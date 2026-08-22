@@ -304,13 +304,9 @@ export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: s
 
   return data.map((moto: any) => {
     const rawImages = (moto.motorcycle_images as any[]) || [];
-    const sortedImages = rawImages.sort(
-      (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
-    );
+    const sortedImages = rawImages.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     const primaryImg = sortedImages.find((img) => img.is_primary) || sortedImages[0];
-    const imageUrl = primaryImg
-      ? getPublicImageUrl(supabase, primaryImg.storage_path)
-      : undefined;
+    const imageUrl = primaryImg ? getPublicImageUrl(supabase, primaryImg.storage_path) : undefined;
 
     return {
       ...moto,
@@ -528,3 +524,21 @@ export async function getMotorcycleFilterFacets(): Promise<MotorcycleFilterFacet
   };
 }
 
+/**
+ * Busca lista resumida de motocicletas ativas para vinculação à consulta FIPE no painel admin.
+ */
+export async function getMotorcyclesForFipeLinker() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('motorcycles')
+    .select('id, brand, model, year_model, price, mileage, status')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching motorcycles for FIPE linker:', error);
+    return [];
+  }
+
+  return data || [];
+}

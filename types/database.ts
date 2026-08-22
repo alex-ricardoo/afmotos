@@ -31,6 +31,38 @@ export interface Lead {
   updated_at?: string;
 }
 
+export interface FipeConsultation {
+  id: string;
+  created_by: string;
+  motorcycle_id: string | null;
+  provider: string;
+  provider_label: string;
+  vehicle_type_id: string;
+  vehicle_type_label: string | null;
+  brand_id: string | null;
+  brand_name: string;
+  model_id: string | null;
+  model_name: string;
+  version_name: string | null;
+  model_year: number | null;
+  is_zero_km: boolean;
+  fuel_id: string | null;
+  fuel_name: string | null;
+  fuel_acronym: string | null;
+  reference_period_id: string | null;
+  reference_month: number | null;
+  reference_year: number | null;
+  reference_label: string | null;
+  fipe_code: string | null;
+  fipe_price: number | null;
+  currency: string;
+  query_payload: Json;
+  response_snapshot: Json;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -161,6 +193,71 @@ export interface Database {
           message?: string | null;
           status?: string;
           metadata?: any;
+        };
+      };
+      fipe_consultations: {
+        Row: FipeConsultation;
+        Insert: {
+          id?: string;
+          created_by: string;
+          motorcycle_id?: string | null;
+          provider?: string;
+          provider_label?: string;
+          vehicle_type_id: string;
+          vehicle_type_label?: string | null;
+          brand_id?: string | null;
+          brand_name: string;
+          model_id?: string | null;
+          model_name: string;
+          version_name?: string | null;
+          model_year?: number | null;
+          is_zero_km?: boolean;
+          fuel_id?: string | null;
+          fuel_name?: string | null;
+          fuel_acronym?: string | null;
+          reference_period_id?: string | null;
+          reference_month?: number | null;
+          reference_year?: number | null;
+          reference_label?: string | null;
+          fipe_code?: string | null;
+          fipe_price?: number | null;
+          currency?: string;
+          query_payload?: Json;
+          response_snapshot?: Json;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          created_by?: string;
+          motorcycle_id?: string | null;
+          provider?: string;
+          provider_label?: string;
+          vehicle_type_id?: string;
+          vehicle_type_label?: string | null;
+          brand_id?: string | null;
+          brand_name?: string;
+          model_id?: string | null;
+          model_name?: string;
+          version_name?: string | null;
+          model_year?: number | null;
+          is_zero_km?: boolean;
+          fuel_id?: string | null;
+          fuel_name?: string | null;
+          fuel_acronym?: string | null;
+          reference_period_id?: string | null;
+          reference_month?: number | null;
+          reference_year?: number | null;
+          reference_label?: string | null;
+          fipe_code?: string | null;
+          fipe_price?: number | null;
+          currency?: string;
+          query_payload?: Json;
+          response_snapshot?: Json;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
     };

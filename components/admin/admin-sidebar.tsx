@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Bike, MessageSquare, Settings, LogOut, Globe, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, Bike, MessageSquare, Settings, LogOut, Globe, ExternalLink, Scale } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Motos', href: '/admin/motos', icon: Bike },
   { name: 'Contatos & Propostas', href: '/admin/propostas', icon: MessageSquare },
+  { name: 'Tabela FIPE', href: '/admin/fipe', icon: Scale },
   { name: 'Configurações', href: '/admin/configuracoes', icon: Settings },
 ];
 
