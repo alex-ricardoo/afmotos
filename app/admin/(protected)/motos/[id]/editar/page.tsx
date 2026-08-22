@@ -9,12 +9,13 @@ export const metadata = {
   title: 'Editar Moto | AF Motos Admin',
 };
 
-export default async function EditarMotoPage({ params }: { params: { id: string } }) {
+export default async function EditarMotoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: moto, error } = await supabase
     .from('motorcycles')
-    .select('*')
-    .eq('id', params.id)
+    .select('*, images:motorcycle_images(*)')
+    .eq('id', id)
     .single();
 
   if (error || !moto) {

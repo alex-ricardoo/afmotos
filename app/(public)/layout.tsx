@@ -4,20 +4,24 @@ import { WhatsAppButton } from '@/components/layout/whatsapp-button';
 import { Toaster } from '@/components/ui/sonner';
 import { AnalyticsProvider } from '@/components/providers/analytics-provider';
 
-export default function PublicLayout({
+import { getSettings } from '@/lib/actions/settings';
+
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const settings = await getSettings();
+
   return (
     <>
-      <Header />
+      <Header settings={settings} />
       <AnalyticsProvider>
         <main className="flex-1">{children}</main>
         <Toaster />
       </AnalyticsProvider>
-      <WhatsAppButton />
-      <Footer />
+      <WhatsAppButton settings={settings} />
+      <Footer settings={settings} />
     </>
   );
 }

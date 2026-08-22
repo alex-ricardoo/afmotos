@@ -19,8 +19,12 @@ import { QuickSearch } from '@/components/filters/quick-search';
 import { getFeaturedMotorcycles } from '@/lib/queries/motorcycles';
 import { cn } from '@/lib/utils';
 
+import { getSettings } from '@/lib/actions/settings';
+
 export default async function HomePage() {
   const featuredMotos = await getFeaturedMotorcycles();
+  const settings = await getSettings();
+  const siteName = settings?.site_name || 'AF Locações e Vendas';
 
   return (
     <div className="flex flex-col gap-12 md:gap-16 pb-16 overflow-hidden bg-[#050505] text-[#f4f4f2]">
@@ -165,7 +169,7 @@ export default async function HomePage() {
               Padrão de Excelência
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mt-1 text-white">
-              Por que escolher a AF Locações e Vendas?
+              Por que escolher a {siteName}?
             </h2>
             <p className="text-[#a6a6a1] text-sm sm:text-base mt-2">
               Segurança jurídica, técnica e comercial em cada etapa da sua negociação.

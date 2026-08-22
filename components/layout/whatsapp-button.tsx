@@ -21,10 +21,12 @@ interface WhatsAppButtonProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   isFloating?: boolean;
+  settings?: any;
 }
 
 export function WhatsAppButton({
-  phone = CONSTANTS.CONTACT_PHONE,
+  phone,
+  settings,
   message,
   motorcycle,
   className,
@@ -33,12 +35,15 @@ export function WhatsAppButton({
   size = 'default',
   isFloating = true,
 }: WhatsAppButtonProps) {
+  const contactPhone = phone || settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
+  const siteName = settings?.site_name || 'AF Motos';
+
   const finalMessage =
     message ||
     (motorcycle
       ? generateMotorcycleInterestMessage(motorcycle)
-      : 'Olá! Gostaria de falar com um consultor sobre as motos da AF Motos.');
-  const link = generateWhatsAppLink(phone, finalMessage);
+      : `Olá! Gostaria de falar com um consultor sobre as motos da ${siteName}.`);
+  const link = generateWhatsAppLink(contactPhone, finalMessage);
 
   if (isFloating && !children) {
     return (

@@ -13,10 +13,16 @@ import {
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 
-export function Footer() {
+export function Footer({ settings }: { settings?: any }) {
+  const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
+  const siteName = settings?.site_name || 'AF LOCAÇÕES E VENDAS';
+  const slogan = settings?.settings?.slogan || 'Loja Premium de Motocicletas';
+  const description = settings?.settings?.institutional_description || 'Referência em locação, venda e consignação de motocicletas com padrão premium, procedência atestada e atendimento exclusivo.';
+  const contactEmail = settings?.contact_email || CONSTANTS.CONTACT_EMAIL;
+
   const whatsappUrl = generateWhatsAppLink(
-    CONSTANTS.CONTACT_PHONE,
-    'Olá! Gostaria de mais informações sobre a AF Locações e Vendas.'
+    contactPhone,
+    `Olá! Gostaria de mais informações sobre a ${siteName}.`
   );
 
   return (
@@ -68,7 +74,7 @@ export function Footer() {
               <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#c9a44c]/40 bg-[#050505] shrink-0 shadow-[0_0_15px_rgba(201,164,76,0.15)]">
                 <Image
                   src="/logo.jpg"
-                  alt="AF Locações e Vendas"
+                  alt={siteName}
                   fill
                   sizes="48px"
                   className="object-cover"
@@ -76,16 +82,16 @@ export function Footer() {
               </div>
               <div className="flex flex-col">
                 <span className="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5 font-heading">
-                  AF LOCAÇÕES E VENDAS
+                  {siteName}
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#c9a44c]" />
                 </span>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-[#b8bcc2] mt-0.5">
-                  Loja Premium de Motocicletas
+                  {slogan}
                 </span>
               </div>
             </Link>
             <p className="text-sm text-[#a6a6a1] max-w-sm leading-relaxed">
-              Referência em locação, venda e consignação de motocicletas com padrão premium, procedência atestada e atendimento exclusivo.
+              {description}
             </p>
             <div className="pt-2">
               <a
@@ -156,11 +162,11 @@ export function Footer() {
             <ul className="space-y-3 text-xs text-[#a6a6a1]">
               <li className="flex items-center gap-2 text-white font-medium">
                 <Phone className="w-4 h-4 text-[#c9a44c] shrink-0" />
-                <span>{CONSTANTS.CONTACT_PHONE}</span>
+                <span>{contactPhone}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-[#c9a44c] shrink-0" />
-                <span>{CONSTANTS.CONTACT_EMAIL}</span>
+                <span>{contactEmail}</span>
               </li>
               <li className="flex items-start gap-2">
                 <Clock className="w-4 h-4 text-[#c9a44c] shrink-0 mt-0.5" />

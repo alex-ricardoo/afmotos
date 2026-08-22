@@ -19,14 +19,17 @@ const navLinks = [
   { href: '/motos-vendidas', label: 'Vendidas' },
 ];
 
-export function Header() {
+export function Header({ settings }: { settings?: any }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
+  const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
+  const siteName = settings?.site_name || 'AF LOCAÇÕES E VENDAS';
+
   const whatsappUrl = generateWhatsAppLink(
-    CONSTANTS.CONTACT_PHONE,
-    'Olá! Gostaria de falar com um consultor da AF Locações e Vendas.',
+    contactPhone,
+    `Olá! Gostaria de falar com um consultor da ${siteName}.`,
   );
 
   return (
@@ -55,7 +58,7 @@ export function Header() {
 
           <div className="flex flex-col">
             <span className="font-black text-base sm:text-lg md:text-xl tracking-tight leading-none text-white group-hover:text-[#e3c56c] transition-colors flex items-center gap-1.5 font-heading">
-              AF LOCAÇÕES E VENDAS
+              {siteName}
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#c9a44c] shadow-[0_0_8px_#c9a44c]" />
             </span>
             <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-widest text-[#b8bcc2] mt-1">
@@ -133,7 +136,7 @@ export function Header() {
                     </div>
                     <div className="flex flex-col text-left">
                       <span className="font-extrabold text-sm text-white tracking-tight leading-none">
-                        AF LOCAÇÕES E VENDAS
+                        {siteName}
                       </span>
                       <span className="text-[10px] uppercase font-bold text-[#b8bcc2] tracking-wider mt-0.5">
                         Loja
