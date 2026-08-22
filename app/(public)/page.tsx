@@ -50,10 +50,7 @@ export default async function HomePage() {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-base sm:text-lg md:text-xl text-[#a6a6a1] max-w-2xl mx-auto leading-relaxed">
-              Motos para comprar, alugar ou anunciar. Fale diretamente com a {siteName} pelo
-              WhatsApp de forma simples e transparente.
-            </p>
+     
 
             {/* Dual CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
@@ -76,24 +73,6 @@ export default async function HomePage() {
               >
                 Quero anunciar minha moto
               </Link>
-            </div>
-          </div>
-
-          {/* Direct & Honest Trust Highlights */}
-          <div className="w-full max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 pt-8 border-t border-[#c9a44c]/20 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-3 px-3 py-2 rounded-xl bg-[#151515]/60 border border-[#c9a44c]/20">
-              <WhatsAppIcon className="w-5 h-5 text-[#25D366] fill-current shrink-0" />
-              <span className="text-xs font-semibold text-[#f4f4f2]">
-                Atendimento direto no WhatsApp
-              </span>
-            </div>
-            <div className="flex items-center justify-center sm:justify-start gap-3 px-3 py-2 rounded-xl bg-[#151515]/60 border border-[#c9a44c]/20">
-              <ShieldCheck className="w-5 h-5 text-[#e3c56c] shrink-0" />
-              <span className="text-xs font-semibold text-[#f4f4f2]">Negociação transparente</span>
-            </div>
-            <div className="flex items-center justify-center sm:justify-start gap-3 px-3 py-2 rounded-xl bg-[#151515]/60 border border-[#c9a44c]/20">
-              <Wrench className="w-5 h-5 text-[#e3c56c] shrink-0" />
-              <span className="text-xs font-semibold text-[#f4f4f2]">Motos revisadas</span>
             </div>
           </div>
         </div>

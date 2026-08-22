@@ -41,7 +41,7 @@ interface RawMotorcycle {
   motorcycle_feature_assignments?: RawFeatureAssignment[] | null;
 }
 
-function getPublicImageUrl(
+export function getPublicImageUrl(
   supabase: Awaited<ReturnType<typeof createClient>>,
   storagePath?: string | null,
 ): string | undefined {
@@ -273,7 +273,15 @@ export async function getMotorcycleBySlug(slug: string) {
 export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: string) {
   const supabase = await createClient();
 
-  let query = supabase.from('motorcycles').select('*');
+  let query = supabase.from('motorcycles').select(`
+    *,
+    motorcycle_images (
+      id,
+      storage_path,
+      is_primary,
+      sort_order
+    )
+  `);
 
   if (statusFilter && statusFilter !== 'ALL') {
     query = query.eq('status', statusFilter);
@@ -281,7 +289,7 @@ export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: s
 
   if (searchQuery) {
     query = query.or(
-      `brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,internal_code.ilike.%${searchQuery}%`,
+      `brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,license_plate.ilike.%${searchQuery}%,internal_code.ilike.%${searchQuery}%`,
     );
   }
 
@@ -292,20 +300,69 @@ export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: s
     return [];
   }
 
-  return data || [];
+  if (!data) return [];
+
+  return data.map((moto: any) => {
+    const rawImages = (moto.motorcycle_images as any[]) || [];
+    const sortedImages = rawImages.sort(
+      (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+    );
+    const primaryImg = sortedImages.find((img) => img.is_primary) || sortedImages[0];
+    const imageUrl = primaryImg
+      ? getPublicImageUrl(supabase, primaryImg.storage_path)
+      : undefined;
+
+    return {
+      ...moto,
+      image_url: imageUrl,
+      images: sortedImages.map((img) => ({
+        id: img.id,
+        url: getPublicImageUrl(supabase, img.storage_path) || '',
+      })),
+    };
+  });
 }
 
 export async function getMotorcycleById(id: string) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase.from('motorcycles').select(`*`).eq('id', id).single();
+  const { data, error } = await supabase
+    .from('motorcycles')
+    .select(
+      `
+      *,
+      motorcycle_images (
+        id,
+        motorcycle_id,
+        storage_path,
+        is_primary,
+        sort_order,
+        alt_text,
+        created_at
+      )
+    `,
+    )
+    .eq('id', id)
+    .single();
 
-  if (error) {
+  if (error || !data) {
     console.error('Error fetching motorcycle by ID:', error);
     return null;
   }
 
-  return data;
+  const rawImages = ((data.motorcycle_images as any[]) || []).sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  );
+
+  const imagesWithUrls = rawImages.map((img) => ({
+    ...img,
+    url: getPublicImageUrl(supabase, img.storage_path) || '',
+  }));
+
+  return {
+    ...data,
+    images: imagesWithUrls,
+  };
 }
 
 export async function getSoldMotorcycles() {

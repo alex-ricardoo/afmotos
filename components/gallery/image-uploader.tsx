@@ -1,116 +1,292 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { Upload, Trash2, Loader2, Star, ImagePlus, Info, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { uploadImageAction, deleteImageAction } from '@/lib/actions/images';
+import {
+  uploadMotorcycleImageAction,
+  deleteMotorcycleImageAction,
+  setPrimaryMotorcycleImageAction,
+} from '@/lib/actions/images';
+import { MotorcycleImage } from '@/types/database';
+import { Button } from '@/components/ui/button';
 
 interface ImageUploaderProps {
-  onUpload: (url: string, path: string) => void;
-  onDelete?: (path: string) => void;
-  pathPrefix?: string;
-  images?: { url: string; path: string }[];
+  motorcycleId?: string;
+  images?: MotorcycleImage[];
+  onImagesChange?: (images: MotorcycleImage[]) => void;
+  disabled?: boolean;
 }
 
 export function ImageUploader({
-  onUpload,
-  onDelete,
-  pathPrefix = 'general',
+  motorcycleId,
   images = [],
+  onImagesChange,
+  disabled = false,
 }: ImageUploaderProps) {
+  const [localImages, setLocalImages] = useState<MotorcycleImage[]>(images);
   const [uploading, setUploading] = useState(false);
+  const [activeActionId, setActiveActionId] = useState<string | null>(null);
+
+  // Sync internal state if prop updates externally
+  const currentImages = localImages;
+
+  const updateImagesState = (newImages: MotorcycleImage[]) => {
+    setLocalImages(newImages);
+    if (onImagesChange) {
+      onImagesChange(newImages);
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    if (!motorcycleId) {
+      toast.error('Salve os dados da motocicleta primeiro para habilitar o envio de fotos.');
+      return;
+    }
+
     setUploading(true);
 
-    const uploadPromises = Array.from(files).map(async (file) => {
+    const filesArray = Array.from(files);
+    let successCount = 0;
+    let updatedList = [...currentImages];
+
+    for (const file of filesArray) {
       const formData = new FormData();
+      formData.append('motorcycleId', motorcycleId);
       formData.append('file', file);
-      formData.append('path', pathPrefix);
 
       try {
-        const result = await uploadImageAction(formData);
-        if (result.error) {
-          toast.error(`Erro no upload: ${result.error}`);
-          return false;
-        } else if (result.url && result.path) {
-          onUpload(result.url, result.path);
-          return true;
+        const result = await uploadMotorcycleImageAction(formData);
+
+        if (!result.success || !result.image) {
+          toast.error(`Erro ao enviar ${file.name}: ${result.error || 'Falha desconhecida'}`);
+        } else {
+          successCount++;
+          // If this is the first image or returned as primary, update other images in local state
+          if (result.image.is_primary) {
+            updatedList = updatedList.map((img) => ({ ...img, is_primary: false }));
+          }
+          updatedList.push(result.image);
+          updateImagesState([...updatedList]);
         }
       } catch (err) {
-        toast.error('Erro ao enviar imagem');
-        return false;
+        console.error('Upload error:', err);
+        toast.error(`Falha no envio de ${file.name}`);
       }
-      return false;
-    });
-
-    const results = await Promise.all(uploadPromises);
-    const successCount = results.filter(Boolean).length;
+    }
 
     if (successCount > 0) {
       toast.success(
         successCount === 1
-          ? '1 imagem enviada com sucesso!'
-          : `${successCount} imagens enviadas com sucesso!`,
+          ? '1 foto adicionada com sucesso!'
+          : `${successCount} fotos adicionadas com sucesso!`,
       );
     }
 
     setUploading(false);
-    e.target.value = ''; // Reset input
+    e.target.value = ''; // Reset file input
   };
 
-  const handleDelete = async (path: string) => {
+  const handleDelete = async (image: MotorcycleImage) => {
+    if (activeActionId) return;
+    setActiveActionId(image.id);
+
     try {
-      const result = await deleteImageAction(path);
+      const result = await deleteMotorcycleImageAction(image.id);
       if (result.error) {
-        toast.error(result.error);
+        toast.error(`Erro ao remover foto: ${result.error}`);
       } else {
-        if (onDelete) onDelete(path);
-        toast.success('Imagem removida com sucesso');
+        // Remove locally
+        let remaining = currentImages.filter((img) => img.id !== image.id);
+        // If the removed image was primary and there are remaining images, make the first one primary locally
+        if (image.is_primary && remaining.length > 0) {
+          remaining = remaining.map((img, idx) => ({
+            ...img,
+            is_primary: idx === 0,
+          }));
+        }
+        updateImagesState(remaining);
+        toast.success('Foto removida com sucesso');
       }
     } catch (err) {
+      console.error('Delete error:', err);
       toast.error('Erro ao remover imagem');
+    } finally {
+      setActiveActionId(null);
     }
   };
 
+  const handleSetPrimary = async (image: MotorcycleImage) => {
+    if (image.is_primary || activeActionId || !motorcycleId) return;
+    setActiveActionId(image.id);
+
+    try {
+      const result = await setPrimaryMotorcycleImageAction(image.id, motorcycleId);
+      if (result.error) {
+        toast.error(`Erro ao definir foto principal: ${result.error}`);
+      } else {
+        const updated = currentImages.map((img) => ({
+          ...img,
+          is_primary: img.id === image.id,
+        }));
+        updateImagesState(updated);
+        toast.success('Foto definida como principal (capa)');
+      }
+    } catch (err) {
+      console.error('Set primary error:', err);
+      toast.error('Erro ao atualizar foto principal');
+    } finally {
+      setActiveActionId(null);
+    }
+  };
+
+  if (!motorcycleId) {
+    return (
+      <div className="rounded-xl border border-dashed border-amber-500/30 bg-amber-500/5 p-6 text-center space-y-3">
+        <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
+          <Info className="w-5 h-5" />
+        </div>
+        <div>
+          <h4 className="text-sm font-semibold text-foreground">
+            Cadastro de Fotos Disponível Após Salvar
+          </h4>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto mt-1">
+            Preencha os dados da motocicleta e clique em &quot;Cadastrar moto&quot;. Em seguida,
+            você poderá fazer upload e organizar todas as fotos no painel de edição.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4">
-        {images.map((img, index) => (
-          <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden group">
-            <Image src={img.url} alt="Uploaded" fill className="object-cover" />
-            <button
-              type="button"
-              onClick={() => handleDelete(img.path)}
-              className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+      {currentImages.length === 0 && !uploading && (
+        <div className="rounded-lg border border-dashed border-border p-6 text-center text-muted-foreground bg-muted/20">
+          <ImagePlus className="w-8 h-8 mx-auto mb-2 text-muted-foreground/60" />
+          <p className="text-xs font-medium">Nenhuma foto adicionada ainda.</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Adicione fotos da motocicleta para atrair mais compradores. A primeira foto será usada como capa.
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+        {currentImages.map((img) => {
+          const isBusy = activeActionId === img.id;
+
+          return (
+            <div
+              key={img.id}
+              className={`group relative aspect-[4/3] rounded-xl overflow-hidden border-2 bg-zinc-950 transition-all ${
+                img.is_primary
+                  ? 'border-[#c9a44c] shadow-[0_0_15px_rgba(201,164,76,0.25)] ring-1 ring-[#c9a44c]'
+                  : 'border-border hover:border-zinc-500'
+              }`}
             >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-        <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed rounded-md cursor-pointer hover:bg-slate-50 transition-colors">
-          <div className="flex flex-col items-center justify-center pt-5 pb-6 text-slate-500">
+              {img.url ? (
+                <Image
+                  src={img.url}
+                  alt={img.alt_text || 'Foto da motocicleta'}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                  Sem prévia
+                </div>
+              )}
+
+              {/* Overlay on hover / active */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+
+              {/* Primary Badge */}
+              {img.is_primary ? (
+                <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#c9a44c] text-black text-[10px] font-extrabold shadow-sm">
+                  <Star className="w-3 h-3 fill-black" />
+                  <span>Capa</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleSetPrimary(img)}
+                  disabled={isBusy || disabled}
+                  title="Definir como foto de capa principal"
+                  className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 hover:bg-[#c9a44c] text-white hover:text-black text-[10px] font-semibold backdrop-blur-md border border-white/20"
+                >
+                  <Star className="w-3 h-3" />
+                  <span>Tornar Capa</span>
+                </button>
+              )}
+
+              {/* Action Buttons (Bottom Right) */}
+              <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => handleDelete(img)}
+                  disabled={isBusy || disabled}
+                  className="h-7 w-7 rounded-lg bg-red-600/90 hover:bg-red-600 text-white shadow-md cursor-pointer"
+                  title="Excluir esta foto"
+                >
+                  {isBusy ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-3.5 h-3.5" />
+                  )}
+                </Button>
+              </div>
+
+              {/* Loading Overlay if this item is being processed */}
+              {isBusy && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-20">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#c9a44c]" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Upload Button Box */}
+        <label
+          className={`flex flex-col items-center justify-center aspect-[4/3] rounded-xl border-2 border-dashed border-border hover:border-[#c9a44c] hover:bg-muted/40 transition-all cursor-pointer group bg-background/50 ${
+            uploading || disabled ? 'opacity-60 pointer-events-none' : ''
+          }`}
+        >
+          <div className="flex flex-col items-center justify-center p-3 text-center">
             {uploading ? (
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <>
+                <Loader2 className="w-6 h-6 animate-spin text-[#c9a44c] mb-2" />
+                <span className="text-xs font-semibold text-foreground">Enviando...</span>
+                <span className="text-[10px] text-muted-foreground mt-0.5">Salvando foto e registro</span>
+              </>
             ) : (
               <>
-                <Upload className="w-8 h-8 mb-2" />
-                <span className="text-xs font-medium">Adicionar Foto</span>
+                <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-[#c9a44c]/15 group-hover:text-[#c9a44c] transition-colors mb-1.5">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-semibold text-foreground group-hover:text-[#c9a44c] transition-colors">
+                  Adicionar Fotos
+                </span>
+                <span className="text-[10px] text-muted-foreground mt-0.5">
+                  JPG, PNG, WebP
+                </span>
               </>
             )}
           </div>
           <input
             type="file"
             className="hidden"
-            accept="image/*"
+            accept="image/png, image/jpeg, image/webp, image/avif"
             multiple
             onChange={handleFileChange}
-            disabled={uploading}
+            disabled={uploading || disabled}
           />
         </label>
       </div>

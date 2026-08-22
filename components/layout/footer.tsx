@@ -25,38 +25,34 @@ export function Footer({ settings }: { settings?: any }) {
       {/* Trust Seals Bar */}
       <div className="border-b border-[#c9a44c]/20 bg-[#0d0d0d]">
         <div className="container mx-auto px-4 md:px-6 py-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+            <div className="flex items-center justify-start gap-3.5">
               <div className="w-10 h-10 rounded-full bg-[#c9a44c]/10 border border-[#c9a44c]/30 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-5 h-5 text-[#e3c56c]" />
               </div>
-              <div>
-                <h4 className="text-white text-sm font-bold">Atendimento Direto</h4>
-                <p className="text-xs text-[#a6a6a1]">
-                  Fale com a gente no WhatsApp sem intermediários
-                </p>
+              <div className="text-left">
+                <h4 className="text-white text-sm font-bold leading-tight">Atendimento Direto</h4>
+                <p className="text-xs text-[#a6a6a1] mt-0.5">Fale com a gente no WhatsApp sem intermediários</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-center sm:justify-start gap-3.5">
+            <div className="flex items-center justify-start gap-3.5">
               <div className="w-10 h-10 rounded-full bg-[#c9a44c]/10 border border-[#c9a44c]/30 flex items-center justify-center shrink-0">
                 <FileCheck className="w-5 h-5 text-[#e3c56c]" />
               </div>
-              <div>
-                <h4 className="text-white text-sm font-bold">Documentação em Dia</h4>
-                <p className="text-xs text-[#a6a6a1]">
-                  Orientação e clareza na transferência da moto
-                </p>
+              <div className="text-left">
+                <h4 className="text-white text-sm font-bold leading-tight">Documentação em Dia</h4>
+                <p className="text-xs text-[#a6a6a1] mt-0.5">Orientação e clareza na transferência da moto</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-center sm:justify-start gap-3.5">
+            <div className="flex items-center justify-start gap-3.5">
               <div className="w-10 h-10 rounded-full bg-[#c9a44c]/10 border border-[#c9a44c]/30 flex items-center justify-center shrink-0">
                 <Award className="w-5 h-5 text-[#e3c56c]" />
               </div>
-              <div>
-                <h4 className="text-white text-sm font-bold">Negociação Transparente</h4>
-                <p className="text-xs text-[#a6a6a1]">Preço e condições combinados com clareza</p>
+              <div className="text-left">
+                <h4 className="text-white text-sm font-bold leading-tight">Negociação Transparente</h4>
+                <p className="text-xs text-[#a6a6a1] mt-0.5">Preço e condições combinados com clareza</p>
               </div>
             </div>
           </div>

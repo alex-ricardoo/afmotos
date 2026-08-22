@@ -22,6 +22,29 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
     notFound();
   }
 
+  const rawImages = ((moto.images as any[]) || []).sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  );
+
+  const formattedImages = rawImages.map((img) => {
+    let url = img.storage_path;
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      const { data: publicUrlData } = supabase.storage
+        .from('motorcycle-images')
+        .getPublicUrl(img.storage_path);
+      url = publicUrlData.publicUrl;
+    }
+    return {
+      ...img,
+      url,
+    };
+  });
+
+  const initialData = {
+    ...moto,
+    images: formattedImages,
+  };
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col gap-2 mb-6">
@@ -57,7 +80,7 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <MotorcycleForm initialData={moto} />
+      <MotorcycleForm initialData={initialData} />
     </div>
   );
 }

@@ -83,7 +83,7 @@ function toMotorcyclePayload(values: any): MotorcyclePayload {
 export async function createMotorcycleAction(data: any) {
   const supabase = await createClient();
 
-  const { images, ...motoData } = data;
+  const { images: _ignoredImages, ...motoData } = data;
   const payload = toMotorcyclePayload(motoData);
 
   const slug = `${payload.brand}-${payload.model}-${payload.year_model}`
@@ -103,10 +103,10 @@ export async function createMotorcycleAction(data: any) {
       slug,
       internal_code: internalCode,
     })
-    .select('id')
+    .select('id, slug')
     .single();
 
-  if (error) {
+  if (error || !insertedMoto) {
     console.error('Error creating motorcycle:', error);
     return {
       error:
@@ -114,27 +114,15 @@ export async function createMotorcycleAction(data: any) {
     };
   }
 
-  if (images && images.length > 0) {
-    const imagesToInsert = images.map((img: any, index: number) => ({
-      motorcycle_id: insertedMoto.id,
-      storage_path: img.path,
-      is_primary: index === 0,
-      sort_order: index,
-    }));
-    const { error: imagesError } = await supabase.from('motorcycle_images').insert(imagesToInsert);
-    if (imagesError) {
-      console.error('Error inserting images:', imagesError);
-    }
-  }
-
   revalidatePath('/admin/motos');
-  return { success: true };
+  revalidatePath('/motos');
+  return { success: true, id: insertedMoto.id, slug: insertedMoto.slug };
 }
 
 export async function updateMotorcycleAction(id: string, data: any) {
   const supabase = await createClient();
 
-  const { images, ...motoData } = data;
+  const { images: _ignoredImages, ...motoData } = data;
   const payload = toMotorcyclePayload(motoData);
 
   const slug = `${payload.brand}-${payload.model}-${payload.year_model}`
@@ -148,7 +136,7 @@ export async function updateMotorcycleAction(id: string, data: any) {
       slug,
     })
     .eq('id', id)
-    .select('id')
+    .select('id, slug')
     .single();
 
   if (error) {
@@ -159,28 +147,35 @@ export async function updateMotorcycleAction(id: string, data: any) {
     };
   }
 
-  await supabase.from('motorcycle_images').delete().eq('motorcycle_id', id);
-
-  if (images && images.length > 0) {
-    const imagesToInsert = images.map((img: any, index: number) => ({
-      motorcycle_id: id,
-      storage_path: img.path,
-      is_primary: index === 0,
-      sort_order: index,
-    }));
-    const { error: imagesError } = await supabase.from('motorcycle_images').insert(imagesToInsert);
-    if (imagesError) {
-      console.error('Error inserting images:', imagesError);
-    }
+  revalidatePath('/admin/motos');
+  revalidatePath(`/admin/motos/${id}/editar`);
+  revalidatePath('/motos');
+  if (updatedMoto?.slug) {
+    revalidatePath(`/motos/${updatedMoto.slug}`);
   }
 
-  revalidatePath('/admin/motos');
-  return { success: true };
+  return { success: true, id };
 }
 
 export async function deleteMotorcycleAction(id: string) {
   const supabase = await createClient();
 
+  // 1. Fetch images to cleanup storage
+  const { data: images } = await supabase
+    .from('motorcycle_images')
+    .select('storage_path')
+    .eq('motorcycle_id', id);
+
+  if (images && images.length > 0) {
+    const pathsToRemove = images
+      .map((img) => img.storage_path)
+      .filter((p) => p && !p.startsWith('http'));
+    if (pathsToRemove.length > 0) {
+      await supabase.storage.from('motorcycle-images').remove(pathsToRemove);
+    }
+  }
+
+  // 2. Delete motorcycle (cascade deletes motorcycle_images rows)
   const { error } = await supabase.from('motorcycles').delete().eq('id', id);
 
   if (error) {
@@ -189,6 +184,7 @@ export async function deleteMotorcycleAction(id: string) {
   }
 
   revalidatePath('/admin/motos');
+  revalidatePath('/motos');
   return { success: true };
 }
 

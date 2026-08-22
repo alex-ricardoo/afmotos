@@ -124,24 +124,24 @@ export default function AluguelPage() {
         </div>
 
         {/* Requirements Bar */}
-        <div className="bg-[#151515] p-6 rounded-2xl border border-[#c9a44c]/20 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
-          <div className="flex items-center gap-3 justify-center sm:justify-start">
+        <div className="bg-[#151515] p-6 rounded-2xl border border-[#c9a44c]/20 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+          <div className="flex items-center gap-3 justify-start">
             <ShieldCheck className="w-6 h-6 text-[#e3c56c] shrink-0" />
-            <div>
+            <div className="text-left">
               <h4 className="font-bold text-xs text-white">CNH Categoria A</h4>
               <p className="text-[11px] text-[#a6a6a1]">Habilitação válida para pilotar</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 justify-center sm:justify-start">
+          <div className="flex items-center gap-3 justify-start">
             <CreditCard className="w-6 h-6 text-[#e3c56c] shrink-0" />
-            <div>
+            <div className="text-left">
               <h4 className="font-bold text-xs text-white">Caução Combinado</h4>
               <p className="text-[11px] text-[#a6a6a1]">Condições acordadas previamente</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 justify-center sm:justify-start">
+          <div className="flex items-center gap-3 justify-start">
             <Wrench className="w-6 h-6 text-[#e3c56c] shrink-0" />
-            <div>
+            <div className="text-left">
               <h4 className="font-bold text-xs text-white">Motos Checadas</h4>
               <p className="text-[11px] text-[#a6a6a1]">Verificação prévia antes da entrega</p>
             </div>

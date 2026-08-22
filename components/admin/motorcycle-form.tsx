@@ -125,12 +125,14 @@ function normalizeTransmission(val?: string): 'manual' | 'automatico' | 'semiaut
   return 'manual';
 }
 
+import { MotorcycleImage } from '@/types/database';
+
 export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [images, setImages] = useState<{ url: string; path: string }[]>(initialData?.images || []);
+  const [images, setImages] = useState<MotorcycleImage[]>(initialData?.images || []);
 
   const isEditing = !!initialData?.id;
 
@@ -139,14 +141,6 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
       // @ts-ignore
       form.setValue(key as any, data[key]);
     });
-  };
-
-  const handleImageUpload = (url: string, path: string) => {
-    setImages((prev) => [...prev, { url, path }]);
-  };
-
-  const handleImageDelete = (path: string) => {
-    setImages((prev) => prev.filter((img) => img.path !== path));
   };
 
   const form = useForm<MotorcycleFormValues>({
@@ -179,13 +173,11 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
     setSuccessMsg(null);
 
     try {
-      const dataWithImages = { ...data, images };
-
       let result: any;
       if (isEditing) {
-        result = await updateMotorcycleAction(initialData.id, dataWithImages);
+        result = await updateMotorcycleAction(initialData.id, data);
       } else {
-        result = await createMotorcycleAction(dataWithImages);
+        result = await createMotorcycleAction(data);
       }
 
       if (result?.error) {
@@ -195,11 +187,15 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
       }
 
       setSuccessMsg(
-        isEditing ? 'Motocicleta atualizada com sucesso!' : 'Motocicleta cadastrada com sucesso!',
+        isEditing ? 'Motocicleta atualizada com sucesso!' : 'Motocicleta cadastrada com sucesso! Redirecionando...',
       );
 
       setTimeout(() => {
-        router.push('/admin/motos');
+        if (!isEditing && result?.id) {
+          router.push(`/admin/motos/${result.id}/editar`);
+        } else {
+          router.push('/admin/motos');
+        }
         router.refresh();
       }, 1500);
     } catch (error: any) {
@@ -628,9 +624,9 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
             </p>
             <div className="bg-background p-4 border border-border rounded-md">
               <ImageUploader
-                onUpload={handleImageUpload}
-                onDelete={handleImageDelete}
+                motorcycleId={initialData?.id}
                 images={images}
+                onImagesChange={setImages}
               />
             </div>
           </div>
