@@ -91,18 +91,7 @@ export function Header({ settings }: { settings?: any }) {
 
         {/* Actions (WhatsApp CTA + Mobile Menu Trigger) */}
         <div className="flex items-center gap-3">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              buttonVariants({ size: 'sm' }),
-              'hidden sm:inline-flex bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl px-4 h-10 shadow-[0_0_15px_rgba(37,211,102,0.2)] transition-all flex items-center gap-2',
-            )}
-          >
-            <WhatsAppIcon className="w-4 h-4 fill-current" />
-            <span>Falar no WhatsApp</span>
-          </a>
+
 
           {/* Mobile Sheet Navigation */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
