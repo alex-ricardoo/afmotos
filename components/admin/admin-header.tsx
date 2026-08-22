@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { AdminSidebar } from "./admin-sidebar";
+import { Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { AdminSidebar } from './admin-sidebar';
 
 export function AdminHeader() {
   return (
@@ -19,7 +19,7 @@ export function AdminHeader() {
               <AdminSidebar />
             </SheetContent>
           </Sheet>
-          
+
           <div className="flex items-center gap-x-4 lg:hidden">
             <span className="text-xl font-bold tracking-tight">AF Motos</span>
           </div>

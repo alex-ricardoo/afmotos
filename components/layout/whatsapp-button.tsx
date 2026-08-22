@@ -1,46 +1,84 @@
-import React from "react";
-import { buttonVariants } from "@/components/ui/button";
-import { generateWhatsAppLink, generateMotorcycleInterestMessage } from "@/lib/utils/whatsapp";
+'use client';
+
+import React from 'react';
+import { MessageCircle } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
+import { generateWhatsAppLink, generateMotorcycleInterestMessage } from '@/lib/utils/whatsapp';
+import { CONSTANTS } from '@/lib/utils/constants';
+import { cn } from '@/lib/utils';
 
 interface WhatsAppButtonProps {
   phone?: string;
   message?: string;
-  motorcycle?: any;
+  motorcycle?: {
+    brand: string;
+    model: string;
+    year_model: number;
+    price?: number | null;
+  };
   className?: string;
   children?: React.ReactNode;
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
-  size?: "default" | "sm" | "lg" | "icon";
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  isFloating?: boolean;
 }
 
-export function WhatsAppButton({ 
-  phone = "5511999999999", // Default phone
+export function WhatsAppButton({
+  phone = CONSTANTS.CONTACT_PHONE,
   message,
   motorcycle,
   className,
-  children = "Tenho interesse",
-  variant = "default",
-  size = "default"
+  children,
+  variant = 'default',
+  size = 'default',
+  isFloating = true,
 }: WhatsAppButtonProps) {
-  const finalMessage = message || (motorcycle ? generateMotorcycleInterestMessage(motorcycle) : "Olá, gostaria de mais informações.");
+  const finalMessage =
+    message ||
+    (motorcycle
+      ? generateMotorcycleInterestMessage(motorcycle)
+      : 'Olá! Gostaria de falar com um consultor sobre as motos da AF Motos.');
   const link = generateWhatsAppLink(phone, finalMessage);
 
+  if (isFloating && !children) {
+    return (
+      <div className="fixed bottom-6 right-6 z-40 flex items-center group">
+        {/* Tooltip on Desktop hover */}
+        <span className="hidden md:inline-block mr-3 px-3 py-1.5 rounded-full bg-[#0B0D0F] text-white text-xs font-semibold shadow-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
+          Falar no WhatsApp
+        </span>
+
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Falar conosco pelo WhatsApp"
+          className={cn(
+            'relative flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-xl hover:bg-[#20BD5A] hover:scale-105 active:scale-95 transition-all duration-300',
+            className,
+          )}
+        >
+          {/* Subtle pulse ring */}
+          <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-75 animate-ping -z-10 group-hover:animate-none" />
+
+          <MessageCircle className="w-7 h-7 fill-white" />
+
+          {/* Online badge */}
+          <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full" />
+        </a>
+      </div>
+    );
+  }
+
   return (
-    <a href={link} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant, size, className })}>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="mr-2 h-5 w-5"
-      >
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-      </svg>
-      {children}
+    <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(buttonVariants({ variant, size }), className)}
+    >
+      <MessageCircle className="mr-2 h-5 w-5" />
+      {children || 'Tenho interesse'}
     </a>
   );
 }

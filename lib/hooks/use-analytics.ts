@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export function useAnalytics() {
   const pathname = usePathname();
@@ -9,13 +9,13 @@ export function useAnalytics() {
   useEffect(() => {
     if (pathname) {
       // Log page view
-      fetch("/api/analytics", {
-        method: "POST",
+      fetch('/api/analytics', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          event_type: "page_view",
+          event_type: 'page_view',
           path: pathname,
           url: window.location.href,
         }),
@@ -25,10 +25,10 @@ export function useAnalytics() {
 
   const logEvent = async (eventName: string, metadata?: any) => {
     try {
-      await fetch("/api/analytics", {
-        method: "POST",
+      await fetch('/api/analytics', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           event_type: eventName,

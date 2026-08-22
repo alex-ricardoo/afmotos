@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -12,24 +12,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { createLeadAction } from "@/lib/actions/leads";
-import { toast } from "sonner";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { createLeadAction } from '@/lib/actions/leads';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
 const rentalSchema = z.object({
-  name: z.string().min(2, "Nome é obrigatório"),
-  phone: z.string().min(10, "Telefone é obrigatório"),
-  email: z.string().email("E-mail inválido").optional().or(z.literal("")),
-  duration: z.string().min(1, "Duração é obrigatória"),
+  name: z.string().min(2, 'Nome é obrigatório'),
+  phone: z.string().min(10, 'Telefone é obrigatório'),
+  email: z.string().email('E-mail inválido').optional().or(z.literal('')),
+  duration: z.string().min(1, 'Duração é obrigatória'),
   message: z.string().optional(),
 });
 
@@ -42,11 +42,11 @@ export function RentalForm() {
   const form = useForm<RentalFormValues>({
     resolver: zodResolver(rentalSchema) as any,
     defaultValues: {
-      name: "",
-      phone: "",
-      email: "",
-      duration: "",
-      message: "",
+      name: '',
+      phone: '',
+      email: '',
+      duration: '',
+      message: '',
     },
   });
 
@@ -67,11 +67,11 @@ export function RentalForm() {
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Sua solicitação de aluguel foi enviada com sucesso!");
+        toast.success('Sua solicitação de aluguel foi enviada com sucesso!');
         setSuccess(true);
       }
     } catch (error) {
-      toast.error("Ocorreu um erro ao enviar sua solicitação.");
+      toast.error('Ocorreu um erro ao enviar sua solicitação.');
     } finally {
       setLoading(false);
     }
@@ -81,8 +81,13 @@ export function RentalForm() {
     return (
       <div className="bg-green-50 border border-green-200 text-green-800 p-6 rounded-lg text-center">
         <h3 className="text-xl font-semibold mb-2">Solicitação Enviada!</h3>
-        <p>Recebemos o seu interesse em aluguel. Nossa equipe entrará em contato em breve para apresentar as opções e valores disponíveis.</p>
-        <Button className="mt-4" variant="outline" onClick={() => setSuccess(false)}>Nova Solicitação</Button>
+        <p>
+          Recebemos o seu interesse em aluguel. Nossa equipe entrará em contato em breve para
+          apresentar as opções e valores disponíveis.
+        </p>
+        <Button className="mt-4" variant="outline" onClick={() => setSuccess(false)}>
+          Nova Solicitação
+        </Button>
       </div>
     );
   }
@@ -94,7 +99,7 @@ export function RentalForm() {
           <div className="space-y-4 col-span-1 md:col-span-2">
             <h3 className="font-semibold text-lg border-b pb-2">Seus Dados</h3>
           </div>
-          
+
           <FormField
             control={form.control as any}
             name="name"
@@ -171,8 +176,8 @@ export function RentalForm() {
               <FormItem className="col-span-1 md:col-span-2">
                 <FormLabel>Observações adicionais / Preferências de Moto</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Ex: Gostaria de uma moto 160cc para trabalho..." 
+                  <Textarea
+                    placeholder="Ex: Gostaria de uma moto 160cc para trabalho..."
                     className="resize-none"
                     rows={4}
                     {...field}
@@ -185,7 +190,7 @@ export function RentalForm() {
         </div>
 
         <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading ? "Enviando..." : "Solicitar Orçamento de Aluguel"}
+          {loading ? 'Enviando...' : 'Solicitar Orçamento de Aluguel'}
         </Button>
       </form>
     </Form>

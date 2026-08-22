@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-heading, var(--font-sans));
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -18,11 +18,6 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -45,76 +40,100 @@
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Brand Luxury Automotive Gold & Black Tokens */
+  --color-brand-black: #050505;
+  --color-brand-black-soft: #0d0d0d;
+  --color-brand-surface: #151515;
+  --color-brand-surface-light: #202020;
+  --color-brand-gold: #c9a44c;
+  --color-brand-gold-light: #e3c56c;
+  --color-brand-gold-dark: #8f6d25;
+  --color-brand-silver: #b8bcc2;
+  --color-brand-silver-light: #e6e8eb;
+  --color-brand-white: #ffffff;
+  --color-brand-text: #f4f4f2;
+  --color-brand-text-muted: #a6a6a1;
+  --color-brand-border: rgba(201, 164, 76, 0.28);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --brand-black: #050505;
+  --brand-black-soft: #0d0d0d;
+  --brand-surface: #151515;
+  --brand-surface-light: #202020;
+
+  --brand-gold: #c9a44c;
+  --brand-gold-light: #e3c56c;
+  --brand-gold-dark: #8f6d25;
+
+  --brand-silver: #b8bcc2;
+  --brand-silver-light: #e6e8eb;
+
+  --brand-white: #ffffff;
+  --brand-text: #f4f4f2;
+  --brand-text-muted: #a6a6a1;
+
+  --brand-border: rgba(201, 164, 76, 0.28);
+
+  /* Dark-first luxury dealership system variables */
+  --background: #050505;
+  --foreground: #f4f4f2;
+  --card: #151515;
+  --card-foreground: #f4f4f2;
+  --popover: #151515;
+  --popover-foreground: #f4f4f2;
+  --primary: #c9a44c;
+  --primary-foreground: #050505;
+  --secondary: #202020;
+  --secondary-foreground: #f4f4f2;
+  --muted: #1a1a1a;
+  --muted-foreground: #a6a6a1;
+  --accent: #202020;
+  --accent-foreground: #e3c56c;
+  --destructive: #ef4444;
+  --border: rgba(201, 164, 76, 0.22);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #c9a44c;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  --sidebar: #0d0d0d;
+  --sidebar-foreground: #f4f4f2;
+  --sidebar-primary: #c9a44c;
+  --sidebar-primary-foreground: #050505;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #e3c56c;
+  --sidebar-border: rgba(201, 164, 76, 0.22);
+  --sidebar-ring: #c9a44c;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #050505;
+  --foreground: #f4f4f2;
+  --card: #151515;
+  --card-foreground: #f4f4f2;
+  --popover: #151515;
+  --popover-foreground: #f4f4f2;
+  --primary: #c9a44c;
+  --primary-foreground: #050505;
+  --secondary: #202020;
+  --secondary-foreground: #f4f4f2;
+  --muted: #1a1a1a;
+  --muted-foreground: #a6a6a1;
+  --accent: #202020;
+  --accent-foreground: #e3c56c;
+  --destructive: #ef4444;
+  --border: rgba(201, 164, 76, 0.22);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #c9a44c;
+  --sidebar: #0d0d0d;
+  --sidebar-foreground: #f4f4f2;
+  --sidebar-primary: #c9a44c;
+  --sidebar-primary-foreground: #050505;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #e3c56c;
+  --sidebar-border: rgba(201, 164, 76, 0.22);
+  --sidebar-ring: #c9a44c;
 }
 
 @layer base {
@@ -122,9 +141,36 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased selection:bg-[#c9a44c]/30 selection:text-[#e3c56c];
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    background-color: var(--brand-black);
+    color: var(--brand-text);
   }
   html {
-    @apply font-sans;
+    @apply scroll-smooth;
   }
 }
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom luxury gold scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 164, 76, 0.35);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 164, 76, 0.6);
+}
+

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 export async function uploadImageAction(formData: FormData) {
   const supabase = await createClient();
   const file = formData.get('file') as File;
-  const path = formData.get('path') as string || 'general';
+  const path = (formData.get('path') as string) || 'general';
 
   if (!file) {
     return { error: 'Nenhum arquivo enviado' };
@@ -24,9 +24,7 @@ export async function uploadImageAction(formData: FormData) {
     return { error: uploadError.message };
   }
 
-  const { data: publicUrlData } = supabase.storage
-    .from('motorcycle-images')
-    .getPublicUrl(filePath);
+  const { data: publicUrlData } = supabase.storage.from('motorcycle-images').getPublicUrl(filePath);
 
   return { success: true, url: publicUrlData.publicUrl, path: filePath };
 }
@@ -34,9 +32,7 @@ export async function uploadImageAction(formData: FormData) {
 export async function deleteImageAction(path: string) {
   const supabase = await createClient();
 
-  const { error } = await supabase.storage
-    .from('motorcycle-images')
-    .remove([path]);
+  const { error } = await supabase.storage.from('motorcycle-images').remove([path]);
 
   if (error) {
     console.error('Error deleting image:', error);

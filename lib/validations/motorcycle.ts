@@ -15,7 +15,9 @@ export const motorcycleSchema = z.object({
   description: z.string().optional(),
   ownership_type: z.enum(['OWNED', 'CONSIGNMENT']).default('OWNED'),
   operation_type: z.enum(['SALE', 'RENTAL', 'SALE_AND_RENTAL']).default('SALE'),
-  status: z.enum(['AVAILABLE', 'RESERVED', 'SOLD', 'RENTED', 'MAINTENANCE', 'UNAVAILABLE', 'HIDDEN']).default('AVAILABLE'),
+  status: z
+    .enum(['AVAILABLE', 'RESERVED', 'SOLD', 'RENTED', 'MAINTENANCE', 'UNAVAILABLE', 'HIDDEN'])
+    .default('AVAILABLE'),
   featured: z.boolean().default(false),
   license_plate: z.string().optional(),
   location: z.string().default('São Paulo, SP'),

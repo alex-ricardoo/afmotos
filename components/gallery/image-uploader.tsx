@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Upload, X, Loader2 } from "lucide-react";
-import Image from "next/image";
-import { toast } from "sonner";
-import { uploadImageAction, deleteImageAction } from "@/lib/actions/images";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Upload, X, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { toast } from 'sonner';
+import { uploadImageAction, deleteImageAction } from '@/lib/actions/images';
 
 interface ImageUploaderProps {
   onUpload: (url: string, path: string) => void;
@@ -14,7 +14,12 @@ interface ImageUploaderProps {
   images?: { url: string; path: string }[];
 }
 
-export function ImageUploader({ onUpload, onDelete, pathPrefix = "general", images = [] }: ImageUploaderProps) {
+export function ImageUploader({
+  onUpload,
+  onDelete,
+  pathPrefix = 'general',
+  images = [],
+}: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,8 +31,8 @@ export function ImageUploader({ onUpload, onDelete, pathPrefix = "general", imag
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("path", pathPrefix);
+      formData.append('file', file);
+      formData.append('path', pathPrefix);
 
       try {
         const result = await uploadImageAction(formData);
@@ -35,15 +40,15 @@ export function ImageUploader({ onUpload, onDelete, pathPrefix = "general", imag
           toast.error(result.error);
         } else if (result.url && result.path) {
           onUpload(result.url, result.path);
-          toast.success("Imagem enviada com sucesso!");
+          toast.success('Imagem enviada com sucesso!');
         }
       } catch (err) {
-        toast.error("Erro ao enviar imagem");
+        toast.error('Erro ao enviar imagem');
       }
     }
 
     setUploading(false);
-    e.target.value = ""; // Reset input
+    e.target.value = ''; // Reset input
   };
 
   const handleDelete = async (path: string) => {
@@ -53,10 +58,10 @@ export function ImageUploader({ onUpload, onDelete, pathPrefix = "general", imag
         toast.error(result.error);
       } else {
         if (onDelete) onDelete(path);
-        toast.success("Imagem removida com sucesso");
+        toast.success('Imagem removida com sucesso');
       }
     } catch (err) {
-      toast.error("Erro ao remover imagem");
+      toast.error('Erro ao remover imagem');
     }
   };
 
@@ -86,11 +91,11 @@ export function ImageUploader({ onUpload, onDelete, pathPrefix = "general", imag
               </>
             )}
           </div>
-          <input 
-            type="file" 
-            className="hidden" 
-            accept="image/*" 
-            multiple 
+          <input
+            type="file"
+            className="hidden"
+            accept="image/*"
+            multiple
             onChange={handleFileChange}
             disabled={uploading}
           />

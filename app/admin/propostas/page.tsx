@@ -1,9 +1,9 @@
-import { getLeads } from "@/lib/actions/leads";
-import { DataTable } from "@/components/admin/data-table";
-import { columns } from "./columns";
+import { getLeads } from '@/lib/actions/leads';
+import { DataTable } from '@/components/admin/data-table';
+import { columns } from './columns';
 
 export const metadata = {
-  title: "Gerenciar Propostas e Leads | AF Motos Admin",
+  title: 'Gerenciar Propostas e Leads | AF Motos Admin',
 };
 
 export default async function AdminPropostasPage() {

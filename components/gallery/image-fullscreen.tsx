@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import * as React from "react"
-import Image from "next/image"
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import * as React from 'react';
+import Image from 'next/image';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import {
   Carousel,
   CarouselContent,
@@ -11,7 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
   type CarouselApi,
-} from "@/components/ui/carousel"
+} from '@/components/ui/carousel';
 
 interface ImageFullscreenProps {
   images: { id: string; url: string; alt?: string }[];
@@ -20,14 +20,19 @@ interface ImageFullscreenProps {
   initialSlide?: number;
 }
 
-export function ImageFullscreen({ images, isOpen, onClose, initialSlide = 0 }: ImageFullscreenProps) {
-  const [api, setApi] = React.useState<CarouselApi>()
+export function ImageFullscreen({
+  images,
+  isOpen,
+  onClose,
+  initialSlide = 0,
+}: ImageFullscreenProps) {
+  const [api, setApi] = React.useState<CarouselApi>();
 
   React.useEffect(() => {
     if (api && isOpen) {
-      api.scrollTo(initialSlide, true)
+      api.scrollTo(initialSlide, true);
     }
-  }, [api, initialSlide, isOpen])
+  }, [api, initialSlide, isOpen]);
 
   if (!images || images.length === 0) return null;
 
@@ -65,5 +70,5 @@ export function ImageFullscreen({ images, isOpen, onClose, initialSlide = 0 }: I
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,12 +1,12 @@
-import { getAdminMotorcycles } from "@/lib/queries/motorcycles";
-import { DataTable } from "@/components/admin/data-table";
-import { columns } from "./columns";
-import { buttonVariants } from "@/components/ui/button";
-import Link from "next/link";
-import { Plus } from "lucide-react";
+import { getAdminMotorcycles } from '@/lib/queries/motorcycles';
+import { DataTable } from '@/components/admin/data-table';
+import { columns } from './columns';
+import { buttonVariants } from '@/components/ui/button';
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
 
 export const metadata = {
-  title: "Gerenciar Motos | AF Motos Admin",
+  title: 'Gerenciar Motos | AF Motos Admin',
 };
 
 export default async function AdminMotosPage() {

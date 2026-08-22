@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Edit, Eye, MoreHorizontal } from "lucide-react";
+import { ColumnDef } from '@tanstack/react-table';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Edit, Eye, MoreHorizontal } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -12,43 +12,43 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 export const columns: ColumnDef<any, any>[] = [
   {
-    accessorKey: "internal_code",
-    header: "Código",
+    accessorKey: 'internal_code',
+    header: 'Código',
   },
   {
-    accessorKey: "brand",
-    header: "Marca",
+    accessorKey: 'brand',
+    header: 'Marca',
   },
   {
-    accessorKey: "model",
-    header: "Modelo",
+    accessorKey: 'model',
+    header: 'Modelo',
   },
   {
-    accessorKey: "year_model",
-    header: "Ano",
+    accessorKey: 'year_model',
+    header: 'Ano',
   },
   {
-    accessorKey: "price",
-    header: "Preço",
+    accessorKey: 'price',
+    header: 'Preço',
     cell: ({ row }: { row: any }) => {
-      const price = parseFloat(row.getValue("price") || "0");
-      const formatted = new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
+      const price = parseFloat(row.getValue('price') || '0');
+      const formatted = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
       }).format(price);
       return <div>{formatted}</div>;
     },
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: 'status',
+    header: 'Status',
   },
   {
-    id: "actions",
+    id: 'actions',
     cell: ({ row }: { row: any }) => {
       const moto = row.original;
 
@@ -64,7 +64,9 @@ export const columns: ColumnDef<any, any>[] = [
             <DropdownMenuItem onClick={() => window.open(`/motos/${moto.slug}`, '_blank')}>
               <Eye className="mr-2 h-4 w-4" /> Ver no site
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => window.location.href = `/admin/motos/${moto.id}/editar`}>
+            <DropdownMenuItem
+              onClick={() => (window.location.href = `/admin/motos/${moto.id}/editar`)}
+            >
               <Edit className="mr-2 h-4 w-4" /> Editar
             </DropdownMenuItem>
           </DropdownMenuContent>
