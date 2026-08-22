@@ -31,54 +31,58 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-12 md:gap-16 pb-16 overflow-hidden bg-[#050505] text-[#f4f4f2]">
-      {/* 1. Hero Section - Refined for high photo visibility & legible text */}
-      <section className="relative w-full bg-[#050505] text-white pt-16 pb-24 md:pt-28 md:pb-36 overflow-hidden border-b border-[#c9a44c]/20">
-        {/* Background Image - High visibility with 90% opacity on mobile */}
+      {/* 1. Hero Section - Refined for high photo visibility & WCAG AAA contrast */}
+      <section className="relative w-full bg-zinc-950 text-white pt-16 pb-24 md:pt-28 md:pb-36 overflow-hidden border-b border-white/5">
+        {/* Background Image */}
         <div
-          className="absolute inset-0 z-0 bg-[url('/hero-mobile.jpg')] md:bg-[url('/hero.jpg')] bg-cover bg-center bg-no-repeat opacity-90 sm:opacity-85"
+          className="absolute inset-0 z-0 bg-[url('/hero-mobile.jpg')] md:bg-[url('/hero.jpg')] bg-cover bg-center bg-no-repeat opacity-80 md:opacity-75"
           style={{ objectPosition: 'center 35%' }}
         />
 
-        {/* Lighter Directional Gradient Overlay so the background motorcycle is clearly visible */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/35 to-black/20 md:bg-gradient-to-r md:from-[#050505]/90 md:via-[#050505]/65 md:to-transparent pointer-events-none" />
+        {/* Dark Radial Mask/Vignette Overlay for optimal typography legibility & WCAG AAA Contrast */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse at center, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.4) 70%, rgba(10,10,10,0.95) 100%)',
+          }}
+        />
 
         {/* Subtle Brand Gold Ambient Glow */}
-        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top_right,rgba(201,164,76,0.18),transparent_60%)] pointer-events-none" />
+        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top_right,rgba(245,158,11,0.12),transparent_60%)] pointer-events-none" />
 
-        <div className="container relative z-10 mx-auto px-4 md:px-6 flex flex-col items-center">
+        <div className="max-w-7xl relative z-10 mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
           {/* Main Content Area */}
-          <div className="max-w-3xl mx-auto text-center space-y-5 mb-12 md:mb-16 mt-2 md:mt-6">
+          <div className="max-w-3xl mx-auto text-center space-y-5 mb-10 md:mb-14 mt-2 md:mt-4">
             {/* Direct Main Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] text-white font-heading">
-              Encontre sua próxima moto.
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white font-heading">
+              Encontre{' '}
+              <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 bg-clip-text text-transparent">
+                sua próxima moto
+              </span>
+              .
             </h1>
 
             {/* Direct Transparent Subtitle */}
-            <p className="text-base sm:text-lg md:text-xl text-[#e6e8eb] max-w-2xl mx-auto leading-relaxed font-medium">
+            <p className="text-base sm:text-lg text-zinc-300 max-w-2xl mx-auto font-normal leading-relaxed">
               Veja as motos disponíveis ou anuncie a sua com a {siteName}. Atendimento direto e
               transparente pelo WhatsApp.
             </p>
 
             {/* Dual CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3">
               <Link
                 href="/motos"
-                className={cn(
-                  buttonVariants({ size: 'lg' }),
-                  'w-full sm:w-auto bg-[#c9a44c] hover:bg-[#e3c56c] text-[#050505] font-extrabold px-8 h-14 rounded-xl shadow-[0_0_20px_rgba(201,164,76,0.3)] transition-all cursor-pointer',
-                )}
+                className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold shadow-lg shadow-amber-500/20 rounded-xl px-6 py-3.5 flex items-center justify-center gap-2 transition-all cursor-pointer text-sm"
               >
-                <span>Ver motos disponíveis</span>
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <span>Ver Estoque Completo</span>
+                <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/anunciar-sua-moto"
-                className={cn(
-                  buttonVariants({ size: 'lg', variant: 'outline' }),
-                  'w-full sm:w-auto bg-[#151515]/90 hover:bg-[#202020] text-white border-[#c9a44c]/30 hover:border-[#e3c56c] font-bold px-8 h-14 rounded-xl transition-all shadow-xs cursor-pointer',
-                )}
+                className="w-full sm:w-auto bg-white/5 border border-white/10 hover:bg-white/10 text-white font-semibold rounded-xl px-6 py-3.5 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm text-sm"
               >
-                Anunciar minha moto
+                Anuncie sua Moto
               </Link>
             </div>
           </div>
@@ -86,7 +90,7 @@ export default async function HomePage() {
       </section>
 
       {/* 2. Quick Search Floating Widget (Dynamic Facets from DB) */}
-      <section className="container mx-auto px-4 md:px-6 -mt-16 md:-mt-20 relative z-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 sm:-mt-14 md:-mt-16 relative z-20 w-full">
         <QuickSearch facets={facets} />
       </section>
 

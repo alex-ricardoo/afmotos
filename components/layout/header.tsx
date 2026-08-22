@@ -34,41 +34,41 @@ export function Header({ settings }: { settings?: any }) {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[#c9a44c]/20 bg-[#050505]/95 backdrop-blur-md transition-all">
-      <div className="container mx-auto px-4 md:px-6 h-20 md:h-24 flex items-center justify-between">
-        {/* Official Brand Logo */}
+    <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-zinc-950/80 border-b border-white/5 transition-all">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3.5 group py-1">
           {!logoError ? (
-            <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border border-[#c9a44c]/40 group-hover:border-[#e3c56c] shadow-[0_0_15px_rgba(201,164,76,0.15)] group-hover:shadow-[0_0_20px_rgba(201,164,76,0.3)] transition-all bg-[#050505] shrink-0">
+            <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-amber-500/30 group-hover:border-amber-400/80 shadow-[0_0_12px_rgba(201,164,76,0.15)] group-hover:shadow-[0_0_18px_rgba(201,164,76,0.3)] transition-all bg-zinc-950 shrink-0">
               <Image
                 src="/logo.jpg"
                 alt={siteName}
                 fill
-                sizes="(max-width: 768px) 48px, 56px"
+                sizes="(max-width: 768px) 44px, 48px"
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                 priority
                 onError={() => setLogoError(true)}
               />
             </div>
           ) : (
-            <div className="w-12 h-12 rounded-full bg-[#151515] border border-[#c9a44c]/40 flex items-center justify-center font-black text-lg text-[#e3c56c]">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-zinc-900 border border-amber-500/40 flex items-center justify-center font-black text-lg text-amber-400">
               AF
             </div>
           )}
 
           <div className="flex flex-col">
-            <span className="font-black text-base sm:text-lg md:text-xl tracking-tight leading-none text-white group-hover:text-[#e3c56c] transition-colors flex items-center gap-1.5 font-heading">
+            <span className="font-black text-base sm:text-lg tracking-tight leading-none text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5 font-heading">
               {siteName}
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#c9a44c] shadow-[0_0_8px_#c9a44c]" />
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
             </span>
-            <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-widest text-[#b8bcc2] mt-1">
+            <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-widest text-zinc-400 mt-1">
               Compra, Venda e Locação
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center space-x-1 font-medium text-sm">
+        <nav className="hidden lg:flex items-center space-x-1">
           {navLinks.map((link) => {
             const isActive =
               link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
@@ -77,10 +77,10 @@ export function Header({ settings }: { settings?: any }) {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  'px-3.5 py-2 rounded-lg transition-all duration-200 text-sm font-semibold tracking-wide',
+                  'px-3.5 py-2 text-sm font-medium transition-colors relative',
                   isActive
-                    ? 'bg-[#151515] text-[#e3c56c] border border-[#c9a44c]/30 shadow-xs'
-                    : 'text-[#a6a6a1] hover:text-white hover:bg-[#151515]/60',
+                    ? 'text-amber-400 font-semibold after:absolute after:bottom-0 after:left-3.5 after:right-3.5 after:h-[2px] after:bg-amber-400 after:rounded-full'
+                    : 'text-zinc-300 hover:text-amber-400',
                 )}
               >
                 {link.label}
@@ -95,10 +95,10 @@ export function Header({ settings }: { settings?: any }) {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366] text-[#25D366] hover:text-white border border-[#25D366]/30 text-xs font-bold transition-all"
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white font-bold text-xs sm:text-sm transition-all duration-200 shadow-xs group"
           >
-            <WhatsAppIcon className="w-4 h-4 fill-current" />
-            <span>WhatsApp</span>
+            <WhatsAppIcon className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" />
+            <span>Fale Conosco</span>
           </a>
 
           {/* Mobile Sheet Navigation */}
@@ -108,7 +108,7 @@ export function Header({ settings }: { settings?: any }) {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="lg:hidden h-10 w-10 border-border text-foreground hover:bg-muted"
+                  className="lg:hidden h-10 w-10 border-zinc-800 bg-zinc-900/80 text-zinc-200 hover:text-white hover:bg-zinc-800"
                   aria-label="Abrir menu de navegação"
                 >
                   <Menu className="w-5 h-5" />
@@ -117,12 +117,12 @@ export function Header({ settings }: { settings?: any }) {
             />
             <SheetContent
               side="right"
-              className="w-[300px] sm:w-[360px] p-6 bg-[#0d0d0d] border-l border-[#c9a44c]/20 flex flex-col justify-between"
+              className="w-[300px] sm:w-[360px] p-6 bg-zinc-950 border-l border-zinc-800/80 flex flex-col justify-between"
             >
               <div>
-                <SheetHeader className="text-left pb-4 border-b border-[#c9a44c]/20">
+                <SheetHeader className="text-left pb-4 border-b border-zinc-800">
                   <SheetTitle className="flex items-center gap-3">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#c9a44c]/40 bg-[#050505] shrink-0">
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-amber-500/40 bg-zinc-900 shrink-0">
                       <Image
                         src="/logo.jpg"
                         alt={siteName}
@@ -135,7 +135,7 @@ export function Header({ settings }: { settings?: any }) {
                       <span className="font-extrabold text-sm text-white tracking-tight leading-none">
                         {siteName}
                       </span>
-                      <span className="text-[10px] uppercase font-bold text-[#b8bcc2] tracking-wider mt-0.5">
+                      <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider mt-0.5">
                         Compra, Venda e Locação
                       </span>
                     </div>
@@ -154,30 +154,30 @@ export function Header({ settings }: { settings?: any }) {
                         className={cn(
                           'flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all',
                           isActive
-                            ? 'bg-[#151515] text-[#e3c56c] border border-[#c9a44c]/30 shadow-xs'
-                            : 'text-[#a6a6a1] hover:text-white hover:bg-[#151515]/60',
+                            ? 'bg-zinc-900 text-amber-400 border border-amber-500/30'
+                            : 'text-zinc-300 hover:text-white hover:bg-zinc-900/60',
                         )}
                       >
                         <span>{link.label}</span>
-                        <ChevronRight className="w-4 h-4 text-[#c9a44c]/60" />
+                        <ChevronRight className="w-4 h-4 text-amber-400/60" />
                       </Link>
                     );
                   })}
                 </nav>
               </div>
 
-              <div className="pt-6 border-t border-[#c9a44c]/20 space-y-3">
+              <div className="pt-6 border-t border-zinc-800 space-y-3">
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cn(
                     buttonVariants({ size: 'lg' }),
-                    'w-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl h-12 shadow-[0_0_15px_rgba(37,211,102,0.2)] flex items-center justify-center gap-2',
+                    'w-full bg-emerald-950/60 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 font-bold rounded-xl h-12 flex items-center justify-center gap-2 transition-all',
                   )}
                 >
                   <WhatsAppIcon className="w-5 h-5 fill-current" />
-                  <span>Falar no WhatsApp</span>
+                  <span>Fale Conosco no WhatsApp</span>
                 </a>
               </div>
             </SheetContent>
