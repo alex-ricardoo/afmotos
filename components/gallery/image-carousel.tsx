@@ -36,7 +36,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full aspect-[16/10] bg-zinc-900 rounded-2xl flex flex-col items-center justify-center text-zinc-500 gap-2 border border-border">
+      <div className="w-full aspect-[4/3] bg-zinc-900 rounded-2xl flex flex-col items-center justify-center text-zinc-500 gap-2 border border-border">
         <ImageIcon className="w-10 h-10 opacity-30" />
         <span className="text-sm font-medium">Fotos em preparação pela equipe técnica</span>
       </div>
@@ -58,7 +58,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
             {images.map((image, index) => (
               <CarouselItem key={image.id || index}>
                 <div
-                  className="relative aspect-[16/10] overflow-hidden cursor-pointer"
+                  className="relative aspect-[4/3] overflow-hidden cursor-pointer"
                   onClick={() => setIsFullscreenOpen(true)}
                 >
                   <Image
@@ -69,6 +69,8 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
                     sizes="(max-width: 768px) 100vw, 70vw"
                     className="object-cover"
                   />
+                  {/* Subtle Gradient at the bottom for controls visibility */}
+                  <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-zinc-950/80 to-transparent pointer-events-none" />
                 </div>
               </CarouselItem>
             ))}
@@ -91,10 +93,10 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
         <button
           type="button"
           onClick={() => setIsFullscreenOpen(true)}
-          className="absolute bottom-4 right-4 z-10 p-2.5 rounded-xl bg-black/70 hover:bg-black/90 backdrop-blur-md text-white border border-white/10 shadow-md transition-all cursor-pointer"
+          className="absolute bottom-4 right-4 z-10 p-2.5 rounded-2xl bg-zinc-950/40 hover:bg-zinc-950/80 backdrop-blur-md text-[#e3c56c] border border-white/10 hover:border-[#c9a44c]/50 shadow-lg transition-all cursor-pointer"
           aria-label="Expandir galeria em tela cheia"
         >
-          <Maximize2 className="w-4 h-4" />
+          <Maximize2 className="w-5 h-5" />
         </button>
       </div>
 
@@ -109,10 +111,10 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
                 type="button"
                 onClick={() => handleThumbnailClick(index)}
                 className={cn(
-                  'relative w-20 h-14 sm:w-24 sm:h-16 shrink-0 rounded-xl overflow-hidden border-2 transition-all cursor-pointer',
+                  'relative w-20 h-14 sm:w-24 sm:h-16 shrink-0 rounded-xl overflow-hidden border transition-all cursor-pointer',
                   isSelected
-                    ? 'border-[#c9a44c] ring-2 ring-[#c9a44c]/40 scale-95 shadow-sm'
-                    : 'border-transparent opacity-60 hover:opacity-100',
+                    ? 'border-[#c9a44c] shadow-[0_4px_12px_rgba(201,164,76,0.2)] scale-100 z-10'
+                    : 'border-transparent opacity-50 hover:opacity-100 scale-95 hover:scale-100',
                 )}
               >
                 <Image

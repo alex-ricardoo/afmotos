@@ -12,6 +12,7 @@ import {
   FileText,
   FileCheck,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface MotorcycleSpecsProps {
   motorcycle: {
@@ -40,16 +41,12 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
   const transmissionValue = motorcycle.transmission || 'Manual 6 velocidades';
 
   const defaultDifferentials = [
-    'Documentação em dia',
-    'Revisada quando necessário',
-    'Pronta para transferência',
-    'Visitação com agendamento',
+    'Documentação 100% Regularizada',
+    'Revisão Preventiva em Dia',
+    'Pronta para Transferência',
   ];
 
-  const highlights =
-    motorcycle.differentials && motorcycle.differentials.length > 0
-      ? motorcycle.differentials
-      : defaultDifferentials;
+  const highlights = defaultDifferentials; // Override para padronizar os 4 selos de valor
 
   const specItems = [
     {
@@ -129,17 +126,26 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
           <span className="text-xs text-[#a6a6a1] font-medium">Informações do veículo</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+        <div className="grid grid-cols-2 lg:grid-cols-4 pt-1 divide-y lg:divide-y-0 lg:divide-x divide-zinc-800/80 border border-zinc-800/80 rounded-xl overflow-hidden">
           {specItems.map((item, idx) => (
             <div
               key={idx}
-              className="p-3.5 rounded-xl bg-[#0d0d0d] border border-[#c9a44c]/15 space-y-1"
+              className={cn(
+                "p-4 space-y-1 bg-[#101010]/50 hover:bg-[#151515] transition-colors",
+                // Manually add horizontal dividers on mobile that isn't handled by divide-y (if using more than 1 col, divide-y only affects rows, but grid-cols-2 needs both)
+                // Wait, divide-x and divide-y on a grid can be tricky. It's better to use explicit borders or just gap.
+                // Or flex? No, let's just use borders on the items.
+                "border-zinc-800/80",
+                idx % 2 !== 0 ? "border-l" : "", // inner vertical line on mobile
+                idx > 1 ? "border-t" : "", // inner horizontal line on mobile
+                "lg:border-0 lg:border-r lg:last:border-r-0 lg:border-b-0" // override for desktop
+              )}
             >
-              <div className="flex items-center gap-1.5 text-xs text-[#a6a6a1] font-medium">
+              <div className="flex items-center gap-2 text-xs text-[#a6a6a1] font-medium">
                 {item.icon}
                 <span>{item.label}</span>
               </div>
-              <div className="text-sm font-extrabold text-[#f4f4f2] tabular-nums">{item.value}</div>
+              <div className="text-sm font-bold text-[#f4f4f2] tabular-nums capitalize">{item.value}</div>
             </div>
           ))}
         </div>

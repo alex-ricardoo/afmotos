@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { toast } from 'sonner';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { createLeadAction } from '@/lib/actions/leads';
 import {
   Select,
   SelectContent,
@@ -25,43 +23,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { customRentalSchema, CustomRentalInput } from '@/lib/validations/lead';
+import { createLeadAction } from '@/lib/actions/leads';
 
-const rentalSchema = z.object({
-  name: z.string().min(2, 'Nome é obrigatório'),
-  phone: z.string().min(10, 'Telefone com DDD é obrigatório'),
-  email: z.string().email('E-mail inválido').optional().or(z.literal('')),
-  duration: z.string().min(1, 'Selecione o plano desejado'),
-  message: z.string().optional(),
-});
-
-type RentalFormValues = z.infer<typeof rentalSchema>;
-
-const PLANS = [
-  { value: 'diario', label: 'Diária' },
-  { value: 'semanal', label: 'Semanal' },
-  { value: 'mensal', label: 'Mensal' },
-  { value: 'personalizado', label: 'Plano Personalizado / Longo Prazo' },
+const DURATION_OPTIONS = [
+  { label: '1 mês', value: '1_mes' },
+  { label: '2 meses', value: '2_meses' },
+  { label: '3 meses', value: '3_meses' },
+  { label: '6 meses', value: '6_meses' },
+  { label: '12 meses (1 ano)', value: '12_meses' },
+  { label: 'Outro período personalizado', value: 'outro_periodo' },
 ];
 
-export function RentalForm() {
+export function CustomRentalForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const form = useForm<RentalFormValues>({
-    resolver: zodResolver(rentalSchema) as any,
+  const form = useForm<CustomRentalInput>({
+    resolver: zodResolver(customRentalSchema) as any,
     defaultValues: {
       name: '',
       phone: '',
       email: '',
       duration: '',
+      start_date: '',
+      preferred_model: '',
       message: '',
     },
   });
 
-  async function onSubmit(data: RentalFormValues) {
+  async function onSubmit(data: CustomRentalInput) {
     setLoading(true);
     try {
-      const planLabel = PLANS.find((p) => p.value === data.duration)?.label || data.duration;
+      const durationLabel =
+        DURATION_OPTIONS.find((opt) => opt.value === data.duration)?.label || data.duration;
 
       const result = await createLeadAction({
         type: 'RENTAL',
@@ -70,14 +65,19 @@ export function RentalForm() {
         email: data.email || undefined,
         message: data.message || undefined,
         metadata: {
-          duration: planLabel,
+          custom_plan: true,
+          duration: durationLabel,
+          start_date: data.start_date || undefined,
+          preferred_model: data.preferred_model || undefined,
         },
       });
 
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success('Recebemos suas informações. Vamos analisar e falar com você pelo WhatsApp.');
+        toast.success(
+          'Recebemos sua solicitação. Vamos falar com você para montar uma condição personalizada.',
+        );
         setSuccess(true);
         form.reset();
       }
@@ -90,23 +90,23 @@ export function RentalForm() {
 
   if (success) {
     return (
-      <div className="bg-[#151515] border border-emerald-500/40 text-[#f4f4f2] p-8 rounded-2xl text-center space-y-4">
-        <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
-          <CheckCircle2 className="w-8 h-8" />
+      <div className="bg-[#151515] border border-emerald-500/40 text-[#f4f4f2] p-6 sm:p-8 rounded-2xl text-center space-y-3">
+        <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
+          <CheckCircle2 className="w-6 h-6" />
         </div>
         <h3 className="text-xl font-bold text-white font-heading">
-          Solicitação de Aluguel Enviada!
+          Solicitação de Plano Recebida!
         </h3>
         <p className="text-sm text-[#a6a6a1] max-w-md mx-auto leading-relaxed">
           Recebemos o seu interesse em locação. Vamos verificar a disponibilidade de motos e entrar
-          em contato pelo WhatsApp para informar os modelos e valores.
+          em contato pelo WhatsApp para apresentar uma proposta sob medida.
         </p>
         <div className="pt-2">
           <Button
-            className="bg-[#c9a44c] hover:bg-[#e3c56c] text-[#050505] font-bold px-6 h-11 rounded-xl cursor-pointer"
+            className="bg-[#c9a44c] hover:bg-[#e3c56c] text-black font-bold h-10 px-6 rounded-xl cursor-pointer"
             onClick={() => setSuccess(false)}
           >
-            Nova Consulta
+            Nova Solicitação
           </Button>
         </div>
       </div>
@@ -123,11 +123,11 @@ export function RentalForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs font-bold uppercase text-[#b8bcc2]">
-                  Nome Completo *
+                  Seu Nome *
                 </FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Ex: Carlos Silva"
+                    placeholder="Ex: João Souza"
                     {...field}
                     className="bg-[#0d0d0d] border-[#c9a44c]/20 h-11 rounded-xl text-white focus-visible:border-[#e3c56c]"
                   />
@@ -174,13 +174,55 @@ export function RentalForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className="bg-[#151515] border-[#c9a44c]/30 text-white">
-                    {PLANS.map((plan) => (
-                      <SelectItem key={plan.value} value={plan.value}>
-                        {plan.label}
+                    {DURATION_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <FormMessage className="text-xs text-rose-400" />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control as any}
+            name="preferred_model"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase text-[#b8bcc2]">
+                  Modelo ou cilindrada pretendida
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Ex: 150cc, 160cc, Scooter..."
+                    {...field}
+                    className="bg-[#0d0d0d] border-[#c9a44c]/20 h-11 rounded-xl text-white focus-visible:border-[#e3c56c]"
+                  />
+                </FormControl>
+                <FormMessage className="text-xs text-rose-400" />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            control={form.control as any}
+            name="start_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase text-[#b8bcc2]">
+                  Previsão de Início
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    {...field}
+                    className="bg-[#0d0d0d] border-[#c9a44c]/20 h-11 rounded-xl text-white focus-visible:border-[#e3c56c]"
+                  />
+                </FormControl>
                 <FormMessage className="text-xs text-rose-400" />
               </FormItem>
             )}
@@ -214,11 +256,11 @@ export function RentalForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-xs font-bold uppercase text-[#b8bcc2]">
-                Preferência de moto ou dúvidas (opcional)
+                Mensagem ou necessidade específica
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Conte para que tipo de uso você precisa da moto..."
+                  placeholder="Conte para que tipo de uso você precisa da moto, percurso diário aproximado..."
                   rows={3}
                   {...field}
                   className="bg-[#0d0d0d] border-[#c9a44c]/20 rounded-xl text-white focus-visible:border-[#e3c56c]"
@@ -241,7 +283,7 @@ export function RentalForm() {
                 <span>Enviando solicitação...</span>
               </>
             ) : (
-              <span>Consultar disponibilidade</span>
+              <span>Solicitar plano personalizado</span>
             )}
           </Button>
         </div>

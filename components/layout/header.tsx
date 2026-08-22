@@ -13,9 +13,9 @@ import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 
 const navLinks = [
+  { href: '/', label: 'Início' },
   { href: '/motos', label: 'Motos disponíveis' },
-  { href: '/consignar-moto', label: 'Anuncie sua moto' },
-  { href: '/venda-sua-moto', label: 'Venda sua moto' },
+  { href: '/anunciar-sua-moto', label: 'Anuncie sua moto' },
   { href: '/aluguel', label: 'Aluguel' },
   { href: '/motos-vendidas', label: 'Motos vendidas' },
 ];
@@ -26,11 +26,11 @@ export function Header({ settings }: { settings?: any }) {
   const [logoError, setLogoError] = useState(false);
 
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
-  const siteName = settings?.site_name || 'AF Motos';
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
 
   const whatsappUrl = generateWhatsAppLink(
     contactPhone,
-    `Olá! Gostaria de falar com a ${siteName}.`,
+    `Olá! Gostaria de falar com a equipe da ${siteName}.`,
   );
 
   return (
@@ -71,7 +71,7 @@ export function Header({ settings }: { settings?: any }) {
         <nav className="hidden lg:flex items-center space-x-1 font-medium text-sm">
           {navLinks.map((link) => {
             const isActive =
-              pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
+              link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.href}
@@ -91,7 +91,15 @@ export function Header({ settings }: { settings?: any }) {
 
         {/* Actions (WhatsApp CTA + Mobile Menu Trigger) */}
         <div className="flex items-center gap-3">
-
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366] text-[#25D366] hover:text-white border border-[#25D366]/30 text-xs font-bold transition-all"
+          >
+            <WhatsAppIcon className="w-4 h-4 fill-current" />
+            <span>WhatsApp</span>
+          </a>
 
           {/* Mobile Sheet Navigation */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -117,7 +125,7 @@ export function Header({ settings }: { settings?: any }) {
                     <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#c9a44c]/40 bg-[#050505] shrink-0">
                       <Image
                         src="/logo.jpg"
-                        alt="AF Locações e Vendas"
+                        alt={siteName}
                         fill
                         sizes="40px"
                         className="object-cover"
@@ -137,8 +145,7 @@ export function Header({ settings }: { settings?: any }) {
                 <nav className="flex flex-col gap-1.5 mt-6">
                   {navLinks.map((link) => {
                     const isActive =
-                      pathname === link.href ||
-                      (link.href !== '/' && pathname.startsWith(link.href));
+                      link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
                     return (
                       <Link
                         key={link.href}

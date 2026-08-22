@@ -8,7 +8,7 @@ import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 
 export function Footer({ settings }: { settings?: any }) {
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
-  const siteName = settings?.site_name || 'AF Motos';
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
   const slogan = settings?.settings?.slogan || 'Compra, venda e locação de motos de forma simples';
   const description =
     settings?.settings?.institutional_description ||
@@ -32,7 +32,9 @@ export function Footer({ settings }: { settings?: any }) {
               </div>
               <div className="text-left">
                 <h4 className="text-white text-sm font-bold leading-tight">Atendimento Direto</h4>
-                <p className="text-xs text-[#a6a6a1] mt-0.5">Fale com a gente no WhatsApp sem intermediários</p>
+                <p className="text-xs text-[#a6a6a1] mt-0.5">
+                  Fale com a gente no WhatsApp sem intermediários
+                </p>
               </div>
             </div>
 
@@ -41,8 +43,10 @@ export function Footer({ settings }: { settings?: any }) {
                 <FileCheck className="w-5 h-5 text-[#e3c56c]" />
               </div>
               <div className="text-left">
-                <h4 className="text-white text-sm font-bold leading-tight">Documentação em Dia</h4>
-                <p className="text-xs text-[#a6a6a1] mt-0.5">Orientação e clareza na transferência da moto</p>
+                <h4 className="text-white text-sm font-bold leading-tight">Documentação Clara</h4>
+                <p className="text-xs text-[#a6a6a1] mt-0.5">
+                  Orientação e transparência na transferência da moto
+                </p>
               </div>
             </div>
 
@@ -51,8 +55,12 @@ export function Footer({ settings }: { settings?: any }) {
                 <Award className="w-5 h-5 text-[#e3c56c]" />
               </div>
               <div className="text-left">
-                <h4 className="text-white text-sm font-bold leading-tight">Negociação Transparente</h4>
-                <p className="text-xs text-[#a6a6a1] mt-0.5">Preço e condições combinados com clareza</p>
+                <h4 className="text-white text-sm font-bold leading-tight">
+                  Negociação Transparente
+                </h4>
+                <p className="text-xs text-[#a6a6a1] mt-0.5">
+                  Preço e condições combinados com clareza
+                </p>
               </div>
             </div>
           </div>
@@ -84,7 +92,7 @@ export function Footer({ settings }: { settings?: any }) {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-bold transition-all shadow-[0_0_15px_rgba(37,211,102,0.2)]"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-bold transition-all shadow-[0_0_15px_rgba(37,211,102,0.2)] cursor-pointer"
               >
                 <WhatsAppIcon className="w-4 h-4 fill-current" />
                 <span>Falar no WhatsApp</span>
@@ -95,9 +103,14 @@ export function Footer({ settings }: { settings?: any }) {
           {/* Links: Navegação */}
           <div className="space-y-4">
             <h4 className="text-white text-xs font-bold uppercase tracking-widest text-[#e3c56c]">
-              Motos & Modelos
+              Motos & Catálogo
             </h4>
             <ul className="space-y-2.5 text-sm">
+              <li>
+                <Link href="/" className="hover:text-white transition-colors">
+                  Início
+                </Link>
+              </li>
               <li>
                 <Link href="/motos" className="hover:text-white transition-colors">
                   Motos Disponíveis
@@ -118,18 +131,21 @@ export function Footer({ settings }: { settings?: any }) {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link href="/consignar-moto" className="hover:text-white transition-colors">
+                <Link href="/anunciar-sua-moto" className="hover:text-white transition-colors">
                   Anuncie sua Moto
-                </Link>
-              </li>
-              <li>
-                <Link href="/venda-sua-moto" className="hover:text-white transition-colors">
-                  Venda sua Moto
                 </Link>
               </li>
               <li>
                 <Link href="/aluguel" className="hover:text-white transition-colors">
                   Aluguel de Motos
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/politica-de-privacidade"
+                  className="hover:text-white transition-colors"
+                >
+                  Privacidade & Dados
                 </Link>
               </li>
             </ul>
@@ -168,10 +184,12 @@ export function Footer({ settings }: { settings?: any }) {
             © {new Date().getFullYear()} {siteName}. Todos os direitos reservados.
           </p>
           <div className="flex items-center gap-6">
-            <span className="hover:text-white cursor-pointer transition-colors">
+            <Link
+              href="/politica-de-privacidade"
+              className="hover:text-white cursor-pointer transition-colors"
+            >
               Política de Privacidade
-            </span>
-            <span className="hover:text-white cursor-pointer transition-colors">Termos de Uso</span>
+            </Link>
             <Link href="/admin/login" className="hover:text-white transition-colors">
               Área Restrita
             </Link>

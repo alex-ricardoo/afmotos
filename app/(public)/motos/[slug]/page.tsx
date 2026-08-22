@@ -210,17 +210,6 @@ export default async function MotorcycleDetailPage({ params }: Props) {
               </div>
             </div>
 
-            {/* Quality & Security Card */}
-            <div className="bg-[#0d0d0d] text-white p-5 rounded-2xl border border-[#c9a44c]/30 space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#e3c56c]">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Negociação Transparente</span>
-              </div>
-              <p className="text-xs text-[#b8bcc2] leading-relaxed">
-                Tire suas dúvidas diretamente pelo WhatsApp antes de fechar qualquer negócio.
-                Documentação e histórico conferidos para uma transferência tranquila.
-              </p>
-            </div>
           </div>
         </div>
 
@@ -250,12 +239,12 @@ export default async function MotorcycleDetailPage({ params }: Props) {
       </div>
 
       {/* Sticky Bottom Bar for Mobile Devices */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#050505]/95 backdrop-blur-md border-t border-[#c9a44c]/30 p-3 px-4 flex items-center justify-between gap-3 shadow-2xl">
-        <div>
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 p-4 pb-safe flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div className="flex flex-col">
           <span className="text-[10px] uppercase font-bold text-[#a6a6a1] block leading-none">
-            Valor
+            Valor a partir de
           </span>
-          <span className="text-lg font-black text-[#e3c56c] tabular-nums">
+          <span className="text-xl font-black text-[#e3c56c] tabular-nums mt-0.5">
             {moto.price ? formatCurrency(moto.price) : 'Consulte'}
           </span>
         </div>
@@ -264,10 +253,10 @@ export default async function MotorcycleDetailPage({ params }: Props) {
           href={mobileWhatsAppUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 max-w-[220px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-sm shadow-[0_0_15px_rgba(37,211,102,0.2)] transition-all"
+          className="flex-1 max-w-[200px] flex items-center justify-center gap-2 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-[0_0_15px_rgba(5,150,105,0.3)] transition-all active:scale-[0.98]"
         >
-          <WhatsAppIcon className="w-4 h-4 fill-current" />
-          <span>Falar no WhatsApp</span>
+          <WhatsAppIcon className="w-5 h-5 fill-current" />
+          <span>Falar com Vendedor</span>
         </a>
       </div>
     </div>

@@ -18,6 +18,19 @@ export interface UploadMotorcycleImageInput {
   altText?: string;
 }
 
+export interface Lead {
+  id: string;
+  type: string;
+  name: string;
+  phone: string;
+  email?: string | null;
+  message?: string | null;
+  status: string;
+  metadata?: any;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -124,6 +137,30 @@ export interface Database {
           alt_text?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      leads: {
+        Row: Lead;
+        Insert: {
+          id?: string;
+          type: string;
+          name: string;
+          phone: string;
+          email?: string | null;
+          message?: string | null;
+          status?: string;
+          metadata?: any;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          type?: string;
+          name?: string;
+          phone?: string;
+          email?: string | null;
+          message?: string | null;
+          status?: string;
+          metadata?: any;
         };
       };
     };

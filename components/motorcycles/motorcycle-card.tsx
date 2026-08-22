@@ -1,9 +1,13 @@
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Zap, ArrowUpRight } from 'lucide-react';
+import { Bike, Calendar, Gauge, Zap, ArrowUpRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { MotorcycleStatusBadge, MotorcycleStatus } from './motorcycle-status-badge';
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
+import { MotorcycleStatusBadge } from './motorcycle-status-badge';
 import { formatCurrency } from '@/lib/utils/format';
+import { CONSTANTS } from '@/lib/utils/constants';
+import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 
 export interface MotorcycleCardData {
   id: string;
@@ -27,107 +31,137 @@ export interface MotorcycleCardProps {
 }
 
 export function MotorcycleCard({ motorcycle }: MotorcycleCardProps) {
+  const whatsappMessage = `Olá! Tenho interesse na ${motorcycle.brand} ${motorcycle.model} ${motorcycle.year_model}${motorcycle.price ? ` (R$ ${motorcycle.price.toLocaleString('pt-BR')})` : ''} anunciada no site da AF Motos. Poderia me passar mais detalhes?`;
+
+  const whatsappUrl = generateWhatsAppLink(CONSTANTS.CONTACT_PHONE, whatsappMessage);
+
   return (
-    <Link
-      href={`/motos/${motorcycle.slug}`}
-      className="block h-full group focus-visible:outline-none"
-    >
-      <Card className="overflow-hidden rounded-2xl bg-[#151515] border-[#c9a44c]/20 group-hover:border-[#e3c56c]/60 group-hover:shadow-[0_0_25px_rgba(201,164,76,0.18)] transition-all duration-300 h-full flex flex-col justify-between">
-        {/* Image Container with 16:10 aspect ratio */}
-        <div className="relative aspect-[16/10] overflow-hidden bg-[#050505]">
-          {motorcycle.image_url ? (
+    <Card className="group relative flex flex-col overflow-hidden rounded-2xl bg-[#151515] border-[#c9a44c]/20 hover:border-[#e3c56c]/60 shadow-sm hover:shadow-[0_0_25px_rgba(201,164,76,0.15)] active:scale-[0.98] transition-all duration-100 sm:duration-300 w-full h-full">
+      {/* Top Image Container - Clicável para abrir os detalhes */}
+      <Link
+        href={`/motos/${motorcycle.slug}`}
+        className="block relative w-full aspect-[4/3] sm:aspect-[16/10] bg-[#0a0a0a] overflow-hidden focus-visible:outline-none cursor-pointer"
+        aria-label={`Ver detalhes de ${motorcycle.brand} ${motorcycle.model}`}
+      >
+        {motorcycle.image_url ? (
+          <>
+            {/* Placeholder esqueleto para loading progressivo */}
+            <div className="absolute inset-0 animate-pulse bg-zinc-800/50" />
             <Image
               src={motorcycle.image_url}
-              alt={`${motorcycle.brand} ${motorcycle.model} ${motorcycle.year_model}`}
+              alt={`${motorcycle.brand} ${motorcycle.model}`}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+              className="object-cover relative z-10 transition-transform duration-500 ease-out group-hover:scale-105"
             />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-[#0d0d0d] text-[#71717a] gap-1">
-              <Zap className="w-8 h-8 opacity-40 text-[#c9a44c]" />
-              <span className="text-xs font-medium">Foto em preparação</span>
-            </div>
-          )}
-
-          {/* Top Floating Badges */}
-          <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-1 pointer-events-none z-10">
-            {/* Origin badge if available */}
-            {motorcycle.differentials && motorcycle.differentials.length > 0 ? (
-              <span className="px-2 py-0.5 rounded-md bg-[#050505]/85 backdrop-blur-md text-[10px] font-bold text-white uppercase tracking-wider border border-white/10 shadow-xs">
-                {motorcycle.differentials[0]}
-              </span>
-            ) : (
-              <div />
-            )}
-
-            <MotorcycleStatusBadge status={motorcycle.status as MotorcycleStatus} />
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0d0d0d] text-[#a6a6a1] gap-2 p-4 z-10">
+            <Bike className="w-8 h-8 opacity-40 text-[#c9a44c]" />
+            <span className="text-xs font-medium">Foto indisponível</span>
           </div>
+        )}
 
-          {/* Gradient Overlay for card contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        {/* Top Floating Status Badge */}
+        <div className="absolute top-3 left-3 z-20 pointer-events-none">
+          <MotorcycleStatusBadge
+            status={motorcycle.status}
+            className="backdrop-blur-md bg-black/70 border-zinc-700/50 text-white shadow-lg"
+          />
         </div>
 
-        {/* Card Body */}
-        <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
-          <div>
-            {/* Brand Header */}
-            <div className="text-[11px] uppercase tracking-wider font-extrabold text-[#c9a44c] mb-0.5">
-              {motorcycle.brand}
-            </div>
+        {/* Gradiente escuro na base da imagem */}
+        <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-[#151515] to-transparent z-20 pointer-events-none" />
+      </Link>
 
-            {/* Model & Version */}
-            <h3 className="font-extrabold text-base sm:text-lg leading-snug text-white group-hover:text-[#e3c56c] transition-colors line-clamp-1">
+      {/* Card Body */}
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+        {/* Cabeçalho Clicável */}
+        <div>
+          <span className="block text-[11px] text-zinc-400 font-semibold tracking-wider uppercase mb-0.5">
+            {motorcycle.brand}
+          </span>
+          <Link
+            href={`/motos/${motorcycle.slug}`}
+            className="block focus-visible:outline-none group/title cursor-pointer"
+            aria-label={`Ver detalhes de ${motorcycle.brand} ${motorcycle.model}`}
+          >
+            <h3 className="text-base md:text-lg font-bold text-white group-hover/title:text-[#e3c56c] group-hover:text-[#e3c56c] transition-colors line-clamp-1 leading-tight flex items-center gap-1.5 flex-wrap">
               {motorcycle.model}
-            </h3>
-            <p className="text-xs text-[#a6a6a1] line-clamp-1 mt-0.5 font-medium">
-              {motorcycle.version || 'Edição Especial'}
-            </p>
-          </div>
-
-          {/* Specs Row / Chips */}
-          <div className="grid grid-cols-3 gap-1.5 py-2.5 px-3 bg-[#0d0d0d] rounded-xl text-center text-xs font-semibold text-[#f4f4f2] border border-[#c9a44c]/15">
-            <div className="flex flex-col items-center">
-              <span className="text-[10px] text-[#a6a6a1] uppercase font-medium">Ano</span>
-              <span className="tabular-nums">
-                {motorcycle.year_manufacture}/{motorcycle.year_model}
-              </span>
-            </div>
-            <div className="flex flex-col items-center border-x border-[#c9a44c]/15 px-1">
-              <span className="text-[10px] text-[#a6a6a1] uppercase font-medium">KM</span>
-              <span className="tabular-nums">
-                {motorcycle.mileage !== null && motorcycle.mileage !== undefined
-                  ? `${motorcycle.mileage.toLocaleString('pt-BR')} km`
-                  : '0 km'}
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[10px] text-[#a6a6a1] uppercase font-medium">Motor</span>
-              <span className="tabular-nums">
-                {motorcycle.engine_capacity ? `${motorcycle.engine_capacity}cc` : 'Flex'}
-              </span>
-            </div>
-          </div>
-
-          {/* Price & Action Footer */}
-          <div className="pt-2 border-t border-[#c9a44c]/20 flex items-end justify-between">
-            <div>
-              {motorcycle.previous_price && (
-                <span className="text-xs line-through text-[#71717a] block font-medium tabular-nums">
-                  {formatCurrency(motorcycle.previous_price)}
+              {motorcycle.version ? (
+                <span className="font-normal text-zinc-300 text-sm whitespace-nowrap">
+                  {motorcycle.version}
                 </span>
-              )}
-              <div className="text-lg sm:text-xl font-black text-[#e3c56c] tabular-nums tracking-tight">
-                {motorcycle.price ? formatCurrency(motorcycle.price) : 'Consulte'}
-              </div>
-            </div>
+              ) : null}
+            </h3>
+          </Link>
+        </div>
 
-            <div className="w-8 h-8 rounded-full bg-[#202020] border border-[#c9a44c]/30 group-hover:bg-[#c9a44c] group-hover:text-black flex items-center justify-center text-[#e3c56c] transition-all duration-300 shadow-xs">
-              <ArrowUpRight className="w-4 h-4" />
+        {/* Specs Linha Única Minimalista */}
+        <Link
+          href={`/motos/${motorcycle.slug}`}
+          className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[13px] text-zinc-300 font-medium cursor-pointer focus-visible:outline-none"
+        >
+          <div className="flex items-center gap-1.5" title="Ano">
+            <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+            <span>
+              {motorcycle.year_manufacture}/{motorcycle.year_model}
+            </span>
+          </div>
+          <span className="text-zinc-700 hidden sm:inline">•</span>
+          <div className="flex items-center gap-1.5" title="Quilometragem">
+            <Gauge className="w-3.5 h-3.5 text-zinc-500" />
+            <span>
+              {motorcycle.mileage != null
+                ? `${motorcycle.mileage.toLocaleString('pt-BR')} km`
+                : '0 km'}
+            </span>
+          </div>
+          <span className="text-zinc-700 hidden sm:inline">•</span>
+          <div className="flex items-center gap-1.5" title="Motor">
+            <Zap className="w-3.5 h-3.5 text-zinc-500" />
+            <span>{motorcycle.engine_capacity ? `${motorcycle.engine_capacity}cc` : 'Flex'}</span>
+          </div>
+        </Link>
+
+        {/* Preço e Call To Action */}
+        <div className="pt-2 mt-auto flex flex-col gap-3">
+          {/* Preço */}
+          <Link href={`/motos/${motorcycle.slug}`} className="block cursor-pointer">
+            <div className="flex items-end gap-1.5">
+              <span className="text-lg md:text-xl font-extrabold text-amber-400 tracking-tight leading-none">
+                {motorcycle.price ? formatCurrency(motorcycle.price) : 'Consulte'}
+              </span>
+              {motorcycle.price && motorcycle.price < 500 && motorcycle.status === 'RENTED' && (
+                <span className="text-xs text-zinc-400 font-medium pb-0.5">/dia</span>
+              )}
             </div>
+          </Link>
+
+          <div className="flex items-center gap-2 w-full">
+            {/* Botão Secundário: Detalhes */}
+            <Link
+              href={`/motos/${motorcycle.slug}`}
+              title="Ver detalhes da moto"
+              aria-label={`Ver detalhes de ${motorcycle.brand} ${motorcycle.model}`}
+              className="flex items-center justify-center w-12 h-12 flex-shrink-0 rounded-xl bg-[#202020] border border-[#c9a44c]/20 hover:bg-[#c9a44c] hover:text-black active:scale-[0.98] text-[#e3c56c] transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e3c56c] cursor-pointer"
+            >
+              <ArrowUpRight className="w-5 h-5" />
+            </Link>
+
+            {/* Botão Primário: WhatsApp */}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm sm:text-base transition-all duration-100 sm:duration-200 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515] cursor-pointer"
+            >
+              <WhatsAppIcon className="w-5 h-5 fill-current" />
+              <span className="truncate">WhatsApp</span>
+            </a>
           </div>
         </div>
-      </Card>
-    </Link>
+      </div>
+    </Card>
   );
 }

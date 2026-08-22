@@ -1,5 +1,6 @@
 import React from 'react';
 import { RentalForm } from '@/components/forms/rental-form';
+import { CustomRentalForm } from '@/components/forms/custom-rental-form';
 import {
   Bike,
   ShieldCheck,
@@ -9,6 +10,7 @@ import {
   CreditCard,
   Zap,
   Info,
+  Clock,
 } from 'lucide-react';
 
 export const metadata = {
@@ -58,7 +60,7 @@ export default function AluguelPage() {
                 <div className="w-10 h-10 rounded-xl bg-[#202020] border border-[#c9a44c]/30 text-white flex items-center justify-center font-bold">
                   <Calendar className="w-5 h-5 text-[#e3c56c]" />
                 </div>
-                <h3 className="font-extrabold text-xl text-white">Diária</h3>
+                <h3 className="font-extrabold text-xl text-white font-heading">Diária</h3>
                 <p className="text-xs text-[#a6a6a1] leading-relaxed">
                   Para necessidades pontuais, compromissos rápidos ou viagens curtas.
                 </p>
@@ -81,7 +83,7 @@ export default function AluguelPage() {
                 <div className="w-10 h-10 rounded-xl bg-[#c9a44c] text-black flex items-center justify-center font-bold">
                   <Zap className="w-5 h-5" />
                 </div>
-                <h3 className="font-extrabold text-xl text-white">Semanal</h3>
+                <h3 className="font-extrabold text-xl text-white font-heading">Semanal</h3>
                 <p className="text-xs text-[#a6a6a1] leading-relaxed">
                   Ideal para períodos de teste ou necessidades temporárias de locomoção.
                 </p>
@@ -104,7 +106,7 @@ export default function AluguelPage() {
                 <div className="w-10 h-10 rounded-xl bg-[#202020] border border-[#c9a44c]/30 text-white flex items-center justify-center font-bold">
                   <Wrench className="w-5 h-5 text-[#e3c56c]" />
                 </div>
-                <h3 className="font-extrabold text-xl text-white">Mensal</h3>
+                <h3 className="font-extrabold text-xl text-white font-heading">Mensal</h3>
                 <p className="text-xs text-[#a6a6a1] leading-relaxed">
                   Para quem precisa de moto contínua para trabalho ou uso frequente no mês.
                 </p>
@@ -148,28 +150,48 @@ export default function AluguelPage() {
           </div>
         </div>
 
-        {/* Lead Capture Form Card */}
+        {/* Section: Custom Rental Plans ("Precisa alugar por mais tempo?") */}
         <div className="bg-[#151515] rounded-3xl border border-[#c9a44c]/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden max-w-3xl mx-auto">
           <div className="p-6 sm:p-8 bg-[#0d0d0d] border-b border-[#c9a44c]/20 space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c9a44c]/15 text-xs font-bold text-[#e3c56c]">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Contratos de Médio e Longo Prazo</span>
+            </div>
             <h2 className="text-2xl font-extrabold tracking-tight text-white font-heading">
-              Consultar Disponibilidade de Aluguel
+              Precisa alugar por mais tempo?
             </h2>
             <p className="text-sm text-[#a6a6a1]">
-              Informe o período e suas preferências. Entraremos em contato pelo WhatsApp para
-              informar as opções ativas.
+              Solicite um plano sob medida para 1, 2, 3, 6 ou 12 meses. Montamos uma proposta de
+              acordo com a sua necessidade.
             </p>
           </div>
 
           <div className="p-6 sm:p-8">
-            <RentalForm />
+            <CustomRentalForm />
           </div>
 
           <div className="px-6 py-4 bg-[#0a0a0a] border-t border-[#c9a44c]/15 flex items-start gap-2.5 text-xs text-[#a6a6a1]">
             <Info className="w-4 h-4 text-[#e3c56c] shrink-0 mt-0.5" />
             <p>
-              A disponibilidade de locação depende das motos ativas na loja no momento. Fale conosco
-              para confirmar os modelos disponíveis.
+              A disponibilidade de modelos para locação contínua está sujeita a confirmação.
+              Entraremos em contato pelo WhatsApp para alinhar todos os detalhes contratuais.
             </p>
+          </div>
+        </div>
+
+        {/* Fast Consultation Form Card */}
+        <div className="bg-[#151515] rounded-3xl border border-[#c9a44c]/20 shadow-xs overflow-hidden max-w-3xl mx-auto">
+          <div className="p-6 sm:p-8 bg-[#0d0d0d] border-b border-[#c9a44c]/20 space-y-2">
+            <h2 className="text-2xl font-extrabold tracking-tight text-white font-heading">
+              Consulta Rápida de Disponibilidade
+            </h2>
+            <p className="text-sm text-[#a6a6a1]">
+              Envie seus dados para tirar dúvidas rápidas sobre aluguel de curto prazo.
+            </p>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            <RentalForm />
           </div>
         </div>
       </div>

@@ -1,3 +1,5 @@
+'use client';
+
 import { Menu, ShieldCheck, Globe, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';

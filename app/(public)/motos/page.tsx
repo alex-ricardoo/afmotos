@@ -1,11 +1,8 @@
 import React from 'react';
-import Link from 'next/link';
-import { Sparkles, SlidersHorizontal, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { SlidersHorizontal, ShieldCheck } from 'lucide-react';
 import { MotorcycleGrid } from '@/components/motorcycles/motorcycle-grid';
 import { MotorcycleFilters, MobileFiltersDrawer } from '@/components/filters/motorcycle-filters';
-import { getAllMotorcycles } from '@/lib/queries/motorcycles';
-import { buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { getAllMotorcycles, getMotorcycleFilterFacets } from '@/lib/queries/motorcycles';
 
 export const metadata = {
   title: 'Motos Disponíveis | AF Motos',
@@ -19,7 +16,10 @@ interface CatalogProps {
 
 export default async function CatalogPage({ searchParams }: CatalogProps) {
   const resolvedParams = await searchParams;
-  const motos = await getAllMotorcycles(resolvedParams);
+  const [motos, facets] = await Promise.all([
+    getAllMotorcycles(resolvedParams),
+    getMotorcycleFilterFacets(),
+  ]);
 
   const activeBrand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand : undefined;
   const activeSearch =
@@ -68,7 +68,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
             )}
           </div>
 
-          <MobileFiltersDrawer totalResults={motos.length} />
+          <MobileFiltersDrawer totalResults={motos.length} facets={facets} />
         </div>
 
         {/* Catalog Grid + Desktop Sidebar */}
@@ -83,7 +83,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
                 </div>
               </div>
 
-              <MotorcycleFilters />
+              <MotorcycleFilters facets={facets} />
             </div>
           </aside>
 

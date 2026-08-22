@@ -391,7 +391,7 @@ export async function getSoldMotorcycles() {
       )
     `,
     )
-    .in('status', ['SOLD', 'vendida'])
+    .eq('status', 'SOLD')
     .order('updated_at', { ascending: false });
 
   if (error) {
@@ -410,3 +410,121 @@ export async function getSoldMotorcycles() {
     };
   });
 }
+
+export interface PriceTier {
+  label: string;
+  value: string;
+}
+
+export interface MotorcycleFilterFacets {
+  brands: string[];
+  models: string[];
+  categories: { id: string; name: string; slug: string }[];
+  years: number[];
+  priceRange: { min: number; max: number };
+  priceTiers: PriceTier[];
+  totalAvailable: number;
+}
+
+export async function getMotorcycleFilterFacets(): Promise<MotorcycleFilterFacets> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('motorcycles')
+    .select(
+      `
+      id,
+      brand,
+      model,
+      year_model,
+      price,
+      category_id,
+      status,
+      motorcycle_categories (
+        id,
+        name,
+        slug
+      )
+    `,
+    )
+    .neq('status', 'HIDDEN')
+    .neq('status', 'SOLD');
+
+  if (error || !data) {
+    console.error('Error fetching motorcycle filter facets:', error);
+    return {
+      brands: [],
+      models: [],
+      categories: [],
+      years: [],
+      priceRange: { min: 0, max: 100000 },
+      priceTiers: [],
+      totalAvailable: 0,
+    };
+  }
+
+  const uniqueBrands = Array.from(
+    new Set(data.map((m) => m.brand).filter((b): b is string => Boolean(b && b.trim()))),
+  ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  const uniqueModels = Array.from(
+    new Set(data.map((m) => m.model).filter((m): m is string => Boolean(m && m.trim()))),
+  ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  const uniqueYears = Array.from(
+    new Set(data.map((m) => m.year_model).filter((y): y is number => Boolean(y && y > 1900))),
+  ).sort((a, b) => b - a);
+
+  const categoryMap = new Map<string, { id: string; name: string; slug: string }>();
+  data.forEach((m) => {
+    const rawCat = m.motorcycle_categories;
+    if (rawCat) {
+      const cat = Array.isArray(rawCat) ? rawCat[0] : rawCat;
+      if (cat && typeof cat === 'object' && 'id' in cat && 'name' in cat && 'slug' in cat) {
+        const item = cat as { id: string; name: string; slug: string };
+        if (item.id && !categoryMap.has(item.id)) {
+          categoryMap.set(item.id, item);
+        }
+      }
+    }
+  });
+  const uniqueCategories = Array.from(categoryMap.values());
+
+  const prices = data
+    .map((m) => (m.price !== null ? Number(m.price) : null))
+    .filter((p): p is number => p !== null && !isNaN(p) && p > 0);
+
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 100000;
+
+  // Gerar faixas dinâmicas de preço baseadas nos preços reais
+  const priceTiers: PriceTier[] = [];
+  if (maxPrice > 0) {
+    const defaultSteps = [15000, 25000, 35000, 50000, 75000, 100000, 150000];
+    const applicableSteps = defaultSteps.filter(
+      (step) => step >= minPrice * 0.9 && step <= maxPrice * 1.3,
+    );
+
+    if (applicableSteps.length === 0) {
+      applicableSteps.push(Math.ceil(maxPrice / 1000) * 1000);
+    }
+
+    applicableSteps.forEach((step) => {
+      priceTiers.push({
+        label: `Até R$ ${step.toLocaleString('pt-BR')}`,
+        value: String(step),
+      });
+    });
+  }
+
+  return {
+    brands: uniqueBrands,
+    models: uniqueModels,
+    categories: uniqueCategories,
+    years: uniqueYears,
+    priceRange: { min: minPrice, max: maxPrice },
+    priceTiers,
+    totalAvailable: data.length,
+  };
+}
+
