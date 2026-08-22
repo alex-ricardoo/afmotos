@@ -13,6 +13,7 @@ Build a full-stack motorcycle dealership platform for AF Motos using Next.js 16 
 **Language/Version**: TypeScript 5.x (strict mode), Node.js 20+
 
 **Primary Dependencies**:
+
 - Next.js 16.3.2 (App Router, Server Components, Server Actions)
 - React 19.2.8
 - Tailwind CSS v4 (CSS-first configuration via `@tailwindcss/postcss`)
@@ -42,22 +43,22 @@ Build a full-stack motorcycle dealership platform for AF Motos using Next.js 16 
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| # | Principle | Status | Evidence |
-|---|-----------|--------|----------|
-| I | Product First | ✅ PASS | Three clear user profiles (buyers, owners, admin). All flows deliver direct business value. No unnecessary features. |
-| II | Mobile First | ✅ PASS | Spec explicitly mandates mobile-first design. Instagram/WhatsApp traffic origin acknowledged. All components designed mobile-first. |
-| III | Type Safety | ✅ PASS | TypeScript strict mode enabled in tsconfig.json. Zod validation on all form boundaries. Shared types in `types/`. |
-| IV | Segurança | ✅ PASS | Secrets server-side only. RLS on all tables. Server Actions for mutations. Plate lookup server-only. No public exposure of plates/owner data. |
-| V | Supabase como Fonte de Dados | ✅ PASS | PostgreSQL via Supabase for all persistence. No parallel databases. Storage for images. |
-| VI | Componentização & Organização por Domínio | ✅ PASS | Code organized by domain (motorcycles, leads, rentals, admin). Reusable components in shared `components/ui/`. |
-| VII | Integrações Desacopladas | ✅ PASS | PlateProvider interface abstraction. WhatsApp message generation isolated. Storage path abstraction. |
-| VIII | UX Consistente | ✅ PASS | shadcn/ui design system. Consistent tokens via Tailwind CSS v4. Loading/error/empty/success states on all flows. |
-| IX | Performance & SEO | ✅ PASS | Next/Image for optimization. Server Components by default. Dynamic metadata + OG + JSON-LD. Sitemap + robots. |
-| X | Testabilidade | ✅ PASS | Business logic in `lib/` isolated from UI. Commission calculation, status transitions, WhatsApp messages testable independently. |
-| XI | Observabilidade | ✅ PASS | analytics_events table. Event tracking for views, clicks, submissions. UTM tracking. |
-| XII | Evolução Incremental | ✅ PASS | MVP scope clearly bounded. No premature features. Architecture extensible via abstractions without over-engineering. |
+| #    | Principle                                 | Status  | Evidence                                                                                                                                      |
+| ---- | ----------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| I    | Product First                             | ✅ PASS | Three clear user profiles (buyers, owners, admin). All flows deliver direct business value. No unnecessary features.                          |
+| II   | Mobile First                              | ✅ PASS | Spec explicitly mandates mobile-first design. Instagram/WhatsApp traffic origin acknowledged. All components designed mobile-first.           |
+| III  | Type Safety                               | ✅ PASS | TypeScript strict mode enabled in tsconfig.json. Zod validation on all form boundaries. Shared types in `types/`.                             |
+| IV   | Segurança                                 | ✅ PASS | Secrets server-side only. RLS on all tables. Server Actions for mutations. Plate lookup server-only. No public exposure of plates/owner data. |
+| V    | Supabase como Fonte de Dados              | ✅ PASS | PostgreSQL via Supabase for all persistence. No parallel databases. Storage for images.                                                       |
+| VI   | Componentização & Organização por Domínio | ✅ PASS | Code organized by domain (motorcycles, leads, rentals, admin). Reusable components in shared `components/ui/`.                                |
+| VII  | Integrações Desacopladas                  | ✅ PASS | PlateProvider interface abstraction. WhatsApp message generation isolated. Storage path abstraction.                                          |
+| VIII | UX Consistente                            | ✅ PASS | shadcn/ui design system. Consistent tokens via Tailwind CSS v4. Loading/error/empty/success states on all flows.                              |
+| IX   | Performance & SEO                         | ✅ PASS | Next/Image for optimization. Server Components by default. Dynamic metadata + OG + JSON-LD. Sitemap + robots.                                 |
+| X    | Testabilidade                             | ✅ PASS | Business logic in `lib/` isolated from UI. Commission calculation, status transitions, WhatsApp messages testable independently.              |
+| XI   | Observabilidade                           | ✅ PASS | analytics_events table. Event tracking for views, clicks, submissions. UTM tracking.                                                          |
+| XII  | Evolução Incremental                      | ✅ PASS | MVP scope clearly bounded. No premature features. Architecture extensible via abstractions without over-engineering.                          |
 
 **Gate Result**: ✅ ALL PASS — Proceeding to Phase 0.
 
@@ -316,19 +317,19 @@ No constitution violations requiring justification. All design choices align wit
 
 ## Post-Design Constitution Re-Check
 
-| # | Principle | Status | Notes |
-|---|-----------|--------|-------|
-| I | Product First | ✅ | All entities directly serve buyer/owner/admin flows |
-| II | Mobile First | ✅ | Component design prioritizes mobile; carousel, filters, gallery designed for touch |
-| III | Type Safety | ✅ | Zod schemas for all form boundaries; shared types in `types/`; strict TS |
-| IV | Segurança | ✅ | RLS policies on all tables; server-only plate lookup, auth, mutations |
-| V | Supabase | ✅ | Single PostgreSQL database; Storage for images; no external DBs |
-| VI | Componentização | ✅ | Domain-organized components; reusable UI base; clean separation |
-| VII | Integrações Desacopladas | ✅ | PlateProvider interface; WhatsApp template isolation; Storage abstraction |
-| VIII | UX Consistente | ✅ | shadcn/ui + custom tokens; all states handled (loading/error/empty/success) |
-| IX | Performance & SEO | ✅ | Server Components default; Next/Image; generateMetadata; JSON-LD; sitemap |
-| X | Testabilidade | ✅ | Domain logic in `lib/domain/` testable independently; Vitest for unit tests |
-| XI | Observabilidade | ✅ | analytics_events table; event tracking module; UTM support |
-| XII | Evolução Incremental | ✅ | Clean abstractions without premature complexity; extensible data model |
+| #    | Principle                | Status | Notes                                                                              |
+| ---- | ------------------------ | ------ | ---------------------------------------------------------------------------------- |
+| I    | Product First            | ✅     | All entities directly serve buyer/owner/admin flows                                |
+| II   | Mobile First             | ✅     | Component design prioritizes mobile; carousel, filters, gallery designed for touch |
+| III  | Type Safety              | ✅     | Zod schemas for all form boundaries; shared types in `types/`; strict TS           |
+| IV   | Segurança                | ✅     | RLS policies on all tables; server-only plate lookup, auth, mutations              |
+| V    | Supabase                 | ✅     | Single PostgreSQL database; Storage for images; no external DBs                    |
+| VI   | Componentização          | ✅     | Domain-organized components; reusable UI base; clean separation                    |
+| VII  | Integrações Desacopladas | ✅     | PlateProvider interface; WhatsApp template isolation; Storage abstraction          |
+| VIII | UX Consistente           | ✅     | shadcn/ui + custom tokens; all states handled (loading/error/empty/success)        |
+| IX   | Performance & SEO        | ✅     | Server Components default; Next/Image; generateMetadata; JSON-LD; sitemap          |
+| X    | Testabilidade            | ✅     | Domain logic in `lib/domain/` testable independently; Vitest for unit tests        |
+| XI   | Observabilidade          | ✅     | analytics_events table; event tracking module; UTM support                         |
+| XII  | Evolução Incremental     | ✅     | Clean abstractions without premature complexity; extensible data model             |
 
 **Post-Design Gate Result**: ✅ ALL PASS

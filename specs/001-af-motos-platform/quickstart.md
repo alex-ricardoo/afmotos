@@ -70,6 +70,7 @@ Verify `.env.example` exists with all required variable names (no values). Verif
 Apply all migrations to the Supabase project (via Supabase CLI or Dashboard SQL Editor).
 
 **Expected**: All tables created. Verify via Supabase Dashboard → Table Editor:
+
 - `admin_profiles`
 - `categories` (8 seed records)
 - `features` (10 seed records)
@@ -104,6 +105,7 @@ Verify `motorcycle-images` (public) and `documents` (private) buckets exist in S
 ### ✅ Components render
 
 Open the application and verify:
+
 - Custom fonts load (Inter or configured font)
 - Brand colors are applied
 - Dark/light theme tokens work
@@ -308,6 +310,7 @@ Open the application and verify:
 ### ✅ Mobile experience
 
 Test on real device or Chrome DevTools mobile view (375px):
+
 - Gallery swipes smoothly
 - Filters accessible via bottom sheet/drawer
 - WhatsApp button easily tappable
@@ -335,15 +338,15 @@ npm run build
 
 Reference: [spec.md Success Criteria](./spec.md#success-criteria-mandatory)
 
-| # | Criterion | Validation |
-|---|-----------|------------|
-| SC-001 | ≤ 3 taps from landing to motorcycle detail | Navigate home → catalog → detail |
-| SC-002 | Detail page interactive < 3s on 4G | Chrome DevTools throttle test |
-| SC-003 | Admin registers motorcycle < 5 min | Time the full flow with photos |
-| SC-004 | Valid WhatsApp link preview on all moto pages | Share URL on WhatsApp |
-| SC-005 | WhatsApp message identifies motorcycle | Check pre-filled message content |
-| SC-006 | Sell proposal visible in admin < 10s | Submit form, check admin |
-| SC-007 | Single-action lead status update | Click status dropdown in admin |
-| SC-008 | Sold motorcycles accessible + show similar | Check `/motos-vendidas` |
-| SC-009 | Commission calculation 100% accurate | Test percentage and fixed |
-| SC-010 | No sensitive data on public pages | Source inspection + network tab |
+| #      | Criterion                                     | Validation                       |
+| ------ | --------------------------------------------- | -------------------------------- |
+| SC-001 | ≤ 3 taps from landing to motorcycle detail    | Navigate home → catalog → detail |
+| SC-002 | Detail page interactive < 3s on 4G            | Chrome DevTools throttle test    |
+| SC-003 | Admin registers motorcycle < 5 min            | Time the full flow with photos   |
+| SC-004 | Valid WhatsApp link preview on all moto pages | Share URL on WhatsApp            |
+| SC-005 | WhatsApp message identifies motorcycle        | Check pre-filled message content |
+| SC-006 | Sell proposal visible in admin < 10s          | Submit form, check admin         |
+| SC-007 | Single-action lead status update              | Click status dropdown in admin   |
+| SC-008 | Sold motorcycles accessible + show similar    | Check `/motos-vendidas`          |
+| SC-009 | Commission calculation 100% accurate          | Test percentage and fixed        |
+| SC-010 | No sensitive data on public pages             | Source inspection + network tab  |

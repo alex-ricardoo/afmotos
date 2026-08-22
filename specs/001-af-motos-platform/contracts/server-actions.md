@@ -15,6 +15,7 @@ Creates a new motorcycle record.
 **Auth**: Required (admin)
 
 **Input**:
+
 ```typescript
 {
   brand: string           // Required
@@ -44,6 +45,7 @@ Creates a new motorcycle record.
 ```
 
 **Behavior**:
+
 1. Validates input with Zod schema
 2. Generates slug from brand + model + yearModel (handles duplicates)
 3. Generates internal code (sequential: AF-0001, AF-0002, ...)
@@ -63,6 +65,7 @@ Updates an existing motorcycle.
 **Input**: Same as createMotorcycle + `id: string` (required)
 
 **Behavior**:
+
 1. Validates input
 2. Checks motorcycle exists
 3. Regenerates slug if brand/model/year changed
@@ -80,14 +83,16 @@ Changes motorcycle status with transition validation.
 **Auth**: Required (admin)
 
 **Input**:
+
 ```typescript
 {
-  id: string
-  status: MotorcycleStatus
+  id: string;
+  status: MotorcycleStatus;
 }
 ```
 
 **Behavior**:
+
 1. Loads current motorcycle
 2. Validates transition is allowed (via `lib/domain/motorcycle-status.ts`)
 3. If transition to SOLD: creates Sale record (see markAsSold)
@@ -104,6 +109,7 @@ Marks a motorcycle as sold and creates sale record.
 **Auth**: Required (admin)
 
 **Input**:
+
 ```typescript
 {
   motorcycleId: string
@@ -117,6 +123,7 @@ Marks a motorcycle as sold and creates sale record.
 ```
 
 **Behavior**:
+
 1. Validates motorcycle is in a state that can transition to SOLD
 2. Creates Sale record
 3. Updates motorcycle status to SOLD
@@ -166,6 +173,7 @@ Updates sort order for a motorcycle's images.
 **Auth**: Required (admin)
 
 **Input**:
+
 ```typescript
 {
   motorcycleId: string
@@ -208,6 +216,7 @@ Creates a new lead from any public form.
 **Auth**: Not required (public)
 
 **Input**:
+
 ```typescript
 {
   type: LeadType
@@ -222,6 +231,7 @@ Creates a new lead from any public form.
 ```
 
 **Behavior**:
+
 1. Validates with Zod
 2. Sanitizes input
 3. Inserts lead with status NEW
@@ -238,6 +248,7 @@ Submits a proposal to sell a motorcycle to AF Motos.
 **Auth**: Not required (public)
 
 **Input**:
+
 ```typescript
 {
   name: string
@@ -258,6 +269,7 @@ Submits a proposal to sell a motorcycle to AF Motos.
 ```
 
 **Behavior**:
+
 1. Validates input
 2. Creates lead (type: SELL_MOTORCYCLE)
 3. Creates sell_request linked to lead
@@ -285,6 +297,7 @@ Updates consignment contract details (admin).
 **Auth**: Required (admin)
 
 **Input**:
+
 ```typescript
 {
   id: string
@@ -313,6 +326,7 @@ Submits a rental request from public form.
 **Auth**: Not required (public)
 
 **Input**:
+
 ```typescript
 {
   motorcycleId: string
@@ -325,6 +339,7 @@ Submits a rental request from public form.
 ```
 
 **Behavior**:
+
 1. Validates dates (end > start)
 2. Calculates estimated total from motorcycle's daily_rate
 3. Creates rental record (status: REQUESTED)
@@ -389,10 +404,11 @@ Updates global site settings.
 ## Standard Action Response Format
 
 All actions return:
+
 ```typescript
 type ActionResult<T = void> =
   | { success: true; data?: T }
-  | { success: false; error: string; fieldErrors?: Record<string, string[]> }
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
 ```
 
 `fieldErrors` is populated when Zod validation fails, mapping field names to error messages for form display.

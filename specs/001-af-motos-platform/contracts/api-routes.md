@@ -13,6 +13,7 @@ Looks up motorcycle data from a license plate number.
 **Authentication**: Required (admin only)
 
 **Request**:
+
 ```json
 {
   "plate": "ABC1D23"
@@ -20,9 +21,11 @@ Looks up motorcycle data from a license plate number.
 ```
 
 **Validation**:
+
 - `plate`: Required string. Must match Brazilian plate format (old: `ABC-1234`, new: `ABC1D23`). Normalized to uppercase, dashes removed.
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -41,6 +44,7 @@ Looks up motorcycle data from a license plate number.
 ```
 
 **Partial data** (200 — some fields missing):
+
 ```json
 {
   "success": true,
@@ -60,16 +64,17 @@ Looks up motorcycle data from a license plate number.
 
 **Error responses**:
 
-| Status | Code | Description |
-|--------|------|-------------|
-| 400 | `INVALID_PLATE` | Plate format is invalid |
-| 401 | `UNAUTHORIZED` | No valid admin session |
-| 404 | `VEHICLE_NOT_FOUND` | No vehicle found for this plate |
-| 429 | `RATE_LIMITED` | Too many requests; try again later |
-| 502 | `PROVIDER_ERROR` | Plate lookup provider is unavailable or returned error |
-| 503 | `PROVIDER_UNAVAILABLE` | Plate lookup provider is not configured |
+| Status | Code                   | Description                                            |
+| ------ | ---------------------- | ------------------------------------------------------ |
+| 400    | `INVALID_PLATE`        | Plate format is invalid                                |
+| 401    | `UNAUTHORIZED`         | No valid admin session                                 |
+| 404    | `VEHICLE_NOT_FOUND`    | No vehicle found for this plate                        |
+| 429    | `RATE_LIMITED`         | Too many requests; try again later                     |
+| 502    | `PROVIDER_ERROR`       | Plate lookup provider is unavailable or returned error |
+| 503    | `PROVIDER_UNAVAILABLE` | Plate lookup provider is not configured                |
 
 **Error format**:
+
 ```json
 {
   "success": false,
@@ -89,6 +94,7 @@ Tracks a user event.
 **Authentication**: Not required (public endpoint)
 
 **Request**:
+
 ```json
 {
   "eventType": "MOTORCYCLE_VIEW",
@@ -104,6 +110,7 @@ Tracks a user event.
 ```
 
 **Validation**:
+
 - `eventType`: Required. One of: `MOTORCYCLE_VIEW`, `WHATSAPP_CLICK`, `SHARE`, `SELL_REQUEST_SUBMITTED`, `CONSIGNMENT_REQUEST_SUBMITTED`, `RENTAL_REQUEST_SUBMITTED`, `SEARCH`, `FILTER_APPLIED`
 - `motorcycleId`: Optional UUID
 - `source`: Optional string
@@ -111,6 +118,7 @@ Tracks a user event.
 - `sessionId`: Optional string
 
 **Success Response** (201):
+
 ```json
 {
   "success": true
@@ -129,19 +137,21 @@ Handles image upload to Supabase Storage.
 
 **Request**: `multipart/form-data`
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| file | File | Yes | Image file |
-| motorcycleId | string | Yes | Target motorcycle UUID |
-| sortOrder | number | No | Display order (defaults to max + 1) |
-| isPrimary | boolean | No | Whether this is the main photo (default: false) |
+| Field        | Type    | Required | Description                                     |
+| ------------ | ------- | -------- | ----------------------------------------------- |
+| file         | File    | Yes      | Image file                                      |
+| motorcycleId | string  | Yes      | Target motorcycle UUID                          |
+| sortOrder    | number  | No       | Display order (defaults to max + 1)             |
+| isPrimary    | boolean | No       | Whether this is the main photo (default: false) |
 
 **Validation**:
+
 - File type: `image/jpeg`, `image/png`, `image/webp`
 - Max file size: 10MB
 - Motorcycle must exist and be owned by admin
 
 **Success Response** (201):
+
 ```json
 {
   "success": true,
@@ -157,11 +167,11 @@ Handles image upload to Supabase Storage.
 
 **Error responses**:
 
-| Status | Code | Description |
-|--------|------|-------------|
-| 400 | `INVALID_FILE_TYPE` | File type not allowed |
-| 400 | `FILE_TOO_LARGE` | File exceeds 10MB limit |
-| 400 | `MISSING_MOTORCYCLE_ID` | Motorcycle ID not provided |
-| 401 | `UNAUTHORIZED` | No valid admin session |
-| 404 | `MOTORCYCLE_NOT_FOUND` | Motorcycle does not exist |
-| 500 | `UPLOAD_FAILED` | Storage upload failed |
+| Status | Code                    | Description                |
+| ------ | ----------------------- | -------------------------- |
+| 400    | `INVALID_FILE_TYPE`     | File type not allowed      |
+| 400    | `FILE_TOO_LARGE`        | File exceeds 10MB limit    |
+| 400    | `MISSING_MOTORCYCLE_ID` | Motorcycle ID not provided |
+| 401    | `UNAUTHORIZED`          | No valid admin session     |
+| 404    | `MOTORCYCLE_NOT_FOUND`  | Motorcycle does not exist  |
+| 500    | `UPLOAD_FAILED`         | Storage upload failed      |

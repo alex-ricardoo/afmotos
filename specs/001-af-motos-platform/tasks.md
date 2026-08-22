@@ -4,12 +4,12 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Initialize Next.js project with Tailwind v4 (Verify existing `app/` and `components/` structure)
-- [ ] T002 [P] Initialize shadcn/ui configuration with `npx shadcn@latest init`
-- [ ] T003 [P] Configure ESLint and Prettier for strict TypeScript checking
-- [ ] T004 [P] Setup Supabase clients (server, browser, admin) in `lib/supabase/`
-- [ ] T005 [P] Setup Zod validation structure in `lib/validations/`
-- [ ] T006 Add base layout elements (Header, Footer, MobileNav) in `app/layout.tsx`
+- [x] T001 Initialize Next.js project with Tailwind v4 (Verify existing `app/` and `components/` structure)
+- [x] T002 [P] Initialize shadcn/ui configuration with `npx shadcn@latest init`
+- [x] T003 [P] Configure ESLint and Prettier for strict TypeScript checking
+- [x] T004 [P] Setup Supabase clients (server, browser, admin) in `lib/supabase/`
+- [x] T005 [P] Setup Zod validation structure in `lib/validations/`
+- [x] T006 Add base layout elements (Header, Footer, MobileNav) in `app/layout.tsx`
 
 ---
 
@@ -19,11 +19,11 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T007 Create database schema migrations per `data-model.md`
-- [ ] T008 [P] Setup Supabase Auth and RLS policies
-- [ ] T009 [P] Create database types using Supabase CLI
-- [ ] T010 Create base repository pattern/actions for data fetching in `lib/actions/`
-- [ ] T011 Setup image storage buckets (`motorcycle-images`, `documents`)
+- [x] T007 Create database schema migrations per `data-model.md`
+- [x] T008 [P] Setup Supabase Auth and RLS policies
+- [x] T009 [P] Create database types using Supabase CLI
+- [x] T010 Create base repository pattern/actions for data fetching in `lib/actions/`
+- [x] T011 Setup image storage buckets (`motorcycle-images`, `documents`)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -37,11 +37,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create UI components: `MotorcycleCard`, `CatalogGrid`, `StatusBadge` in `components/motorcycles/`
-- [ ] T013 [P] [US1] Implement Server Component for `/` (Home page) with featured listings
-- [ ] T014 [US1] Implement Server Component for `/motos` with catalog listing
-- [ ] T015 [US1] Create filter panel and search functionality in `components/filters/`
-- [ ] T016 [US1] Integrate filter state with URL search params in `/motos/page.tsx`
+- [x] T012 [P] [US1] Create UI components: `MotorcycleCard`, `CatalogGrid`, `StatusBadge` in `components/motorcycles/`
+- [x] T013 [P] [US1] Implement Server Component for `/` (Home page) with featured listings
+- [x] T014 [US1] Implement Server Component for `/motos` with catalog listing
+- [x] T015 [US1] Create filter panel and search functionality in `components/filters/`
+- [x] T016 [US1] Integrate filter state with URL search params in `/motos/page.tsx`
 
 **Checkpoint**: At this point, the public catalog (US1) should be fully functional and testable independently
 
@@ -55,12 +55,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T017 [P] [US2] Create gallery components (`ImageCarousel`, `ImageFullscreen`) in `components/gallery/`
-- [ ] T018 [P] [US2] Implement WhatsApp message generator utility in `lib/utils/whatsapp.ts`
-- [ ] T019 [US2] Create Server Component for `/motos/[slug]`
-- [ ] T020 [US2] Implement specs section and description renderer
-- [ ] T021 [US2] Add WhatsApp CTA button component
-- [ ] T022 [US2] Implement SEO metadata generation for detail pages
+- [x] T017 [P] [US2] Create gallery components (`ImageCarousel`, `ImageFullscreen`) in `components/gallery/`
+- [x] T018 [P] [US2] Implement WhatsApp message generator utility in `lib/utils/whatsapp.ts`
+- [x] T019 [US2] Create Server Component for `/motos/[slug]`
+- [x] T020 [US2] Implement specs section and description renderer
+- [x] T021 [US2] Add WhatsApp CTA button component
+- [x] T022 [US2] Implement SEO metadata generation for detail pages
 
 **Checkpoint**: At this point, Users can view full motorcycle specs and initiate contact.
 
@@ -74,14 +74,14 @@
 
 ### Implementation for User Story 3
 
-- [ ] T023 [P] [US3] Create admin layout (`AdminSidebar`, `AdminHeader`) in `app/admin/layout.tsx`
-- [ ] T024 [P] [US3] Implement auth middleware for `/admin/*` routes in `middleware.ts`
-- [ ] T025 [P] [US3] Create admin login page `/admin/login/page.tsx`
-- [ ] T026 [US3] Create data tables for motorcycles inventory in `/admin/motos/page.tsx`
-- [ ] T027 [US3] Implement create/edit motorcycle form in `/admin/motos/nova/page.tsx` using `react-hook-form`
-- [ ] T028 [US3] Create Server Actions for motorcycle CRUD in `lib/actions/motorcycles.ts`
-- [ ] T029 [US3] Implement ImageUploader component and Supabase Storage actions in `lib/actions/images.ts`
-- [ ] T030 [US3] Add plate lookup integration (Route Handler + UI field)
+- [x] T023 [P] [US3] Create admin layout (`AdminSidebar`, `AdminHeader`) in `app/admin/layout.tsx`
+- [x] T024 [P] [US3] Implement auth middleware for `/admin/*` routes in `middleware.ts`
+- [x] T025 [P] [US3] Create admin login page `/admin/login/page.tsx`
+- [x] T026 [US3] Create data tables for motorcycles inventory in `/admin/motos/page.tsx`
+- [x] T027 [US3] Implement create/edit motorcycle form in `/admin/motos/nova/page.tsx` using `react-hook-form`
+- [x] T028 [US3] Create Server Actions for motorcycle CRUD in `lib/actions/motorcycles.ts`
+- [x] T029 [US3] Implement ImageUploader component and Supabase Storage actions in `lib/actions/images.ts`
+- [x] T030 [US3] Add plate lookup integration (Route Handler + UI field)
 
 **Checkpoint**: Admin can fully manage the catalog and inventory independently.
 
@@ -95,12 +95,12 @@
 
 ### Implementation for User Story 4
 
-- [ ] T031 [P] [US4] Create public forms (`SellForm`, `ConsignmentForm`, `RentalForm`) in `components/forms/`
-- [ ] T032 [P] [US4] Implement Server Actions for lead/request submission
-- [ ] T033 [US4] Create public pages `/venda-sua-moto`, `/consignar-moto`, `/aluguel`
-- [ ] T034 [US4] Create admin data tables for leads and proposals `/admin/propostas`
-- [ ] T035 [US4] Implement commission calculation domain logic in `lib/domain/commission.ts`
-- [ ] T036 [US4] Build Sold Motorcycles page `/motos-vendidas`
+- [x] T031 [P] [US4] Create public forms (`SellForm`, `ConsignmentForm`, `RentalForm`) in `components/forms/`
+- [x] T032 [P] [US4] Implement Server Actions for lead/request submission
+- [x] T033 [US4] Create public pages `/venda-sua-moto`, `/consignar-moto`, `/aluguel`
+- [x] T034 [US4] Create admin data tables for leads and proposals `/admin/propostas`
+- [x] T035 [US4] Implement commission calculation domain logic in `lib/domain/commission.ts`
+- [x] T036 [US4] Build Sold Motorcycles page `/motos-vendidas`
 
 **Checkpoint**: All user interactive forms and CRM/lead capture are working.
 
@@ -110,11 +110,11 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T037 [P] Implement analytics tracking endpoint (`/api/analytics`) and hooks
-- [ ] T038 [P] Configure global error boundaries and loading states
-- [ ] T039 Add responsive design polish and mobile-first adjustments
-- [ ] T040 Security hardening (review RLS policies, input sanitization)
-- [ ] T041 Run `quickstart.md` validation checklist
+- [x] T037 [P] Implement analytics tracking endpoint (`/api/analytics`) and hooks
+- [x] T038 [P] Configure global error boundaries and loading states
+- [x] T039 Add responsive design polish and mobile-first adjustments
+- [x] T040 Security hardening (review RLS policies, input sanitization)
+- [x] T041 Run `quickstart.md` validation checklist
 
 ---
 

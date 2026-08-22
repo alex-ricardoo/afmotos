@@ -15,7 +15,7 @@
 - Q: When two motorcycles share the same brand, model, and year, how should the system generate unique URL slugs? → A: Append a numeric suffix (e.g., `/motos/honda-cb-500f-2022`, `/motos/honda-cb-500f-2022-2`).
 - Q: Are there restricted transitions between motorcycle statuses, or can the admin freely change from any status to any? → A: Restricted transitions — define a small set of valid paths (e.g., "vendida" is final unless explicitly reversed; "alugada"→"disponível" only after return).
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 – Browse & Discover Motorcycles (Priority: P1)
 
@@ -163,7 +163,7 @@ Every public motorcycle page has a unique, friendly URL (e.g., /motos/honda-cb-5
 - What happens when a visitor accesses the admin panel without authentication? → They are redirected to the login page.
 - What happens when a rental request date range conflicts with an existing reservation? → In the MVP, this is handled manually by the admin. The data model is prepared for automated conflict detection in future versions.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -223,7 +223,7 @@ Every public motorcycle page has a unique, friendly URL (e.g., /motos/honda-cb-5
 - **SiteConfiguration**: Global site settings. Key attributes: WhatsApp number, default messages per context, about text, commercial information, rental general terms.
 - **AnalyticsEvent**: Tracked events for observability. Key attributes: event type, motorcycle ID (when applicable), metadata, timestamp, source/UTM parameters.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
