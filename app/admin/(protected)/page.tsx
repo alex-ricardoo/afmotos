@@ -8,17 +8,17 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-        <p className="text-gray-500">
-          Visão geral do sistema AF Motos.
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Bem-vindo ao painel administrativo.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Motos Disponíveis</CardTitle>
-            <Bike className="h-4 w-4 text-gray-500" />
+            <CardTitle className="text-sm font-medium text-foreground">Total de Motos</CardTitle>
+            <Bike className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.available}</div>

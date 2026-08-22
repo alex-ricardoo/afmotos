@@ -28,8 +28,7 @@ export function ImageUploader({
 
     setUploading(true);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    const uploadPromises = Array.from(files).map(async (file) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('path', pathPrefix);
@@ -37,14 +36,24 @@ export function ImageUploader({
       try {
         const result = await uploadImageAction(formData);
         if (result.error) {
-          toast.error(result.error);
+          toast.error(`Erro no upload: ${result.error}`);
+          return false;
         } else if (result.url && result.path) {
           onUpload(result.url, result.path);
-          toast.success('Imagem enviada com sucesso!');
+          return true;
         }
       } catch (err) {
         toast.error('Erro ao enviar imagem');
+        return false;
       }
+      return false;
+    });
+
+    const results = await Promise.all(uploadPromises);
+    const successCount = results.filter(Boolean).length;
+
+    if (successCount > 0) {
+      toast.success(successCount === 1 ? '1 imagem enviada com sucesso!' : `${successCount} imagens enviadas com sucesso!`);
     }
 
     setUploading(false);

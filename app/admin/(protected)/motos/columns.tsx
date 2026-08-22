@@ -1,9 +1,8 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Edit, Eye, MoreHorizontal } from 'lucide-react';
+import { motorcycleStatusLabels } from '@/lib/utils/translations';
 
 import {
   DropdownMenu,
@@ -16,10 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export const columns: ColumnDef<any, any>[] = [
-  {
-    accessorKey: 'internal_code',
-    header: 'Código',
-  },
   {
     accessorKey: 'brand',
     header: 'Marca',
@@ -47,6 +42,14 @@ export const columns: ColumnDef<any, any>[] = [
   {
     accessorKey: 'status',
     header: 'Status',
+    cell: ({ row }: { row: any }) => {
+      const status = row.getValue('status') as string;
+      return (
+        <div>
+          {motorcycleStatusLabels[status as keyof typeof motorcycleStatusLabels] || status}
+        </div>
+      );
+    },
   },
   {
     id: 'actions',

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { createMotorcycleAction, updateMotorcycleAction } from '@/lib/actions/motorcycles';
 import { PlateLookupField } from '@/components/forms/plate-lookup-field';
 import { ImageUploader } from '@/components/gallery/image-uploader';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +29,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { motorcycleStatusLabels, operationTypeLabels, ownershipTypeLabels } from '@/lib/utils/translations';
+
+const fuelLabels: Record<string, string> = {
+  gasolina: 'Gasolina',
+  etanol: 'Etanol',
+  flex: 'Flex',
+  eletrico: 'Elétrico',
+  diesel: 'Diesel',
+};
+
+const transmissionLabels: Record<string, string> = {
+  manual: 'Manual',
+  automatico: 'Automático',
+  semiautomatico: 'Semiautomático',
+  cvt: 'CVT',
+};
 
 const motorcycleSchema = z.object({
   brand: z.string().min(2, 'Marca é obrigatória'),
@@ -35,22 +53,22 @@ const motorcycleSchema = z.object({
   version: z.string().optional(),
   year_manufacture: z.coerce
     .number()
-    .min(1900)
-    .max(new Date().getFullYear() + 1),
+    .min(1900, 'Ano de fabricação inválido')
+    .max(new Date().getFullYear() + 1, 'Ano inválido'),
   year_model: z.coerce
     .number()
-    .min(1900)
-    .max(new Date().getFullYear() + 1),
+    .min(1900, 'Ano do modelo inválido')
+    .max(new Date().getFullYear() + 1, 'Ano inválido'),
   mileage: z.coerce.number().optional(),
   engine_capacity: z.coerce.number().optional(),
-  fuel: z.string().optional(),
-  transmission: z.string().optional(),
+  fuel: z.enum(['gasolina', 'etanol', 'flex', 'eletrico', 'diesel']).optional().or(z.literal('')),
+  transmission: z.enum(['manual', 'automatico', 'semiautomatico', 'cvt']).optional().or(z.literal('')),
   color: z.string().optional(),
   price: z.coerce.number().optional(),
   description: z.string().optional(),
-  ownership_type: z.enum(['OWN', 'CONSIGNMENT']),
-  operation_type: z.enum(['SALE', 'RENTAL', 'BOTH']),
-  status: z.enum(['AVAILABLE', 'RESERVED', 'SOLD', 'MAINTENANCE', 'RENTED', 'HIDDEN']),
+  ownership_type: z.enum(['OWNED', 'CONSIGNMENT']),
+  operation_type: z.enum(['SALE', 'RENTAL', 'SALE_AND_RENTAL']),
+  status: z.enum(['AVAILABLE', 'RESERVED', 'SOLD', 'MAINTENANCE', 'RENTED', 'UNAVAILABLE', 'HIDDEN']),
   featured: z.boolean().default(false),
   license_plate: z.string().optional(),
   location: z.string().optional(),
@@ -65,10 +83,40 @@ interface MotorcycleFormProps {
   initialData?: any;
 }
 
+function normalizeOwnership(val?: string) {
+  if (val === 'OWN' || val === 'OWNED') return 'OWNED';
+  if (val === 'CONSIGNMENT') return 'CONSIGNMENT';
+  return 'OWNED';
+}
+
+function normalizeOperation(val?: string) {
+  if (val === 'BOTH' || val === 'SALE_AND_RENTAL') return 'SALE_AND_RENTAL';
+  if (val === 'RENTAL') return 'RENTAL';
+  return 'SALE';
+}
+
+function normalizeFuel(val?: string) {
+  if (!val) return 'gasolina';
+  const lower = val.toLowerCase();
+  if (['gasolina', 'etanol', 'flex', 'eletrico', 'diesel'].includes(lower)) return lower;
+  return 'gasolina';
+}
+
+function normalizeTransmission(val?: string) {
+  if (!val) return 'manual';
+  const lower = val.toLowerCase();
+  if (['manual', 'automatico', 'semiautomatico', 'cvt'].includes(lower)) return lower;
+  return 'manual';
+}
+
 export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [images, setImages] = useState<{ url: string; path: string }[]>(initialData?.images || []);
+
+  const isEditing = !!initialData?.id;
 
   const handlePlateSuccess = (data: any) => {
     Object.keys(data).forEach((key) => {
@@ -87,72 +135,113 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
 
   const form = useForm<MotorcycleFormValues>({
     resolver: zodResolver(motorcycleSchema) as any,
-    defaultValues: initialData || {
-      brand: '',
-      model: '',
-      version: '',
-      year_manufacture: new Date().getFullYear(),
-      year_model: new Date().getFullYear(),
-      mileage: 0,
-      engine_capacity: 0,
-      fuel: 'Gasolina',
-      transmission: 'Manual',
-      color: '',
-      price: 0,
-      description: '',
-      ownership_type: 'OWN',
-      operation_type: 'SALE',
-      status: 'AVAILABLE',
-      featured: false,
-      license_plate: '',
-      location: '',
-      daily_rate: 0,
-      weekly_rate: 0,
-      monthly_rate: 0,
+    defaultValues: {
+      brand: initialData?.brand || '',
+      model: initialData?.model || '',
+      version: initialData?.version || '',
+      year_manufacture: initialData?.year_manufacture || new Date().getFullYear(),
+      year_model: initialData?.year_model || new Date().getFullYear(),
+      mileage: initialData?.mileage || 0,
+      engine_capacity: initialData?.engine_capacity || 0,
+      fuel: normalizeFuel(initialData?.fuel),
+      transmission: normalizeTransmission(initialData?.transmission),
+      color: initialData?.color || '',
+      price: initialData?.price || 0,
+      description: initialData?.description || '',
+      ownership_type: normalizeOwnership(initialData?.ownership_type),
+      operation_type: normalizeOperation(initialData?.operation_type),
+      status: initialData?.status || 'AVAILABLE',
+      featured: initialData?.featured || false,
+      license_plate: initialData?.license_plate || '',
+      location: initialData?.location || '',
+      daily_rate: initialData?.daily_rate || 0,
+      weekly_rate: initialData?.weekly_rate || 0,
+      monthly_rate: initialData?.monthly_rate || 0,
     },
   });
 
   async function onSubmit(data: MotorcycleFormValues) {
     setLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
 
     try {
       const dataWithImages = { ...data, images };
 
-      if (initialData?.id) {
-        await updateMotorcycleAction(initialData.id, dataWithImages);
+      let result: any;
+      if (isEditing) {
+        result = await updateMotorcycleAction(initialData.id, dataWithImages);
       } else {
-        await createMotorcycleAction(dataWithImages);
+        result = await createMotorcycleAction(dataWithImages);
       }
 
-      router.push('/admin/motos');
-      router.refresh();
-    } catch (error) {
+      if (result?.error) {
+        setErrorMsg(`Erro ao salvar: ${result.error}`);
+        setLoading(false);
+        return;
+      }
+
+      setSuccessMsg(isEditing ? 'Motocicleta atualizada com sucesso!' : 'Motocicleta cadastrada com sucesso!');
+
+      setTimeout(() => {
+        router.push('/admin/motos');
+        router.refresh();
+      }, 1500);
+    } catch (error: any) {
       console.error(error);
-    } finally {
+      setErrorMsg('Não foi possível salvar a motocicleta. Verifique os campos e tente novamente.');
       setLoading(false);
     }
   }
 
   return (
     <div className="space-y-8">
-      <div className="bg-white p-6 rounded-lg shadow-sm border max-w-md">
-        <PlateLookupField onSuccess={handlePlateSuccess} />
+      <div className="flex justify-between items-center bg-card p-4 rounded-lg border border-border shadow-sm">
+        <p className="text-sm text-muted-foreground">
+          <span className="text-destructive font-bold mr-1">*</span> Indica campos de preenchimento obrigatório.
+        </p>
       </div>
+
+      {errorMsg && (
+        <div className="bg-destructive/15 text-destructive border border-destructive p-4 rounded-md flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <p className="text-sm font-medium">{errorMsg}</p>
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="bg-green-500/15 text-green-500 border border-green-500 p-4 rounded-md flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 shrink-0" />
+          <p className="text-sm font-medium">{successMsg}</p>
+        </div>
+      )}
+
+      {!isEditing && (
+        <div className="bg-card p-6 rounded-lg shadow-sm border border-border max-w-md">
+          <h3 className="text-sm font-semibold mb-4 text-foreground">
+            Busca por Placa <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+          </h3>
+          <PlateLookupField onSuccess={handlePlateSuccess} />
+        </div>
+      )}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-8">
           
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Dados Básicos</h2>
+          {/* SEÇÃO 1: IDENTIFICAÇÃO */}
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">Identificação</h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <FormField
                 control={form.control as any}
                 name="brand"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Marca</FormLabel>
+                    <FormLabel>
+                      Marca <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Honda" {...field} />
+                      <Input placeholder="Ex: Honda" {...field} className="bg-background" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -163,9 +252,11 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 name="model"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Modelo</FormLabel>
+                    <FormLabel>
+                      Modelo <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: CB 500F" {...field} />
+                      <Input placeholder="Ex: CB 500F" {...field} className="bg-background" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -176,9 +267,11 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 name="version"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Versão</FormLabel>
+                    <FormLabel>
+                      Versão <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: ABS" {...field} value={field.value || ''} />
+                      <Input placeholder="Ex: ABS" {...field} value={field.value || ''} className="bg-background" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -186,12 +279,36 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
               />
               <FormField
                 control={form.control as any}
+                name="license_plate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Placa <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="ABC-1234" {...field} value={field.value || ''} className="bg-background" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* SEÇÃO 2: ESPECIFICAÇÕES */}
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">Especificações Técnicas</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <FormField
+                control={form.control as any}
                 name="year_manufacture"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ano Fabricação</FormLabel>
+                    <FormLabel>
+                      Ano Fabricação <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} className="bg-background" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -202,9 +319,11 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 name="year_model"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ano Modelo</FormLabel>
+                    <FormLabel>
+                      Ano Modelo <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} className="bg-background" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -215,26 +334,203 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 name="mileage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quilometragem</FormLabel>
+                    <FormLabel>
+                      Quilometragem (km) <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} value={field.value || 0} />
+                      <Input type="number" {...field} value={field.value ?? 0} className="bg-background" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="engine_capacity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Cilindrada (cc) <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} value={field.value ?? 0} className="bg-background" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="fuel"
+                render={({ field }) => {
+                  const currentVal = field.value || 'gasolina';
+                  return (
+                    <FormItem>
+                      <FormLabel>
+                        Combustível <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={currentVal}>
+                        <FormControl>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Selecione...">
+                              {fuelLabels[currentVal] || currentVal}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="gasolina">Gasolina</SelectItem>
+                          <SelectItem value="etanol">Etanol</SelectItem>
+                          <SelectItem value="flex">Flex</SelectItem>
+                          <SelectItem value="eletrico">Elétrico</SelectItem>
+                          <SelectItem value="diesel">Diesel</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+              <FormField
+                control={form.control as any}
+                name="transmission"
+                render={({ field }) => {
+                  const currentVal = field.value || 'manual';
+                  return (
+                    <FormItem>
+                      <FormLabel>
+                        Câmbio <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={currentVal}>
+                        <FormControl>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Selecione...">
+                              {transmissionLabels[currentVal] || currentVal}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="manual">Manual</SelectItem>
+                          <SelectItem value="automatico">Automático</SelectItem>
+                          <SelectItem value="semiautomatico">Semiautomático</SelectItem>
+                          <SelectItem value="cvt">CVT</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+              <FormField
+                control={form.control as any}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Cor <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Preto" {...field} value={field.value || ''} className="bg-background" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            
+          </div>
+
+          {/* SEÇÃO 3: COMERCIAL */}
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">Comercial</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <FormField
+                control={form.control as any}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Preço de Venda (R$) <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} value={field.value ?? 0} className="bg-background" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="operation_type"
+                render={({ field }) => {
+                  const currentVal = field.value || 'SALE';
+                  return (
+                    <FormItem>
+                      <FormLabel>
+                        Tipo de Operação <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={currentVal}>
+                        <FormControl>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Selecione o tipo de operação">
+                              {operationTypeLabels[currentVal as keyof typeof operationTypeLabels] || currentVal}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="SALE">{operationTypeLabels['SALE']}</SelectItem>
+                          <SelectItem value="RENTAL">{operationTypeLabels['RENTAL']}</SelectItem>
+                          <SelectItem value="SALE_AND_RENTAL">{operationTypeLabels['SALE_AND_RENTAL']}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+              <FormField
+                control={form.control as any}
+                name="ownership_type"
+                render={({ field }) => {
+                  const currentVal = field.value || 'OWNED';
+                  return (
+                    <FormItem>
+                      <FormLabel>
+                        Tipo de Propriedade <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={currentVal}>
+                        <FormControl>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Selecione o tipo de propriedade">
+                              {ownershipTypeLabels[currentVal as keyof typeof ownershipTypeLabels] || currentVal}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="OWNED">{ownershipTypeLabels['OWNED']}</SelectItem>
+                          <SelectItem value="CONSIGNMENT">{ownershipTypeLabels['CONSIGNMENT']}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+            </div>
+          </div>
+
+          {/* SEÇÃO 4: DESCRIÇÃO */}
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
+              Descrição Comercial <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+            </h2>
             <FormField
               control={form.control as any}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Descreva a motocicleta em detalhes..."
-                      className="resize-none"
+                      placeholder="Descreva a motocicleta em detalhes para o anúncio..."
+                      className="resize-none bg-background"
                       rows={5}
                       {...field}
                       value={field.value || ''}
@@ -246,74 +542,13 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
             />
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Status e Valores</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <FormField
-                control={form.control as any}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preço (R$)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} value={field.value || 0} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="AVAILABLE">Disponível</SelectItem>
-                        <SelectItem value="RESERVED">Reservada</SelectItem>
-                        <SelectItem value="SOLD">Vendida</SelectItem>
-                        <SelectItem value="MAINTENANCE">Manutenção</SelectItem>
-                        <SelectItem value="RENTED">Alugada</SelectItem>
-                        <SelectItem value="HIDDEN">Oculta</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="ownership_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Propriedade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="OWN">Própria</SelectItem>
-                        <SelectItem value="CONSIGNMENT">Consignação</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Fotos da Motocicleta</h2>
-            <div className="bg-slate-50 p-4 border rounded-md">
+          {/* SEÇÃO 5: IMAGENS */}
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
+              Imagens <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+            </h2>
+            <p className="text-sm text-muted-foreground">Adicione fotos nítidas da motocicleta. A primeira foto será usada como capa.</p>
+            <div className="bg-background p-4 border border-border rounded-md">
               <ImageUploader
                 onUpload={handleImageUpload}
                 onDelete={handleImageDelete}
@@ -322,17 +557,80 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
             </div>
           </div>
 
-          <div className="flex justify-end gap-4">
+          {/* SEÇÃO 6: PUBLICAÇÃO */}
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">Publicação</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <FormField
+                control={form.control as any}
+                name="status"
+                render={({ field }) => {
+                  const currentVal = field.value || 'AVAILABLE';
+                  return (
+                    <FormItem>
+                      <FormLabel>
+                        Status de Visibilidade <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={currentVal}>
+                        <FormControl>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Selecione o status">
+                              {motorcycleStatusLabels[currentVal as keyof typeof motorcycleStatusLabels] || currentVal}
+                            </SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(motorcycleStatusLabels).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+              <FormField
+                control={form.control as any}
+                name="featured"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Moto em Destaque</FormLabel>
+                      <FormDescription>
+                        Exibir esta moto na seção principal do site.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {form.formState.isDirty && (
+            <div className="bg-yellow-500/10 text-yellow-600 border border-yellow-500/30 p-3 rounded-md text-sm">
+              Você tem alterações não salvas.
+            </div>
+          )}
+
+          <div className="flex justify-end gap-4 sticky bottom-4 bg-card/80 backdrop-blur-sm p-4 border border-border rounded-lg shadow-lg">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={loading}
+              className="border-border text-foreground hover:bg-muted"
             >
               Cancelar
             </Button>
-            <Button type="submit" className="bg-[#c9a44c] hover:bg-[#b8943c] text-black font-semibold" disabled={loading}>
-              {loading ? 'Salvando...' : 'Salvar'}
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8" disabled={loading}>
+              {loading ? (isEditing ? 'Salvando...' : 'Cadastrando...') : (isEditing ? 'Salvar alterações' : 'Cadastrar moto')}
             </Button>
           </div>
         </form>

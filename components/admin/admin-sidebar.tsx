@@ -26,10 +26,10 @@ export function AdminSidebar() {
   };
 
   return (
-    <div className="flex h-full w-64 flex-col bg-slate-900 text-white">
-      <div className="flex h-16 shrink-0 items-center px-6">
-        <Link href="/admin" className="text-xl font-bold tracking-tight">
-          AF Motos <span className="text-primary text-green-500">Admin</span>
+    <div className="flex flex-1 h-full w-full flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+      <div className="flex h-16 shrink-0 items-center px-6 border-b border-sidebar-border">
+        <Link href="/admin" className="text-xl font-bold tracking-tight text-sidebar-foreground">
+          AF <span className="text-primary">Motos</span>
         </Link>
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto">
@@ -42,14 +42,14 @@ export function AdminSidebar() {
                 href={item.href}
                 className={cn(
                   isActive
-                    ? 'bg-slate-800 text-white'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white',
-                  'group flex items-center rounded-md px-2 py-3 text-sm font-medium',
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  'group flex items-center rounded-md px-2 py-3 text-sm font-medium transition-colors',
                 )}
               >
                 <item.icon
                   className={cn(
-                    isActive ? 'text-white' : 'text-slate-400 group-hover:text-white',
+                    isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground',
                     'mr-3 h-5 w-5 flex-shrink-0',
                   )}
                   aria-hidden="true"
@@ -59,10 +59,10 @@ export function AdminSidebar() {
             );
           })}
         </nav>
-        <div className="p-4 mt-auto">
+        <div className="p-4 mt-auto border-t border-sidebar-border">
             <button
             onClick={handleLogout}
-            className="group flex w-full items-center rounded-md px-2 py-3 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            className="group flex w-full items-center rounded-md px-2 py-3 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
           >
             <LogOut className="mr-3 h-5 w-5 flex-shrink-0 text-slate-400 group-hover:text-white" />
             Sair

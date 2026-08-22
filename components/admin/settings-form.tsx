@@ -96,8 +96,8 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-8">
           
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Identidade da Loja</h2>
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
+            <h2 className="text-xl font-semibold text-foreground border-b pb-2">Identidade da Loja</h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <FormField
                 control={form.control as any}
@@ -158,8 +158,8 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Contato e Endereço</h2>
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
+            <h2 className="text-xl font-semibold text-foreground border-b pb-2">Contato e Endereço</h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <FormField
                 control={form.control as any}
@@ -203,8 +203,8 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Redes Sociais</h2>
+          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
+            <h2 className="text-xl font-semibold text-foreground border-b pb-2">Redes Sociais</h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <FormField
                 control={form.control as any}
