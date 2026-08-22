@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 export async function getMotorcycles() {
   const supabase = await createClient();
@@ -35,43 +36,61 @@ export async function getMotorcycleBySlug(slug: string) {
 export async function createMotorcycleAction(data: any) {
   const supabase = await createClient();
 
+  const { images, ...motoData } = data;
+
   // Create slug from brand, model, and year
-  const slug = `${data.brand}-${data.model}-${data.year_model}`
+  const slug = `${motoData.brand}-${motoData.model}-${motoData.year_model}`
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-');
 
   // Generate random internal code if not provided
   const internalCode =
-    data.internal_code ||
+    motoData.internal_code ||
     `MOTO-${Math.floor(Math.random() * 10000)
       .toString()
       .padStart(4, '0')}`;
 
-  const { error } = await supabase.from('motorcycles').insert({
-    ...data,
+  const { data: insertedMoto, error } = await supabase.from('motorcycles').insert({
+    ...motoData,
     slug,
     internal_code: internalCode,
-  });
+  }).select('id').single();
 
   if (error) {
     console.error('Error creating motorcycle:', error);
     return { error: error.message };
   }
 
+  if (images && images.length > 0) {
+    const imagesToInsert = images.map((img: any, index: number) => ({
+      motorcycle_id: insertedMoto.id,
+      storage_path: img.path,
+      is_primary: index === 0,
+      sort_order: index,
+    }));
+    const { error: imagesError } = await supabase.from('motorcycle_images').insert(imagesToInsert);
+    if (imagesError) {
+      console.error('Error inserting images:', imagesError);
+    }
+  }
+
+  revalidatePath('/admin/motos');
   return { success: true };
 }
 
 export async function updateMotorcycleAction(id: string, data: any) {
   const supabase = await createClient();
 
-  const slug = `${data.brand}-${data.model}-${data.year_model}`
+  const { images, ...motoData } = data;
+
+  const slug = `${motoData.brand}-${motoData.model}-${motoData.year_model}`
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-');
 
   const { error } = await supabase
     .from('motorcycles')
     .update({
-      ...data,
+      ...motoData,
       slug,
     })
     .eq('id', id);
@@ -81,6 +100,22 @@ export async function updateMotorcycleAction(id: string, data: any) {
     return { error: error.message };
   }
 
+  await supabase.from('motorcycle_images').delete().eq('motorcycle_id', id);
+
+  if (images && images.length > 0) {
+    const imagesToInsert = images.map((img: any, index: number) => ({
+      motorcycle_id: id,
+      storage_path: img.path,
+      is_primary: index === 0,
+      sort_order: index,
+    }));
+    const { error: imagesError } = await supabase.from('motorcycle_images').insert(imagesToInsert);
+    if (imagesError) {
+      console.error('Error inserting images:', imagesError);
+    }
+  }
+
+  revalidatePath('/admin/motos');
   return { success: true };
 }
 
@@ -94,5 +129,24 @@ export async function deleteMotorcycleAction(id: string) {
     return { error: error.message };
   }
 
+  revalidatePath('/admin/motos');
   return { success: true };
+}
+
+export async function toggleMotorcycleStatus(id: string, currentStatus: string) {
+  const supabase = await createClient();
+  const newStatus = currentStatus === 'AVAILABLE' ? 'UNAVAILABLE' : 'AVAILABLE';
+
+  const { error } = await supabase
+    .from('motorcycles')
+    .update({ status: newStatus })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error updating status:', error);
+    return { error: error.message };
+  }
+
+  revalidatePath('/admin/motos');
+  return { success: true, newStatus };
 }

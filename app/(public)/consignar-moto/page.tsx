@@ -47,7 +47,7 @@ export default function ConsignarMotoPage() {
               Por que consignar com a AF Locações e Vendas?
             </h2>
             <p className="text-[#a6a6a1] text-sm mt-1">
-              Compare as vantagens de deixar sua moto com uma concessionária especializada.
+              Compare as vantagens de deixar sua moto com uma loja especializada.
             </p>
           </div>
 

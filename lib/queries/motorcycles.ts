@@ -270,13 +270,20 @@ export async function getMotorcycleBySlug(slug: string) {
   };
 }
 
-export async function getAdminMotorcycles() {
+export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: string) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from('motorcycles')
-    .select(`*`)
-    .order('created_at', { ascending: false });
+  let query = supabase.from('motorcycles').select('*');
+
+  if (statusFilter && statusFilter !== 'ALL') {
+    query = query.eq('status', statusFilter);
+  }
+
+  if (searchQuery) {
+    query = query.or(`brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,internal_code.ilike.%${searchQuery}%`);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching admin motorcycles:', error);

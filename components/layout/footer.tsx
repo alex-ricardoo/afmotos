@@ -80,7 +80,7 @@ export function Footer() {
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#c9a44c]" />
                 </span>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-[#b8bcc2] mt-0.5">
-                  Concessionária Premium
+                  Loja Premium de Motocicletas
                 </span>
               </div>
             </Link>

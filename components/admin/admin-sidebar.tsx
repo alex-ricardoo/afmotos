@@ -44,7 +44,7 @@ export function AdminSidebar() {
                   isActive
                     ? 'bg-slate-800 text-white'
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white',
-                  'group flex items-center rounded-md px-2 py-2 text-sm font-medium',
+                  'group flex items-center rounded-md px-2 py-3 text-sm font-medium',
                 )}
               >
                 <item.icon
@@ -60,9 +60,9 @@ export function AdminSidebar() {
           })}
         </nav>
         <div className="p-4 mt-auto">
-          <button
+            <button
             onClick={handleLogout}
-            className="group flex w-full items-center rounded-md px-2 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            className="group flex w-full items-center rounded-md px-2 py-3 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
           >
             <LogOut className="mr-3 h-5 w-5 flex-shrink-0 text-slate-400 group-hover:text-white" />
             Sair

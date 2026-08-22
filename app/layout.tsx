@@ -1,11 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { WhatsAppButton } from '@/components/layout/whatsapp-button';
-import { Toaster } from '@/components/ui/sonner';
-import { AnalyticsProvider } from '@/components/providers/analytics-provider';
 
 const geistSans = Geist({
   variable: '--font-sans',
@@ -20,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'AF Locações e Vendas | Concessionária Premium de Motocicletas',
+  title: 'AF Locações e Vendas | Loja Premium de Motocicletas',
   description:
     'Aluguel, compra, venda e consignação de motos com procedência garantida, laudo cautelar aprovado e atendimento premium.',
   metadataBase: new URL(
@@ -39,13 +34,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#050505] text-[#f4f4f2] font-sans selection:bg-[#c9a44c] selection:text-black">
-        <Header />
-        <AnalyticsProvider>
-          <main className="flex-1">{children}</main>
-          <Toaster />
-        </AnalyticsProvider>
-        <WhatsAppButton />
-        <Footer />
+        {children}
       </body>
     </html>
   );

@@ -59,7 +59,7 @@ export function Header() {
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#c9a44c] shadow-[0_0_8px_#c9a44c]" />
             </span>
             <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-widest text-[#b8bcc2] mt-1">
-              Concessionária Premium
+              Loja
             </span>
           </div>
         </Link>
@@ -136,7 +136,7 @@ export function Header() {
                         AF LOCAÇÕES E VENDAS
                       </span>
                       <span className="text-[10px] uppercase font-bold text-[#b8bcc2] tracking-wider mt-0.5">
-                        Concessionária
+                        Loja
                       </span>
                     </div>
                   </SheetTitle>

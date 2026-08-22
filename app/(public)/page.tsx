@@ -48,7 +48,7 @@ export default async function HomePage() {
 
             {/* Subtitle */}
             <p className="text-base sm:text-lg md:text-xl text-[#a6a6a1] max-w-2xl mx-auto leading-relaxed">
-              Concessionária premium especializada em locação, venda e consignação de
+              Loja especializada em locação, venda e consignação de
               motocicletas selecionadas com rigor técnico e garantia total.
             </p>
 

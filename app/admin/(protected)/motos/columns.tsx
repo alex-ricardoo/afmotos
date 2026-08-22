@@ -9,6 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -54,12 +55,14 @@ export const columns: ColumnDef<any, any>[] = [
 
       return (
         <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-[min(var(--radius-md),10px)] text-sm font-medium transition-all outline-none select-none hover:bg-muted hover:text-foreground h-8 w-8 p-0">
+          <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center rounded-[min(var(--radius-md),10px)] text-sm font-medium transition-all outline-none select-none hover:bg-muted hover:text-foreground h-10 w-10 p-0">
             <span className="sr-only">Abrir menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal className="h-5 w-5" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Ações</DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => window.open(`/motos/${moto.slug}`, '_blank')}>
               <Eye className="mr-2 h-4 w-4" /> Ver no site

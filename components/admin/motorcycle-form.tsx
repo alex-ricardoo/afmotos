@@ -141,172 +141,178 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-8">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <FormField
-              control={form.control as any}
-              name="brand"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Marca</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Honda" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control as any}
-              name="model"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Modelo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: CB 500F" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control as any}
-              name="version"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Versão</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: ABS" {...field} value={field.value || ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control as any}
-              name="year_manufacture"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ano Fabricação</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control as any}
-              name="year_model"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ano Modelo</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control as any}
-              name="mileage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Quilometragem</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} value={field.value || 0} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control as any}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Preço (R$)</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} value={field.value || 0} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control as any}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+          
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Dados Básicos</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <FormField
+                control={form.control as any}
+                name="brand"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Marca</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o status" />
-                      </SelectTrigger>
+                      <Input placeholder="Ex: Honda" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="AVAILABLE">Disponível</SelectItem>
-                      <SelectItem value="RESERVED">Reservada</SelectItem>
-                      <SelectItem value="SOLD">Vendida</SelectItem>
-                      <SelectItem value="MAINTENANCE">Manutenção</SelectItem>
-                      <SelectItem value="RENTED">Alugada</SelectItem>
-                      <SelectItem value="HIDDEN">Oculta</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="model"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Modelo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: CB 500F" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="version"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Versão</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: ABS" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="year_manufacture"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ano Fabricação</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="year_model"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ano Modelo</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="mileage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quilometragem</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} value={field.value || 0} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
             <FormField
               control={form.control as any}
-              name="ownership_type"
+              name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Propriedade</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="OWN">Própria</SelectItem>
-                      <SelectItem value="CONSIGNMENT">Consignação</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Descrição</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Descreva a motocicleta em detalhes..."
+                      className="resize-none"
+                      rows={5}
+                      {...field}
+                      value={field.value || ''}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
 
-          <FormField
-            control={form.control as any}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Descrição</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Descreva a motocicleta em detalhes..."
-                    className="resize-none"
-                    rows={5}
-                    {...field}
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Status e Valores</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <FormField
+                control={form.control as any}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preço (R$)</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} value={field.value || 0} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="AVAILABLE">Disponível</SelectItem>
+                        <SelectItem value="RESERVED">Reservada</SelectItem>
+                        <SelectItem value="SOLD">Vendida</SelectItem>
+                        <SelectItem value="MAINTENANCE">Manutenção</SelectItem>
+                        <SelectItem value="RENTED">Alugada</SelectItem>
+                        <SelectItem value="HIDDEN">Oculta</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control as any}
+                name="ownership_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Propriedade</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="OWN">Própria</SelectItem>
+                        <SelectItem value="CONSIGNMENT">Consignação</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
 
-          <div className="space-y-2">
-            <FormLabel>Fotos da Motocicleta</FormLabel>
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Fotos da Motocicleta</h2>
             <div className="bg-slate-50 p-4 border rounded-md">
               <ImageUploader
                 onUpload={handleImageUpload}
@@ -325,7 +331,7 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" className="bg-[#c9a44c] hover:bg-[#b8943c] text-black font-semibold" disabled={loading}>
               {loading ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
