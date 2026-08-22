@@ -3,7 +3,12 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface MotorcycleImage {
   id: string;
   motorcycle_id: string;
-  storage_path: string;
+  provider?: 'imgbb' | 'supabase' | string;
+  storage_path?: string | null;
+  public_url?: string | null;
+  display_url?: string | null;
+  thumbnail_url?: string | null;
+  delete_url?: string | null;
   sort_order: number;
   is_primary: boolean;
   alt_text: string | null;

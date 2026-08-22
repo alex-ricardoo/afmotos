@@ -3,16 +3,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { MotorcycleImage } from '@/types/database';
+import { uploadImage, removeFromSupabaseStorage, getImageSource } from '@/lib/uploads';
 
-const BUCKET_NAME = 'motorcycle-images';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_MIME_TYPES: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'image/avif': 'avif',
-};
 
 export type UploadImageResult =
   | { success: true; image: MotorcycleImage; error?: never }
@@ -20,35 +13,22 @@ export type UploadImageResult =
 
 /**
  * Server action to upload an image and associate it with a specific motorcycle.
+ * Uses ImgBB as primary provider with automated Supabase Storage fallback.
  */
-export async function uploadMotorcycleImageAction(
-  formData: FormData,
-): Promise<UploadImageResult> {
+export async function uploadMotorcycleImageAction(formData: FormData): Promise<UploadImageResult> {
   const supabase = await createClient();
 
   const motorcycleId = formData.get('motorcycleId') as string;
   const file = formData.get('file') as File | null;
   const altText = (formData.get('altText') as string) || null;
 
-  // 1. Validations
+  // 1. Basic validation
   if (!motorcycleId || !UUID_REGEX.test(motorcycleId)) {
     return { success: false, error: 'ID da motocicleta inválido ou não informado.' };
   }
 
   if (!file || !(file instanceof File) || file.size === 0) {
     return { success: false, error: 'Nenhum arquivo válido foi enviado.' };
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    return { success: false, error: 'O tamanho do arquivo excede o limite de 10MB.' };
-  }
-
-  const safeExt = ALLOWED_MIME_TYPES[file.type];
-  if (!safeExt) {
-    return {
-      success: false,
-      error: 'Formato de imagem não suportado. Use JPG, PNG, WebP ou AVIF.',
-    };
   }
 
   // 2. Check if motorcycle exists
@@ -62,25 +42,24 @@ export async function uploadMotorcycleImageAction(
     return { success: false, error: 'Motocicleta não encontrada no sistema.' };
   }
 
-  // 3. Build unique storage path: motorcycles/{motorcycleId}/{uuid}.{ext}
-  const uniqueFilename = `${crypto.randomUUID()}.${safeExt}`;
-  const storagePath = `motorcycles/${motorcycleId}/${uniqueFilename}`;
-
-  // 4. Upload to Supabase Storage
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(storagePath, file, {
-      upsert: false,
-      contentType: file.type,
-      cacheControl: '3600',
+  // 3. Upload image via centralized orchestrator (ImgBB -> Supabase Storage fallback)
+  let uploadResult;
+  try {
+    uploadResult = await uploadImage({
+      file,
+      context: 'motorcycle',
+      entityId: motorcycleId,
+      altText: altText || undefined,
     });
-
-  if (uploadError || !uploadData) {
-    console.error('Error uploading image to storage:', uploadError);
-    return { success: false, error: `Erro no upload: ${uploadError?.message || 'Falha ao salvar no Storage'}` };
+  } catch (err: unknown) {
+    console.error('Error during image upload orchestration:', err);
+    return {
+      success: false,
+      error: (err as Error).message || 'Falha ao processar o upload da imagem.',
+    };
   }
 
-  // 5. Determine sort_order and is_primary
+  // 4. Determine sort_order and is_primary
   const { data: existingImages } = await supabase
     .from('motorcycle_images')
     .select('id, sort_order, is_primary')
@@ -95,35 +74,63 @@ export async function uploadMotorcycleImageAction(
       : -1;
   const nextSortOrder = maxSortOrder + 1;
 
-  // 6. Insert row in public.motorcycle_images
-  const { data: imageRow, error: insertError } = await supabase
+  // 5. Insert row in public.motorcycle_images with external metadata
+  const insertPayload = {
+    motorcycle_id: motorcycleId,
+    provider: uploadResult.provider,
+    storage_path: uploadResult.storagePath,
+    public_url: uploadResult.publicUrl,
+    display_url: uploadResult.displayUrl,
+    thumbnail_url: uploadResult.thumbnailUrl,
+    delete_url: uploadResult.deleteUrl,
+    sort_order: nextSortOrder,
+    is_primary: shouldBePrimary,
+    alt_text: altText,
+  };
+
+  let { data: imageRow, error: insertError } = await supabase
     .from('motorcycle_images')
-    .insert({
-      motorcycle_id: motorcycleId,
-      storage_path: uploadData.path,
-      sort_order: nextSortOrder,
-      is_primary: shouldBePrimary,
-      alt_text: altText,
-    })
+    .insert(insertPayload)
     .select('*')
     .single();
 
-  // 7. Rollback if insert fails
+  // Fallback: se o banco ainda não possuir as novas colunas de metadados externos
+  if (insertError) {
+    const legacyPayload = {
+      motorcycle_id: motorcycleId,
+      storage_path: uploadResult.storagePath || uploadResult.publicUrl || '',
+      sort_order: nextSortOrder,
+      is_primary: shouldBePrimary,
+      alt_text: altText,
+    };
+    const fallbackRes = await supabase
+      .from('motorcycle_images')
+      .insert(legacyPayload)
+      .select('*')
+      .single();
+    if (!fallbackRes.error && fallbackRes.data) {
+      imageRow = fallbackRes.data;
+      insertError = null;
+    }
+  }
+
+  // 6. Rollback if insert fails
   if (insertError || !imageRow) {
-    console.error('Failed to insert motorcycle_images record. Rolling back storage object:', insertError);
-    await supabase.storage.from(BUCKET_NAME).remove([uploadData.path]);
+    console.error(
+      'Failed to insert motorcycle_images record. Rolling back uploaded file if on Supabase:',
+      insertError,
+    );
+    if (uploadResult.provider === 'supabase' && uploadResult.storagePath) {
+      await removeFromSupabaseStorage(uploadResult.storagePath);
+    }
     return {
       success: false,
-      error: 'Não foi possível registrar o vínculo da imagem. O arquivo enviado foi revertido com segurança.',
+      error:
+        'Não foi possível registrar o vínculo da imagem. O arquivo enviado foi revertido com segurança.',
     };
   }
 
-  // 8. Generate public URL
-  const { data: publicUrlData } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(imageRow.storage_path);
-
-  // 9. Revalidate relevant Next.js routes
+  // 7. Revalidate relevant Next.js routes
   revalidatePath('/admin/motos');
   revalidatePath(`/admin/motos/${motorcycleId}/editar`);
   revalidatePath('/motos');
@@ -135,14 +142,14 @@ export async function uploadMotorcycleImageAction(
     success: true,
     image: {
       ...imageRow,
-      url: publicUrlData.publicUrl,
+      url: getImageSource(imageRow),
     },
   };
 }
 
 /**
  * Server action to delete an image by ID.
- * Removes both the storage object and database record, updating primary image if needed.
+ * Removes both the storage object (if Supabase) and database record, updating primary image if needed.
  */
 export async function deleteMotorcycleImageAction(
   imageId: string,
@@ -166,16 +173,14 @@ export async function deleteMotorcycleImageAction(
 
   const motorcycleId = imageRecord.motorcycle_id;
   const wasPrimary = imageRecord.is_primary;
+  const provider = imageRecord.provider || (imageRecord.storage_path ? 'supabase' : 'imgbb');
 
-  // 2. Remove from Storage (if not an external URL)
-  if (imageRecord.storage_path && !imageRecord.storage_path.startsWith('http')) {
-    const { error: storageRemoveError } = await supabase.storage
-      .from(BUCKET_NAME)
-      .remove([imageRecord.storage_path]);
-
-    if (storageRemoveError) {
-      console.warn('Storage removal warning (proceeding with DB deletion):', storageRemoveError);
-    }
+  // 2. Remove from Storage if Supabase
+  if (provider === 'supabase' && imageRecord.storage_path) {
+    await removeFromSupabaseStorage(imageRecord.storage_path);
+  } else if (provider === 'imgbb') {
+    // Audit log for ImgBB deletion
+    console.info(`[ImgBB] Imagem desvinculada do catálogo (ID: ${imageId}). Delete URL arquivada.`);
   }
 
   // 3. Delete from DB
@@ -290,9 +295,7 @@ export async function reorderMotorcycleImagesAction(
 /**
  * Helper to fetch all images for a motorcycle with resolved public URLs.
  */
-export async function getMotorcycleImagesAction(
-  motorcycleId: string,
-): Promise<MotorcycleImage[]> {
+export async function getMotorcycleImagesAction(motorcycleId: string): Promise<MotorcycleImage[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -306,41 +309,8 @@ export async function getMotorcycleImagesAction(
     return [];
   }
 
-  return data.map((img) => {
-    let url = img.storage_path;
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      const { data: publicUrlData } = supabase.storage
-        .from(BUCKET_NAME)
-        .getPublicUrl(img.storage_path);
-      url = publicUrlData.publicUrl;
-    }
-    return {
-      ...img,
-      url,
-    };
-  });
-}
-
-/**
- * Diagnostic action to inspect orphan storage objects and orphan database records.
- */
-export async function getOrphanedImagesDiagnosticsAction() {
-  const supabase = await createClient();
-
-  const { data: dbImages, error: dbError } = await supabase
-    .from('motorcycle_images')
-    .select('id, motorcycle_id, storage_path, is_primary');
-
-  const { data: storageFiles, error: storageError } = await supabase.storage
-    .from(BUCKET_NAME)
-    .list('general', { limit: 100 });
-
-  return {
-    dbImagesCount: dbImages?.length || 0,
-    dbError: dbError?.message,
-    storageGeneralCount: storageFiles?.length || 0,
-    storageError: storageError?.message,
-    dbImages: dbImages || [],
-    storageGeneralFiles: storageFiles || [],
-  };
+  return data.map((img) => ({
+    ...img,
+    url: getImageSource(img),
+  }));
 }

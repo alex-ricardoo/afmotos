@@ -107,17 +107,17 @@ export function Footer({ settings }: { settings?: any }) {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link href="/" className="hover:text-white transition-colors">
+                <Link href="/" className="hover:text-amber-500 transition-colors duration-200">
                   Início
                 </Link>
               </li>
               <li>
-                <Link href="/motos" className="hover:text-white transition-colors">
+                <Link href="/motos" className="hover:text-amber-500 transition-colors duration-200">
                   Motos Disponíveis
                 </Link>
               </li>
               <li>
-                <Link href="/motos-vendidas" className="hover:text-white transition-colors">
+                <Link href="/motos-vendidas" className="hover:text-amber-500 transition-colors duration-200">
                   Motos Vendidas
                 </Link>
               </li>
@@ -131,19 +131,19 @@ export function Footer({ settings }: { settings?: any }) {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link href="/anunciar-sua-moto" className="hover:text-white transition-colors">
+                <Link href="/anunciar-sua-moto" className="hover:text-amber-500 transition-colors duration-200">
                   Anuncie sua Moto
                 </Link>
               </li>
               <li>
-                <Link href="/aluguel" className="hover:text-white transition-colors">
+                <Link href="/aluguel" className="hover:text-amber-500 transition-colors duration-200">
                   Aluguel de Motos
                 </Link>
               </li>
               <li>
                 <Link
                   href="/politica-de-privacidade"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-amber-500 transition-colors duration-200"
                 >
                   Privacidade & Dados
                 </Link>
@@ -157,13 +157,17 @@ export function Footer({ settings }: { settings?: any }) {
               Atendimento
             </h4>
             <ul className="space-y-3 text-xs text-[#a6a6a1]">
-              <li className="flex items-center gap-2 text-white font-medium">
-                <Phone className="w-4 h-4 text-[#c9a44c] shrink-0" />
-                <span>{contactPhone}</span>
+              <li>
+                <a href={`tel:${contactPhone.replace(/\D/g, '')}`} className="flex items-center gap-2 hover:text-amber-500 transition-colors duration-200">
+                  <Phone className="w-4 h-4 text-[#c9a44c] shrink-0" />
+                  <span className="font-medium text-white hover:text-amber-500">{contactPhone}</span>
+                </a>
               </li>
-              <li className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[#c9a44c] shrink-0" />
-                <span>{contactEmail}</span>
+              <li>
+                <a href={`mailto:${contactEmail}`} className="flex items-center gap-2 hover:text-amber-500 transition-colors duration-200">
+                  <Mail className="w-4 h-4 text-[#c9a44c] shrink-0" />
+                  <span>{contactEmail}</span>
+                </a>
               </li>
               <li className="flex items-start gap-2">
                 <Clock className="w-4 h-4 text-[#c9a44c] shrink-0 mt-0.5" />
@@ -186,11 +190,11 @@ export function Footer({ settings }: { settings?: any }) {
           <div className="flex items-center gap-6">
             <Link
               href="/politica-de-privacidade"
-              className="hover:text-white cursor-pointer transition-colors"
+              className="hover:text-amber-500 cursor-pointer transition-colors duration-200"
             >
               Política de Privacidade
             </Link>
-            <Link href="/admin/login" className="hover:text-white transition-colors">
+            <Link href="/admin/login" className="hover:text-amber-500 transition-colors duration-200">
               Área Restrita
             </Link>
           </div>

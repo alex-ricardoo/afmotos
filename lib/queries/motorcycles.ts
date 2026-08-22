@@ -1,8 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
+import { getImageSource } from '@/lib/uploads/image-url';
 
 interface RawImageRecord {
   id: string;
-  storage_path: string;
+  provider?: string | null;
+  storage_path?: string | null;
+  public_url?: string | null;
+  display_url?: string | null;
+  thumbnail_url?: string | null;
   is_primary?: boolean | null;
   sort_order?: number | null;
   alt_text?: string | null;
@@ -42,15 +47,11 @@ interface RawMotorcycle {
 }
 
 export function getPublicImageUrl(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  storagePath?: string | null,
+  _supabase?: Awaited<ReturnType<typeof createClient>> | null,
+  imageOrPath?: RawImageRecord | string | null,
 ): string | undefined {
-  if (!storagePath) return undefined;
-  if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
-    return storagePath;
-  }
-  const { data } = supabase.storage.from('motorcycle-images').getPublicUrl(storagePath);
-  return data?.publicUrl || undefined;
+  if (!imageOrPath) return undefined;
+  return getImageSource(imageOrPath) || undefined;
 }
 
 export async function getFeaturedMotorcycles() {
@@ -71,12 +72,7 @@ export async function getFeaturedMotorcycles() {
       mileage,
       engine_capacity,
       status,
-      motorcycle_images (
-        id,
-        storage_path,
-        is_primary,
-        sort_order
-      )
+      motorcycle_images (*)
     `,
     )
     .eq('featured', true)
@@ -85,7 +81,7 @@ export async function getFeaturedMotorcycles() {
     .limit(6);
 
   if (error) {
-    console.error('Error fetching featured motorcycles:', error);
+    console.error('Error fetching featured motorcycles:', error.message || error);
     return [];
   }
 
@@ -98,7 +94,7 @@ export async function getFeaturedMotorcycles() {
       moto.motorcycle_images?.find((img) => img.is_primary) || moto.motorcycle_images?.[0];
     return {
       ...moto,
-      image_url: getPublicImageUrl(supabase, primaryImg?.storage_path),
+      image_url: getPublicImageUrl(supabase, primaryImg),
     };
   });
 }
@@ -112,6 +108,7 @@ export interface FilterSearchParams {
   maxPrice?: string;
   price?: string;
   status?: string;
+  sort?: string;
   [key: string]: string | string[] | undefined;
 }
 
@@ -134,12 +131,7 @@ export async function getAllMotorcycles(searchParams?: FilterSearchParams) {
       engine_capacity,
       status,
       featured,
-      motorcycle_images (
-        id,
-        storage_path,
-        is_primary,
-        sort_order
-      )
+      motorcycle_images (*)
     `,
     )
     .neq('status', 'HIDDEN');
@@ -166,6 +158,7 @@ export async function getAllMotorcycles(searchParams?: FilterSearchParams) {
           ? searchParams.price
           : undefined;
     const status = typeof searchParams.status === 'string' ? searchParams.status : undefined;
+    const sort = typeof searchParams.sort === 'string' ? searchParams.sort : undefined;
 
     if (brand && brand !== 'all' && typeof brand === 'string') {
       query = query.ilike('brand', `%${brand}%`);
@@ -188,14 +181,27 @@ export async function getAllMotorcycles(searchParams?: FilterSearchParams) {
     if (status && status !== 'all') {
       query = query.eq('status', status);
     }
-  }
 
-  query = query.order('created_at', { ascending: false });
+    // Sort handling
+    if (sort === 'price_asc') {
+      query = query.order('price', { ascending: true, nullsFirst: false });
+    } else if (sort === 'price_desc') {
+      query = query.order('price', { ascending: false, nullsFirst: false });
+    } else if (sort === 'year_desc') {
+      query = query.order('year_model', { ascending: false, nullsFirst: false });
+    } else if (sort === 'km_asc') {
+      query = query.order('mileage', { ascending: true, nullsFirst: false });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
 
   const { data, error } = await query;
 
   if (error) {
-    console.error('Error fetching motorcycles:', error);
+    console.error('Error fetching motorcycles:', error.message || error);
     return [];
   }
 
@@ -206,7 +212,7 @@ export async function getAllMotorcycles(searchParams?: FilterSearchParams) {
       moto.motorcycle_images?.find((img) => img.is_primary) || moto.motorcycle_images?.[0];
     return {
       ...moto,
-      image_url: getPublicImageUrl(supabase, primaryImg?.storage_path),
+      image_url: getPublicImageUrl(supabase, primaryImg),
     };
   });
 }
@@ -219,13 +225,7 @@ export async function getMotorcycleBySlug(slug: string) {
     .select(
       `
       *,
-      motorcycle_images (
-        id,
-        storage_path,
-        is_primary,
-        sort_order,
-        alt_text
-      ),
+      motorcycle_images (*),
       motorcycle_feature_assignments (
         feature_id,
         motorcycle_features (
@@ -240,7 +240,7 @@ export async function getMotorcycleBySlug(slug: string) {
     .single();
 
   if (error || !data) {
-    console.error('Error fetching motorcycle by slug:', error);
+    console.error('Error fetching motorcycle by slug:', error?.message || error);
     return null;
   }
 
@@ -250,7 +250,7 @@ export async function getMotorcycleBySlug(slug: string) {
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map((img) => ({
       id: img.id,
-      url: getPublicImageUrl(supabase, img.storage_path) || '',
+      url: getPublicImageUrl(supabase, img) || '',
       is_main: !!img.is_primary,
       display_order: img.sort_order ?? 0,
       alt_text: img.alt_text || undefined,
@@ -275,12 +275,7 @@ export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: s
 
   let query = supabase.from('motorcycles').select(`
     *,
-    motorcycle_images (
-      id,
-      storage_path,
-      is_primary,
-      sort_order
-    )
+    motorcycle_images (*)
   `);
 
   if (statusFilter && statusFilter !== 'ALL') {
@@ -296,7 +291,7 @@ export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: s
   const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching admin motorcycles:', error);
+    console.error('Error fetching admin motorcycles:', error.message || error);
     return [];
   }
 
@@ -306,14 +301,14 @@ export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: s
     const rawImages = (moto.motorcycle_images as any[]) || [];
     const sortedImages = rawImages.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     const primaryImg = sortedImages.find((img) => img.is_primary) || sortedImages[0];
-    const imageUrl = primaryImg ? getPublicImageUrl(supabase, primaryImg.storage_path) : undefined;
+    const imageUrl = primaryImg ? getPublicImageUrl(supabase, primaryImg) : undefined;
 
     return {
       ...moto,
       image_url: imageUrl,
       images: sortedImages.map((img) => ({
         id: img.id,
-        url: getPublicImageUrl(supabase, img.storage_path) || '',
+        url: getPublicImageUrl(supabase, img) || '',
       })),
     };
   });
@@ -327,22 +322,14 @@ export async function getMotorcycleById(id: string) {
     .select(
       `
       *,
-      motorcycle_images (
-        id,
-        motorcycle_id,
-        storage_path,
-        is_primary,
-        sort_order,
-        alt_text,
-        created_at
-      )
+      motorcycle_images (*)
     `,
     )
     .eq('id', id)
     .single();
 
   if (error || !data) {
-    console.error('Error fetching motorcycle by ID:', error);
+    console.error('Error fetching motorcycle by ID:', error?.message || error);
     return null;
   }
 
@@ -352,7 +339,7 @@ export async function getMotorcycleById(id: string) {
 
   const imagesWithUrls = rawImages.map((img) => ({
     ...img,
-    url: getPublicImageUrl(supabase, img.storage_path) || '',
+    url: getPublicImageUrl(supabase, img) || '',
   }));
 
   return {
@@ -379,19 +366,14 @@ export async function getSoldMotorcycles() {
       mileage,
       engine_capacity,
       status,
-      motorcycle_images (
-        id,
-        storage_path,
-        is_primary,
-        sort_order
-      )
+      motorcycle_images (*)
     `,
     )
     .eq('status', 'SOLD')
     .order('updated_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching sold motorcycles:', error);
+    console.error('Error fetching sold motorcycles:', error.message || error);
     return [];
   }
 
@@ -402,7 +384,7 @@ export async function getSoldMotorcycles() {
       moto.motorcycle_images?.find((img) => img.is_primary) || moto.motorcycle_images?.[0];
     return {
       ...moto,
-      image_url: getPublicImageUrl(supabase, primaryImg?.storage_path),
+      image_url: getPublicImageUrl(supabase, primaryImg),
     };
   });
 }

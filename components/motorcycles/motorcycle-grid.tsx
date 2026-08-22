@@ -11,11 +11,13 @@ import { cn } from '@/lib/utils';
 interface MotorcycleGridProps {
   motorcycles: MotorcycleCardData[];
   emptyMessage?: string;
+  viewMode?: 'grid' | 'list';
 }
 
 export function MotorcycleGrid({
   motorcycles,
   emptyMessage = 'Nenhuma moto encontrada com os filtros selecionados.',
+  viewMode = 'grid',
 }: MotorcycleGridProps) {
   const whatsappUrl = generateWhatsAppLink(
     CONSTANTS.CONTACT_PHONE,
@@ -61,11 +63,45 @@ export function MotorcycleGrid({
     );
   }
 
+  const needsLeadMagnet = viewMode === 'grid' && motorcycles.length > 0 && motorcycles.length % 3 !== 0;
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+    <div
+      className={cn(
+        'gap-6',
+        viewMode === 'grid'
+          ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3'
+          : 'flex flex-col space-y-4',
+      )}
+    >
       {motorcycles.map((moto) => (
-        <MotorcycleCard key={moto.id} motorcycle={moto} />
+        <div key={moto.id} className={viewMode === 'list' ? 'w-full' : ''}>
+          <MotorcycleCard motorcycle={moto} />
+        </div>
       ))}
+      
+      {needsLeadMagnet && (
+        <div className="rounded-2xl border-2 border-dashed border-amber-500/40 bg-zinc-900/40 p-6 flex flex-col justify-center items-center text-center space-y-4 min-h-[300px] hover:border-amber-500/60 transition-colors">
+          <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
+            <SearchX className="w-6 h-6 text-amber-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-extrabold text-white">Procurando outro modelo?</h3>
+            <p className="text-sm text-zinc-400 mt-2">
+              Não encontrou o ano ou a versão exata que você quer? Encomende com a gente.
+            </p>
+          </div>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-bold transition-all shadow-[0_0_15px_rgba(37,211,102,0.2)] mt-2"
+          >
+            <WhatsAppIcon className="w-4 h-4 fill-current" />
+            <span>Encomendar no WhatsApp</span>
+          </a>
+        </div>
+      )}
     </div>
   );
 }

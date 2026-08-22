@@ -10,6 +10,7 @@ import {
   setPrimaryMotorcycleImageAction,
 } from '@/lib/actions/images';
 import { MotorcycleImage } from '@/types/database';
+import { getImageSource } from '@/lib/uploads/image-url';
 import { Button } from '@/components/ui/button';
 
 interface ImageUploaderProps {
@@ -170,7 +171,8 @@ export function ImageUploader({
           <ImagePlus className="w-8 h-8 mx-auto mb-2 text-muted-foreground/60" />
           <p className="text-xs font-medium">Nenhuma foto adicionada ainda.</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Adicione fotos da motocicleta para atrair mais compradores. A primeira foto será usada como capa.
+            Adicione fotos da motocicleta para atrair mais compradores. A primeira foto será usada
+            como capa.
           </p>
         </div>
       )}
@@ -188,19 +190,22 @@ export function ImageUploader({
                   : 'border-border hover:border-zinc-500'
               }`}
             >
-              {img.url ? (
-                <Image
-                  src={img.url}
-                  alt={img.alt_text || 'Foto da motocicleta'}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                  Sem prévia
-                </div>
-              )}
+              {(() => {
+                const src = getImageSource(img);
+                return src ? (
+                  <Image
+                    src={src}
+                    alt={img.alt_text || 'Foto da motocicleta'}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                    Sem prévia
+                  </div>
+                );
+              })()}
 
               {/* Overlay on hover / active */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
@@ -264,7 +269,9 @@ export function ImageUploader({
               <>
                 <Loader2 className="w-6 h-6 animate-spin text-[#c9a44c] mb-2" />
                 <span className="text-xs font-semibold text-foreground">Enviando...</span>
-                <span className="text-[10px] text-muted-foreground mt-0.5">Salvando foto e registro</span>
+                <span className="text-[10px] text-muted-foreground mt-0.5">
+                  Salvando foto e registro
+                </span>
               </>
             ) : (
               <>
@@ -274,9 +281,7 @@ export function ImageUploader({
                 <span className="text-xs font-semibold text-foreground group-hover:text-[#c9a44c] transition-colors">
                   Adicionar Fotos
                 </span>
-                <span className="text-[10px] text-muted-foreground mt-0.5">
-                  JPG, PNG, WebP
-                </span>
+                <span className="text-[10px] text-muted-foreground mt-0.5">JPG, PNG, WebP</span>
               </>
             )}
           </div>

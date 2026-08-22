@@ -163,13 +163,18 @@ export async function deleteMotorcycleAction(id: string) {
   // 1. Fetch images to cleanup storage
   const { data: images } = await supabase
     .from('motorcycle_images')
-    .select('storage_path')
+    .select('provider, storage_path')
     .eq('motorcycle_id', id);
 
   if (images && images.length > 0) {
     const pathsToRemove = images
-      .map((img) => img.storage_path)
-      .filter((p) => p && !p.startsWith('http'));
+      .filter(
+        (img) =>
+          (!img.provider || img.provider === 'supabase') &&
+          img.storage_path &&
+          !img.storage_path.startsWith('http'),
+      )
+      .map((img) => img.storage_path as string);
     if (pathsToRemove.length > 0) {
       await supabase.storage.from('motorcycle-images').remove(pathsToRemove);
     }

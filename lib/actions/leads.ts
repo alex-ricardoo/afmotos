@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { uploadImage } from '@/lib/uploads';
 
 export interface CreateLeadPayload {
   type:
@@ -42,6 +43,37 @@ export interface SellRequestPayload {
   desired_price?: number;
   notes?: string;
   images?: string[];
+}
+
+/**
+ * Server action to upload an image from public announcement/sell form.
+ * Uses centralized uploadImage orchestrator (ImgBB with Supabase Storage fallback).
+ */
+export async function uploadPublicSellRequestImageAction(
+  formData: FormData,
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const file = formData.get('file') as File | null;
+    if (!file || !(file instanceof File) || file.size === 0) {
+      return { success: false, error: 'Nenhum arquivo de imagem válido enviado.' };
+    }
+
+    const uploaded = await uploadImage({
+      file,
+      context: 'sell_request',
+    });
+
+    return {
+      success: true,
+      url: uploaded.publicUrl,
+    };
+  } catch (err: unknown) {
+    console.error('Error uploading public sell request image:', err);
+    return {
+      success: false,
+      error: (err as Error).message || 'Falha ao processar upload da foto.',
+    };
+  }
 }
 
 export async function createSellRequestAction(data: SellRequestPayload) {

@@ -17,8 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { sellRequestSchema, SellRequestInput } from '@/lib/validations/sell-request';
-import { createSellRequestAction } from '@/lib/actions/leads';
-import { createClient } from '@/lib/supabase/client';
+import { createSellRequestAction, uploadPublicSellRequestImageAction } from '@/lib/actions/leads';
 
 export function AnunciarMotoForm() {
   const [loading, setLoading] = useState(false);
@@ -80,18 +79,17 @@ export function AnunciarMotoForm() {
     setLoading(true);
     try {
       const uploadedUrls: string[] = [];
-      const supabase = createClient();
 
-      // Upload de fotos selecionadas para o Supabase Storage se houver
+      // Upload de fotos selecionadas via Server Action centralizada (ImgBB + Fallback Supabase)
       for (const file of selectedFiles) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `sell-requests/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('motorcycle-images')
-          .upload(fileName, file);
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadResult = await uploadPublicSellRequestImageAction(formData);
 
-        if (!uploadError && uploadData) {
-          uploadedUrls.push(uploadData.path);
+        if (uploadResult.success && uploadResult.url) {
+          uploadedUrls.push(uploadResult.url);
+        } else {
+          console.warn('Aviso de falha parcial no upload de foto da proposta:', uploadResult.error);
         }
       }
 
