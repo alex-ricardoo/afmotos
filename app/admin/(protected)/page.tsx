@@ -1,6 +1,6 @@
 import { getDashboardMetrics } from '@/lib/queries/dashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bike, CheckCircle, FileText, ShoppingBag } from 'lucide-react';
+import { Bike, CheckCircle, MessageSquare, ShoppingBag } from 'lucide-react';
 
 export default async function AdminDashboardPage() {
   const metrics = await getDashboardMetrics();
@@ -42,8 +42,8 @@ export default async function AdminDashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Novos Leads</CardTitle>
-            <FileText className="h-4 w-4 text-yellow-500" />
+            <CardTitle className="text-sm font-medium">Novos Contatos</CardTitle>
+            <MessageSquare className="h-4 w-4 text-[#e3c56c]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.newLeads}</div>

@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -242,17 +243,17 @@ export function AdminMotorcycleStock({ initialData }: Props) {
       </div>
 
       {/* 3. Toolbar (Search, Filter Tabs & View Toggle) */}
-      <div className="bg-card p-4 rounded-2xl border border-border/80 shadow-xs space-y-4">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="bg-card p-4 rounded-2xl border border-border/80 shadow-xs space-y-4 overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Search Box */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               type="text"
               placeholder="Buscar por marca, modelo, versão ou placa..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-9 h-11 bg-background/50 border-border/60 focus:border-[#c9a44c] rounded-xl text-sm"
+              className="pl-10 pr-9 h-11 bg-background/50 border-border/60 focus:border-[#c9a44c] rounded-xl text-sm w-full"
             />
             {searchQuery && (
               <button
@@ -265,14 +266,14 @@ export function AdminMotorcycleStock({ initialData }: Props) {
           </div>
 
           {/* View Toggle Buttons (Grid vs Table) */}
-          <div className="flex items-center gap-1 bg-background/60 p-1 rounded-xl border border-border/60 self-end md:self-auto">
+          <div className="flex items-center justify-center gap-1 bg-background/60 p-1 rounded-xl border border-border/60 shrink-0">
             <Button
               type="button"
               variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('grid')}
               className={cn(
-                'h-9 px-3 rounded-lg text-xs font-semibold gap-1.5 transition-all',
+                'flex-1 sm:flex-initial h-9 px-3.5 rounded-lg text-xs font-semibold gap-1.5 transition-all',
                 viewMode === 'grid' && 'bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40',
               )}
             >
@@ -285,7 +286,7 @@ export function AdminMotorcycleStock({ initialData }: Props) {
               size="sm"
               onClick={() => setViewMode('table')}
               className={cn(
-                'h-9 px-3 rounded-lg text-xs font-semibold gap-1.5 transition-all',
+                'flex-1 sm:flex-initial h-9 px-3.5 rounded-lg text-xs font-semibold gap-1.5 transition-all',
                 viewMode === 'table' && 'bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40',
               )}
             >
