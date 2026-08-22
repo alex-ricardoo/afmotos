@@ -67,11 +67,11 @@ export function RentalForm() {
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success('Sua solicitação de aluguel foi enviada com sucesso!');
+        toast.success('Recebemos suas informações. Vamos analisar e falar com você pelo WhatsApp.');
         setSuccess(true);
       }
     } catch (error) {
-      toast.error('Ocorreu um erro ao enviar sua solicitação.');
+      toast.error('Não foi possível enviar agora. Verifique os campos e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -79,13 +79,16 @@ export function RentalForm() {
 
   if (success) {
     return (
-      <div className="bg-green-50 border border-green-200 text-green-800 p-6 rounded-lg text-center">
-        <h3 className="text-xl font-semibold mb-2">Solicitação Enviada!</h3>
-        <p>
-          Recebemos o seu interesse em aluguel. Nossa equipe entrará em contato em breve para
-          apresentar as opções e valores disponíveis.
+      <div className="bg-emerald-950/40 border border-emerald-500/30 text-[#f4f4f2] p-6 rounded-2xl text-center space-y-3">
+        <h3 className="text-xl font-bold text-white">Solicitação Enviada!</h3>
+        <p className="text-sm text-[#a6a6a1]">
+          Recebemos o seu interesse em aluguel. Vamos verificar a disponibilidade e entrar em
+          contato com você pelo WhatsApp para apresentar as opções.
         </p>
-        <Button className="mt-4" variant="outline" onClick={() => setSuccess(false)}>
+        <Button
+          className="mt-4 bg-[#c9a44c] hover:bg-[#e3c56c] text-black font-bold"
+          onClick={() => setSuccess(false)}
+        >
           Nova Solicitação
         </Button>
       </div>
@@ -189,8 +192,13 @@ export function RentalForm() {
           />
         </div>
 
-        <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading ? 'Enviando...' : 'Solicitar Orçamento de Aluguel'}
+        <Button
+          type="submit"
+          className="w-full bg-[#c9a44c] hover:bg-[#e3c56c] text-black font-extrabold h-12 rounded-xl shadow-sm cursor-pointer"
+          size="lg"
+          disabled={loading}
+        >
+          {loading ? 'Enviando...' : 'Consultar Disponibilidade de Aluguel'}
         </Button>
       </form>
     </Form>

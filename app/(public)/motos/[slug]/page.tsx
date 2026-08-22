@@ -5,15 +5,11 @@ import {
   ChevronRight,
   ArrowLeft,
   ShieldCheck,
-  FileCheck,
   MapPin,
   Clock,
-  Sparkles,
-  Share2,
-  MessageCircle,
-  Award,
 } from 'lucide-react';
 import { Metadata } from 'next';
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { getMotorcycleBySlug, getFeaturedMotorcycles } from '@/lib/queries/motorcycles';
 import { ImageCarousel } from '@/components/gallery/image-carousel';
 import { MotorcycleSpecs } from '@/components/motorcycles/motorcycle-specs';
@@ -26,7 +22,6 @@ import { MotorcycleGrid } from '@/components/motorcycles/motorcycle-grid';
 import { formatCurrency } from '@/lib/utils/format';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink, generateMotorcycleInterestMessage } from '@/lib/utils/whatsapp';
-import { cn } from '@/lib/utils';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -37,14 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const moto = await getMotorcycleBySlug(slug);
 
   if (!moto) {
-    return { title: 'Moto não encontrada | AF Locações e Vendas' };
+    return { title: 'Moto não encontrada | AF Motos' };
   }
 
   const priceFormatted = moto.price ? ` - ${formatCurrency(moto.price)}` : '';
-  const title = `${moto.brand} ${moto.model} ${moto.year_model}${priceFormatted} | AF Locações e Vendas`;
+  const title = `${moto.brand} ${moto.model} ${moto.year_model}${priceFormatted} | AF Motos`;
   const description = moto.description
     ? moto.description.substring(0, 160)
-    : `Confira a ${moto.brand} ${moto.model} (${moto.year_model}) na AF Locações e Vendas. Laudo cautelar aprovado, revisada e com garantia total.`;
+    : `Confira a ${moto.brand} ${moto.model} (${moto.year_model}) na AF Motos. Negociação direta e atendimento pelo WhatsApp.`;
 
   return {
     title,
@@ -78,7 +73,7 @@ export default async function MotorcycleDetailPage({ params }: Props) {
 
   const mobileWhatsAppUrl = generateWhatsAppLink(
     CONSTANTS.CONTACT_PHONE,
-    generateMotorcycleInterestMessage(moto)
+    generateMotorcycleInterestMessage(moto),
   );
 
   return (
@@ -87,18 +82,12 @@ export default async function MotorcycleDetailPage({ params }: Props) {
       <div className="border-b border-[#c9a44c]/20 bg-[#0d0d0d]">
         <div className="container mx-auto px-4 md:px-6 py-3.5 flex items-center justify-between text-xs text-[#a6a6a1]">
           <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-none">
-            <Link
-              href="/"
-              className="hover:text-white transition-colors font-medium"
-            >
+            <Link href="/" className="hover:text-white transition-colors font-medium">
               Início
             </Link>
             <ChevronRight className="w-3.5 h-3.5 shrink-0 text-[#c9a44c]/60" />
-            <Link
-              href="/motos"
-              className="hover:text-white transition-colors font-medium"
-            >
-              Estoque
+            <Link href="/motos" className="hover:text-white transition-colors font-medium">
+              Motos disponíveis
             </Link>
             <ChevronRight className="w-3.5 h-3.5 shrink-0 text-[#c9a44c]/60" />
             <span className="text-white font-bold truncate max-w-[200px] sm:max-w-none">
@@ -111,7 +100,7 @@ export default async function MotorcycleDetailPage({ params }: Props) {
             className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-[#e3c56c] hover:text-white transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Voltar ao Estoque</span>
+            <span>Voltar para Motos</span>
           </Link>
         </div>
       </div>
@@ -130,18 +119,12 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                 <span className="text-xs uppercase tracking-wider font-extrabold text-[#c9a44c]">
                   {moto.brand}
                 </span>
-                <MotorcycleStatusBadge
-                  status={moto.status as MotorcycleStatus}
-                />
+                <MotorcycleStatusBadge status={moto.status as MotorcycleStatus} />
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-heading">
                 {moto.model}
               </h1>
-              {moto.version && (
-                <p className="text-sm text-[#a6a6a1] font-medium">
-                  {moto.version}
-                </p>
-              )}
+              {moto.version && <p className="text-sm text-[#a6a6a1] font-medium">{moto.version}</p>}
               <div className="text-3xl font-black text-[#e3c56c] tabular-nums tracking-tight pt-1">
                 {moto.price ? formatCurrency(moto.price) : 'Consulte'}
               </div>
@@ -160,9 +143,7 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                   <span className="text-xs uppercase tracking-wider font-extrabold text-[#c9a44c]">
                     {moto.brand}
                   </span>
-                  <MotorcycleStatusBadge
-                    status={moto.status as MotorcycleStatus}
-                  />
+                  <MotorcycleStatusBadge status={moto.status as MotorcycleStatus} />
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-snug font-heading">
@@ -170,39 +151,33 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                 </h1>
 
                 {moto.version && (
-                  <p className="text-sm text-[#a6a6a1] font-medium">
-                    {moto.version}
-                  </p>
+                  <p className="text-sm text-[#a6a6a1] font-medium">{moto.version}</p>
                 )}
               </div>
 
               {/* Price Display */}
               <div className="space-y-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#b8bcc2]">
-                  Valor de Aquisição
+                  Preço
                 </span>
                 <div className="text-3xl sm:text-4xl font-black text-[#e3c56c] tabular-nums tracking-tight">
                   {moto.price ? formatCurrency(moto.price) : 'Sob Consulta'}
                 </div>
                 <p className="text-xs text-[#a6a6a1]">
-                  Opções de financiamento bancário, entrada facilitada e troca com troco.
+                  Negociação direta com o vendedor. Fale pelo WhatsApp para mais informações.
                 </p>
               </div>
 
               {/* Key Quick Stats */}
               <div className="grid grid-cols-3 gap-2 py-3 px-3.5 bg-[#0d0d0d] rounded-2xl text-center text-xs font-bold text-white border border-[#c9a44c]/15">
                 <div>
-                  <span className="text-[10px] text-[#a6a6a1] block font-medium">
-                    Ano
-                  </span>
+                  <span className="text-[10px] text-[#a6a6a1] block font-medium">Ano</span>
                   <span className="tabular-nums">
                     {moto.year_manufacture}/{moto.year_model}
                   </span>
                 </div>
                 <div className="border-x border-[#c9a44c]/15">
-                  <span className="text-[10px] text-[#a6a6a1] block font-medium">
-                    KM
-                  </span>
+                  <span className="text-[10px] text-[#a6a6a1] block font-medium">KM</span>
                   <span className="tabular-nums">
                     {moto.mileage !== null && moto.mileage !== undefined
                       ? `${moto.mileage.toLocaleString('pt-BR')} km`
@@ -210,13 +185,9 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#a6a6a1] block font-medium">
-                    Motor
-                  </span>
+                  <span className="text-[10px] text-[#a6a6a1] block font-medium">Motor</span>
                   <span className="tabular-nums">
-                    {moto.engine_capacity
-                      ? `${moto.engine_capacity}cc`
-                      : 'Flex'}
+                    {moto.engine_capacity ? `${moto.engine_capacity}cc` : 'Flex'}
                   </span>
                 </div>
               </div>
@@ -224,19 +195,17 @@ export default async function MotorcycleDetailPage({ params }: Props) {
               {/* WhatsApp Conversion CTAs */}
               <WhatsAppCTA motorcycle={moto} />
 
-              {/* Showroom info */}
+              {/* Showroom / Visitação info */}
               <div className="pt-2 border-t border-[#c9a44c]/20 space-y-2 text-xs text-[#a6a6a1]">
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-[#e3c56c] shrink-0 mt-0.5" />
                   <span>
-                    Disponível para visitação e test-ride no Showroom AF Locações e Vendas com agendamento.
+                    Visitação e checagem da moto disponíveis com agendamento prévio pelo WhatsApp.
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#e3c56c] shrink-0" />
-                  <span>
-                    Segunda a Sexta das 08h às 18h | Sábado das 08h às 13h
-                  </span>
+                  <span>Segunda a Sexta das 08h às 18h | Sábado das 08h às 13h</span>
                 </div>
               </div>
             </div>
@@ -245,10 +214,11 @@ export default async function MotorcycleDetailPage({ params }: Props) {
             <div className="bg-[#0d0d0d] text-white p-5 rounded-2xl border border-[#c9a44c]/30 space-y-3">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#e3c56c]">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Garantia AF Locações e Vendas</span>
+                <span>Negociação Transparente</span>
               </div>
               <p className="text-xs text-[#b8bcc2] leading-relaxed">
-                Veículo com laudo cautelar 100% aprovado, sem sinistro ou restrições, periciado e pronto para transferência imediata.
+                Tire suas dúvidas diretamente pelo WhatsApp antes de fechar qualquer negócio.
+                Documentação e histórico conferidos para uma transferência tranquila.
               </p>
             </div>
           </div>
@@ -260,17 +230,17 @@ export default async function MotorcycleDetailPage({ params }: Props) {
             <div className="flex items-end justify-between">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-[#e3c56c]">
-                  Explore Mais Opções
+                  Mais Opções
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">
-                  Outras Motos Semelhantes
+                  Outras Motos Disponíveis
                 </h2>
               </div>
               <Link
                 href="/motos"
                 className="hidden sm:inline-flex text-xs font-bold text-[#e3c56c] hover:text-white"
               >
-                Ver todo o estoque &rarr;
+                Ver todas as motos &rarr;
               </Link>
             </div>
 
@@ -296,7 +266,7 @@ export default async function MotorcycleDetailPage({ params }: Props) {
           rel="noopener noreferrer"
           className="flex-1 max-w-[220px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-sm shadow-[0_0_15px_rgba(37,211,102,0.2)] transition-all"
         >
-          <MessageCircle className="w-4 h-4 fill-white" />
+          <WhatsAppIcon className="w-4 h-4 fill-current" />
           <span>Falar no WhatsApp</span>
         </a>
       </div>

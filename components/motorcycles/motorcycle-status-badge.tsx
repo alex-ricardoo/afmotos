@@ -21,10 +21,7 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<
-  string,
-  { label: string; classes: string; dotClass: string }
-> = {
+const statusConfig: Record<string, { label: string; classes: string; dotClass: string }> = {
   AVAILABLE: {
     label: 'Disponível',
     classes:

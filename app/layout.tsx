@@ -15,19 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'AF Locações e Vendas | Loja Premium de Motocicletas',
+  title: 'AF Motos | Compra, Venda e Locação de Motos',
   description:
-    'Aluguel, compra, venda e consignação de motos com procedência garantida, laudo cautelar aprovado e atendimento premium.',
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || 'https://aflocacoesevendas.com.br'
-  ),
+    'Encontre motos disponíveis ou anuncie a sua com a AF Motos. Negociação direta e transparente com atendimento pelo WhatsApp.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://aflocacoesevendas.com.br'),
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="pt-BR"

@@ -27,9 +27,13 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
       <div className="flex flex-col gap-2 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            <Link href="/admin" className="hover:text-primary transition-colors">Admin</Link>
+            <Link href="/admin" className="hover:text-primary transition-colors">
+              Admin
+            </Link>
             <span>/</span>
-            <Link href="/admin/motos" className="hover:text-primary transition-colors">Motos</Link>
+            <Link href="/admin/motos" className="hover:text-primary transition-colors">
+              Motos
+            </Link>
             <span>/</span>
             <span className="text-foreground">Editar</span>
           </div>
@@ -38,7 +42,10 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/admin/motos" className={buttonVariants({ variant: 'outline', size: 'icon' })}>
+          <Link
+            href="/admin/motos"
+            className={buttonVariants({ variant: 'outline', size: 'icon' })}
+          >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>

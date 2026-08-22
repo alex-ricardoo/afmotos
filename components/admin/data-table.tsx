@@ -44,8 +44,8 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         <TableBody>
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow 
-                key={row.id} 
+              <TableRow
+                key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
                 className="hover:bg-muted/50 border-border transition-colors data-[state=selected]:bg-muted"
               >
@@ -58,7 +58,10 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+              <TableCell
+                colSpan={columns.length}
+                className="h-32 text-center text-muted-foreground"
+              >
                 <div className="flex flex-col items-center justify-center gap-1">
                   <p>Nenhum resultado encontrado.</p>
                   <p className="text-sm">Tente ajustar os filtros ou a busca.</p>

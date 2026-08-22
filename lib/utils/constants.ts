@@ -1,6 +1,6 @@
 export const CONSTANTS = {
-  CONTACT_PHONE: '5511999999999', // Substituir pelo telefone oficial
-  STORE_NAME: 'AF Locações e Vendas',
-  STORE_ADDRESS: 'Showroom Premium - Atendimento com Agendamento',
-  CONTACT_EMAIL: 'contato@aflocacoesevendas.com.br',
+  CONTACT_PHONE: '5511999999999', // Telefone oficial configurável no banco
+  STORE_NAME: 'AF Motos',
+  STORE_ADDRESS: 'Atendimento local com agendamento direto pelo WhatsApp',
+  CONTACT_EMAIL: 'contato@afmotos.com.br',
 };

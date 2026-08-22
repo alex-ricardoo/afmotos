@@ -19,7 +19,13 @@ export default async function AdminMotosPage(props: {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Estoque de Motos</h1>
-        <Link href="/admin/motos/nova" className={buttonVariants({ className: 'bg-primary hover:bg-primary/90 text-primary-foreground font-semibold w-full sm:w-auto' })}>
+        <Link
+          href="/admin/motos/nova"
+          className={buttonVariants({
+            className:
+              'bg-primary hover:bg-primary/90 text-primary-foreground font-semibold w-full sm:w-auto',
+          })}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Adicionar Moto
         </Link>

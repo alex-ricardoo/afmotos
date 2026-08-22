@@ -22,7 +22,7 @@ Transform the AF Motos digital platform into a high-conversion, professional dig
 **Project Type**: Full-stack Next.js Web Application  
 **Performance Goals**: Core Web Vitals LCP < 2.5s on mobile 4G, 0 cumulative layout shift, 95+ Lighthouse Accessibility score  
 **Constraints**: Zero regression in Supabase queries/types; preserve all route handlers and Server Actions; no placeholder mock data; strict adherence to WCAG 2.1 AA contrast standards  
-**Scale/Scope**: 7 public customer-facing routes + components architecture (Layout, Filters, Motorcycles, Gallery, Forms)  
+**Scale/Scope**: 7 public customer-facing routes + components architecture (Layout, Filters, Motorcycles, Gallery, Forms)
 
 ---
 
@@ -30,20 +30,20 @@ Transform the AF Motos digital platform into a high-conversion, professional dig
 
 _GATE: Initial assessment against the 12 Constitutional Principles._
 
-| Principle | Status | Evaluation |
-|-----------|--------|------------|
-| **I. Product First** | PASS | High-trust dealership experience directly facilitates discovery, evaluation, and conversion. |
-| **II. Mobile First** | PASS | Navigation, gallery, search drawer, and sticky WhatsApp actions optimized for thumb reach. |
-| **III. Type Safety** | PASS | All component props strictly typed against database entities without `any`. |
-| **IV. Segurança** | PASS | No sensitive keys or private fields exposed in client markup or public routes. |
-| **V. Supabase como Fonte** | PASS | All dynamic data continues to be queried directly from Supabase. |
-| **VI. Componentização** | PASS | Cohesive components organized by domain (`layout`, `motorcycles`, `filters`, `forms`, `gallery`). |
-| **VII. Integrações Desacopladas** | PASS | WhatsApp link generators and plate lookup remain behind clean helper abstractions. |
-| **VIII. UX Consistente** | PASS | Unified Tailwind v4 design tokens for colors, spacing, typography, and card states. |
-| **IX. Performance & SEO** | PASS | Optimized `next/image` with aspect ratios, dynamic Open Graph tags, and semantic HTML. |
-| **X. Testabilidade** | PASS | Business logic, formatters, and validation functions remain decoupled and verifiable. |
-| **XI. Observabilidade** | PASS | Existing analytics events (views, clicks, lead submissions) remain integrated. |
-| **XII. Evolução Incremental** | PASS | Visual redesign builds directly upon existing architecture without breaking changes. |
+| Principle                         | Status | Evaluation                                                                                        |
+| --------------------------------- | ------ | ------------------------------------------------------------------------------------------------- |
+| **I. Product First**              | PASS   | High-trust dealership experience directly facilitates discovery, evaluation, and conversion.      |
+| **II. Mobile First**              | PASS   | Navigation, gallery, search drawer, and sticky WhatsApp actions optimized for thumb reach.        |
+| **III. Type Safety**              | PASS   | All component props strictly typed against database entities without `any`.                       |
+| **IV. Segurança**                 | PASS   | No sensitive keys or private fields exposed in client markup or public routes.                    |
+| **V. Supabase como Fonte**        | PASS   | All dynamic data continues to be queried directly from Supabase.                                  |
+| **VI. Componentização**           | PASS   | Cohesive components organized by domain (`layout`, `motorcycles`, `filters`, `forms`, `gallery`). |
+| **VII. Integrações Desacopladas** | PASS   | WhatsApp link generators and plate lookup remain behind clean helper abstractions.                |
+| **VIII. UX Consistente**          | PASS   | Unified Tailwind v4 design tokens for colors, spacing, typography, and card states.               |
+| **IX. Performance & SEO**         | PASS   | Optimized `next/image` with aspect ratios, dynamic Open Graph tags, and semantic HTML.            |
+| **X. Testabilidade**              | PASS   | Business logic, formatters, and validation functions remain decoupled and verifiable.             |
+| **XI. Observabilidade**           | PASS   | Existing analytics events (views, clicks, lead submissions) remain integrated.                    |
+| **XII. Evolução Incremental**     | PASS   | Visual redesign builds directly upon existing architecture without breaking changes.              |
 
 ---
 
@@ -112,6 +112,6 @@ components/
 
 ## Complexity Tracking
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|--------------------------------------|
-| None | N/A | Standard clean Next.js + Tailwind v4 architecture |
+| Violation | Why Needed | Simpler Alternative Rejected Because              |
+| --------- | ---------- | ------------------------------------------------- |
+| None      | N/A        | Standard clean Next.js + Tailwind v4 architecture |

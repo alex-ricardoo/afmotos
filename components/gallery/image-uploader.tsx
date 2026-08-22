@@ -53,7 +53,11 @@ export function ImageUploader({
     const successCount = results.filter(Boolean).length;
 
     if (successCount > 0) {
-      toast.success(successCount === 1 ? '1 imagem enviada com sucesso!' : `${successCount} imagens enviadas com sucesso!`);
+      toast.success(
+        successCount === 1
+          ? '1 imagem enviada com sucesso!'
+          : `${successCount} imagens enviadas com sucesso!`,
+      );
     }
 
     setUploading(false);

@@ -112,7 +112,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
                   'relative w-20 h-14 sm:w-24 sm:h-16 shrink-0 rounded-xl overflow-hidden border-2 transition-all cursor-pointer',
                   isSelected
                     ? 'border-[#c9a44c] ring-2 ring-[#c9a44c]/40 scale-95 shadow-sm'
-                    : 'border-transparent opacity-60 hover:opacity-100'
+                    : 'border-transparent opacity-60 hover:opacity-100',
                 )}
               >
                 <Image

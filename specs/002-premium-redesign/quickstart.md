@@ -1,7 +1,7 @@
 # Quickstart & Visual Verification Guide: AF Motos Redesign
 
 **Feature**: AF Motos – Premium Visual Redesign (`002-premium-redesign`)  
-**Date**: 2026-08-21  
+**Date**: 2026-08-21
 
 ---
 
@@ -17,6 +17,7 @@
 ```bash
 npm run dev
 ```
+
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
@@ -24,6 +25,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## 3. Visual & Functional Verification Scenarios
 
 ### Scenario 1: Homepage & Premium Branding
+
 - **URL**: `http://localhost:3000`
 - **Verify**:
   - Hero banner renders with strong typography and high-contrast dual CTAs.
@@ -34,6 +36,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
   - Mobile responsiveness: Hamburger menu works smoothly with no horizontal scrolling.
 
 ### Scenario 2: Catalog & Filter Drawer
+
 - **URL**: `http://localhost:3000/motos`
 - **Verify**:
   - Desktop sticky filter sidebar is clean and responsive.
@@ -42,6 +45,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
   - Empty state displays a friendly, actionable message if no bikes match.
 
 ### Scenario 3: Motorcycle Detail Page
+
 - **URL**: `http://localhost:3000/motos/[any-slug]`
 - **Verify**:
   - Image gallery allows thumbnail switching and mobile swipe.
@@ -51,6 +55,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
   - Mobile view displays a fixed bottom CTA bar.
 
 ### Scenario 4: Service Pages (Venda / Consignação / Aluguel)
+
 - **URLs**:
   - `http://localhost:3000/venda-sua-moto`
   - `http://localhost:3000/consignar-moto`

@@ -3,6 +3,7 @@
 ## 1. Core Entities
 
 ### `public.motorcycles`
+
 - Represents the inventory of motorcycles.
 - **Fields (Relevant for Admin):**
   - `id` (UUID)
@@ -19,6 +20,7 @@
   - `is_featured` (Boolean)
 
 ### `public.motorcycle_images`
+
 - Stores image metadata linked to a motorcycle.
 - **Fields:**
   - `id` (UUID)
@@ -28,6 +30,7 @@
   - `display_order` (Int)
 
 ### `public.profiles`
+
 - Stores user data and roles.
 - **Fields:**
   - `id` (UUID, FK to auth.users)
@@ -43,6 +46,7 @@
   - Cannot `INSERT`, `UPDATE`, or `DELETE`.
 
 ## 3. Storage Bucket
+
 - **Bucket:** `motorcycles`
 - **Policies:**
   - Public Read access for viewing images.

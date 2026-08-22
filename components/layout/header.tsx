@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, MessageCircle, ChevronRight } from 'lucide-react';
+import { Menu, ChevronRight } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -12,11 +13,11 @@ import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 
 const navLinks = [
-  { href: '/motos', label: 'Estoque' },
-  { href: '/venda-sua-moto', label: 'Venda sua Moto' },
-  { href: '/consignar-moto', label: 'Consignação' },
+  { href: '/motos', label: 'Motos disponíveis' },
+  { href: '/consignar-moto', label: 'Anuncie sua moto' },
+  { href: '/venda-sua-moto', label: 'Venda sua moto' },
   { href: '/aluguel', label: 'Aluguel' },
-  { href: '/motos-vendidas', label: 'Vendidas' },
+  { href: '/motos-vendidas', label: 'Motos vendidas' },
 ];
 
 export function Header({ settings }: { settings?: any }) {
@@ -25,24 +26,23 @@ export function Header({ settings }: { settings?: any }) {
   const [logoError, setLogoError] = useState(false);
 
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
-  const siteName = settings?.site_name || 'AF LOCAÇÕES E VENDAS';
+  const siteName = settings?.site_name || 'AF Motos';
 
   const whatsappUrl = generateWhatsAppLink(
     contactPhone,
-    `Olá! Gostaria de falar com um consultor da ${siteName}.`,
+    `Olá! Gostaria de falar com a ${siteName}.`,
   );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#c9a44c]/20 bg-[#050505]/95 backdrop-blur-md transition-all">
       <div className="container mx-auto px-4 md:px-6 h-20 md:h-24 flex items-center justify-between">
-        
         {/* Official Brand Logo */}
         <Link href="/" className="flex items-center gap-3.5 group py-1">
           {!logoError ? (
             <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border border-[#c9a44c]/40 group-hover:border-[#e3c56c] shadow-[0_0_15px_rgba(201,164,76,0.15)] group-hover:shadow-[0_0_20px_rgba(201,164,76,0.3)] transition-all bg-[#050505] shrink-0">
               <Image
                 src="/logo.jpg"
-                alt="AF Locações e Vendas"
+                alt={siteName}
                 fill
                 sizes="(max-width: 768px) 48px, 56px"
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -62,7 +62,7 @@ export function Header({ settings }: { settings?: any }) {
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#c9a44c] shadow-[0_0_8px_#c9a44c]" />
             </span>
             <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-widest text-[#b8bcc2] mt-1">
-              Loja
+              Compra, Venda e Locação
             </span>
           </div>
         </Link>
@@ -97,10 +97,10 @@ export function Header({ settings }: { settings?: any }) {
             rel="noopener noreferrer"
             className={cn(
               buttonVariants({ size: 'sm' }),
-              'hidden sm:inline-flex bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl px-4 h-10 shadow-[0_0_15px_rgba(37,211,102,0.2)] transition-all',
+              'hidden sm:inline-flex bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl px-4 h-10 shadow-[0_0_15px_rgba(37,211,102,0.2)] transition-all flex items-center gap-2',
             )}
           >
-            <MessageCircle className="w-4 h-4 fill-white mr-1.5" />
+            <WhatsAppIcon className="w-4 h-4 fill-current" />
             <span>Falar no WhatsApp</span>
           </a>
 
@@ -139,7 +139,7 @@ export function Header({ settings }: { settings?: any }) {
                         {siteName}
                       </span>
                       <span className="text-[10px] uppercase font-bold text-[#b8bcc2] tracking-wider mt-0.5">
-                        Loja
+                        Compra, Venda e Locação
                       </span>
                     </div>
                   </SheetTitle>
@@ -159,7 +159,7 @@ export function Header({ settings }: { settings?: any }) {
                           'flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all',
                           isActive
                             ? 'bg-[#151515] text-[#e3c56c] border border-[#c9a44c]/30 shadow-xs'
-                            : 'text-[#a6a6a1] hover:text-white hover:bg-[#151515]/60'
+                            : 'text-[#a6a6a1] hover:text-white hover:bg-[#151515]/60',
                         )}
                       >
                         <span>{link.label}</span>
@@ -177,10 +177,10 @@ export function Header({ settings }: { settings?: any }) {
                   rel="noopener noreferrer"
                   className={cn(
                     buttonVariants({ size: 'lg' }),
-                    'w-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl h-12 shadow-[0_0_15px_rgba(37,211,102,0.2)] flex items-center justify-center gap-2'
+                    'w-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl h-12 shadow-[0_0_15px_rgba(37,211,102,0.2)] flex items-center justify-center gap-2',
                   )}
                 >
-                  <MessageCircle className="w-5 h-5 fill-white" />
+                  <WhatsAppIcon className="w-5 h-5 fill-current" />
                   <span>Falar no WhatsApp</span>
                 </a>
               </div>

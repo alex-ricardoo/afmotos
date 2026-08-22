@@ -8,7 +8,7 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [X] T001 Verify branch `004-admin-fixes` is active
+- [x] T001 Verify branch `004-admin-fixes` is active
 
 ---
 
@@ -18,7 +18,7 @@
 
 **🚀 CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T002 Verify `site_settings` table structure matches expected data model via Supabase dashboard or migrations
+- [x] T002 Verify `site_settings` table structure matches expected data model via Supabase dashboard or migrations
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -32,8 +32,8 @@
 
 ### Implementation for User Story 1
 
-- [X] T003 [P] [US1] Fix `params` resolution in `app/admin/(protected)/motos/[id]/editar/page.tsx` to await the promise
-- [X] T004 [US1] Update query to include `images:motorcycle_images(*)` in `app/admin/(protected)/motos/[id]/editar/page.tsx`
+- [x] T003 [P] [US1] Fix `params` resolution in `app/admin/(protected)/motos/[id]/editar/page.tsx` to await the promise
+- [x] T004 [US1] Update query to include `images:motorcycle_images(*)` in `app/admin/(protected)/motos/[id]/editar/page.tsx`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -47,14 +47,14 @@
 
 ### Implementation for User Story 2
 
-- [X] T005 [P] [US2] Create server actions `getSettings` and `saveSettingsAction` in `lib/actions/settings.ts`
-- [X] T006 [US2] Create `SettingsForm` component with Zod validation in `components/admin/settings-form.tsx`
-- [X] T007 [US2] Create settings page to render the form in `app/admin/(protected)/configuracoes/page.tsx`
-- [X] T008 [P] [US2] Update `app/(public)/layout.tsx` to fetch settings and pass down as props
-- [X] T009 [US2] Update `components/layout/header.tsx` to use dynamic settings
-- [X] T010 [US2] Update `components/layout/footer.tsx` to use dynamic settings
-- [X] T011 [US2] Update `components/layout/whatsapp-button.tsx` to use dynamic settings
-- [X] T012 [US2] Update `app/(public)/page.tsx` to fetch settings and replace hardcoded names
+- [x] T005 [P] [US2] Create server actions `getSettings` and `saveSettingsAction` in `lib/actions/settings.ts`
+- [x] T006 [US2] Create `SettingsForm` component with Zod validation in `components/admin/settings-form.tsx`
+- [x] T007 [US2] Create settings page to render the form in `app/admin/(protected)/configuracoes/page.tsx`
+- [x] T008 [P] [US2] Update `app/(public)/layout.tsx` to fetch settings and pass down as props
+- [x] T009 [US2] Update `components/layout/header.tsx` to use dynamic settings
+- [x] T010 [US2] Update `components/layout/footer.tsx` to use dynamic settings
+- [x] T011 [US2] Update `components/layout/whatsapp-button.tsx` to use dynamic settings
+- [x] T012 [US2] Update `app/(public)/page.tsx` to fetch settings and replace hardcoded names
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -64,8 +64,8 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [X] T013 Validate functionality according to `quickstart.md`
-- [X] T014 Verify UI consistency on mobile and desktop devices
+- [x] T013 Validate functionality according to `quickstart.md`
+- [x] T014 Verify UI consistency on mobile and desktop devices
 
 ---
 

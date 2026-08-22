@@ -280,7 +280,9 @@ export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: s
   }
 
   if (searchQuery) {
-    query = query.or(`brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,internal_code.ilike.%${searchQuery}%`);
+    query = query.or(
+      `brand.ilike.%${searchQuery}%,model.ilike.%${searchQuery}%,internal_code.ilike.%${searchQuery}%`,
+    );
   }
 
   const { data, error } = await query.order('created_at', { ascending: false });

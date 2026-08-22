@@ -131,14 +131,13 @@ function FilterControls({ onApply }: FilterFormProps) {
               'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer',
               !currentBrand
                 ? 'bg-[#c9a44c] text-[#050505] border-[#c9a44c] font-bold shadow-xs'
-                : 'bg-[#151515] text-[#a6a6a1] border-[#c9a44c]/20 hover:border-[#c9a44c]/60 hover:text-white'
+                : 'bg-[#151515] text-[#a6a6a1] border-[#c9a44c]/20 hover:border-[#c9a44c]/60 hover:text-white',
             )}
           >
             Todas
           </button>
           {POPULAR_BRANDS.map((brand) => {
-            const isSelected =
-              currentBrand.toLowerCase() === brand.toLowerCase();
+            const isSelected = currentBrand.toLowerCase() === brand.toLowerCase();
             return (
               <button
                 key={brand}
@@ -148,7 +147,7 @@ function FilterControls({ onApply }: FilterFormProps) {
                   'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer',
                   isSelected
                     ? 'bg-[#c9a44c] text-[#050505] border-[#c9a44c] font-bold shadow-xs'
-                    : 'bg-[#151515] text-[#a6a6a1] border-[#c9a44c]/20 hover:border-[#c9a44c]/60 hover:text-white'
+                    : 'bg-[#151515] text-[#a6a6a1] border-[#c9a44c]/20 hover:border-[#c9a44c]/60 hover:text-white',
                 )}
               >
                 {brand}
@@ -163,10 +162,7 @@ function FilterControls({ onApply }: FilterFormProps) {
         <Label className="text-xs font-bold uppercase tracking-wider text-[#b8bcc2]">
           Faixa de Preço
         </Label>
-        <Select
-          value={currentPrice}
-          onValueChange={(val) => updateParam('maxPrice', val ?? 'all')}
-        >
+        <Select value={currentPrice} onValueChange={(val) => updateParam('maxPrice', val ?? 'all')}>
           <SelectTrigger className="w-full h-10 rounded-xl bg-[#151515] border-[#c9a44c]/20 text-sm text-white">
             <SelectValue placeholder="Selecione o valor" />
           </SelectTrigger>
@@ -185,10 +181,7 @@ function FilterControls({ onApply }: FilterFormProps) {
         <Label className="text-xs font-bold uppercase tracking-wider text-[#b8bcc2]">
           Ano Mínimo de Fabricação
         </Label>
-        <Select
-          value={currentYear}
-          onValueChange={(val) => updateParam('minYear', val ?? 'all')}
-        >
+        <Select value={currentYear} onValueChange={(val) => updateParam('minYear', val ?? 'all')}>
           <SelectTrigger className="w-full h-10 rounded-xl bg-[#151515] border-[#c9a44c]/20 text-sm text-white">
             <SelectValue placeholder="Selecione o ano" />
           </SelectTrigger>
@@ -221,15 +214,11 @@ export function MotorcycleFilters() {
   return <FilterControls />;
 }
 
-export function MobileFiltersDrawer({
-  totalResults,
-}: {
-  totalResults: number;
-}) {
+export function MobileFiltersDrawer({ totalResults }: { totalResults: number }) {
   const [open, setOpen] = useState(false);
   const searchParams = useSearchParams();
   const activeCount = Array.from(searchParams.entries()).filter(([k]) =>
-    ['brand', 'search', 'q', 'maxPrice', 'minYear'].includes(k)
+    ['brand', 'search', 'q', 'maxPrice', 'minYear'].includes(k),
   ).length;
 
   return (

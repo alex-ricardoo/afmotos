@@ -30,7 +30,11 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { motorcycleStatusLabels, operationTypeLabels, ownershipTypeLabels } from '@/lib/utils/translations';
+import {
+  motorcycleStatusLabels,
+  operationTypeLabels,
+  ownershipTypeLabels,
+} from '@/lib/utils/translations';
 
 const fuelLabels: Record<string, string> = {
   gasolina: 'Gasolina',
@@ -62,19 +66,27 @@ const motorcycleSchema = z.object({
   mileage: z.coerce.number().optional(),
   engine_capacity: z.coerce.number().optional(),
   fuel: z.enum(['gasolina', 'etanol', 'flex', 'eletrico', 'diesel']).optional().or(z.literal('')),
-  transmission: z.enum(['manual', 'automatico', 'semiautomatico', 'cvt']).optional().or(z.literal('')),
+  transmission: z
+    .enum(['manual', 'automatico', 'semiautomatico', 'cvt'])
+    .optional()
+    .or(z.literal('')),
   color: z.string().optional(),
   price: z.coerce.number().optional(),
   description: z.string().optional(),
   ownership_type: z.enum(['OWNED', 'CONSIGNMENT']),
   operation_type: z.enum(['SALE', 'RENTAL', 'SALE_AND_RENTAL']),
-  status: z.enum(['AVAILABLE', 'RESERVED', 'SOLD', 'MAINTENANCE', 'RENTED', 'UNAVAILABLE', 'HIDDEN']),
+  status: z.enum([
+    'AVAILABLE',
+    'RESERVED',
+    'SOLD',
+    'MAINTENANCE',
+    'RENTED',
+    'UNAVAILABLE',
+    'HIDDEN',
+  ]),
   featured: z.boolean().default(false),
   license_plate: z.string().optional(),
   location: z.string().optional(),
-  daily_rate: z.coerce.number().optional(),
-  weekly_rate: z.coerce.number().optional(),
-  monthly_rate: z.coerce.number().optional(),
 });
 
 type MotorcycleFormValues = z.infer<typeof motorcycleSchema>;
@@ -83,29 +95,33 @@ interface MotorcycleFormProps {
   initialData?: any;
 }
 
-function normalizeOwnership(val?: string) {
-  if (val === 'OWN' || val === 'OWNED') return 'OWNED';
+function normalizeOwnership(val?: string): 'OWNED' | 'CONSIGNMENT' {
   if (val === 'CONSIGNMENT') return 'CONSIGNMENT';
   return 'OWNED';
 }
 
-function normalizeOperation(val?: string) {
-  if (val === 'BOTH' || val === 'SALE_AND_RENTAL') return 'SALE_AND_RENTAL';
+function normalizeOperation(val?: string): 'SALE' | 'RENTAL' | 'SALE_AND_RENTAL' {
   if (val === 'RENTAL') return 'RENTAL';
+  if (val === 'BOTH' || val === 'SALE_AND_RENTAL') return 'SALE_AND_RENTAL';
   return 'SALE';
 }
 
-function normalizeFuel(val?: string) {
+function normalizeFuel(val?: string): 'gasolina' | 'etanol' | 'flex' | 'eletrico' | 'diesel' {
   if (!val) return 'gasolina';
   const lower = val.toLowerCase();
-  if (['gasolina', 'etanol', 'flex', 'eletrico', 'diesel'].includes(lower)) return lower;
+  if (lower === 'etanol') return 'etanol';
+  if (lower === 'flex') return 'flex';
+  if (lower === 'eletrico') return 'eletrico';
+  if (lower === 'diesel') return 'diesel';
   return 'gasolina';
 }
 
-function normalizeTransmission(val?: string) {
+function normalizeTransmission(val?: string): 'manual' | 'automatico' | 'semiautomatico' | 'cvt' {
   if (!val) return 'manual';
   const lower = val.toLowerCase();
-  if (['manual', 'automatico', 'semiautomatico', 'cvt'].includes(lower)) return lower;
+  if (lower === 'automatico') return 'automatico';
+  if (lower === 'semiautomatico') return 'semiautomatico';
+  if (lower === 'cvt') return 'cvt';
   return 'manual';
 }
 
@@ -154,9 +170,6 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
       featured: initialData?.featured || false,
       license_plate: initialData?.license_plate || '',
       location: initialData?.location || '',
-      daily_rate: initialData?.daily_rate || 0,
-      weekly_rate: initialData?.weekly_rate || 0,
-      monthly_rate: initialData?.monthly_rate || 0,
     },
   });
 
@@ -181,7 +194,9 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
         return;
       }
 
-      setSuccessMsg(isEditing ? 'Motocicleta atualizada com sucesso!' : 'Motocicleta cadastrada com sucesso!');
+      setSuccessMsg(
+        isEditing ? 'Motocicleta atualizada com sucesso!' : 'Motocicleta cadastrada com sucesso!',
+      );
 
       setTimeout(() => {
         router.push('/admin/motos');
@@ -198,7 +213,8 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
     <div className="space-y-8">
       <div className="flex justify-between items-center bg-card p-4 rounded-lg border border-border shadow-sm">
         <p className="text-sm text-muted-foreground">
-          <span className="text-destructive font-bold mr-1">*</span> Indica campos de preenchimento obrigatório.
+          <span className="text-destructive font-bold mr-1">*</span> Indica campos de preenchimento
+          obrigatório.
         </p>
       </div>
 
@@ -219,7 +235,8 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
       {!isEditing && (
         <div className="bg-card p-6 rounded-lg shadow-sm border border-border max-w-md">
           <h3 className="text-sm font-semibold mb-4 text-foreground">
-            Busca por Placa <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+            Busca por Placa{' '}
+            <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
           </h3>
           <PlateLookupField onSuccess={handlePlateSuccess} />
         </div>
@@ -227,10 +244,11 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-8">
-          
           {/* SEÇÃO 1: IDENTIFICAÇÃO */}
           <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">Identificação</h2>
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
+              Identificação
+            </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <FormField
                 control={form.control as any}
@@ -268,10 +286,16 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Versão <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                      Versão{' '}
+                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: ABS" {...field} value={field.value || ''} className="bg-background" />
+                      <Input
+                        placeholder="Ex: ABS"
+                        {...field}
+                        value={field.value || ''}
+                        className="bg-background"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -283,10 +307,16 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Placa <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                      Placa{' '}
+                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="ABC-1234" {...field} value={field.value || ''} className="bg-background" />
+                      <Input
+                        placeholder="ABC-1234"
+                        {...field}
+                        value={field.value || ''}
+                        className="bg-background"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -297,7 +327,9 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
 
           {/* SEÇÃO 2: ESPECIFICAÇÕES */}
           <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">Especificações Técnicas</h2>
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
+              Especificações Técnicas
+            </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
               <FormField
                 control={form.control as any}
@@ -335,10 +367,16 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Quilometragem (km) <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                      Quilometragem (km){' '}
+                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
                     </FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} value={field.value ?? 0} className="bg-background" />
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value ?? 0}
+                        className="bg-background"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -350,10 +388,16 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Cilindrada (cc) <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                      Cilindrada (cc){' '}
+                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
                     </FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} value={field.value ?? 0} className="bg-background" />
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value ?? 0}
+                        className="bg-background"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -367,7 +411,10 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                   return (
                     <FormItem>
                       <FormLabel>
-                        Combustível <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                        Combustível{' '}
+                        <span className="text-xs font-normal text-muted-foreground">
+                          (Opcional)
+                        </span>
                       </FormLabel>
                       <Select onValueChange={field.onChange} value={currentVal}>
                         <FormControl>
@@ -398,7 +445,10 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                   return (
                     <FormItem>
                       <FormLabel>
-                        Câmbio <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                        Câmbio{' '}
+                        <span className="text-xs font-normal text-muted-foreground">
+                          (Opcional)
+                        </span>
                       </FormLabel>
                       <Select onValueChange={field.onChange} value={currentVal}>
                         <FormControl>
@@ -426,10 +476,16 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Cor <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                      Cor{' '}
+                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Preto" {...field} value={field.value || ''} className="bg-background" />
+                      <Input
+                        placeholder="Ex: Preto"
+                        {...field}
+                        value={field.value || ''}
+                        className="bg-background"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -440,7 +496,9 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
 
           {/* SEÇÃO 3: COMERCIAL */}
           <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">Comercial</h2>
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
+              Comercial
+            </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <FormField
                 control={form.control as any}
@@ -448,10 +506,16 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Preço de Venda (R$) <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+                      Preço de Venda (R$){' '}
+                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
                     </FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} value={field.value ?? 0} className="bg-background" />
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value ?? 0}
+                        className="bg-background"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -471,14 +535,18 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                         <FormControl>
                           <SelectTrigger className="bg-background">
                             <SelectValue placeholder="Selecione o tipo de operação">
-                              {operationTypeLabels[currentVal as keyof typeof operationTypeLabels] || currentVal}
+                              {operationTypeLabels[
+                                currentVal as keyof typeof operationTypeLabels
+                              ] || currentVal}
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="SALE">{operationTypeLabels['SALE']}</SelectItem>
                           <SelectItem value="RENTAL">{operationTypeLabels['RENTAL']}</SelectItem>
-                          <SelectItem value="SALE_AND_RENTAL">{operationTypeLabels['SALE_AND_RENTAL']}</SelectItem>
+                          <SelectItem value="SALE_AND_RENTAL">
+                            {operationTypeLabels['SALE_AND_RENTAL']}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -500,15 +568,22 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                         <FormControl>
                           <SelectTrigger className="bg-background">
                             <SelectValue placeholder="Selecione o tipo de propriedade">
-                              {ownershipTypeLabels[currentVal as keyof typeof ownershipTypeLabels] || currentVal}
+                              {ownershipTypeLabels[
+                                currentVal as keyof typeof ownershipTypeLabels
+                              ] || currentVal}
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="OWNED">{ownershipTypeLabels['OWNED']}</SelectItem>
-                          <SelectItem value="CONSIGNMENT">{ownershipTypeLabels['CONSIGNMENT']}</SelectItem>
+                          <SelectItem value="CONSIGNMENT">
+                            {ownershipTypeLabels['CONSIGNMENT']}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormDescription className="text-xs text-muted-foreground">
+                        Consignação é o nome interno usado para motos anunciadas para terceiros.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   );
@@ -520,7 +595,8 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
           {/* SEÇÃO 4: DESCRIÇÃO */}
           <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
             <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
-              Descrição Comercial <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+              Descrição Comercial{' '}
+              <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
             </h2>
             <FormField
               control={form.control as any}
@@ -547,7 +623,9 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
             <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
               Imagens <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
             </h2>
-            <p className="text-sm text-muted-foreground">Adicione fotos nítidas da motocicleta. A primeira foto será usada como capa.</p>
+            <p className="text-sm text-muted-foreground">
+              Adicione fotos nítidas da motocicleta. A primeira foto será usada como capa.
+            </p>
             <div className="bg-background p-4 border border-border rounded-md">
               <ImageUploader
                 onUpload={handleImageUpload}
@@ -559,7 +637,9 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
 
           {/* SEÇÃO 6: PUBLICAÇÃO */}
           <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">Publicação</h2>
+            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
+              Publicação
+            </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <FormField
                 control={form.control as any}
@@ -575,13 +655,17 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                         <FormControl>
                           <SelectTrigger className="bg-background">
                             <SelectValue placeholder="Selecione o status">
-                              {motorcycleStatusLabels[currentVal as keyof typeof motorcycleStatusLabels] || currentVal}
+                              {motorcycleStatusLabels[
+                                currentVal as keyof typeof motorcycleStatusLabels
+                              ] || currentVal}
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {Object.entries(motorcycleStatusLabels).map(([key, label]) => (
-                            <SelectItem key={key} value={key}>{label}</SelectItem>
+                            <SelectItem key={key} value={key}>
+                              {label}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -602,10 +686,7 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                       </FormDescription>
                     </div>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                   </FormItem>
                 )}
@@ -629,8 +710,18 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
             >
               Cancelar
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8" disabled={loading}>
-              {loading ? (isEditing ? 'Salvando...' : 'Cadastrando...') : (isEditing ? 'Salvar alterações' : 'Cadastrar moto')}
+            <Button
+              type="submit"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8"
+              disabled={loading}
+            >
+              {loading
+                ? isEditing
+                  ? 'Salvando...'
+                  : 'Cadastrando...'
+                : isEditing
+                  ? 'Salvar alterações'
+                  : 'Cadastrar moto'}
             </Button>
           </div>
         </form>

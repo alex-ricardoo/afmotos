@@ -16,7 +16,6 @@ export function PlateLookupField({ onSuccess }: PlateLookupFieldProps) {
   const [loading, setLoading] = useState(false);
 
   const formatPlate = (value: string) => {
-    // Basic Mercosul/Old formatting (XXX-0000 or XXX0X00)
     return value
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, '')
@@ -36,7 +35,7 @@ export function PlateLookupField({ onSuccess }: PlateLookupFieldProps) {
 
       const data = await response.json();
       onSuccess(data);
-      toast.success('Dados preenchidos automaticamente');
+      toast.success('Dados preenchidos automaticamente!');
     } catch (error) {
       toast.error('Não foi possível buscar os dados pela placa');
     } finally {
@@ -45,26 +44,30 @@ export function PlateLookupField({ onSuccess }: PlateLookupFieldProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor="plate-lookup">Consultar Placa (Preenchimento automático)</Label>
+    <div className="flex flex-col gap-2.5">
+      <Label htmlFor="plate-lookup" className="text-sm font-semibold text-[#f4f4f2]">
+        Consultar Placa{' '}
+        <span className="text-xs text-[#a6a6a1] font-normal">(Preenchimento automático)</span>
+      </Label>
       <div className="flex gap-2">
         <Input
           id="plate-lookup"
-          placeholder="ABC1D23"
+          placeholder="Ex: ABC1D23"
           value={plate}
           onChange={(e) => setPlate(formatPlate(e.target.value))}
           maxLength={7}
+          className="bg-black/60 border border-white/15 text-white placeholder:text-zinc-500 rounded-xl h-11 uppercase font-semibold text-base tracking-wider focus:border-[#c9a44c]"
         />
         <Button
           type="button"
-          variant="secondary"
           onClick={handleSearch}
           disabled={loading || plate.length < 7}
+          className="bg-[#c9a44c] hover:bg-[#e3c56c] text-black font-extrabold px-5 h-11 rounded-xl cursor-pointer disabled:opacity-50"
         >
           {loading ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            <Loader2 className="w-4 h-4 mr-2 animate-spin text-black" />
           ) : (
-            <Search className="w-4 h-4 mr-2" />
+            <Search className="w-4 h-4 mr-2 text-black" />
           )}
           Buscar
         </Button>

@@ -1,22 +1,12 @@
 import React from 'react';
 import { SellForm } from '@/components/forms/sell-form';
-import {
-  Banknote,
-  ShieldCheck,
-  CheckCircle2,
-  Zap,
-  Clock,
-  Sparkles,
-  FileCheck,
-  SearchCheck,
-  CreditCard,
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShieldCheck, FileCheck, Info } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 
 export const metadata = {
-  title: 'Venda Sua Moto | AF Locações e Vendas',
+  title: 'Venda sua Moto | AF Motos',
   description:
-    'Venda sua moto com pagamento imediato via PIX, avaliação justa por placa e transferência rápida sem burocracia na AF Locações e Vendas.',
+    'Quer vender sua moto? Envie as informações e fotos da sua moto para a AF Motos e conversamos diretamente pelo WhatsApp sobre os próximos passos.',
 };
 
 export default function VendaSuaMotoPage() {
@@ -26,16 +16,17 @@ export default function VendaSuaMotoPage() {
       <div className="bg-[#0d0d0d] text-white py-12 md:py-16 border-b border-[#c9a44c]/20">
         <div className="container mx-auto px-4 md:px-6 text-center max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#151515] border border-[#c9a44c]/30 text-xs font-bold text-[#e3c56c]">
-            <Zap className="w-4 h-4 text-[#e3c56c]" />
-            <span>Avaliação Rápida & Pagamento à Vista via PIX</span>
+            <WhatsAppIcon className="w-4 h-4 text-[#25D366] fill-current" />
+            <span>Negociação Direta pelo WhatsApp</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white font-heading">
-            Venda Sua Moto com Segurança
+            Quer vender sua moto?
           </h1>
 
           <p className="text-base md:text-lg text-[#a6a6a1] leading-relaxed">
-            Compramos sua moto com avaliação transparente baseada no mercado real. Sem intermediários, sem riscos e com PIX na conta no mesmo dia.
+            Envie os dados e fotos da sua moto. A gente analisa as informações e entra em contato
+            com você pelo WhatsApp para conversar e combinar os próximos passos.
           </p>
         </div>
       </div>
@@ -47,9 +38,9 @@ export default function VendaSuaMotoPage() {
             <div className="w-10 h-10 rounded-xl bg-[#c9a44c] text-[#050505] flex items-center justify-center font-black text-sm shadow-sm">
               01
             </div>
-            <h3 className="font-extrabold text-lg text-white">Preencha a Placa</h3>
+            <h3 className="font-extrabold text-lg text-white">Envie os Dados</h3>
             <p className="text-sm text-[#a6a6a1] leading-relaxed">
-              Informe a placa da sua moto para preenchimento automático das informações de marca, modelo e ano.
+              Preencha a marca, modelo, ano, quilometragem e detalhes da moto no formulário abaixo.
             </p>
           </div>
 
@@ -57,19 +48,21 @@ export default function VendaSuaMotoPage() {
             <div className="w-10 h-10 rounded-xl bg-[#202020] border border-[#c9a44c]/30 text-[#e3c56c] flex items-center justify-center font-black text-sm">
               02
             </div>
-            <h3 className="font-extrabold text-lg text-white">Receba a Proposta</h3>
+            <h3 className="font-extrabold text-lg text-white">Vamos Analisar</h3>
             <p className="text-sm text-[#a6a6a1] leading-relaxed">
-              Nossa equipe de consultores analisa o mercado e envia uma proposta justa diretamente pelo WhatsApp.
+              Verificamos as informações enviadas e o estado geral do veículo para entender a melhor
+              proposta.
             </p>
           </div>
 
           <div className="bg-[#151515] p-6 rounded-2xl border border-[#c9a44c]/20 shadow-xs space-y-3 relative hover:border-[#c9a44c]/40 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-[#202020] border border-[#c9a44c]/30 text-[#e3c56c] flex items-center justify-center font-black text-sm">
               03
             </div>
-            <h3 className="font-extrabold text-lg text-white">PIX na Conta</h3>
+            <h3 className="font-extrabold text-lg text-white">Conversamos no WhatsApp</h3>
             <p className="text-sm text-[#a6a6a1] leading-relaxed">
-              Após vistoria rápida presencial ou por vídeo, o pagamento é transferido e cuidamos de toda a documentação.
+              Entramos em contato para conversar com você e combinar os valores e as condições de
+              forma transparente.
             </p>
           </div>
         </div>
@@ -78,39 +71,48 @@ export default function VendaSuaMotoPage() {
         <div className="bg-[#151515] rounded-3xl border border-[#c9a44c]/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden max-w-3xl mx-auto">
           <div className="p-6 sm:p-8 bg-[#0d0d0d] border-b border-[#c9a44c]/20 space-y-2">
             <h2 className="text-2xl font-extrabold tracking-tight text-white font-heading">
-              Formulário de Avaliação Gratuita
+              Envie as informações da sua moto
             </h2>
             <p className="text-sm text-[#a6a6a1]">
-              Preencha os campos abaixo. Não cobramos nenhuma taxa para avaliar seu veículo.
+              Preencha os campos abaixo para entrarmos em contato com você pelo WhatsApp.
             </p>
           </div>
 
           <div className="p-6 sm:p-8">
             <SellForm />
           </div>
+
+          {/* Transparent Notice Footer */}
+          <div className="px-6 py-4 bg-[#0a0a0a] border-t border-[#c9a44c]/15 flex items-start gap-2.5 text-xs text-[#a6a6a1]">
+            <Info className="w-4 h-4 text-[#e3c56c] shrink-0 mt-0.5" />
+            <p>
+              O envio das informações não garante venda imediata nem compra automática. Valores e
+              condições são combinados diretamente entre você e a AF Motos.
+            </p>
+          </div>
         </div>
 
-        {/* Trust Badges */}
+        {/* Trust Highlights */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 text-center">
           <div className="space-y-2">
             <ShieldCheck className="w-8 h-8 text-[#e3c56c] mx-auto" />
-            <h4 className="font-bold text-sm text-white">Segurança Jurídica</h4>
+            <h4 className="font-bold text-sm text-white">Negociação Transparente</h4>
             <p className="text-xs text-[#a6a6a1]">
-              Contrato formal e transferência imediata de responsabilidade
+              Sem promessas irreais. Conversamos abertamente sobre o valor da moto.
             </p>
           </div>
           <div className="space-y-2">
-            <CreditCard className="w-8 h-8 text-[#e3c56c] mx-auto" />
-            <h4 className="font-bold text-sm text-white">Pagamento Instantâneo</h4>
+            <WhatsAppIcon className="w-8 h-8 text-[#25D366] fill-current mx-auto" />
+            <h4 className="font-bold text-sm text-white">Atendimento Direto</h4>
             <p className="text-xs text-[#a6a6a1]">
-              Receba via PIX na sua conta assim que aprovada a vistoria
+              Contato direto e rápido pelo WhatsApp para tirar todas as dúvidas.
             </p>
           </div>
           <div className="space-y-2">
             <FileCheck className="w-8 h-8 text-[#e3c56c] mx-auto" />
-            <h4 className="font-bold text-sm text-white">Zero Burocracia</h4>
+            <h4 className="font-bold text-sm text-white">Documentação Clara</h4>
             <p className="text-xs text-[#a6a6a1]">
-              Nossa equipe cuida de todo o processo de despachante e cartório
+              Orientação passo a passo para a transferência do veículo com tranquilidade.
             </p>
           </div>
         </div>

@@ -8,13 +8,13 @@ import {
   Wrench,
   CreditCard,
   Zap,
-  Sparkles,
+  Info,
 } from 'lucide-react';
 
 export const metadata = {
-  title: 'Aluguel de Motocicletas | AF Locações e Vendas',
+  title: 'Aluguel de Motos | AF Motos',
   description:
-    'Alugue motos revisadas com planos diários, semanais e mensais. Manutenção inclusa, seguro e contratação descomplicada na AF Locações e Vendas.',
+    'Aluguel de motos com a AF Motos. Planos para uso diário, semanal ou mensal com condições combinadas diretamente pelo WhatsApp.',
 };
 
 export default function AluguelPage() {
@@ -25,15 +25,16 @@ export default function AluguelPage() {
         <div className="container mx-auto px-4 md:px-6 text-center max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#151515] border border-[#c9a44c]/30 text-xs font-bold text-[#e3c56c]">
             <Bike className="w-4 h-4 text-[#e3c56c]" />
-            <span>Planos Flexíveis com Manutenção e Suporte Inclusos</span>
+            <span>Aluguel Simples e Direto</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white font-heading">
-            Aluguel de Motocicletas
+            Aluguel de Motos
           </h1>
 
           <p className="text-base md:text-lg text-[#a6a6a1] leading-relaxed">
-            Motos revisadas e prontas para rodar na cidade, estrada ou trabalho. Liberdade sobre duas rodas com o respaldo da AF Locações e Vendas.
+            Motos para alugar para trabalho ou dia a dia. Converse diretamente com a AF Motos pelo
+            WhatsApp para consultar os modelos e condições disponíveis.
           </p>
         </div>
       </div>
@@ -43,10 +44,10 @@ export default function AluguelPage() {
         <div className="space-y-6">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-heading">
-              Escolha o Plano Ideal
+              Opções de Período
             </h2>
             <p className="text-[#a6a6a1] text-sm mt-1">
-              Condições transparentes adaptadas para o seu objetivo.
+              Valores e disponibilidade combinados diretamente com você.
             </p>
           </div>
 
@@ -57,18 +58,18 @@ export default function AluguelPage() {
                 <div className="w-10 h-10 rounded-xl bg-[#202020] border border-[#c9a44c]/30 text-white flex items-center justify-center font-bold">
                   <Calendar className="w-5 h-5 text-[#e3c56c]" />
                 </div>
-                <h3 className="font-extrabold text-xl text-white">Diário / Weekend</h3>
+                <h3 className="font-extrabold text-xl text-white">Diária</h3>
                 <p className="text-xs text-[#a6a6a1] leading-relaxed">
-                  Perfeito para viagens curtas, fins de semana ou testar um modelo antes de comprar.
+                  Para necessidades pontuais, compromissos rápidos ou viagens curtas.
                 </p>
                 <ul className="space-y-2 text-xs font-semibold text-[#f4f4f2] pt-2">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#e3c56c] shrink-0" />
-                    <span>Quilometragem flexível</span>
+                    <span>Retirada combinada</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#e3c56c] shrink-0" />
-                    <span>Capacete e trava de segurança inclusos</span>
+                    <span>Período flexível</span>
                   </li>
                 </ul>
               </div>
@@ -76,25 +77,22 @@ export default function AluguelPage() {
 
             {/* Plan 2 */}
             <div className="bg-[#151515] p-6 rounded-2xl border-2 border-[#c9a44c] shadow-[0_0_20px_rgba(201,164,76,0.15)] space-y-4 flex flex-col justify-between relative">
-              <div className="absolute -top-3 right-4 px-2.5 py-0.5 bg-[#c9a44c] text-black text-[10px] font-extrabold uppercase tracking-wider rounded-full">
-                Popular
-              </div>
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-[#c9a44c] text-black flex items-center justify-center font-bold">
                   <Zap className="w-5 h-5" />
                 </div>
-                <h3 className="font-extrabold text-xl text-white">Plano Semanal</h3>
+                <h3 className="font-extrabold text-xl text-white">Semanal</h3>
                 <p className="text-xs text-[#a6a6a1] leading-relaxed">
-                  Flexibilidade máxima para compromissos temporários ou mobilidade urbana inteligente.
+                  Ideal para períodos de teste ou necessidades temporárias de locomoção.
                 </p>
                 <ul className="space-y-2 text-xs font-semibold text-[#f4f4f2] pt-2">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#e3c56c] shrink-0" />
-                    <span>Revisões preventivas inclusas</span>
+                    <span>Condição combinada por semana</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#e3c56c] shrink-0" />
-                    <span>Suporte e assistência dedicada</span>
+                    <span>Suporte direto no WhatsApp</span>
                   </li>
                 </ul>
               </div>
@@ -106,18 +104,18 @@ export default function AluguelPage() {
                 <div className="w-10 h-10 rounded-xl bg-[#202020] border border-[#c9a44c]/30 text-white flex items-center justify-center font-bold">
                   <Wrench className="w-5 h-5 text-[#e3c56c]" />
                 </div>
-                <h3 className="font-extrabold text-xl text-white">Plano Mensal</h3>
+                <h3 className="font-extrabold text-xl text-white">Mensal</h3>
                 <p className="text-xs text-[#a6a6a1] leading-relaxed">
-                  A melhor tarifa diária para quem precisa de um veículo para trabalho ou dia a dia contínuo.
+                  Para quem precisa de moto contínua para trabalho ou uso frequente no mês.
                 </p>
                 <ul className="space-y-2 text-xs font-semibold text-[#f4f4f2] pt-2">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#e3c56c] shrink-0" />
-                    <span>Troca de óleo e pneus inclusos</span>
+                    <span>Manutenção preventiva combinada</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#e3c56c] shrink-0" />
-                    <span>Substituição de moto em manutenção</span>
+                    <span>Valores alinhados previamente</span>
                   </li>
                 </ul>
               </div>
@@ -125,27 +123,27 @@ export default function AluguelPage() {
           </div>
         </div>
 
-        {/* Requirements & Guarantee Bar */}
+        {/* Requirements Bar */}
         <div className="bg-[#151515] p-6 rounded-2xl border border-[#c9a44c]/20 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3 justify-center sm:justify-start">
             <ShieldCheck className="w-6 h-6 text-[#e3c56c] shrink-0" />
             <div>
               <h4 className="font-bold text-xs text-white">CNH Categoria A</h4>
-              <p className="text-[11px] text-[#a6a6a1]">Válida e sem impedimentos</p>
+              <p className="text-[11px] text-[#a6a6a1]">Habilitação válida para pilotar</p>
             </div>
           </div>
           <div className="flex items-center gap-3 justify-center sm:justify-start">
             <CreditCard className="w-6 h-6 text-[#e3c56c] shrink-0" />
             <div>
-              <h4 className="font-bold text-xs text-white">Caução Facilitado</h4>
-              <p className="text-[11px] text-[#a6a6a1]">Cartão de crédito ou PIX garantia</p>
+              <h4 className="font-bold text-xs text-white">Caução Combinado</h4>
+              <p className="text-[11px] text-[#a6a6a1]">Condições acordadas previamente</p>
             </div>
           </div>
           <div className="flex items-center gap-3 justify-center sm:justify-start">
             <Wrench className="w-6 h-6 text-[#e3c56c] shrink-0" />
             <div>
-              <h4 className="font-bold text-xs text-white">Motos 100% Revisadas</h4>
-              <p className="text-[11px] text-[#a6a6a1]">Segurança mecânica certificada</p>
+              <h4 className="font-bold text-xs text-white">Motos Checadas</h4>
+              <p className="text-[11px] text-[#a6a6a1]">Verificação prévia antes da entrega</p>
             </div>
           </div>
         </div>
@@ -154,15 +152,24 @@ export default function AluguelPage() {
         <div className="bg-[#151515] rounded-3xl border border-[#c9a44c]/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden max-w-3xl mx-auto">
           <div className="p-6 sm:p-8 bg-[#0d0d0d] border-b border-[#c9a44c]/20 space-y-2">
             <h2 className="text-2xl font-extrabold tracking-tight text-white font-heading">
-              Solicitar Orçamento de Locação
+              Consultar Disponibilidade de Aluguel
             </h2>
             <p className="text-sm text-[#a6a6a1]">
-              Informe suas preferências de período e modelo para recebermos o contato.
+              Informe o período e suas preferências. Entraremos em contato pelo WhatsApp para
+              informar as opções ativas.
             </p>
           </div>
 
           <div className="p-6 sm:p-8">
             <RentalForm />
+          </div>
+
+          <div className="px-6 py-4 bg-[#0a0a0a] border-t border-[#c9a44c]/15 flex items-start gap-2.5 text-xs text-[#a6a6a1]">
+            <Info className="w-4 h-4 text-[#e3c56c] shrink-0 mt-0.5" />
+            <p>
+              A disponibilidade de locação depende das motos ativas na loja no momento. Fale conosco
+              para confirmar os modelos disponíveis.
+            </p>
           </div>
         </div>
       </div>

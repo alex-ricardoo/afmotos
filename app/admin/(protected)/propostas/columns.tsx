@@ -13,7 +13,11 @@ export const columns: ColumnDef<any, any>[] = [
     cell: ({ row }: { row: any }) => {
       const type = row.getValue('type') as keyof typeof leadTypeLabels;
       const label = leadTypeLabels[type] || type;
-      return <Badge variant="outline" className="border-primary/30 text-primary">{label}</Badge>;
+      return (
+        <Badge variant="outline" className="border-primary/30 text-primary">
+          {label}
+        </Badge>
+      );
     },
   },
   {
@@ -30,7 +34,7 @@ export const columns: ColumnDef<any, any>[] = [
     cell: ({ row }: { row: any }) => {
       const status = row.getValue('status') as keyof typeof leadStatusLabels;
       const label = leadStatusLabels[status] || status;
-      
+
       const variantMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
         NEW: 'default',
         CONTACTED: 'secondary',
@@ -49,7 +53,11 @@ export const columns: ColumnDef<any, any>[] = [
     header: 'Data',
     cell: ({ row }: { row: any }) => {
       const date = new Date(row.getValue('created_at'));
-      return <div className="text-muted-foreground">{format(date, 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>;
+      return (
+        <div className="text-muted-foreground">
+          {format(date, 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+        </div>
+      );
     },
   },
 ];

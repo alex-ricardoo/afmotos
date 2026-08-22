@@ -6,11 +6,7 @@ import { AnalyticsProvider } from '@/components/providers/analytics-provider';
 
 import { getSettings } from '@/lib/actions/settings';
 
-export default async function PublicLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const settings = await getSettings();
 
   return (

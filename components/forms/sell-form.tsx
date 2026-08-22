@@ -80,11 +80,11 @@ export function SellForm() {
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success('Sua proposta foi enviada com sucesso!');
+        toast.success('Recebemos suas informações. Vamos analisar e falar com você pelo WhatsApp.');
         setSuccess(true);
       }
     } catch (error) {
-      toast.error('Ocorreu um erro ao enviar sua proposta.');
+      toast.error('Não foi possível enviar agora. Verifique os campos e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -92,13 +92,16 @@ export function SellForm() {
 
   if (success) {
     return (
-      <div className="bg-green-50 border border-green-200 text-green-800 p-6 rounded-lg text-center">
-        <h3 className="text-xl font-semibold mb-2">Proposta Enviada!</h3>
-        <p>
-          Recebemos as informações da sua moto. Nossa equipe entrará em contato em breve para
-          apresentar uma oferta.
+      <div className="bg-emerald-950/40 border border-emerald-500/30 text-[#f4f4f2] p-6 rounded-2xl text-center space-y-3">
+        <h3 className="text-xl font-bold text-white">Informações Enviadas!</h3>
+        <p className="text-sm text-[#a6a6a1]">
+          Recebemos os dados da sua moto. Vamos analisar as informações e entrar em contato com você
+          pelo WhatsApp para conversar sobre os próximos passos.
         </p>
-        <Button className="mt-4" variant="outline" onClick={() => setSuccess(false)}>
+        <Button
+          className="mt-4 bg-[#c9a44c] hover:bg-[#e3c56c] text-black font-bold"
+          onClick={() => setSuccess(false)}
+        >
           Enviar outra moto
         </Button>
       </div>
@@ -107,7 +110,7 @@ export function SellForm() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-slate-50 p-6 rounded-lg border">
+      <div className="bg-[#151515] p-6 rounded-2xl border border-[#c9a44c]/20 shadow-sm">
         <PlateLookupField onSuccess={handlePlateSuccess} />
       </div>
 
@@ -248,8 +251,13 @@ export function SellForm() {
             />
           </div>
 
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? 'Enviando...' : 'Enviar Solicitação de Venda'}
+          <Button
+            type="submit"
+            className="w-full bg-[#c9a44c] hover:bg-[#e3c56c] text-black font-extrabold h-12 rounded-xl shadow-sm cursor-pointer"
+            size="lg"
+            disabled={loading}
+          >
+            {loading ? 'Enviando...' : 'Enviar Dados da Moto'}
           </Button>
         </form>
       </Form>

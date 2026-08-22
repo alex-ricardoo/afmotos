@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { MessageCircle } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { buttonVariants } from '@/components/ui/button';
 import { generateWhatsAppLink, generateMotorcycleInterestMessage } from '@/lib/utils/whatsapp';
 import { CONSTANTS } from '@/lib/utils/constants';
@@ -42,7 +42,7 @@ export function WhatsAppButton({
     message ||
     (motorcycle
       ? generateMotorcycleInterestMessage(motorcycle)
-      : `Olá! Gostaria de falar com um consultor sobre as motos da ${siteName}.`);
+      : `Olá! Gostaria de falar com a ${siteName}.`);
   const link = generateWhatsAppLink(contactPhone, finalMessage);
 
   if (isFloating && !children) {
@@ -66,7 +66,7 @@ export function WhatsAppButton({
           {/* Subtle pulse ring */}
           <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-75 animate-ping -z-10 group-hover:animate-none" />
 
-          <MessageCircle className="w-7 h-7 fill-white" />
+          <WhatsAppIcon className="w-7 h-7 fill-current" />
 
           {/* Online badge */}
           <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full" />
@@ -82,7 +82,7 @@ export function WhatsAppButton({
       rel="noopener noreferrer"
       className={cn(buttonVariants({ variant, size }), className)}
     >
-      <MessageCircle className="mr-2 h-5 w-5" />
+      <WhatsAppIcon className="mr-2 h-5 w-5 fill-current" />
       {children || 'Tenho interesse'}
     </a>
   );

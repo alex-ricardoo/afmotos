@@ -45,9 +45,7 @@ export const columns: ColumnDef<any, any>[] = [
     cell: ({ row }: { row: any }) => {
       const status = row.getValue('status') as string;
       return (
-        <div>
-          {motorcycleStatusLabels[status as keyof typeof motorcycleStatusLabels] || status}
-        </div>
+        <div>{motorcycleStatusLabels[status as keyof typeof motorcycleStatusLabels] || status}</div>
       );
     },
   },

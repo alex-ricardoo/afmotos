@@ -8,9 +8,9 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export const metadata = {
-  title: 'Estoque de Motos | AF Locações e Vendas',
+  title: 'Motos Disponíveis | AF Motos',
   description:
-    'Confira nosso catálogo de motocicletas selecionadas com laudo cautelar aprovado e garantia total de procedência.',
+    'Confira as motos disponíveis na AF Motos. Negociação direta e atendimento transparente pelo WhatsApp.',
 };
 
 interface CatalogProps {
@@ -21,10 +21,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
   const resolvedParams = await searchParams;
   const motos = await getAllMotorcycles(resolvedParams);
 
-  const activeBrand =
-    typeof resolvedParams.brand === 'string'
-      ? resolvedParams.brand
-      : undefined;
+  const activeBrand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand : undefined;
   const activeSearch =
     typeof (resolvedParams.search || resolvedParams.q) === 'string'
       ? ((resolvedParams.search || resolvedParams.q) as string)
@@ -38,15 +35,16 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
           <div className="max-w-3xl space-y-3">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#151515] border border-[#c9a44c]/30 text-xs font-bold text-[#e3c56c]">
               <ShieldCheck className="w-3.5 h-3.5 text-[#e3c56c]" />
-              <span>100% com Laudo Cautelar & Revisão de Entrega</span>
+              <span>Motos Disponíveis & Atendimento Direto</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white font-heading">
-              Estoque de Motocicletas
+              Motos Disponíveis
             </h1>
 
             <p className="text-sm md:text-base text-[#a6a6a1] leading-relaxed">
-              Encontre o modelo perfeito com procedência assegurada, documentação regularizada e as melhores condições para compra ou locação.
+              Confira as motocicletas anunciadas na AF Motos e fale diretamente com a gente pelo
+              WhatsApp para tirar dúvidas ou negociar.
             </p>
           </div>
         </div>
@@ -61,9 +59,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
               {motos.length}
             </span>
             <span className="text-sm text-[#a6a6a1]">
-              {motos.length === 1
-                ? 'motocicleta disponível'
-                : 'motocicletas disponíveis'}
+              {motos.length === 1 ? 'motocicleta disponível' : 'motocicletas disponíveis'}
             </span>
             {(activeBrand || activeSearch) && (
               <span className="hidden sm:inline-flex items-center gap-1 ml-2 px-2.5 py-0.5 rounded-full bg-[#151515] border border-[#c9a44c]/30 text-xs font-semibold text-[#e3c56c]">
@@ -83,9 +79,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
               <div className="flex items-center justify-between pb-3 border-b border-[#c9a44c]/20">
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal className="w-4 h-4 text-[#e3c56c]" />
-                  <h3 className="font-bold text-sm uppercase tracking-wider text-white">
-                    Filtros
-                  </h3>
+                  <h3 className="font-bold text-sm uppercase tracking-wider text-white">Filtros</h3>
                 </div>
               </div>
 

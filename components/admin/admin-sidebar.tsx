@@ -49,7 +49,9 @@ export function AdminSidebar() {
               >
                 <item.icon
                   className={cn(
-                    isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground',
+                    isActive
+                      ? 'text-sidebar-accent-foreground'
+                      : 'text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground',
                     'mr-3 h-5 w-5 flex-shrink-0',
                   )}
                   aria-hidden="true"
@@ -60,7 +62,7 @@ export function AdminSidebar() {
           })}
         </nav>
         <div className="p-4 mt-auto border-t border-sidebar-border">
-            <button
+          <button
             onClick={handleLogout}
             className="group flex w-full items-center rounded-md px-2 py-3 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
           >

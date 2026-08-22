@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { SearchX, MessageCircle } from 'lucide-react';
+import { SearchX } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { MotorcycleCard, MotorcycleCardData } from './motorcycle-card';
 import { buttonVariants } from '@/components/ui/button';
 import { CONSTANTS } from '@/lib/utils/constants';
@@ -38,7 +39,7 @@ export function MotorcycleGrid({
             href="/motos"
             className={cn(
               buttonVariants({ variant: 'outline' }),
-              'rounded-xl font-semibold text-xs h-10 px-5 bg-[#202020] border-[#c9a44c]/30 text-white hover:bg-[#c9a44c] hover:text-black transition-all'
+              'rounded-xl font-semibold text-xs h-10 px-5 bg-[#202020] border-[#c9a44c]/30 text-white hover:bg-[#c9a44c] hover:text-black transition-all',
             )}
           >
             Limpar Filtros
@@ -49,10 +50,10 @@ export function MotorcycleGrid({
             rel="noopener noreferrer"
             className={cn(
               buttonVariants(),
-              'bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-xl font-semibold text-xs h-10 px-5 flex items-center gap-2 shadow-[0_0_15px_rgba(37,211,102,0.2)] transition-all'
+              'bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-xl font-semibold text-xs h-10 px-5 flex items-center gap-2 shadow-[0_0_15px_rgba(37,211,102,0.2)] transition-all',
             )}
           >
-            <MessageCircle className="w-4 h-4" />
+            <WhatsAppIcon className="w-4 h-4 fill-current" />
             <span>Consultar Próximas Entradas</span>
           </a>
         </div>

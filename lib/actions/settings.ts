@@ -6,11 +6,7 @@ import { revalidatePath } from 'next/cache';
 export async function getSettings() {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from('site_settings')
-    .select('*')
-    .limit(1)
-    .single();
+  const { data, error } = await supabase.from('site_settings').select('*').limit(1).single();
 
   if (error && error.code !== 'PGRST116') {
     // PGRST116 means no rows found, which is fine initially
@@ -45,9 +41,7 @@ export async function saveSettingsAction(data: any) {
     error = updateError;
   } else {
     // Insert new
-    const { error: insertError } = await supabase
-      .from('site_settings')
-      .insert(payload);
+    const { error: insertError } = await supabase.from('site_settings').insert(payload);
     error = insertError;
   }
 

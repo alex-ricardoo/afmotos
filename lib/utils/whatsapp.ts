@@ -14,9 +14,13 @@ export function generateMotorcycleInterestMessage(motorcycle: {
   year_model: number;
   price?: number | null;
 }): string {
-  const priceText = motorcycle.price
-    ? ` anunciada por R$ ${motorcycle.price.toLocaleString('pt-BR')}`
-    : '';
+  return `Olá! Tenho interesse na ${motorcycle.brand} ${motorcycle.model} (${motorcycle.year_model}). Pode me passar mais informações?`;
+}
 
-  return `Olá! Tenho interesse na moto ${motorcycle.brand} ${motorcycle.model} (${motorcycle.year_model})${priceText}. Podemos conversar?`;
+export function generateSellOrConsignMessage(): string {
+  return 'Olá! Quero anunciar minha moto com a AF Motos. Como faço?';
+}
+
+export function generateRentalMessage(): string {
+  return 'Olá! Tenho interesse em alugar uma moto. Gostaria de saber as opções disponíveis.';
 }

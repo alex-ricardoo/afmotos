@@ -5,6 +5,7 @@
 **Input**: Feature specification from `/specs/003-admin-redesign/spec.md`
 
 ## Summary
+
 Redesign and fix the administrative panel for AF Motos to establish a clear visual and structural separation from the public site using Next.js Route Groups. Ensure that the dashboard and motorcycle management modules are deeply integrated with real Supabase data and protected by strict Row Level Security (RLS) policies.
 
 ## Technical Context
@@ -30,6 +31,7 @@ Redesign and fix the administrative panel for AF Motos to establish a clear visu
 ## Constitution Check
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
+
 - **I. Product First**: Yes, the redesign is aimed at making the admin UX seamless.
 - **III. Type Safety**: Yes, strict TS and Zod validation will be used for the motorcycle forms.
 - **IV. Segurança**: Yes, RLS and Server Actions will be strictly enforced.

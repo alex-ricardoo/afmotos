@@ -1,19 +1,21 @@
 # Data Model: Admin Fixes & Site Settings
 
 ## `site_settings`
+
 Represents the singleton configuration object for the AF Motos public site.
 
 ### Fields
-| Name | Type | Notes |
-| :--- | :--- | :--- |
-| `id` | `uuid` | Primary Key |
-| `site_name` | `text` | Store Name |
-| `whatsapp_phone` | `text` | Primary Contact Number |
-| `contact_email` | `text` | Primary Contact Email |
-| `address` | `text` | Physical address |
-| `settings` | `jsonb` | Flexible configuration payload |
-| `created_at` | `timestamptz` | |
-| `updated_at` | `timestamptz` | |
+
+| Name             | Type          | Notes                          |
+| :--------------- | :------------ | :----------------------------- |
+| `id`             | `uuid`        | Primary Key                    |
+| `site_name`      | `text`        | Store Name                     |
+| `whatsapp_phone` | `text`        | Primary Contact Number         |
+| `contact_email`  | `text`        | Primary Contact Email          |
+| `address`        | `text`        | Physical address               |
+| `settings`       | `jsonb`       | Flexible configuration payload |
+| `created_at`     | `timestamptz` |                                |
+| `updated_at`     | `timestamptz` |                                |
 
 ### JSONB `settings` Structure
 
@@ -56,12 +58,15 @@ Represents the singleton configuration object for the AF Motos public site.
 ```
 
 ## `motorcycles`
+
 Represents a motorcycle in the inventory. We are fixing the edit route, no schema changes.
 
 ### State Transitions
+
 - Edits made via the admin panel will perform an `UPDATE` on the `motorcycles` table.
 - Site settings edits will perform an `UPDATE` on the `site_settings` table (or an `INSERT` if empty).
 
 ## RLS Policies (Existing)
+
 - **site_settings**: `SELECT` is public (`true`). `INSERT`/`UPDATE`/`DELETE` requires `is_admin()`.
 - **motorcycles**: Admins can `UPDATE`. Public can `SELECT` visible motorcycles.

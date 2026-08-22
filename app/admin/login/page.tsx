@@ -52,12 +52,16 @@ export default function AdminLoginPage() {
           </div>
         </div>
         <CardTitle className="text-2xl font-bold tracking-tight">AF Motos Admin</CardTitle>
-        <CardDescription className="text-gray-400">Entre com suas credenciais para acessar o painel restrito</CardDescription>
+        <CardDescription className="text-gray-400">
+          Entre com suas credenciais para acessar o painel restrito
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleLogin}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-300">Email</Label>
+            <Label htmlFor="email" className="text-gray-300">
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
@@ -69,7 +73,9 @@ export default function AdminLoginPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-gray-300">Senha</Label>
+            <Label htmlFor="password" className="text-gray-300">
+              Senha
+            </Label>
             <Input
               id="password"
               type="password"
@@ -81,9 +87,9 @@ export default function AdminLoginPage() {
           </div>
         </CardContent>
         <CardFooter className="pt-2">
-          <Button 
-            type="submit" 
-            className="w-full bg-[#c9a44c] hover:bg-[#b8943c] text-black font-semibold" 
+          <Button
+            type="submit"
+            className="w-full bg-[#c9a44c] hover:bg-[#b8943c] text-black font-semibold"
             disabled={loading}
           >
             {loading ? 'Autenticando...' : 'Acessar Painel'}

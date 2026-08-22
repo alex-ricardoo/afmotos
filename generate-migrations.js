@@ -20,7 +20,7 @@ CREATE TABLE admin_profiles (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-`
+`,
   },
   {
     name: '00002_categories.sql',
@@ -37,7 +37,7 @@ CREATE TABLE categories (
 );
 CREATE INDEX idx_categories_slug ON categories(slug);
 CREATE INDEX idx_categories_sort_order ON categories(sort_order);
-`
+`,
   },
   {
     name: '00003_features.sql',
@@ -51,7 +51,7 @@ CREATE TABLE features (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_features_sort_order ON features(sort_order);
-`
+`,
   },
   {
     name: '00004_motorcycles.sql',
@@ -89,7 +89,7 @@ CREATE INDEX idx_motorcycles_brand ON motorcycles(brand);
 CREATE INDEX idx_motorcycles_operation_type ON motorcycles(operation_type);
 CREATE INDEX idx_motorcycles_featured ON motorcycles(featured);
 CREATE INDEX idx_motorcycles_created_at ON motorcycles(created_at DESC);
-`
+`,
   },
   {
     name: '00005_motorcycle_categories.sql',
@@ -99,7 +99,7 @@ CREATE TABLE motorcycle_categories (
   category_id uuid REFERENCES categories(id) ON DELETE CASCADE,
   PRIMARY KEY (motorcycle_id, category_id)
 );
-`
+`,
   },
   {
     name: '00006_motorcycle_features_map.sql',
@@ -109,7 +109,7 @@ CREATE TABLE motorcycle_features_map (
   feature_id uuid REFERENCES features(id) ON DELETE CASCADE,
   PRIMARY KEY (motorcycle_id, feature_id)
 );
-`
+`,
   },
   {
     name: '00007_motorcycle_images.sql',
@@ -128,7 +128,7 @@ CREATE TABLE motorcycle_images (
 );
 CREATE UNIQUE INDEX idx_motorcycle_images_primary ON motorcycle_images(motorcycle_id) WHERE is_primary = true;
 CREATE INDEX idx_motorcycle_images_sort_order ON motorcycle_images(motorcycle_id, sort_order);
-`
+`,
   },
   {
     name: '00008_motorcycle_owners.sql',
@@ -145,7 +145,7 @@ CREATE TABLE motorcycle_owners (
 );
 CREATE INDEX idx_motorcycle_owners_phone ON motorcycle_owners(phone);
 CREATE INDEX idx_motorcycle_owners_email ON motorcycle_owners(email);
-`
+`,
   },
   {
     name: '00009_consignments.sql',
@@ -171,7 +171,7 @@ CREATE TABLE consignments (
 CREATE INDEX idx_consignments_motorcycle ON consignments(motorcycle_id);
 CREATE INDEX idx_consignments_owner ON consignments(owner_id);
 CREATE INDEX idx_consignments_status ON consignments(contract_status);
-`
+`,
   },
   {
     name: '00010_sales.sql',
@@ -191,7 +191,7 @@ CREATE TABLE sales (
 );
 CREATE INDEX idx_sales_motorcycle ON sales(motorcycle_id);
 CREATE INDEX idx_sales_date ON sales(sale_date);
-`
+`,
   },
   {
     name: '00011_leads.sql',
@@ -213,7 +213,7 @@ CREATE TABLE leads (
 CREATE INDEX idx_leads_type ON leads(type);
 CREATE INDEX idx_leads_status ON leads(status);
 CREATE INDEX idx_leads_motorcycle ON leads(motorcycle_id);
-`
+`,
   },
   {
     name: '00012_rentals.sql',
@@ -237,7 +237,7 @@ CREATE TABLE rentals (
 );
 CREATE INDEX idx_rentals_motorcycle ON rentals(motorcycle_id);
 CREATE INDEX idx_rentals_status ON rentals(status);
-`
+`,
   },
   {
     name: '00013_rental_settings.sql',
@@ -258,7 +258,7 @@ CREATE TABLE rental_settings (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-`
+`,
   },
   {
     name: '00014_sell_requests.sql',
@@ -287,7 +287,7 @@ CREATE TABLE sell_requests (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_sell_requests_status ON sell_requests(status);
-`
+`,
   },
   {
     name: '00015_analytics_events.sql',
@@ -305,7 +305,7 @@ CREATE TABLE analytics_events (
 );
 CREATE INDEX idx_analytics_events_type ON analytics_events(event_type);
 CREATE INDEX idx_analytics_events_motorcycle ON analytics_events(motorcycle_id);
-`
+`,
   },
   {
     name: '00016_site_configuration.sql',
@@ -323,7 +323,7 @@ CREATE TABLE site_configuration (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-`
+`,
   },
   {
     name: '00017_rls_policies.sql',
@@ -380,8 +380,8 @@ CREATE POLICY "Admin Full Access rental_settings" ON rental_settings USING (auth
 CREATE POLICY "Admin Full Access sell_requests" ON sell_requests USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin Full Access analytics_events" ON analytics_events USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin Full Access site_configuration" ON site_configuration USING (auth.role() = 'authenticated');
-`
-  }
+`,
+  },
 ];
 
 for (const m of migrations) {

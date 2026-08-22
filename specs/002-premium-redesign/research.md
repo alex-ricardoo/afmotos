@@ -2,14 +2,16 @@
 
 **Feature**: AF Motos – Premium Visual Redesign (`002-premium-redesign`)  
 **Date**: 2026-08-21  
-**Status**: Completed  
+**Status**: Completed
 
 ---
 
 ## 1. Design System & Theme Architecture (Tailwind CSS v4)
 
 ### Decision
+
 Utilize Tailwind CSS v4 CSS-first `@theme` configuration and CSS custom properties in `app/globals.css` with the specified automotive premium palette:
+
 - **Graphite Background / Accent Dark**: `#0B0D0F`
 - **Surface Dark**: `#171A1D`
 - **Light Neutral / Background Light**: `#F5F5F2`
@@ -20,20 +22,24 @@ Utilize Tailwind CSS v4 CSS-first `@theme` configuration and CSS custom properti
 - **Subtle Borders**: `#E4E6E8` (light mode) / `rgba(255, 255, 255, 0.10)` (dark mode)
 
 ### Rationale
+
 - Tailwind v4 eliminates JavaScript-based `tailwind.config.js` in favor of high-performance CSS variables and native `@theme` declarations.
 - Defining semantic tokens (`--background`, `--foreground`, `--primary`, `--muted`, `--card`, `--border`, `--radius`) ensures that all components remain strictly consistent without arbitrary hardcoded hex codes across JSX files.
 - The high-contrast dark graphite and warm neutral palette evokes an upscale showroom atmosphere rather than a generic tech template.
 
 ### Alternatives Considered
-- *Full Dark Mode default*: Rejected because automotive dealerships benefit from bright, crisp product presentation on white/neutral cards while utilizing rich dark graphite for hero/header/footer contrast.
-- *Heavy Glassmorphism & Neon gradients*: Explicitly avoided to maintain an authentic, reliable dealership aesthetic with high legibility.
+
+- _Full Dark Mode default_: Rejected because automotive dealerships benefit from bright, crisp product presentation on white/neutral cards while utilizing rich dark graphite for hero/header/footer contrast.
+- _Heavy Glassmorphism & Neon gradients_: Explicitly avoided to maintain an authentic, reliable dealership aesthetic with high legibility.
 
 ---
 
 ## 2. Typography & Hierarchy Scale
 
 ### Decision
+
 Implement a modern, robust sans-serif typographic scale with tabular numbers for currency and technical metrics:
+
 - **Display**: `text-4xl md:text-6xl font-black tracking-tight leading-none`
 - **H1 (Page Title)**: `text-3xl md:text-4xl font-extrabold tracking-tight`
 - **H2 (Section Header)**: `text-2xl md:text-3xl font-bold tracking-tight`
@@ -45,6 +51,7 @@ Implement a modern, robust sans-serif typographic scale with tabular numbers for
 - **Badge / Label**: `text-[11px] font-bold uppercase tracking-wider`
 
 ### Rationale
+
 - Clear differentiation between hierarchy levels prevents visual fatigue.
 - Automotive specs (cc, km, year) need rapid scanning without visual noise.
 
@@ -53,6 +60,7 @@ Implement a modern, robust sans-serif typographic scale with tabular numbers for
 ## 3. Component Hierarchy & UX Patterns
 
 ### Decision
+
 1. **Header & Navigation**:
    - Sticky header with slim height (`h-16 md:h-20`), clean typography, dealership branding, desktop nav links, WhatsApp direct action button, and a responsive mobile sheet menu.
 2. **Hero Section**:
@@ -76,6 +84,7 @@ Implement a modern, robust sans-serif typographic scale with tabular numbers for
 ## 4. Accessibility & Mobile-First Strategy
 
 ### Decision
+
 - All interactive elements adhere to WCAG 2.1 AA contrast standards (minimum 4.5:1 for body text, 3:1 for large headers and interactive icons).
 - Form inputs have explicit labels and aria attributes.
 - Mobile touch targets are at least 44x44px.

@@ -74,10 +74,10 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
 
     try {
       const result = await saveSettingsAction(data);
-      
+
       if (result.error) {
         toast.error('Erro ao salvar configurações', {
-          description: result.error
+          description: result.error,
         });
       } else {
         toast.success('Configurações salvas com sucesso');
@@ -95,9 +95,10 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
     <div className="space-y-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-8">
-          
           <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b pb-2">Identidade da Loja</h2>
+            <h2 className="text-xl font-semibold text-foreground border-b pb-2">
+              Identidade da Loja
+            </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <FormField
                 control={form.control as any}
@@ -145,11 +146,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
                   <FormItem className="md:col-span-2">
                     <FormLabel>Descrição Institucional</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Escreva sobre a loja..." 
-                        rows={4}
-                        {...field} 
-                      />
+                      <Textarea placeholder="Escreva sobre a loja..." rows={4} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -159,7 +156,9 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
           </div>
 
           <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b pb-2">Contato e Endereço</h2>
+            <h2 className="text-xl font-semibold text-foreground border-b pb-2">
+              Contato e Endereço
+            </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <FormField
                 control={form.control as any}
@@ -257,7 +256,11 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
             >
               Cancelar
             </Button>
-            <Button type="submit" className="bg-[#c9a44c] hover:bg-[#b8943c] text-black font-semibold" disabled={loading}>
+            <Button
+              type="submit"
+              className="bg-[#c9a44c] hover:bg-[#b8943c] text-black font-semibold"
+              disabled={loading}
+            >
               {loading ? 'Salvando...' : 'Salvar Configurações'}
             </Button>
           </div>

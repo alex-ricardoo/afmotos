@@ -84,10 +84,7 @@ export function QuickSearch() {
           <label className="text-[11px] font-bold uppercase tracking-wider text-[#b8bcc2] ml-1 flex items-center gap-1.5">
             <DollarSign className="w-3.5 h-3.5 text-[#e3c56c]" /> Preço Máximo
           </label>
-          <Select
-            value={maxPrice}
-            onValueChange={(val) => setMaxPrice(val ?? '')}
-          >
+          <Select value={maxPrice} onValueChange={(val) => setMaxPrice(val ?? '')}>
             <SelectTrigger className="w-full h-11 bg-[#0d0d0d] border-[#c9a44c]/20 text-sm font-medium rounded-xl text-[#f4f4f2] focus-visible:border-[#e3c56c]">
               <SelectValue placeholder="Qualquer Valor" />
             </SelectTrigger>
@@ -107,10 +104,7 @@ export function QuickSearch() {
           <label className="text-[11px] font-bold uppercase tracking-wider text-[#b8bcc2] ml-1 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-[#e3c56c]" /> Ano Mínimo
           </label>
-          <Select
-            value={minYear}
-            onValueChange={(val) => setMinYear(val ?? '')}
-          >
+          <Select value={minYear} onValueChange={(val) => setMinYear(val ?? '')}>
             <SelectTrigger className="w-full h-11 bg-[#0d0d0d] border-[#c9a44c]/20 text-sm font-medium rounded-xl text-[#f4f4f2] focus-visible:border-[#e3c56c]">
               <SelectValue placeholder="Qualquer Ano" />
             </SelectTrigger>
@@ -132,7 +126,7 @@ export function QuickSearch() {
             className="w-full h-11 bg-[#c9a44c] hover:bg-[#e3c56c] text-[#050505] font-extrabold rounded-xl shadow-[0_0_15px_rgba(201,164,76,0.3)] transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
           >
             <Search className="w-4 h-4 text-[#050505]" />
-            <span>Buscar no Estoque</span>
+            <span>Buscar Motos</span>
           </Button>
         </div>
       </div>

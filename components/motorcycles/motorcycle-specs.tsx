@@ -40,10 +40,10 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
   const transmissionValue = motorcycle.transmission || 'Manual 6 velocidades';
 
   const defaultDifferentials = [
-    'Laudo Cautelar 100% Aprovado',
-    'Garantia de Motor e Câmbio',
-    'Revisão de Entrega Inclusa',
-    'Documentação Pronta para Transferência',
+    'Documentação em dia',
+    'Revisada quando necessário',
+    'Pronta para transferência',
+    'Visitação com agendamento',
   ];
 
   const highlights =
@@ -92,8 +92,8 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
     },
     {
       icon: <ShieldCheck className="w-4 h-4 text-[#e3c56c]" />,
-      label: 'Procedência',
-      value: '100% Periciada',
+      label: 'Documentação',
+      value: 'Regularizada',
     },
   ];
 
@@ -103,7 +103,7 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
       <div className="bg-[#151515] rounded-2xl p-5 sm:p-6 border border-[#c9a44c]/20 shadow-xs space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-[#b8bcc2] flex items-center gap-1.5">
           <CheckCircle2 className="w-4 h-4 text-[#e3c56c]" />
-          Diferenciais & Garantias Desta Unidade
+          Destaques Desta Moto
         </h3>
 
         <div className="flex flex-wrap gap-2 pt-1">
@@ -126,7 +126,7 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
             <FileText className="w-4 h-4 text-[#e3c56c]" />
             Ficha Técnica
           </h3>
-          <span className="text-xs text-[#a6a6a1] font-medium">Dados auditados</span>
+          <span className="text-xs text-[#a6a6a1] font-medium">Informações do veículo</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
@@ -139,9 +139,7 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
                 {item.icon}
                 <span>{item.label}</span>
               </div>
-              <div className="text-sm font-extrabold text-[#f4f4f2] tabular-nums">
-                {item.value}
-              </div>
+              <div className="text-sm font-extrabold text-[#f4f4f2] tabular-nums">{item.value}</div>
             </div>
           ))}
         </div>
@@ -152,7 +150,7 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
         <div className="bg-[#151515] rounded-2xl p-5 sm:p-6 border border-[#c9a44c]/20 shadow-xs space-y-3">
           <h3 className="font-extrabold text-base sm:text-lg text-white flex items-center gap-2 pb-3 border-b border-[#c9a44c]/20">
             <FileCheck className="w-4 h-4 text-[#e3c56c]" />
-            Observações do Especialista
+            Observações da Moto
           </h3>
           <div className="text-sm text-[#b8bcc2] leading-relaxed space-y-3 pt-1">
             {motorcycle.description
