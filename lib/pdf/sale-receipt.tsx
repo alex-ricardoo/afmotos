@@ -444,25 +444,16 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
                 </Text>
               </View>
 
-              <View style={styles.col4}>
+              <View style={styles.col6}>
                 <Text style={styles.fieldLabel}>Placa</Text>
                 <Text style={styles.fieldValueBold}>
                   {moto?.license_plate || 'Em emplacamento / Não informada'}
                 </Text>
               </View>
 
-              <View style={styles.col4}>
+              <View style={styles.col6}>
                 <Text style={styles.fieldLabel}>Cor</Text>
                 <Text style={styles.fieldValue}>{moto?.color || 'Não informada'}</Text>
-              </View>
-
-              <View style={styles.col4}>
-                <Text style={styles.fieldLabel}>Valor Tabela FIPE (Ref.)</Text>
-                <Text style={styles.fieldValue}>
-                  {moto?.fipe_price && moto.fipe_price > 0
-                    ? formatCurrencyBRL(moto.fipe_price)
-                    : 'Consultar balcão'}
-                </Text>
               </View>
             </View>
           </View>
