@@ -299,7 +299,7 @@ export function CatalogControls() {
   const currentSort = searchParams.get('sort') || '';
   const currentView = searchParams.get('view') || 'grid';
 
-  const updateParam = (key: string, value: string) => {
+  const updateParam = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
       params.set(key, value);

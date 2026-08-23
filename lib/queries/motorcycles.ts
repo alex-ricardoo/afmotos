@@ -77,6 +77,7 @@ export async function getFeaturedMotorcycles() {
     )
     .eq('featured', true)
     .neq('status', 'HIDDEN')
+    .neq('status', 'SOLD')
     .order('created_at', { ascending: false })
     .limit(6);
 
@@ -134,7 +135,8 @@ export async function getAllMotorcycles(searchParams?: FilterSearchParams) {
       motorcycle_images (*)
     `,
     )
-    .neq('status', 'HIDDEN');
+    .neq('status', 'HIDDEN')
+    .neq('status', 'SOLD');
 
   // Search parameters handling
   if (searchParams) {

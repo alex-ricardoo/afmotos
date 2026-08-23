@@ -41,8 +41,9 @@ export function WhatsAppButton({
   const finalMessage =
     message ||
     (motorcycle
-      ? generateMotorcycleInterestMessage(motorcycle)
-      : `Olá! Gostaria de falar com a ${siteName}.`);
+      ? `Olá! Vim pelo site da ${siteName} e gostaria de saber mais sobre a ${motorcycle.brand} ${motorcycle.model}${motorcycle.year_model ? `, ano ${motorcycle.year_model}` : ""}.`
+      : `Olá! Vim pelo site da ${siteName} e gostaria de saber mais sobre as motos disponíveis.`);
+
   const link = generateWhatsAppLink(contactPhone, finalMessage);
 
   if (isFloating && !children) {

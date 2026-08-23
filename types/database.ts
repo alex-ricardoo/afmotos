@@ -36,6 +36,57 @@ export interface Lead {
   updated_at?: string;
 }
 
+export interface SellRequest {
+  id: string;
+  lead_id?: string | null;
+  name: string;
+  phone: string;
+  email?: string | null;
+  license_plate?: string | null;
+  motorcycle_data?: Json;
+  brand?: string | null;
+  model?: string | null;
+  year_manufacture?: number | null;
+  year_model?: number | null;
+  color?: string | null;
+  mileage?: number | null;
+  desired_price?: number | null;
+  state?: string | null;
+  city?: string | null;
+  notes?: string | null;
+  status: string;
+  fipe_provider?: string | null;
+  fipe_vehicle_type_id?: string | null;
+  fipe_brand_id?: string | null;
+  fipe_brand_name?: string | null;
+  fipe_model_id?: string | null;
+  fipe_model_name?: string | null;
+  fipe_year_id?: string | null;
+  fipe_year_label?: string | null;
+  fipe_fuel_id?: string | null;
+  fipe_fuel_name?: string | null;
+  fipe_code?: string | null;
+  fipe_price?: number | null;
+  fipe_reference_period?: string | null;
+  fipe_queried_at?: string | null;
+  fipe_snapshot?: Json;
+  offered_amount?: number | null;
+  accepted_amount?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SellRequestImage {
+  id: string;
+  sell_request_id: string;
+  storage_path?: string | null;
+  provider: string;
+  public_url: string;
+  delete_url?: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface FipeConsultation {
   id: string;
   created_by: string;
@@ -87,6 +138,7 @@ export interface Database {
           transmission: string | null;
           color: string | null;
           price: number | null;
+          fipe_price: number | null;
           description: string | null;
           ownership_type: string;
           operation_type: string;
@@ -115,6 +167,7 @@ export interface Database {
           transmission?: string | null;
           color?: string | null;
           price?: number | null;
+          fipe_price?: number | null;
           description?: string | null;
           ownership_type?: string;
           operation_type?: string;
@@ -141,6 +194,7 @@ export interface Database {
           transmission?: string | null;
           color?: string | null;
           price?: number | null;
+          fipe_price?: number | null;
           description?: string | null;
           ownership_type?: string;
           operation_type?: string;
@@ -198,6 +252,110 @@ export interface Database {
           message?: string | null;
           status?: string;
           metadata?: any;
+        };
+      };
+      sell_requests: {
+        Row: SellRequest;
+        Insert: {
+          id?: string;
+          lead_id?: string | null;
+          name: string;
+          phone: string;
+          email?: string | null;
+          license_plate?: string | null;
+          motorcycle_data?: Json;
+          brand?: string | null;
+          model?: string | null;
+          year_manufacture?: number | null;
+          year_model?: number | null;
+          color?: string | null;
+          mileage?: number | null;
+          desired_price?: number | null;
+          state?: string | null;
+          city?: string | null;
+          notes?: string | null;
+          status?: string;
+          fipe_provider?: string | null;
+          fipe_vehicle_type_id?: string | null;
+          fipe_brand_id?: string | null;
+          fipe_brand_name?: string | null;
+          fipe_model_id?: string | null;
+          fipe_model_name?: string | null;
+          fipe_year_id?: string | null;
+          fipe_year_label?: string | null;
+          fipe_fuel_id?: string | null;
+          fipe_fuel_name?: string | null;
+          fipe_code?: string | null;
+          fipe_price?: number | null;
+          fipe_reference_period?: string | null;
+          fipe_queried_at?: string | null;
+          fipe_snapshot?: Json;
+          offered_amount?: number | null;
+          accepted_amount?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          lead_id?: string | null;
+          name?: string;
+          phone?: string;
+          email?: string | null;
+          license_plate?: string | null;
+          motorcycle_data?: Json;
+          brand?: string | null;
+          model?: string | null;
+          year_manufacture?: number | null;
+          year_model?: number | null;
+          color?: string | null;
+          mileage?: number | null;
+          desired_price?: number | null;
+          state?: string | null;
+          city?: string | null;
+          notes?: string | null;
+          status?: string;
+          fipe_provider?: string | null;
+          fipe_vehicle_type_id?: string | null;
+          fipe_brand_id?: string | null;
+          fipe_brand_name?: string | null;
+          fipe_model_id?: string | null;
+          fipe_model_name?: string | null;
+          fipe_year_id?: string | null;
+          fipe_year_label?: string | null;
+          fipe_fuel_id?: string | null;
+          fipe_fuel_name?: string | null;
+          fipe_code?: string | null;
+          fipe_price?: number | null;
+          fipe_reference_period?: string | null;
+          fipe_queried_at?: string | null;
+          fipe_snapshot?: Json;
+          offered_amount?: number | null;
+          accepted_amount?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      sell_request_images: {
+        Row: SellRequestImage;
+        Insert: {
+          id?: string;
+          sell_request_id: string;
+          storage_path?: string | null;
+          provider?: string;
+          public_url: string;
+          delete_url?: string | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          sell_request_id?: string;
+          storage_path?: string | null;
+          provider?: string;
+          public_url?: string;
+          delete_url?: string | null;
+          sort_order?: number;
+          created_at?: string;
         };
       };
       fipe_consultations: {

@@ -11,6 +11,7 @@ import {
 import { Metadata } from 'next';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { getMotorcycleBySlug, getFeaturedMotorcycles } from '@/lib/queries/motorcycles';
+import { getSettings } from '@/lib/actions/settings';
 import { ImageCarousel } from '@/components/gallery/image-carousel';
 import { MotorcycleSpecs } from '@/components/motorcycles/motorcycle-specs';
 import { WhatsAppCTA } from '@/components/motorcycles/whatsapp-cta';
@@ -54,13 +55,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MotorcycleDetailPage({ params }: Props) {
   const { slug } = await params;
-  const moto = await getMotorcycleBySlug(slug);
+  const [moto, allFeatured, settings] = await Promise.all([
+    getMotorcycleBySlug(slug),
+    getFeaturedMotorcycles(),
+    getSettings(),
+  ]);
 
   if (!moto) {
     notFound();
   }
 
-  const relatedMotos = (await getFeaturedMotorcycles())
+  const whatsappPhone = settings?.whatsapp_phone;
+
+  const relatedMotos = allFeatured
     .filter((m) => m.slug !== moto.slug)
     .slice(0, 3);
 
@@ -72,9 +79,10 @@ export default async function MotorcycleDetailPage({ params }: Props) {
         : [];
 
   const mobileWhatsAppUrl = generateWhatsAppLink(
-    CONSTANTS.CONTACT_PHONE,
+    whatsappPhone,
     generateMotorcycleInterestMessage(moto),
   );
+
 
   return (
     <div className="bg-[#050505] min-h-screen pb-24 md:pb-16 text-[#f4f4f2]">
@@ -193,7 +201,7 @@ export default async function MotorcycleDetailPage({ params }: Props) {
               </div>
 
               {/* WhatsApp Conversion CTAs */}
-              <WhatsAppCTA motorcycle={moto} />
+              <WhatsAppCTA motorcycle={moto} whatsappPhone={whatsappPhone} />
 
               {/* Showroom / Visitação info */}
               <div className="pt-2 border-t border-[#c9a44c]/20 space-y-2 text-xs text-[#a6a6a1]">
@@ -233,7 +241,7 @@ export default async function MotorcycleDetailPage({ params }: Props) {
               </Link>
             </div>
 
-            <MotorcycleGrid motorcycles={relatedMotos} />
+            <MotorcycleGrid motorcycles={relatedMotos} whatsappPhone={whatsappPhone} />
           </div>
         )}
       </div>

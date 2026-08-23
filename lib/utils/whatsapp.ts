@@ -1,11 +1,66 @@
-export function generateWhatsAppLink(phone: string, message: string): string {
-  // Clean phone number: remove non-digits
-  const cleanPhone = phone.replace(/\D/g, '');
+import { CONSTANTS } from './constants';
 
-  // Format message for URL
+/**
+ * Normaliza o número de telefone para o padrão internacional do WhatsApp (wa.me)
+ * Trata números com ou sem DDI (55), com ou sem DDD, com ou sem símbolos e zeros iniciais.
+ * Evita o bug de duplicação do 55 (ex: 555511999999999).
+ */
+export function cleanWhatsAppNumber(phone?: string | null): string {
+  if (!phone) {
+    phone = CONSTANTS.CONTACT_PHONE;
+  }
+
+  // Remove tudo que não for dígito
+  let digits = phone.replace(/\D/g, '');
+
+  // Remove zero(s) à esquerda se houver (ex: 011999999999 -> 11999999999)
+  if (digits.startsWith('0')) {
+    digits = digits.replace(/^0+/, '');
+  }
+
+  // Se já inicia com 55 e tem tamanho de número brasileiro completo (12 ou 13 dígitos: 55 + 2 DDD + 8 ou 9 dígitos)
+  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+    return digits;
+  }
+
+  // Se tem tamanho de número brasileiro sem DDI (10 ou 11 dígitos: 2 DDD + 8 ou 9 dígitos)
+  if (digits.length === 10 || digits.length === 11) {
+    return `55${digits}`;
+  }
+
+  // Caso genérico: se já começar com 55 mantém, senão adiciona 55
+  return digits.startsWith('55') ? digits : `55${digits}`;
+}
+
+/**
+ * Formata um número de telefone para exibição amigável ao usuário (ex: (11) 99999-9999)
+ */
+export function formatPhoneForDisplay(phone?: string | null): string {
+  if (!phone) return '';
+  
+  let digits = phone.replace(/\D/g, '');
+  
+  // Se vier com o 55 e tiver 12 ou 13 dígitos, remove o 55 para exibição nacional
+  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  return phone;
+}
+
+export function generateWhatsAppLink(phone: string | undefined | null, message: string): string {
+  const cleanPhone = cleanWhatsAppNumber(phone);
   const encodedMessage = encodeURIComponent(message);
 
-  return `https://wa.me/55${cleanPhone}?text=${encodedMessage}`;
+  return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
 }
 
 export function generateMotorcycleInterestMessage(motorcycle: {
@@ -24,3 +79,4 @@ export function generateSellOrConsignMessage(): string {
 export function generateRentalMessage(): string {
   return 'Olá! Tenho interesse em alugar uma moto. Gostaria de saber as opções disponíveis.';
 }
+

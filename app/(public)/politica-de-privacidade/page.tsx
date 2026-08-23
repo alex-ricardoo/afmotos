@@ -1,6 +1,8 @@
 import React from 'react';
 import { ShieldCheck, Lock, Eye, FileText, CheckCircle2 } from 'lucide-react';
 import { CONSTANTS } from '@/lib/utils/constants';
+import { getSettings } from '@/lib/actions/settings';
+import { formatPhoneForDisplay } from '@/lib/utils/whatsapp';
 
 export const metadata = {
   title: 'Política de Privacidade | AF Motos',
@@ -8,7 +10,11 @@ export const metadata = {
     'Política de Privacidade e Proteção de Dados da AF Motos em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).',
 };
 
-export default function PoliticaPrivacidadePage() {
+export default async function PoliticaPrivacidadePage() {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  const whatsappPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
+
   return (
     <div className="bg-[#050505] min-h-screen pb-16 text-[#f4f4f2]">
       {/* Header Hero */}
@@ -141,10 +147,10 @@ export default function PoliticaPrivacidadePage() {
             </p>
             <div className="bg-[#0d0d0d] p-4 rounded-xl border border-[#c9a44c]/15 space-y-1 text-xs text-[#a6a6a1]">
               <p>
-                <strong className="text-white">Responsável:</strong> AF Motos
+                <strong className="text-white">Responsável:</strong> {siteName}
               </p>
               <p>
-                <strong className="text-white">WhatsApp:</strong> {CONSTANTS.CONTACT_PHONE}
+                <strong className="text-white">WhatsApp:</strong> {formatPhoneForDisplay(whatsappPhone)}
               </p>
               <p>
                 <strong className="text-white">Atendimento:</strong> {CONSTANTS.OPENING_HOURS}

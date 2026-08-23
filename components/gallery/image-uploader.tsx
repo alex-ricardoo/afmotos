@@ -167,24 +167,56 @@ export function ImageUploader({
   return (
     <div className="space-y-4">
       {currentImages.length === 0 && !uploading && (
-        <div className="rounded-lg border border-dashed border-border p-6 text-center text-muted-foreground bg-muted/20">
-          <ImagePlus className="w-8 h-8 mx-auto mb-2 text-muted-foreground/60" />
-          <p className="text-xs font-medium">Nenhuma foto adicionada ainda.</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+        <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground bg-muted/20">
+          <ImagePlus className="w-10 h-10 mx-auto mb-3 text-muted-foreground/60" />
+          <p className="text-sm font-medium">Nenhuma foto adicionada ainda.</p>
+          <p className="text-xs text-muted-foreground mt-1">
             Adicione fotos da motocicleta para atrair mais compradores. A primeira foto será usada
             como capa.
           </p>
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+      {/* Upload Button Box for Mobile First */}
+      <div className="w-full">
+        <label
+          className={`flex items-center justify-center gap-2 w-full p-4 rounded-xl border border-border bg-card hover:bg-muted/40 transition-all cursor-pointer shadow-sm ${
+            uploading || disabled ? 'opacity-60 pointer-events-none' : ''
+          }`}
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin text-[#c9a44c]" />
+              <span className="text-sm font-semibold text-foreground">Enviando...</span>
+            </>
+          ) : (
+            <>
+              <Upload className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm font-semibold text-foreground">
+                Tirar Foto / Galeria
+              </span>
+            </>
+          )}
+          <input
+            type="file"
+            className="hidden"
+            accept="image/png, image/jpeg, image/webp, image/avif"
+            multiple
+            capture="environment"
+            onChange={handleFileChange}
+            disabled={uploading || disabled}
+          />
+        </label>
+      </div>
+
+      <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory hide-scrollbar">
         {currentImages.map((img) => {
           const isBusy = activeActionId === img.id;
 
           return (
             <div
               key={img.id}
-              className={`group relative aspect-[4/3] rounded-xl overflow-hidden border-2 bg-zinc-950 transition-all ${
+              className={`group relative w-32 shrink-0 aspect-[4/3] snap-start rounded-xl overflow-hidden border-2 bg-zinc-950 transition-all ${
                 img.is_primary
                   ? 'border-[#c9a44c] shadow-[0_0_15px_rgba(201,164,76,0.25)] ring-1 ring-[#c9a44c]'
                   : 'border-border hover:border-zinc-500'
@@ -230,14 +262,14 @@ export function ImageUploader({
               )}
 
               {/* Action Buttons (Bottom Right) */}
-              <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 opacity-100 transition-opacity duration-200">
                 <Button
                   type="button"
                   variant="destructive"
                   size="icon"
                   onClick={() => handleDelete(img)}
                   disabled={isBusy || disabled}
-                  className="h-7 w-7 rounded-lg bg-red-600/90 hover:bg-red-600 text-white shadow-md cursor-pointer"
+                  className="h-7 w-7 rounded-full bg-red-500/80 backdrop-blur-md hover:bg-red-600 text-white shadow-md cursor-pointer border border-white/10"
                   title="Excluir esta foto"
                 >
                   {isBusy ? (
@@ -257,43 +289,6 @@ export function ImageUploader({
             </div>
           );
         })}
-
-        {/* Upload Button Box */}
-        <label
-          className={`flex flex-col items-center justify-center aspect-[4/3] rounded-xl border-2 border-dashed border-border hover:border-[#c9a44c] hover:bg-muted/40 transition-all cursor-pointer group bg-background/50 ${
-            uploading || disabled ? 'opacity-60 pointer-events-none' : ''
-          }`}
-        >
-          <div className="flex flex-col items-center justify-center p-3 text-center">
-            {uploading ? (
-              <>
-                <Loader2 className="w-6 h-6 animate-spin text-[#c9a44c] mb-2" />
-                <span className="text-xs font-semibold text-foreground">Enviando...</span>
-                <span className="text-[10px] text-muted-foreground mt-0.5">
-                  Salvando foto e registro
-                </span>
-              </>
-            ) : (
-              <>
-                <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-[#c9a44c]/15 group-hover:text-[#c9a44c] transition-colors mb-1.5">
-                  <Upload className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-semibold text-foreground group-hover:text-[#c9a44c] transition-colors">
-                  Adicionar Fotos
-                </span>
-                <span className="text-[10px] text-muted-foreground mt-0.5">JPG, PNG, WebP</span>
-              </>
-            )}
-          </div>
-          <input
-            type="file"
-            className="hidden"
-            accept="image/png, image/jpeg, image/webp, image/avif"
-            multiple
-            onChange={handleFileChange}
-            disabled={uploading || disabled}
-          />
-        </label>
       </div>
     </div>
   );

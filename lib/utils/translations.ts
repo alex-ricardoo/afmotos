@@ -35,9 +35,9 @@ export const operationTypeLabels = OPERATION_TYPE_LABELS;
 
 export const OWNERSHIP_TYPE_LABELS: Record<string, string> = {
   OWNED: 'Própria',
-  CONSIGNMENT: 'Consignada',
+  CONSIGNMENT: 'De um Cliente',
   propria: 'Própria',
-  consignada: 'Consignada',
+  consignada: 'De um Cliente',
 };
 
 export const ownershipTypeLabels = OWNERSHIP_TYPE_LABELS;

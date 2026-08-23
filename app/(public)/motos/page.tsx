@@ -3,6 +3,7 @@ import { SlidersHorizontal, ShieldCheck } from 'lucide-react';
 import { MotorcycleGrid } from '@/components/motorcycles/motorcycle-grid';
 import { MotorcycleFilters, MobileFiltersDrawer, CatalogControls } from '@/components/filters/motorcycle-filters';
 import { getAllMotorcycles, getMotorcycleFilterFacets } from '@/lib/queries/motorcycles';
+import { getSettings } from '@/lib/actions/settings';
 import { FileCheck, Award, Wrench } from 'lucide-react';
 
 export const metadata = {
@@ -17,10 +18,12 @@ interface CatalogProps {
 
 export default async function CatalogPage({ searchParams }: CatalogProps) {
   const resolvedParams = await searchParams;
-  const [motos, facets] = await Promise.all([
+  const [motos, facets, settings] = await Promise.all([
     getAllMotorcycles(resolvedParams),
     getMotorcycleFilterFacets(),
+    getSettings(),
   ]);
+
 
   const activeBrand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand : undefined;
   const activeSearch =
@@ -93,6 +96,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
               motorcycles={motos}
               emptyMessage="Nenhuma moto encontrada com os filtros atuais. Tente ajustar a busca ou limpar os filtros."
               viewMode={currentView}
+              whatsappPhone={settings?.whatsapp_phone}
             />
           </main>
         </div>

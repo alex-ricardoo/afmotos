@@ -15,17 +15,20 @@ interface WhatsAppCTAProps {
     year_model: number;
     price?: number | null;
   };
+  whatsappPhone?: string;
+  phone?: string;
   className?: string;
 }
 
-export function WhatsAppCTA({ motorcycle, className }: WhatsAppCTAProps) {
-  const phone = CONSTANTS?.CONTACT_PHONE || '5511999999999';
+export function WhatsAppCTA({ motorcycle, whatsappPhone, phone, className }: WhatsAppCTAProps) {
+  const contactPhone = whatsappPhone || phone;
 
   const interestMessage = generateMotorcycleInterestMessage(motorcycle);
   const tradeInMessage = `Olá! Tenho interesse na moto ${motorcycle.brand} ${motorcycle.model} (${motorcycle.year_model}) e gostaria de saber sobre a possibilidade de dar outra moto na troca.`;
 
-  const interestUrl = generateWhatsAppLink(phone, interestMessage);
-  const tradeInUrl = generateWhatsAppLink(phone, tradeInMessage);
+  const interestUrl = generateWhatsAppLink(contactPhone, interestMessage);
+  const tradeInUrl = generateWhatsAppLink(contactPhone, tradeInMessage);
+
 
   return (
     <div className={cn('space-y-4', className)}>

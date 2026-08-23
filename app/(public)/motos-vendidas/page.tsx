@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { History, Sparkles, ArrowRight } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { getSoldMotorcycles } from '@/lib/queries/motorcycles';
+import { getSettings } from '@/lib/actions/settings';
 import { MotorcycleGrid } from '@/components/motorcycles/motorcycle-grid';
 import { buttonVariants } from '@/components/ui/button';
 import { CONSTANTS } from '@/lib/utils/constants';
@@ -16,12 +17,16 @@ export const metadata = {
 };
 
 export default async function MotosVendidasPage() {
-  const motorcycles = await getSoldMotorcycles();
+  const [motorcycles, settings] = await Promise.all([
+    getSoldMotorcycles(),
+    getSettings(),
+  ]);
 
   const customOrderWhatsappUrl = generateWhatsAppLink(
-    CONSTANTS.CONTACT_PHONE,
+    settings?.whatsapp_phone,
     'Olá! Vi um modelo na lista de motos vendidas da AF Motos e gostaria de saber se há previsão de alguma similar.',
   );
+
 
   return (
     <div className="bg-[#050505] min-h-screen pb-16 text-[#f4f4f2]">
@@ -72,6 +77,7 @@ export default async function MotosVendidasPage() {
         <MotorcycleGrid
           motorcycles={motorcycles}
           emptyMessage="O histórico de motos vendidas está sendo atualizado."
+          whatsappPhone={settings?.whatsapp_phone}
         />
 
         {/* Custom Order Callout Box */}

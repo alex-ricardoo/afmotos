@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { ShieldCheck, FileCheck, Award, Phone, Mail, Clock } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { CONSTANTS } from '@/lib/utils/constants';
-import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
+import { generateWhatsAppLink, formatPhoneForDisplay } from '@/lib/utils/whatsapp';
 
 export function Footer({ settings }: { settings?: any }) {
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
@@ -19,6 +19,7 @@ export function Footer({ settings }: { settings?: any }) {
     contactPhone,
     `Olá! Gostaria de mais informações sobre a ${siteName}.`,
   );
+
 
   return (
     <footer className="bg-[#050505] text-[#b8bcc2] border-t border-[#c9a44c]/20">
@@ -158,9 +159,15 @@ export function Footer({ settings }: { settings?: any }) {
             </h4>
             <ul className="space-y-3 text-xs text-[#a6a6a1]">
               <li>
-                <a href={`tel:${contactPhone.replace(/\D/g, '')}`} className="flex items-center gap-2 hover:text-amber-500 transition-colors duration-200">
-                  <Phone className="w-4 h-4 text-[#c9a44c] shrink-0" />
-                  <span className="font-medium text-white hover:text-amber-500">{contactPhone}</span>
+                <a
+                  href={`tel:${contactPhone.replace(/\D/g, "")}`}
+                  className="flex items-center gap-2 transition-colors duration-200 hover:text-amber-500"
+                >
+                  <Phone className="h-4 w-4 shrink-0 text-[#c9a44c]" />
+
+                  <span className="font-medium text-white hover:text-amber-500">
+                    {formatPhoneForDisplay(contactPhone)}
+                  </span>
                 </a>
               </li>
               <li>

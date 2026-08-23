@@ -6,9 +6,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { createMotorcycleAction, updateMotorcycleAction } from '@/lib/actions/motorcycles';
-import { PlateLookupField } from '@/components/forms/plate-lookup-field';
 import { ImageUploader } from '@/components/gallery/image-uploader';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Sparkles, CarFront, Tag, FileText, Camera, Check, Search, X, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { MotorcycleImage } from '@/types/database';
+import { useFipex } from '@/hooks/use-fipex';
+import { fipexFetch } from '@/lib/fipex/client';
+import { mapPrelude } from '@/lib/fipex/mappers';
+import { fipexCache, FIPEX_CACHE_TTL } from '@/lib/fipex/cache';
+import { RawApiResponse, RawPreludeData } from '@/lib/fipex/types';
+import { useEffect, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +37,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+
+import {
   motorcycleStatusLabels,
   operationTypeLabels,
   ownershipTypeLabels,
@@ -50,6 +63,8 @@ const transmissionLabels: Record<string, string> = {
   semiautomatico: 'Semiautomático',
   cvt: 'CVT',
 };
+
+const POPULAR_BRANDS = new Set(['HONDA', 'YAMAHA', 'KAWASAKI', 'SUZUKI', 'BMW', 'TRIUMPH', 'DUCATI', 'HARLEY-DAVIDSON']);
 
 const motorcycleSchema = z.object({
   brand: z.string().min(2, 'Marca é obrigatória'),
@@ -72,6 +87,7 @@ const motorcycleSchema = z.object({
     .or(z.literal('')),
   color: z.string().optional(),
   price: z.coerce.number().optional(),
+  fipe_price: z.coerce.number().optional(),
   description: z.string().optional(),
   ownership_type: z.enum(['OWNED', 'CONSIGNMENT']),
   operation_type: z.enum(['SALE', 'RENTAL', 'SALE_AND_RENTAL']),
@@ -125,7 +141,41 @@ function normalizeTransmission(val?: string): 'manual' | 'automatico' | 'semiaut
   return 'manual';
 }
 
-import { MotorcycleImage } from '@/types/database';
+const formatCurrency = (value: number | string) => {
+  const clean = String(value).replace(/\D/g, '');
+  if (!clean) return '';
+  const num = Number(clean) / 100;
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+};
+
+const parseCurrency = (value: string) => {
+  if (!value) return 0;
+  return Number(value.replace(/\D/g, '')) / 100;
+};
+
+const formatKM = (value: number | string) => {
+  const num = String(value).replace(/\D/g, '');
+  if (!num) return '';
+  return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
+const parseKM = (value: string) => {
+  return Number(value.replace(/\D/g, ''));
+};
+
+const RadioPill = ({ label, value, selected, onClick }: { label: string; value: string; selected: boolean; onClick: (v: string) => void }) => (
+  <button
+    type="button"
+    onClick={() => onClick(value)}
+    className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all border ${
+      selected
+        ? 'bg-[#c9a44c]/20 border-[#c9a44c] text-[#c9a44c] shadow-[0_0_10px_rgba(201,164,76,0.15)]'
+        : 'bg-background border-border text-muted-foreground hover:bg-muted'
+    }`}
+  >
+    {label}
+  </button>
+);
 
 export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
   const router = useRouter();
@@ -136,11 +186,21 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
 
   const isEditing = !!initialData?.id;
 
-  const handlePlateSuccess = (data: any) => {
-    Object.keys(data).forEach((key) => {
-      // @ts-ignore
-      form.setValue(key as any, data[key]);
-    });
+  const generateAiDescription = () => {
+    const values = form.getValues();
+    const kmStr = values.mileage ? formatKM(values.mileage) + ' km' : '0 km';
+    const desc = `🏍️ ${values.brand} ${values.model} ${values.version || ''}
+
+📅 Ano: ${values.year_manufacture}/${values.year_model}
+🛣️ Quilometragem: ${kmStr}
+🎨 Cor: ${values.color || 'Não informada'}
+⚙️ Motor: ${values.engine_capacity ? `${values.engine_capacity}cc` : 'Não informada'}
+${values.fipe_price ? `📊 Preço Tabela FIPE: ${formatCurrency(values.fipe_price)}\n` : ''}
+Moto revisada, documentação em dia e garantia de motor e câmbio.
+Financiamos em até 48x e aceitamos seu usado na troca!
+
+Fale com nossa equipe e agende um test ride.`;
+    form.setValue('description', desc.trim(), { shouldDirty: true });
   };
 
   const form = useForm<MotorcycleFormValues>({
@@ -157,6 +217,7 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
       transmission: normalizeTransmission(initialData?.transmission),
       color: initialData?.color || '',
       price: initialData?.price || 0,
+      fipe_price: initialData?.fipe_price || null,
       description: initialData?.description || '',
       ownership_type: normalizeOwnership(initialData?.ownership_type),
       operation_type: normalizeOperation(initialData?.operation_type),
@@ -166,6 +227,130 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
       location: initialData?.location || '',
     },
   });
+
+  // FIPE State & Refs
+  const fipe = useFipex();
+  const [selectedBrandId, setSelectedBrandId] = useState<string>('');
+  const [selectedModelId, setSelectedModelId] = useState<string>('');
+  
+  const [isBrandOpen, setIsBrandOpen] = useState(false);
+  const [brandSearchTerm, setBrandSearchTerm] = useState('');
+  const [onlyPopularBrands, setOnlyPopularBrands] = useState(true);
+  const brandComboboxRef = useRef<HTMLDivElement>(null);
+
+  const [isModelOpen, setIsModelOpen] = useState(false);
+  const [modelSearchTerm, setModelSearchTerm] = useState('');
+  const modelComboboxRef = useRef<HTMLDivElement>(null);
+  
+  const [fipeMotoTypeId, setFipeMotoTypeId] = useState<string>('');
+
+  // Initialize FIPE (get type ID for motorcycles and load brands)
+  useEffect(() => {
+    let isMounted = true;
+    async function loadFipeMotoBrands() {
+      try {
+        const cached = fipexCache.get<{ vehicleTypes: { id: string, slug: string, name: string }[] }>('prelude');
+        let motoTypeId = '';
+        if (cached) {
+          const motoType = cached.vehicleTypes.find(t => t.slug === 'motocicletas' || t.name.toLowerCase().includes('moto'));
+          if (motoType) motoTypeId = motoType.id;
+        } else {
+          const raw = await fipexFetch<RawApiResponse<RawPreludeData>>('/v1/prelude');
+          const mapped = mapPrelude(raw.data);
+          fipexCache.set('prelude', mapped, FIPEX_CACHE_TTL.PRELUDE);
+          const motoType = mapped.vehicleTypes.find(t => t.slug === 'motocicletas' || t.name.toLowerCase().includes('moto'));
+          if (motoType) motoTypeId = motoType.id;
+        }
+        
+        if (isMounted && motoTypeId) {
+          setFipeMotoTypeId(motoTypeId);
+          fipe.fetchBrandsForType(motoTypeId);
+        }
+      } catch (err) {
+        console.error('Failed to load FIPE prelude', err);
+      }
+    }
+    loadFipeMotoBrands();
+    return () => { isMounted = false; };
+  }, [fipe.fetchBrandsForType]);
+
+  const filteredBrands = fipe.allBrands.filter((b) => {
+    if (onlyPopularBrands && !POPULAR_BRANDS.has(b.name.toUpperCase())) return false;
+    return b.name.toLowerCase().includes(brandSearchTerm.toLowerCase());
+  });
+
+  const filteredModels = fipe.allModels.filter((m) => 
+    m.name.toLowerCase().includes(modelSearchTerm.toLowerCase())
+  );
+
+  const handleBrandSelect = (id: string, name: string) => {
+    setSelectedBrandId(id);
+    form.setValue('brand', name, { shouldValidate: true });
+    setIsBrandOpen(false);
+    setBrandSearchTerm('');
+    
+    // reset model and year
+    setSelectedModelId('');
+    form.setValue('model', '');
+    form.setValue('year_manufacture', new Date().getFullYear());
+    form.setValue('year_model', new Date().getFullYear());
+    form.setValue('fipe_price', 0);
+    
+    fipe.fetchModelsForBrand(id, fipeMotoTypeId); // Fetch models for Motos
+  };
+
+  const handleModelSelect = (id: string, name: string) => {
+    setSelectedModelId(id);
+    form.setValue('model', name, { shouldValidate: true });
+    setIsModelOpen(false);
+    setModelSearchTerm('');
+    
+    // reset year and price
+    form.setValue('year_manufacture', new Date().getFullYear());
+    form.setValue('year_model', new Date().getFullYear());
+    form.setValue('fipe_price', 0);
+    
+    fipe.fetchModelDetail(id);
+  };
+
+  const handleYearChange = async (val: string) => {
+    form.setValue('year_model', parseInt(val), { shouldValidate: true });
+    form.setValue('year_manufacture', parseInt(val), { shouldValidate: true }); // Assume fab == model mostly
+    
+    if (selectedModelId) {
+      // Let's find the matching year option
+      const yearOpt = fipe.years.find(y => y.value === val);
+      if (yearOpt && fipe.modelDetail) {
+        // find fuel id
+        const yf = fipe.modelDetail.yearFuels.find(yf => (yf.year === yearOpt.year || (yf.isZeroKm && yearOpt.isZeroKm)));
+        const fuelId = yf?.fuels?.[0]?.id;
+        if (yf && fuelId) {
+           const fetchedPriceData = await fipe.fetchFipePrice(selectedModelId, val, fuelId);
+           if (fetchedPriceData && fetchedPriceData.price_cents) {
+             const priceReais = fetchedPriceData.price_cents / 100;
+             form.setValue('fipe_price', priceReais, { shouldValidate: true });
+             if (!form.getValues('price')) {
+               form.setValue('price', priceReais, { shouldValidate: true });
+             }
+           }
+        }
+      }
+    }
+  };
+
+  // Close comboboxes when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (brandComboboxRef.current && !brandComboboxRef.current.contains(event.target as Node)) {
+        setIsBrandOpen(false);
+      }
+      if (modelComboboxRef.current && !modelComboboxRef.current.contains(event.target as Node)) {
+        setIsModelOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   async function onSubmit(data: MotorcycleFormValues) {
     setLoading(true);
@@ -206,518 +391,659 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center bg-card p-4 rounded-lg border border-border shadow-sm">
-        <p className="text-sm text-muted-foreground">
-          <span className="text-destructive font-bold mr-1">*</span> Indica campos de preenchimento
-          obrigatório.
-        </p>
-      </div>
-
+    <div className="space-y-6 pb-24">
       {errorMsg && (
-        <div className="bg-destructive/15 text-destructive border border-destructive p-4 rounded-md flex items-center gap-3">
+        <div className="bg-destructive/15 text-destructive border border-destructive p-4 rounded-xl flex items-center gap-3">
           <AlertCircle className="w-5 h-5 shrink-0" />
           <p className="text-sm font-medium">{errorMsg}</p>
         </div>
       )}
 
       {successMsg && (
-        <div className="bg-green-500/15 text-green-500 border border-green-500 p-4 rounded-md flex items-center gap-3">
+        <div className="bg-green-500/15 text-green-500 border border-green-500 p-4 rounded-xl flex items-center gap-3">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
           <p className="text-sm font-medium">{successMsg}</p>
         </div>
       )}
 
-      {!isEditing && (
-        <div className="bg-card p-6 rounded-lg shadow-sm border border-border max-w-md">
-          <h3 className="text-sm font-semibold mb-4 text-foreground">
-            Busca por Placa{' '}
-            <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
-          </h3>
-          <PlateLookupField onSuccess={handlePlateSuccess} />
-        </div>
-      )}
+
+
+      {/* Imagens (Mobile First: Top) */}
+      <div className="bg-card p-5 rounded-2xl shadow-sm border border-border space-y-4">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <Camera className="w-5 h-5 text-muted-foreground" />
+          Imagens da Moto
+        </h2>
+        <ImageUploader
+          motorcycleId={initialData?.id}
+          images={images}
+          onImagesChange={setImages}
+        />
+      </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-8">
-          {/* SEÇÃO 1: IDENTIFICAÇÃO */}
-          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
-              Identificação
-            </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <FormField
-                control={form.control as any}
-                name="brand"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Marca <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Honda" {...field} className="bg-background" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="model"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Modelo <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: CB 500F" {...field} className="bg-background" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="version"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Versão{' '}
-                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: ABS"
-                        {...field}
-                        value={field.value || ''}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="license_plate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Placa{' '}
-                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="ABC-1234"
-                        {...field}
-                        value={field.value || ''}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
+        <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
+          <Accordion 
+            className="space-y-4"
+          >
+            {/* BLOCO 1: DADOS DO VEÍCULO & FICHA TÉCNICA */}
+            <AccordionItem value="dados" className="bg-card border border-border rounded-2xl px-5 overflow-hidden">
+              <AccordionTrigger className="hover:no-underline py-5">
+                <div className="flex items-center gap-2 font-semibold text-lg text-foreground">
+                  <CarFront className="w-5 h-5 text-[#c9a44c]" />
+                  Dados do Veículo & Ficha Técnica
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-6 space-y-5">
 
-          {/* SEÇÃO 2: ESPECIFICAÇÕES */}
-          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
-              Especificações Técnicas
-            </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <FormField
-                control={form.control as any}
-                name="year_manufacture"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Ano Fabricação <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} className="bg-background" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="year_model"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Ano Modelo <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} className="bg-background" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="mileage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Quilometragem (km){' '}
-                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value ?? 0}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="engine_capacity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Cilindrada (cc){' '}
-                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value ?? 0}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="fuel"
-                render={({ field }) => {
-                  const currentVal = field.value || 'gasolina';
-                  return (
-                    <FormItem>
-                      <FormLabel>
-                        Combustível{' '}
-                        <span className="text-xs font-normal text-muted-foreground">
-                          (Opcional)
-                        </span>
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={currentVal}>
-                        <FormControl>
-                          <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Selecione...">
-                              {fuelLabels[currentVal] || currentVal}
-                            </SelectValue>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="gasolina">Gasolina</SelectItem>
-                          <SelectItem value="etanol">Etanol</SelectItem>
-                          <SelectItem value="flex">Flex</SelectItem>
-                          <SelectItem value="eletrico">Elétrico</SelectItem>
-                          <SelectItem value="diesel">Diesel</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <FormField
-                control={form.control as any}
-                name="transmission"
-                render={({ field }) => {
-                  const currentVal = field.value || 'manual';
-                  return (
-                    <FormItem>
-                      <FormLabel>
-                        Câmbio{' '}
-                        <span className="text-xs font-normal text-muted-foreground">
-                          (Opcional)
-                        </span>
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={currentVal}>
-                        <FormControl>
-                          <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Selecione...">
-                              {transmissionLabels[currentVal] || currentVal}
-                            </SelectValue>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="manual">Manual</SelectItem>
-                          <SelectItem value="automatico">Automático</SelectItem>
-                          <SelectItem value="semiautomatico">Semiautomático</SelectItem>
-                          <SelectItem value="cvt">CVT</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <FormField
-                control={form.control as any}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Cor{' '}
-                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: Preto"
-                        {...field}
-                        value={field.value || ''}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <FormField
+                    control={form.control as any}
+                    name="brand"
+                    render={({ field }) => {
+                      const selectedBrand = fipe.allBrands.find(b => b.id === selectedBrandId);
+                      const displayValue = selectedBrand?.name || field.value || '';
+                      
+                      return (
+                        <FormItem className="col-span-1 md:col-span-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <FormLabel>Marca <span className="text-destructive">*</span></FormLabel>
+                            {fipe.loadingBrands && (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-[#e3c56c]">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              </span>
+                            )}
+                          </div>
+                          <FormControl>
+                            <div ref={brandComboboxRef} className="relative space-y-3">
+                              {/* Quick Pills */}
+                              <div className="flex flex-wrap gap-2">
+                                {Array.from(POPULAR_BRANDS).map((brandName) => {
+                                  const brandObj = fipe.allBrands.find(b => b.name.toUpperCase() === brandName);
+                                  const isSelected = selectedBrandId === brandObj?.id || field.value.toUpperCase() === brandName;
+                                  return (
+                                    <button
+                                      key={brandName}
+                                      type="button"
+                                      onClick={() => {
+                                        if (brandObj) {
+                                          handleBrandSelect(brandObj.id, brandObj.name);
+                                        } else {
+                                          form.setValue('brand', brandName, { shouldValidate: true });
+                                        }
+                                      }}
+                                      className={`min-h-[40px] px-3.5 py-2 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-amber-500 border-amber-500 text-zinc-950 shadow-sm'
+                                          : 'bg-background border-border text-foreground hover:border-amber-500/50'
+                                      }`}
+                                    >
+                                      {brandName}
+                                    </button>
+                                  );
+                                })}
+                              </div>
 
-          {/* SEÇÃO 3: COMERCIAL */}
-          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
-              Comercial
-            </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <FormField
-                control={form.control as any}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Preço de Venda (R$){' '}
-                      <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value ?? 0}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control as any}
-                name="operation_type"
-                render={({ field }) => {
-                  const currentVal = field.value || 'SALE';
-                  return (
-                    <FormItem>
-                      <FormLabel>
-                        Tipo de Operação <span className="text-destructive">*</span>
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={currentVal}>
-                        <FormControl>
-                          <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Selecione o tipo de operação">
-                              {operationTypeLabels[
-                                currentVal as keyof typeof operationTypeLabels
-                              ] || currentVal}
-                            </SelectValue>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="SALE">{operationTypeLabels['SALE']}</SelectItem>
-                          <SelectItem value="RENTAL">{operationTypeLabels['RENTAL']}</SelectItem>
-                          <SelectItem value="SALE_AND_RENTAL">
-                            {operationTypeLabels['SALE_AND_RENTAL']}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <FormField
-                control={form.control as any}
-                name="ownership_type"
-                render={({ field }) => {
-                  const currentVal = field.value || 'OWNED';
-                  return (
-                    <FormItem>
-                      <FormLabel>
-                        Tipo de Propriedade <span className="text-destructive">*</span>
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={currentVal}>
-                        <FormControl>
-                          <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Selecione o tipo de propriedade">
-                              {ownershipTypeLabels[
-                                currentVal as keyof typeof ownershipTypeLabels
-                              ] || currentVal}
-                            </SelectValue>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="OWNED">{ownershipTypeLabels['OWNED']}</SelectItem>
-                          <SelectItem value="CONSIGNMENT">
-                            {ownershipTypeLabels['CONSIGNMENT']}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription className="text-xs text-muted-foreground">
-                        Consignação é o nome interno usado para motos anunciadas para terceiros.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-            </div>
-          </div>
+                              {/* Dropdown Trigger */}
+                              <div
+                                onClick={() => {
+                                  if (!fipe.loadingBrands) setIsBrandOpen(p => !p);
+                                }}
+                                className={`w-full min-h-[48px] flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-sm cursor-pointer transition-all bg-background ${
+                                  isBrandOpen ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-border hover:border-amber-500/50'
+                                }`}
+                              >
+                                <span className={displayValue ? 'font-bold text-foreground' : 'text-muted-foreground'}>
+                                  {displayValue || 'Pesquisar ou digitar marca...'}
+                                </span>
+                                <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                              </div>
 
-          {/* SEÇÃO 4: DESCRIÇÃO */}
-          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
-              Descrição Comercial{' '}
-              <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
-            </h2>
-            <FormField
-              control={form.control as any}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Descreva a motocicleta em detalhes para o anúncio..."
-                      className="resize-none bg-background"
-                      rows={5}
-                      {...field}
-                      value={field.value || ''}
+                              {/* Dropdown Content */}
+                              {isBrandOpen && (
+                                <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-[#c9a44c]/40 bg-card/95 backdrop-blur-md shadow-2xl p-2 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+                                  <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                    <input
+                                      type="text"
+                                      value={brandSearchTerm}
+                                      onChange={(e) => setBrandSearchTerm(e.target.value)}
+                                      placeholder="Digite para filtrar marca..."
+                                      autoFocus
+                                      className="w-full min-h-[48px] rounded-lg border border-border bg-background/80 pl-8 pr-8 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-amber-500 outline-none"
+                                    />
+                                    {brandSearchTerm && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setBrandSearchTerm('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center justify-between px-1 text-[11px] text-muted-foreground border-b border-border/40 pb-1.5">
+                                    <span>{filteredBrands.length} marcas</span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); setOnlyPopularBrands(p => !p); }}
+                                      className="text-[#e3c56c] hover:underline cursor-pointer font-medium"
+                                    >
+                                      {onlyPopularBrands ? 'Ver todas' : 'Filtrar principais'}
+                                    </button>
+                                  </div>
+
+                                  <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                                    {filteredBrands.length === 0 ? (
+                                      <div className="p-4 text-center text-xs text-muted-foreground space-y-2">
+                                        <p className="font-medium text-foreground">Nenhuma marca encontrada na FIPE.</p>
+                                        <Button 
+                                          type="button" 
+                                          variant="outline" 
+                                          size="sm"
+                                          className="w-full text-[11px] h-8"
+                                          onClick={() => {
+                                            form.setValue('brand', brandSearchTerm, { shouldValidate: true });
+                                            setSelectedBrandId('');
+                                            setIsBrandOpen(false);
+                                          }}
+                                        >
+                                          Usar "{brandSearchTerm}" manual
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      filteredBrands.map((b) => (
+                                        <div
+                                          key={b.id}
+                                          onClick={() => handleBrandSelect(b.id, b.name)}
+                                          className={`flex items-center justify-between min-h-[40px] px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                                            selectedBrandId === b.id ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-foreground hover:bg-amber-500/15 hover:text-amber-500'
+                                          }`}
+                                        >
+                                          <span>{b.name}</span>
+                                          {selectedBrandId === b.id && <Check className="h-3.5 w-3.5" />}
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
+
+                  <FormField
+                    control={form.control as any}
+                    name="model"
+                    render={({ field }) => {
+                      const selectedModel = fipe.allModels.find(m => m.id === selectedModelId);
+                      const displayValue = selectedModel?.name || field.value || '';
+
+                      return (
+                        <FormItem className="col-span-1 md:col-span-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <FormLabel>Modelo <span className="text-destructive">*</span></FormLabel>
+                            {fipe.loadingModels && (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-[#e3c56c]">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              </span>
+                            )}
+                          </div>
+                          <FormControl>
+                            <div ref={modelComboboxRef} className="relative">
+                              <div
+                                onClick={() => {
+                                  if (!fipe.loadingModels) setIsModelOpen(p => !p);
+                                }}
+                                className={`w-full min-h-[48px] flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-sm cursor-pointer transition-all bg-background ${
+                                  isModelOpen ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-border hover:border-amber-500/50'
+                                }`}
+                              >
+                                <span className={displayValue ? 'font-bold text-foreground' : 'text-muted-foreground'}>
+                                  {displayValue || 'Pesquisar ou digitar modelo...'}
+                                </span>
+                                <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                              </div>
+
+                              {isModelOpen && (
+                                <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-[#c9a44c]/40 bg-card/95 backdrop-blur-md shadow-2xl p-2 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+                                  <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                    <input
+                                      type="text"
+                                      value={modelSearchTerm}
+                                      onChange={(e) => setModelSearchTerm(e.target.value)}
+                                      placeholder="Digite para filtrar modelo..."
+                                      autoFocus
+                                      className="w-full min-h-[48px] rounded-lg border border-border bg-background/80 pl-8 pr-8 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-amber-500 outline-none"
+                                    />
+                                    {modelSearchTerm && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setModelSearchTerm('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <div className="max-h-56 overflow-y-auto space-y-1 pr-1 mt-2">
+                                    {filteredModels.length === 0 ? (
+                                      <div className="p-4 text-center text-xs text-muted-foreground space-y-2">
+                                        <p className="font-medium text-foreground">Nenhum modelo encontrado.</p>
+                                        <Button 
+                                          type="button" 
+                                          variant="outline" 
+                                          size="sm"
+                                          className="w-full text-[11px] h-8"
+                                          onClick={() => {
+                                            form.setValue('model', modelSearchTerm, { shouldValidate: true });
+                                            setSelectedModelId('');
+                                            setIsModelOpen(false);
+                                          }}
+                                        >
+                                          Usar "{modelSearchTerm}" manual
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      filteredModels.map((m) => (
+                                        <div
+                                          key={m.id}
+                                          onClick={() => handleModelSelect(m.id, m.name)}
+                                          className={`flex items-center justify-between min-h-[40px] px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                                            selectedModelId === m.id ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-foreground hover:bg-amber-500/15 hover:text-amber-500'
+                                          }`}
+                                        >
+                                          <span>{m.name}</span>
+                                          {selectedModelId === m.id && <Check className="h-3.5 w-3.5" />}
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
+                  />
+
+                  <FormField
+                    control={form.control as any}
+                    name="version"
+                    render={({ field }) => (
+                      <FormItem className="col-span-1 md:col-span-2">
+                        <FormLabel>Versão (Opcional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: ABS" {...field} value={field.value || ''} className="bg-background h-12 rounded-xl" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4 col-span-1 md:col-span-2">
+                    <FormField
+                      control={form.control as any}
+                      name="year_manufacture"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ano Fab. <span className="text-destructive">*</span></FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} className="bg-background h-12 rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                    <FormField
+                      control={form.control as any}
+                      name="year_model"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ano Mod. <span className="text-destructive">*</span></FormLabel>
+                          <FormControl>
+                            {selectedModelId && fipe.years.length > 0 ? (
+                              <Select 
+                                value={String(field.value) || ''} 
+                                onValueChange={(val) => {
+                                  if (val) handleYearChange(val);
+                                }}
+                              >
+                                <SelectTrigger className="bg-background h-12 rounded-xl">
+                                  <SelectValue placeholder="Selecione o ano..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {fipe.years.map((y) => (
+                                    <SelectItem key={y.value} value={y.value}>
+                                      {y.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input type="number" {...field} className="bg-background h-12 rounded-xl" />
+                            )}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-          {/* SEÇÃO 5: IMAGENS */}
-          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
-              Imagens <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Adicione fotos nítidas da motocicleta. A primeira foto será usada como capa.
-            </p>
-            <div className="bg-background p-4 border border-border rounded-md">
-              <ImageUploader
-                motorcycleId={initialData?.id}
-                images={images}
-                onImagesChange={setImages}
-              />
-            </div>
-          </div>
-
-          {/* SEÇÃO 6: PUBLICAÇÃO */}
-          <div className="bg-card p-6 rounded-lg shadow-sm border border-border space-y-6">
-            <h2 className="text-xl font-semibold text-foreground border-b border-border pb-2">
-              Publicação
-            </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <FormField
-                control={form.control as any}
-                name="status"
-                render={({ field }) => {
-                  const currentVal = field.value || 'AVAILABLE';
-                  return (
-                    <FormItem>
-                      <FormLabel>
-                        Status de Visibilidade <span className="text-destructive">*</span>
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={currentVal}>
+                  <FormField
+                    control={form.control as any}
+                    name="mileage"
+                    render={({ field: { value, onChange, ...fieldProps } }) => (
+                      <FormItem>
+                        <FormLabel>Quilometragem (km)</FormLabel>
                         <FormControl>
-                          <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Selecione o status">
-                              {motorcycleStatusLabels[
-                                currentVal as keyof typeof motorcycleStatusLabels
-                              ] || currentVal}
-                            </SelectValue>
-                          </SelectTrigger>
+                          <Input
+                            placeholder="0 km"
+                            {...fieldProps}
+                            value={formatKM(value || 0)}
+                            onChange={(e) => onChange(parseKM(e.target.value))}
+                            className="bg-background h-12 rounded-xl"
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {Object.entries(motorcycleStatusLabels).map(([key, label]) => (
-                            <SelectItem key={key} value={key}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control as any}
+                    name="license_plate"
+                    render={({ field: { value, onChange, ...fieldProps } }) => (
+                      <FormItem>
+                        <FormLabel>Placa</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="ABC-1234"
+                            {...fieldProps}
+                            value={value || ''}
+                            onChange={(e) => {
+                              const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+                              if (v.length > 3) {
+                                onChange(`${v.slice(0, 3)}-${v.slice(3)}`);
+                              } else {
+                                onChange(v);
+                              }
+                            }}
+                            className="bg-background h-12 rounded-xl uppercase tracking-widest font-semibold"
+                            maxLength={8}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control as any}
+                      name="color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cor</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: Preto" {...field} value={field.value || ''} className="bg-background h-12 rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control as any}
+                      name="engine_capacity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cilindrada (cc)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} value={field.value ?? 0} className="bg-background h-12 rounded-xl" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* BLOCO 2: CONDIÇÃO COMERCIAL & VALORES */}
+            <AccordionItem value="comercial" className="bg-card border border-border rounded-2xl px-5 overflow-hidden">
+              <AccordionTrigger className="hover:no-underline py-5">
+                <div className="flex items-center gap-2 font-semibold text-lg text-foreground">
+                  <Tag className="w-5 h-5 text-[#c9a44c]" />
+                  Condição Comercial & Valores
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <FormField
+                    control={form.control as any}
+                    name="price"
+                    render={({ field: { onChange, value, ...fieldProps } }) => (
+                      <FormItem>
+                        <FormLabel>Preço de Venda <span className="text-destructive">*</span></FormLabel>
+                        <FormControl>
+                          <Input
+                            {...fieldProps}
+                            value={value !== undefined && value !== null && value !== '' ? formatCurrency(value) : ''}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '');
+                              onChange(val ? Number(val) / 100 : 0);
+                            }}
+                            className="bg-background h-14 rounded-xl text-xl font-bold tracking-tight text-amber-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control as any}
+                    name="fipe_price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Preço Tabela FIPE</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              readOnly
+                              value={field.value ? formatCurrency(field.value) : ''}
+                              placeholder="R$ 0,00"
+                              className="bg-muted/50 h-14 rounded-xl text-lg font-semibold tracking-tight text-muted-foreground border-dashed"
+                            />
+                            {fipe.loadingPrice && (
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                <Loader2 className="h-4 w-4 animate-spin text-[#c9a44c]" />
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormDescription className="text-[11px]">
+                          Preenchido automaticamente ao selecionar o Ano Mod.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control as any}
+                  name="operation_type"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Tipo de Operação <span className="text-destructive">*</span></FormLabel>
+                      <FormControl>
+                        <div className="flex gap-2 flex-wrap">
+                          <RadioPill 
+                            label="Venda" 
+                            value="SALE" 
+                            selected={field.value === 'SALE'} 
+                            onClick={field.onChange} 
+                          />
+                          <RadioPill 
+                            label="Aluguel" 
+                            value="RENTAL" 
+                            selected={field.value === 'RENTAL'} 
+                            onClick={field.onChange} 
+                          />
+                          <RadioPill 
+                            label="Ambos" 
+                            value="SALE_AND_RENTAL" 
+                            selected={field.value === 'SALE_AND_RENTAL'} 
+                            onClick={field.onChange} 
+                          />
+                        </div>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
-                  );
-                }}
-              />
-              <FormField
-                control={form.control as any}
-                name="featured"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Moto em Destaque</FormLabel>
-                      <FormDescription>
-                        Exibir esta moto na seção principal do site.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
+                  )}
+                />
 
-          {form.formState.isDirty && (
-            <div className="bg-yellow-500/10 text-yellow-600 border border-yellow-500/30 p-3 rounded-md text-sm">
-              Você tem alterações não salvas.
-            </div>
-          )}
+                <FormField
+                  control={form.control as any}
+                  name="ownership_type"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Tipo de Propriedade <span className="text-destructive">*</span></FormLabel>
+                      <FormControl>
+                        <div className="flex gap-2">
+                          <RadioPill 
+                            label="Própria" 
+                            value="OWNED" 
+                            selected={field.value === 'OWNED'} 
+                            onClick={field.onChange} 
+                          />
+                          <RadioPill 
+                            label="De um Cliente" 
+                            value="CONSIGNMENT" 
+                            selected={field.value === 'CONSIGNMENT'} 
+                            onClick={field.onChange} 
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </AccordionContent>
+            </AccordionItem>
 
-          <div className="flex justify-end gap-4 sticky bottom-4 bg-card/80 backdrop-blur-sm p-4 border border-border rounded-lg shadow-lg">
+            {/* BLOCO 3: DESCRIÇÃO & PUBLICAÇÃO */}
+            <AccordionItem value="publicacao" className="bg-card border border-border rounded-2xl px-5 overflow-hidden">
+              <AccordionTrigger className="hover:no-underline py-5">
+                <div className="flex items-center gap-2 font-semibold text-lg text-foreground">
+                  <FileText className="w-5 h-5 text-[#c9a44c]" />
+                  Descrição & Publicação
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-6 space-y-6">
+                <FormField
+                  control={form.control as any}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between mb-2">
+                        <FormLabel className="mb-0">Descrição Comercial</FormLabel>
+                        <Button 
+                          type="button" 
+                          variant="secondary" 
+                          size="sm" 
+                          onClick={generateAiDescription}
+                          className="h-8 text-xs bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border border-amber-500/20"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                          Criar Template de Descrição
+                        </Button>
+                      </div>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Descreva a motocicleta em detalhes..."
+                          className="resize-none bg-background rounded-xl min-h-[120px]"
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                  <FormField
+                    control={form.control as any}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>Status <span className="text-destructive">*</span></FormLabel>
+                        <FormControl>
+                          <div className="flex flex-wrap gap-2">
+                            <RadioPill label="Disponível" value="AVAILABLE" selected={field.value === 'AVAILABLE'} onClick={field.onChange} />
+                            <RadioPill label="Reservada" value="RESERVED" selected={field.value === 'RESERVED'} onClick={field.onChange} />
+                            <RadioPill label="Vendida" value="SOLD" selected={field.value === 'SOLD'} onClick={field.onChange} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control as any}
+                    name="featured"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-xl border border-border p-4 bg-background">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base font-semibold">Destaque na Página Inicial</FormLabel>
+                          <FormDescription className="text-xs">
+                            Exibir no carrossel principal do site.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          {/* Floating Action Bar (Sticky Footer) */}
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800 p-3 px-4 md:px-8 flex items-center justify-between shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => router.back()}
               disabled={loading}
-              className="border-border text-foreground hover:bg-muted"
+              className="text-muted-foreground hover:text-foreground font-medium"
             >
               Cancelar
             </Button>
+            
             <Button
               type="submit"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8"
+              className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold px-8 py-6 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.25)] active:scale-95 transition-all text-base"
               disabled={loading}
             >
               {loading
-                ? isEditing
-                  ? 'Salvando...'
-                  : 'Cadastrando...'
-                : isEditing
-                  ? 'Salvar alterações'
-                  : 'Cadastrar moto'}
+                ? (isEditing ? 'Salvando...' : 'Cadastrando...')
+                : (isEditing ? 'Salvar Alterações' : 'Cadastrar Moto')}
             </Button>
           </div>
         </form>

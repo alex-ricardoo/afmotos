@@ -126,6 +126,7 @@ export default async function HomePage() {
         <MotorcycleGrid
           motorcycles={featuredMotos}
           emptyMessage="Nenhuma moto disponível no momento. Fale conosco pelo WhatsApp para saber sobre novas opções!"
+          whatsappPhone={settings?.whatsapp_phone}
         />
 
         <div className="mt-8 flex justify-center sm:hidden">

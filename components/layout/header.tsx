@@ -71,7 +71,9 @@ export function Header({ settings }: { settings?: any }) {
         <nav className="hidden lg:flex items-center space-x-1">
           {navLinks.map((link) => {
             const isActive =
-              link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
+              link.href === '/'
+                ? pathname === '/'
+                : pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <Link
                 key={link.href}
@@ -145,7 +147,9 @@ export function Header({ settings }: { settings?: any }) {
                 <nav className="flex flex-col gap-1.5 mt-6">
                   {navLinks.map((link) => {
                     const isActive =
-                      link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
+                      link.href === '/'
+                        ? pathname === '/'
+                        : pathname === link.href || pathname.startsWith(`${link.href}/`);
                     return (
                       <Link
                         key={link.href}
