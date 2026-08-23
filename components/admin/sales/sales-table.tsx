@@ -34,42 +34,48 @@ const getPaymentStatusBadge = (status?: string | null) => {
     case 'PAID':
       return {
         label: 'Pago',
-        className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+        className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
       };
     case 'PARTIAL':
       return {
         label: 'Parcial',
-        className: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+        className: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
       };
     case 'PENDING':
     default:
       return {
         label: 'Pendente',
-        className: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
+        className: 'bg-zinc-800 text-zinc-400 border-zinc-700',
       };
   }
 };
 
 export function SalesTable({ sales }: SalesTableProps) {
   return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-xs">
+    <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
       <Table>
-        <TableHeader className="bg-muted/50 border-b border-border">
-          <TableRow>
-            <TableHead className="w-[80px]">Foto</TableHead>
-            <TableHead>Veículo</TableHead>
-            <TableHead>Comprador</TableHead>
-            <TableHead>Valor da Venda</TableHead>
-            <TableHead>Pagamento</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead>Nº Recibo</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+        <TableHeader className="bg-zinc-900/60 border-b border-zinc-800">
+          <TableRow className="hover:bg-transparent border-zinc-800">
+            <TableHead className="w-[70px] text-zinc-400 text-xs font-bold uppercase">
+              Foto
+            </TableHead>
+            <TableHead className="text-zinc-400 text-xs font-bold uppercase">Veículo</TableHead>
+            <TableHead className="text-zinc-400 text-xs font-bold uppercase">Comprador</TableHead>
+            <TableHead className="text-zinc-400 text-xs font-bold uppercase">
+              Valor da Venda
+            </TableHead>
+            <TableHead className="text-zinc-400 text-xs font-bold uppercase">Pagamento</TableHead>
+            <TableHead className="text-zinc-400 text-xs font-bold uppercase">Data</TableHead>
+            <TableHead className="text-zinc-400 text-xs font-bold uppercase">Nº Recibo</TableHead>
+            <TableHead className="text-right text-zinc-400 text-xs font-bold uppercase">
+              Ações
+            </TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody className="divide-y divide-zinc-900">
           {sales.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+              <TableCell colSpan={8} className="h-32 text-center text-zinc-500 text-sm">
                 Nenhuma venda encontrada com os filtros aplicados.
               </TableCell>
             </TableRow>
@@ -95,11 +101,14 @@ export function SalesTable({ sales }: SalesTableProps) {
               const statusBadge = getPaymentStatusBadge(sale.payment_status);
 
               return (
-                <TableRow key={sale.id} className="hover:bg-muted/30 transition-colors">
+                <TableRow
+                  key={sale.id}
+                  className="hover:bg-zinc-900/40 transition-colors border-zinc-900"
+                >
                   {/* Foto */}
                   <TableCell>
                     {primaryImage ? (
-                      <div className="relative w-16 h-12 rounded-lg overflow-hidden border border-border bg-black/20 shrink-0 shadow-xs">
+                      <div className="relative w-14 h-11 rounded-xl overflow-hidden border border-zinc-800 bg-black/40 shrink-0 shadow-xs">
                         <Image
                           src={primaryImage}
                           alt={moto?.model || 'Moto'}
@@ -109,18 +118,18 @@ export function SalesTable({ sales }: SalesTableProps) {
                         />
                       </div>
                     ) : (
-                      <div className="w-16 h-12 rounded-lg border border-border bg-muted flex items-center justify-center shrink-0">
-                        <Bike className="w-5 h-5 text-muted-foreground/40" />
+                      <div className="w-14 h-11 rounded-xl border border-zinc-800 bg-zinc-900 flex items-center justify-center shrink-0">
+                        <Bike className="w-4 h-4 text-zinc-600" />
                       </div>
                     )}
                   </TableCell>
 
                   {/* Veículo */}
                   <TableCell>
-                    <div className="font-bold text-foreground text-sm">
+                    <div className="font-bold text-white text-sm">
                       {moto?.brand} {moto?.model} {moto?.version || ''}
                     </div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                    <div className="text-xs text-zinc-400 flex items-center gap-2 mt-0.5 font-mono">
                       <span>{moto?.year_model}</span>
                       {moto?.license_plate && <span>• {moto.license_plate}</span>}
                     </div>
@@ -128,11 +137,11 @@ export function SalesTable({ sales }: SalesTableProps) {
 
                   {/* Comprador */}
                   <TableCell>
-                    <div className="font-semibold text-foreground text-sm">
+                    <div className="font-bold text-zinc-200 text-sm">
                       {sale.buyer_name || 'Não informado'}
                     </div>
                     {sale.buyer_phone && (
-                      <div className="text-xs text-muted-foreground mt-0.5 font-mono">
+                      <div className="text-xs text-zinc-400 mt-0.5 font-mono">
                         {sale.buyer_phone}
                       </div>
                     )}
@@ -140,7 +149,7 @@ export function SalesTable({ sales }: SalesTableProps) {
 
                   {/* Valor */}
                   <TableCell>
-                    <div className="font-extrabold text-amber-500 text-sm">
+                    <div className="font-black text-[#e3c56c] text-sm font-mono">
                       {formatCurrency(Number(sale.sale_price))}
                     </div>
                   </TableCell>
@@ -148,12 +157,12 @@ export function SalesTable({ sales }: SalesTableProps) {
                   {/* Pagamento */}
                   <TableCell>
                     <div className="space-y-1">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-muted text-foreground border border-border">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
                         {sale.payment_method || 'PIX'}
                       </span>
                       <div>
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge.className}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold border ${statusBadge.className}`}
                         >
                           {statusBadge.label}
                         </span>
@@ -162,13 +171,13 @@ export function SalesTable({ sales }: SalesTableProps) {
                   </TableCell>
 
                   {/* Data */}
-                  <TableCell className="text-xs text-foreground font-medium">
+                  <TableCell className="text-xs text-zinc-300 font-medium font-mono">
                     {formatDate(sale.sale_date)}
                   </TableCell>
 
                   {/* Recibo */}
                   <TableCell>
-                    <span className="font-mono text-xs font-bold text-foreground">
+                    <span className="font-mono text-xs font-bold text-zinc-300">
                       {sale.receipt_number || '-'}
                     </span>
                   </TableCell>
@@ -184,7 +193,7 @@ export function SalesTable({ sales }: SalesTableProps) {
                           variant: 'outline',
                           size: 'sm',
                           className:
-                            'h-8 px-2.5 rounded-lg text-xs font-semibold border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 flex items-center gap-1.5 cursor-pointer',
+                            'h-8 px-2.5 rounded-xl text-xs font-bold border-[#c9a44c]/30 text-[#e3c56c] hover:bg-[#c9a44c]/10 hover:text-amber-300 flex items-center gap-1.5 cursor-pointer',
                         })}
                         title="Gerar / Baixar Recibo PDF"
                       >
@@ -201,7 +210,7 @@ export function SalesTable({ sales }: SalesTableProps) {
                             variant: 'ghost',
                             size: 'icon-sm',
                             className:
-                              'rounded-lg text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-400 cursor-pointer',
+                              'rounded-xl text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 cursor-pointer',
                           })}
                           title="Falar com Comprador no WhatsApp"
                         >

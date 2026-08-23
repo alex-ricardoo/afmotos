@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Bike, Download, MessageSquare } from 'lucide-react';
+import { Bike, Download, MessageSquare, Phone } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { SaleWithDetails } from '@/lib/queries/sales';
 
@@ -26,18 +26,18 @@ const getPaymentStatusBadge = (status?: string | null) => {
     case 'PAID':
       return {
         label: 'Pago',
-        className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+        className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
       };
     case 'PARTIAL':
       return {
         label: 'Parcial',
-        className: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+        className: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
       };
     case 'PENDING':
     default:
       return {
         label: 'Pendente',
-        className: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
+        className: 'bg-zinc-800 text-zinc-400 border-zinc-700',
       };
   }
 };
@@ -61,11 +61,11 @@ export function SaleCard({ sale }: SaleCardProps) {
   const statusBadge = getPaymentStatusBadge(sale.payment_status);
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 shadow-xs space-y-4 hover:border-[#c9a44c]/40 transition-colors">
+    <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-3xl p-4.5 shadow-sm space-y-4 hover:border-[#c9a44c]/40 transition-colors">
       {/* Top: Image + Moto Details */}
       <div className="flex items-center gap-3.5">
         {primaryImage ? (
-          <div className="relative w-24 h-18 rounded-xl overflow-hidden shrink-0 border border-border bg-black/20 shadow-xs">
+          <div className="relative w-24 h-18 rounded-2xl overflow-hidden shrink-0 border border-zinc-800 bg-black/40 shadow-xs">
             <Image
               src={primaryImage}
               alt={moto?.model || 'Moto'}
@@ -75,43 +75,50 @@ export function SaleCard({ sale }: SaleCardProps) {
             />
           </div>
         ) : (
-          <div className="w-24 h-18 rounded-xl border border-border bg-muted flex flex-col items-center justify-center shrink-0 text-muted-foreground">
+          <div className="w-24 h-18 rounded-2xl border border-zinc-800 bg-zinc-900 flex flex-col items-center justify-center shrink-0 text-zinc-600">
             <Bike className="w-6 h-6 opacity-40" />
             <span className="text-[9px] mt-0.5">Sem foto</span>
           </div>
         )}
 
         <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-sm text-foreground truncate">
+          <h4 className="font-bold text-sm text-white truncate">
             {moto?.brand} {moto?.model} {moto?.version || ''}
           </h4>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+          <div className="flex items-center gap-2 text-xs text-zinc-400 mt-0.5 font-mono">
             <span>{moto?.year_model}</span>
             {moto?.license_plate && <span>• {moto.license_plate}</span>}
           </div>
-          <div className="text-sm font-extrabold text-amber-500 mt-1">
+          <div className="text-base font-black text-[#e3c56c] mt-1 font-mono">
             {formatCurrency(Number(sale.sale_price))}
           </div>
         </div>
       </div>
 
       {/* Buyer & Payment Info */}
-      <div className="bg-muted/40 rounded-xl p-3 border border-border/50 space-y-2 text-xs">
+      <div className="bg-zinc-900/60 rounded-2xl p-3.5 border border-zinc-800/80 space-y-2 text-xs">
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Comprador:</span>
-          <span className="font-semibold text-foreground truncate max-w-[180px]">
+          <span className="text-zinc-400">Comprador:</span>
+          <span className="font-bold text-white truncate max-w-[180px]">
             {sale.buyer_name || 'Não informado'}
           </span>
         </div>
 
+        {sale.buyer_phone && (
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-400">Telefone:</span>
+            <span className="font-mono text-zinc-300 font-semibold">{sale.buyer_phone}</span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Pagamento:</span>
+          <span className="text-zinc-400">Pagamento:</span>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-background text-foreground border border-border">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
               {sale.payment_method || 'PIX'}
             </span>
             <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge.className}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold border ${statusBadge.className}`}
             >
               {statusBadge.label}
             </span>
@@ -119,14 +126,14 @@ export function SaleCard({ sale }: SaleCardProps) {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">Data:</span>
-          <span className="font-medium text-foreground">{formatDate(sale.sale_date)}</span>
+          <span className="text-zinc-400">Data:</span>
+          <span className="font-mono text-zinc-300">{formatDate(sale.sale_date)}</span>
         </div>
 
         {sale.receipt_number && (
-          <div className="flex items-center justify-between pt-1 border-t border-border/40">
-            <span className="text-muted-foreground">Recibo:</span>
-            <span className="font-mono font-bold text-foreground text-[11px]">
+          <div className="flex items-center justify-between pt-1 border-t border-zinc-800/60">
+            <span className="text-zinc-400">Recibo:</span>
+            <span className="font-mono font-black text-[#e3c56c] text-xs">
               {sale.receipt_number}
             </span>
           </div>
@@ -143,7 +150,7 @@ export function SaleCard({ sale }: SaleCardProps) {
             variant: 'outline',
             size: 'sm',
             className:
-              'h-10 rounded-xl text-xs font-semibold border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 flex items-center justify-center gap-1.5 cursor-pointer',
+              'h-10 rounded-xl text-xs font-bold border-[#c9a44c]/30 text-[#e3c56c] hover:bg-[#c9a44c]/10 flex items-center justify-center gap-1.5 cursor-pointer',
           })}
         >
           <Download className="w-3.5 h-3.5" />
@@ -159,14 +166,14 @@ export function SaleCard({ sale }: SaleCardProps) {
               variant: 'outline',
               size: 'sm',
               className:
-                'h-10 rounded-xl text-xs font-semibold border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-400 flex items-center justify-center gap-1.5 cursor-pointer',
+                'h-10 rounded-xl text-xs font-bold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-center gap-1.5 cursor-pointer',
             })}
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>WhatsApp</span>
           </a>
         ) : (
-          <span className="h-10 rounded-xl text-xs text-muted-foreground/50 flex items-center justify-center border border-border/40">
+          <span className="h-10 rounded-xl text-xs text-zinc-500 flex items-center justify-center border border-zinc-800/80">
             Sem WhatsApp
           </span>
         )}

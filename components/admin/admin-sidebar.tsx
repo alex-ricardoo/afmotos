@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Scale,
   Receipt,
+  Sparkles,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -39,24 +40,36 @@ export function AdminSidebar() {
   };
 
   return (
-    <div className="flex flex-1 h-full w-full flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-      <div className="flex h-16 shrink-0 items-center justify-between px-5 border-b border-sidebar-border">
-        <Link href="/admin" className="flex items-center gap-3 group">
-          <div className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 border border-[#c9a44c]/40 shadow-xs bg-black/40 group-hover:border-[#c9a44c] transition-colors">
+    <aside className="flex flex-1 h-full w-full flex-col bg-[#0c0c0f] text-zinc-100 border-r border-zinc-900/60 select-none">
+      {/* Brand Header */}
+      <div className="flex h-20 shrink-0 items-center justify-between px-6 pt-2">
+        <Link href="/admin" className="flex items-center gap-3.5 group">
+          <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[#c9a44c]/50 shadow-[0_0_15px_rgba(201,164,76,0.15)] bg-black/60 group-hover:border-[#c9a44c] group-hover:shadow-[0_0_20px_rgba(201,164,76,0.3)] transition-all">
             <Image src="/logo.png" alt="AF Motos Logo" fill className="object-cover" priority />
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-base font-extrabold tracking-tight text-sidebar-foreground">
-              AF <span className="text-[#c9a44c]">Motos</span>
-            </span>
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40 shadow-xs">
-              Admin
-            </span>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-black tracking-tight text-white">
+                AF <span className="text-[#c9a44c]">Motos</span>
+              </span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
+                Admin
+              </span>
+            </div>
+            <span className="text-[10px] text-zinc-500 font-medium">Gestão & Operação</span>
           </div>
         </Link>
       </div>
-      <div className="flex flex-1 flex-col overflow-y-auto">
-        <nav className="flex-1 space-y-1 px-4 py-4">
+
+      {/* Navigation list */}
+      <div className="flex flex-1 flex-col overflow-y-auto px-3.5 py-4">
+        <div className="px-3 mb-2">
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            Menu Principal
+          </span>
+        </div>
+
+        <nav className="space-y-1.5 flex-1">
           {navigation.map((item) => {
             const isActive =
               item.href === '/admin'
@@ -68,47 +81,53 @@ export function AdminSidebar() {
                 key={item.name}
                 href={item.href}
                 className={cn(
+                  'group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150',
                   isActive
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-xs'
-                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                  'group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                    ? 'bg-gradient-to-r from-[#c9a44c]/20 via-[#c9a44c]/10 to-transparent text-white font-bold border-l-2 border-[#c9a44c] shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/50',
                 )}
               >
-                <item.icon
-                  className={cn(
-                    isActive
-                      ? 'text-[#c9a44c]'
-                      : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80',
-                    'mr-3 h-5 w-5 flex-shrink-0 transition-colors',
-                  )}
-                />
-                {item.name}
+                <div className="flex items-center gap-3">
+                  <item.icon
+                    className={cn(
+                      'h-4.5 w-4.5 shrink-0 transition-colors',
+                      isActive ? 'text-[#e3c56c]' : 'text-zinc-500 group-hover:text-zinc-300',
+                    )}
+                  />
+                  <span>{item.name}</span>
+                </div>
+                {isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#c9a44c] shadow-[0_0_8px_#c9a44c]" />
+                )}
               </Link>
             );
           })}
         </nav>
-        <div className="p-4 border-t border-sidebar-border space-y-2">
+
+        {/* Footer Actions */}
+        <div className="pt-4 pb-2 px-1 space-y-2">
           <Link
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors border border-sidebar-border"
+            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/50 transition-all border border-zinc-900/80"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Globe className="h-4 w-4 text-[#c9a44c]" />
-              <span>Ver Site Público</span>
+              <span>Ver Loja Pública</span>
             </div>
-            <ExternalLink className="h-3.5 w-3.5 opacity-50" />
+            <ExternalLink className="h-3 w-3 opacity-50" />
           </Link>
+
           <button
             onClick={handleLogout}
-            className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-400/90 hover:text-rose-300 hover:bg-rose-950/20 transition-all cursor-pointer"
           >
-            <LogOut className="mr-3 h-5 w-5 flex-shrink-0" />
-            Sair da Conta
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span>Encerrar Sessão</span>
           </button>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

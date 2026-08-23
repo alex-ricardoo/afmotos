@@ -1,55 +1,55 @@
 import { getDashboardMetrics } from '@/lib/queries/dashboard';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bike, CheckCircle, MessageSquare, ShoppingBag } from 'lucide-react';
+import { DashboardKpis } from '@/components/admin/dashboard/dashboard-kpis';
+import { QuickActionsBar } from '@/components/admin/dashboard/quick-actions-bar';
+import { SalesAnalyticsChart } from '@/components/admin/dashboard/sales-analytics-chart';
+import { PaymentBrandsBreakdown } from '@/components/admin/dashboard/payment-brands-breakdown';
+import { RecentSalesFeed } from '@/components/admin/dashboard/recent-sales-feed';
+import { Sparkles } from 'lucide-react';
+
+export const metadata = {
+  title: 'Dashboard Geral | AF Motos Admin',
+  description: 'Visão executiva de faturamento, estoque, vendas e propostas.',
+};
 
 export default async function AdminDashboardPage() {
   const metrics = await getDashboardMetrics();
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Bem-vindo ao painel administrativo.</p>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* 1. Header do Dashboard com Saudação & Resumo */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Painel de Gestão & Inteligência
+            </h1>
+            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
+              <Sparkles className="w-3 h-3" /> AF Motos
+            </span>
+          </div>
+          <p className="text-sm text-zinc-400 mt-1">
+            Acompanhe o faturamento em tempo real, giro do estoque e propostas comerciais.
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">Total de Motos</CardTitle>
-            <Bike className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.available}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Motos Vendidas</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.sold}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Motos Alugadas</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.rented}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Novos Contatos</CardTitle>
-            <MessageSquare className="h-4 w-4 text-[#e3c56c]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.newLeads}</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* 2. KPIs de Alto Impacto (Faturamento, Pátio, Ticket Médio, Leads) */}
+      <DashboardKpis metrics={metrics} />
+
+      {/* 3. Ações Rápidas (Mobile-First 1-Tap Actions) */}
+      <QuickActionsBar />
+
+      {/* 4. Gráficos de Vendas & Mês Recorde */}
+      <SalesAnalyticsChart data={metrics.monthlyHistory} bestMonth={metrics.bestMonth} />
+
+      {/* 5. Distribuição de Pagamento & Marcas Mais Vendidas */}
+      <PaymentBrandsBreakdown
+        paymentDistribution={metrics.paymentDistribution}
+        topBrands={metrics.topBrands}
+      />
+
+      {/* 6. Feed de Vendas Recentes & Emissão de Recibos */}
+      <RecentSalesFeed sales={metrics.recentSales} />
     </div>
   );
 }

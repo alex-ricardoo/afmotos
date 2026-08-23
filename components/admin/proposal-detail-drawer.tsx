@@ -54,11 +54,16 @@ interface ProposalDetailProps {
   typeBadgeClass: string;
 }
 
-export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }: ProposalDetailProps) {
+export function ProposalDetail({
+  proposal,
+  open,
+  onOpenChange,
+  typeBadgeClass,
+}: ProposalDetailProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  
+
   if (!proposal) return null;
 
   const typeLabel = proposalTypeLabels[proposal.type] || proposal.typeLabel;
@@ -72,7 +77,9 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
       <div className="space-y-6 py-4">
         {/* Contact Info Section */}
         <section className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dados do Contato</h4>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Dados do Contato
+          </h4>
           <div className="bg-secondary/20 p-4 rounded-xl border border-border/40 text-sm space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Nome:</span>
@@ -92,7 +99,8 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Localização:</span>
                 <span className="font-bold text-foreground">
-                  {proposal.city}{proposal.state ? ` - ${proposal.state}` : ''}
+                  {proposal.city}
+                  {proposal.state ? ` - ${proposal.state}` : ''}
                 </span>
               </div>
             )}
@@ -102,7 +110,9 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
         {/* Motorcycle Info Section */}
         {proposal.motorcycle && (proposal.motorcycle.brand || proposal.motorcycle.model) && (
           <section className="space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Dados da Moto</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Dados da Moto
+            </h4>
             <div className="bg-secondary/20 p-4 rounded-xl border border-border/40 text-sm space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Moto:</span>
@@ -119,14 +129,18 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
               {proposal.motorcycle.mileage != null && (
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Quilometragem:</span>
-                  <span className="font-bold text-foreground">{proposal.motorcycle.mileage} km</span>
+                  <span className="font-bold text-foreground">
+                    {proposal.motorcycle.mileage} km
+                  </span>
                 </div>
               )}
               {proposal.motorcycle.desiredPrice != null && (
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Valor Desejado:</span>
                   <span className="font-bold text-[#c9a44c]">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proposal.motorcycle.desiredPrice)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                      proposal.motorcycle.desiredPrice,
+                    )}
                   </span>
                 </div>
               )}
@@ -134,7 +148,9 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Valor FIPE:</span>
                   <span className="font-bold text-blue-400">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proposal.motorcycle.fipePrice)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                      proposal.motorcycle.fipePrice,
+                    )}
                   </span>
                 </div>
               )}
@@ -145,7 +161,9 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
         {/* Message Section */}
         {proposal.message && (
           <section className="space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Mensagem</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Mensagem
+            </h4>
             <div className="bg-secondary/20 p-4 rounded-xl border border-border/40 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
               {proposal.message}
             </div>
@@ -160,8 +178,8 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
             </h4>
             <div className="flex flex-wrap gap-3 pb-4">
               {proposal.images.map((img, idx) => (
-                <button 
-                  key={idx} 
+                <button
+                  key={idx}
                   type="button"
                   onClick={() => {
                     setSelectedImageIndex(idx);
@@ -169,7 +187,11 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
                   }}
                   className="relative rounded-xl overflow-hidden border border-border/40 h-28 w-28 sm:h-40 sm:w-40 bg-secondary/20 block hover:opacity-90 transition-opacity text-left cursor-zoom-in"
                 >
-                  <img src={img.url} alt={`Foto ${idx + 1}`} className="object-cover w-full h-full" />
+                  <img
+                    src={img.url}
+                    alt={`Foto ${idx + 1}`}
+                    className="object-cover w-full h-full"
+                  />
                 </button>
               ))}
             </div>
@@ -181,9 +203,9 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
 
   const ActionButtons = (
     <div className="flex flex-col gap-2 w-full">
-      <a 
-        href={whatsappLink} 
-        target="_blank" 
+      <a
+        href={whatsappLink}
+        target="_blank"
         rel="noopener noreferrer"
         className="w-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl h-12 shadow-[0_0_15px_rgba(37,211,102,0.2)] flex items-center justify-center transition-colors"
       >
@@ -196,56 +218,71 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
   if (isDesktop) {
     return (
       <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 bg-[#151515] border-[#c9a44c]/30 text-[#f4f4f2]">
-          <DialogHeader className="px-6 py-5 border-b border-border/40 bg-card">
-            <div className="flex items-center justify-between gap-4 pr-10">
-              <DialogTitle className="text-2xl font-bold truncate text-white min-w-0 flex-1">{proposal.name}</DialogTitle>
-              <Badge variant="outline" className={cn('uppercase text-[10px] font-bold px-2 py-0.5 whitespace-nowrap shrink-0', typeBadgeClass)}>
-                {typeLabel}
-              </Badge>
-            </div>
-            <DialogDescription className="text-[#a6a6a1]">
-              Recebido em {format(new Date(proposal.createdAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="px-6 overflow-y-auto flex-1">
-            {Content}
-          </div>
-          <div className="px-6 py-4 border-t border-border/40 bg-card">
-            {ActionButtons}
-          </div>
-        </DialogContent>
-      </Dialog>
-      {proposal.images && proposal.images.length > 0 && (
-        <ImageFullscreen
-          images={proposal.images.map((img, i) => ({ id: i.toString(), url: img.url }))}
-          isOpen={isFullscreenOpen}
-          onClose={() => setIsFullscreenOpen(false)}
-          initialSlide={selectedImageIndex}
-        />
-      )}
-    </>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 bg-[#151515] border-[#c9a44c]/30 text-[#f4f4f2]">
+            <DialogHeader className="px-6 py-5 border-b border-border/40 bg-card">
+              <div className="flex items-center justify-between gap-4 pr-10">
+                <DialogTitle className="text-2xl font-bold truncate text-white min-w-0 flex-1">
+                  {proposal.name}
+                </DialogTitle>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    'uppercase text-[10px] font-bold px-2 py-0.5 whitespace-nowrap shrink-0',
+                    typeBadgeClass,
+                  )}
+                >
+                  {typeLabel}
+                </Badge>
+              </div>
+              <DialogDescription className="text-[#a6a6a1]">
+                Recebido em{' '}
+                {format(new Date(proposal.createdAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="px-6 overflow-y-auto flex-1">{Content}</div>
+            <div className="px-6 py-4 border-t border-border/40 bg-card">{ActionButtons}</div>
+          </DialogContent>
+        </Dialog>
+        {proposal.images && proposal.images.length > 0 && (
+          <ImageFullscreen
+            images={proposal.images.map((img, i) => ({ id: i.toString(), url: img.url }))}
+            isOpen={isFullscreenOpen}
+            onClose={() => setIsFullscreenOpen(false)}
+            initialSlide={selectedImageIndex}
+          />
+        )}
+      </>
     );
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] sm:max-w-md rounded-t-[20px] bg-[#151515] border-[#c9a44c]/30 p-0 text-[#f4f4f2]">
+      <SheetContent
+        side="bottom"
+        className="max-h-[90vh] sm:max-w-md rounded-t-[20px] bg-[#151515] border-[#c9a44c]/30 p-0 text-[#f4f4f2]"
+      >
         <SheetHeader className="text-left border-b border-border/40 pb-4 p-4 pt-6">
           <div className="flex items-center justify-between gap-4 mb-1 pr-10">
-            <SheetTitle className="text-xl font-bold truncate text-white min-w-0 flex-1">{proposal.name}</SheetTitle>
-            <Badge variant="outline" className={cn('uppercase text-[10px] font-bold px-2 py-0.5 whitespace-nowrap shrink-0', typeBadgeClass)}>
+            <SheetTitle className="text-xl font-bold truncate text-white min-w-0 flex-1">
+              {proposal.name}
+            </SheetTitle>
+            <Badge
+              variant="outline"
+              className={cn(
+                'uppercase text-[10px] font-bold px-2 py-0.5 whitespace-nowrap shrink-0',
+                typeBadgeClass,
+              )}
+            >
               {typeLabel}
             </Badge>
           </div>
           <SheetDescription className="text-[#a6a6a1]">
-            Recebido em {format(new Date(proposal.createdAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+            Recebido em{' '}
+            {format(new Date(proposal.createdAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
           </SheetDescription>
         </SheetHeader>
-        <div className="px-4 overflow-y-auto max-h-[calc(90vh-140px)]">
-          {Content}
-        </div>
+        <div className="px-4 overflow-y-auto max-h-[calc(90vh-140px)]">{Content}</div>
         <SheetFooter className="border-t border-border/40 pt-4 pb-6 px-4">
           <SheetClose
             className={buttonVariants({

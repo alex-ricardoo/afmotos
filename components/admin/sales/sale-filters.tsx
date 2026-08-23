@@ -87,21 +87,21 @@ export function SaleFilters() {
   );
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 shadow-xs space-y-3">
+    <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-3xl p-4 shadow-xs space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
         {/* Campo de busca textual */}
         <div className="sm:col-span-6 relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
           <Input
             value={currentSearch}
             onChange={(e) => updateQueryParams('search', e.target.value)}
             placeholder="Buscar por comprador, moto, placa, CPF ou recibo..."
-            className="pl-9.5 pr-8 h-11 bg-background rounded-xl text-xs sm:text-sm"
+            className="pl-9.5 pr-8 h-11 bg-zinc-900/80 border-zinc-800 focus:border-[#c9a44c] focus:ring-1 focus:ring-[#c9a44c]/30 rounded-xl text-xs sm:text-sm text-white placeholder:text-zinc-500"
           />
           {currentSearch && (
             <button
               onClick={() => updateQueryParams('search', '')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -114,15 +114,15 @@ export function SaleFilters() {
             value={currentMonth}
             onValueChange={(val: string | null) => updateQueryParams('month', val || 'ALL')}
           >
-            <SelectTrigger className="h-11 bg-background rounded-xl text-xs sm:text-sm">
+            <SelectTrigger className="h-11 bg-zinc-900/80 border-zinc-800 rounded-xl text-xs sm:text-sm text-zinc-200">
               <div className="flex items-center gap-2 truncate">
-                <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Calendar className="w-4 h-4 text-zinc-500 shrink-0" />
                 <SelectValue placeholder="Mês">{currentMonthLabel}</SelectValue>
               </div>
             </SelectTrigger>
-            <SelectContent className="bg-card border-border max-h-64">
+            <SelectContent className="bg-zinc-950 border-zinc-800 text-zinc-200 max-h-64">
               {monthOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
+                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer">
                   {opt.label}
                 </SelectItem>
               ))}
@@ -136,17 +136,17 @@ export function SaleFilters() {
             value={currentPayment}
             onValueChange={(val: string | null) => updateQueryParams('payment', val || 'ALL')}
           >
-            <SelectTrigger className="h-11 bg-background rounded-xl text-xs sm:text-sm">
+            <SelectTrigger className="h-11 bg-zinc-900/80 border-zinc-800 rounded-xl text-xs sm:text-sm text-zinc-200">
               <div className="flex items-center gap-2 truncate">
-                <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Filter className="w-4 h-4 text-zinc-500 shrink-0" />
                 <SelectValue placeholder="Pagamento">
                   {paymentMethodLabels[currentPayment] || 'Todas as Formas'}
                 </SelectValue>
               </div>
             </SelectTrigger>
-            <SelectContent className="bg-card border-border">
+            <SelectContent className="bg-zinc-950 border-zinc-800 text-zinc-200">
               {Object.entries(paymentMethodLabels).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
+                <SelectItem key={value} value={value} className="cursor-pointer">
                   {label}
                 </SelectItem>
               ))}
@@ -156,13 +156,13 @@ export function SaleFilters() {
       </div>
 
       {hasActiveFilters && (
-        <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground border-t border-border/50">
+        <div className="flex items-center justify-between pt-1 text-xs text-zinc-400 border-t border-zinc-900">
           <span>Filtros ativos aplicados à listagem</span>
           <Button
             variant="ghost"
             size="sm"
             onClick={clearAllFilters}
-            className="h-7 text-xs text-amber-500 hover:text-amber-400 p-0 hover:bg-transparent cursor-pointer"
+            className="h-7 text-xs text-[#e3c56c] hover:text-amber-300 p-0 hover:bg-transparent cursor-pointer"
           >
             Limpar filtros
           </Button>
