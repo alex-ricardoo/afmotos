@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -10,20 +10,16 @@ import {
   Bike,
   DollarSign,
   User,
-  FileText,
   Calendar,
-  CreditCard,
   Phone,
-  Mail,
-  FileCheck,
-  ArrowLeft,
   CheckCircle2,
-  AlertCircle,
   Sparkles,
   MapPin,
-  Lock,
-  Search,
   Loader2,
+  ShieldCheck,
+  Printer,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -45,8 +41,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { saleSchema, SaleFormValues } from '@/lib/validations/sale';
-import { createSaleAction } from '@/lib/actions/sales';
+import { createSaleAction, updateSaleAction } from '@/lib/actions/sales';
+import { SaleWithDetails } from '@/lib/queries/sales';
+import {
+  formatCpf,
+  formatPhone,
+  formatCep,
+  formatRenavam,
+  formatChassi,
+  formatCurrency,
+  cleanNumeric,
+} from '@/lib/utils/formatters';
 
 interface AvailableMotorcycle {
   id: string;
@@ -60,6 +67,9 @@ interface AvailableMotorcycle {
   status: string;
   license_plate: string | null;
   color: string | null;
+  mileage: number | null;
+  renavam?: string | null;
+  chassi?: string | null;
   images?: Array<{
     id?: string;
     public_url?: string | null;
@@ -73,424 +83,802 @@ interface SaleFormProps {
   motorcycles: AvailableMotorcycle[];
   selectedMotorcycleId?: string;
   initialReceiptNumber?: string;
+  initialSale?: SaleWithDetails | null;
 }
 
-const formatCurrency = (value: number | string) => {
-  const clean = String(value).replace(/\D/g, '');
-  if (!clean) return '';
-  const num = Number(clean) / 100;
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
-};
-
-// Máscara brasileira de telefone / WhatsApp: (81) 98272-6402
-const formatPhoneBR = (val: string) => {
-  const clean = val.replace(/\D/g, '');
-  if (clean.length <= 2) return clean ? `(${clean}` : '';
-  if (clean.length <= 6) return `(${clean.slice(0, 2)}) ${clean.slice(2)}`;
-  if (clean.length <= 10) return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
-  return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7, 11)}`;
-};
-
-// Máscara de CPF / CNPJ: 000.000.000-00 ou 00.000.000/0000-00
-const formatDocumentBR = (val: string) => {
-  const clean = val.replace(/\D/g, '');
-  if (clean.length <= 11) {
-    return clean
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-  }
-  return clean
-    .slice(0, 14)
-    .replace(/(\d{2})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1/$2')
-    .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-};
-
-// Máscara de CEP: 00000-000
-const formatCepBR = (val: string) => {
-  const clean = val.replace(/\D/g, '').slice(0, 8);
-  if (clean.length > 5) {
-    return `${clean.slice(0, 5)}-${clean.slice(5)}`;
-  }
-  return clean;
-};
-
 const paymentMethods = [
-  { value: 'PIX', label: 'PIX' },
-  { value: 'DINHEIRO', label: 'Dinheiro (Espécie)' },
-  { value: 'TRANSFERENCIA', label: 'Transferência Bancária / TED' },
+  { value: 'PIX', label: 'PIX (À Vista)' },
   { value: 'CARTAO', label: 'Cartão de Crédito / Débito' },
-  { value: 'FINANCIAMENTO', label: 'Financiamento Bancário' },
-  { value: 'OUTRO', label: 'Outro' },
+  { value: 'DINHEIRO', label: 'Dinheiro em Espécie' },
+  { value: 'TROCA', label: 'Moto / Veículo na Troca' },
+  { value: 'TRANSFERENCIA', label: 'Transferência Bancária / TED' },
+  { value: 'OUTRO', label: 'Outras Condições' },
 ];
 
 const paymentStatuses = [
-  { value: 'PAID', label: 'Pago Integralmente' },
-  { value: 'PARTIAL', label: 'Entrada / Parcial' },
-  { value: 'PENDING', label: 'Pendente' },
+  { value: 'PAID', label: 'Quitado (Pago Integralmente)' },
+  { value: 'PARTIAL', label: 'Parcial / Entrada Paga' },
+  { value: 'PENDING', label: 'Pendente de Pagamento' },
+];
+
+const quickDeliveryTemplates = [
+  {
+    label: 'Entrega Técnica Completa',
+    text: 'Entrega técnica realizada com sucesso. Manual do proprietário, chave reserva e termos de garantia foram conferidos e entregues ao comprador no ato.',
+  },
+  {
+    label: 'Vistoria e Transferência',
+    text: 'Veículo aprovado em vistoria mecânica e estética. Documentação de transferência entregue para transferência obrigatória em 30 dias (Art. 123 do CTB).',
+  },
+  {
+    label: 'Moto na Troca',
+    text: 'Veículo usado recebido como parte de pagamento mediante vistoria prévia e termo de quitação mútua.',
+  },
 ];
 
 export function SaleForm({
   motorcycles,
   selectedMotorcycleId,
   initialReceiptNumber = 'AFM-2026-0001',
+  initialSale,
 }: SaleFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
+  const [showManualFiscal, setShowManualFiscal] = useState(false);
+  const [successSale, setSuccessSale] = useState<{ id: string; receiptNumber: string } | null>(null);
 
-  // Endereço detalhado
-  const [cep, setCep] = useState('');
-  const [logradouro, setLogradouro] = useState('');
-  const [numero, setNumero] = useState('');
-  const [complemento, setComplemento] = useState('');
-  const [bairro, setBairro] = useState('');
-  const [cidade, setCidade] = useState('');
-  const [estado, setEstado] = useState('');
-
+  const isEditing = !!initialSale;
   const todayStr = new Date().toISOString().split('T')[0];
-
-  const defaultMotorcycle = motorcycles.find((m) => m.id === selectedMotorcycleId);
+  const motoId = initialSale?.motorcycle_id || selectedMotorcycleId || '';
+  const defaultMotorcycle = motorcycles.find((m) => m.id === motoId);
 
   const form = useForm<SaleFormValues>({
     resolver: zodResolver(saleSchema) as any,
     defaultValues: {
-      motorcycle_id: selectedMotorcycleId || '',
-      sale_price: defaultMotorcycle?.price || 0,
-      sale_date: todayStr,
-      buyer_name: '',
-      buyer_phone: '',
-      buyer_email: '',
-      buyer_document: '',
-      buyer_address: '',
-      payment_method: 'PIX',
-      payment_status: 'PAID',
-      amount_paid: defaultMotorcycle?.price || 0,
-      receipt_number: initialReceiptNumber,
-      receipt_notes: '',
-      notes: '',
+      motorcycle_id: motoId,
+      renavam: initialSale?.renavam || defaultMotorcycle?.renavam || '',
+      chassi: initialSale?.chassi || defaultMotorcycle?.chassi || '',
+      delivery_km: initialSale?.delivery_km ?? defaultMotorcycle?.mileage ?? 0,
+      sale_price: Number(initialSale?.sale_price ?? defaultMotorcycle?.price ?? 0),
+      sale_date: initialSale?.sale_date ? initialSale.sale_date.split('T')[0] : todayStr,
+      buyer_name: initialSale?.buyer_name || '',
+      buyer_phone: initialSale?.buyer_phone || '',
+      buyer_email: initialSale?.buyer_email || '',
+      buyer_document: initialSale?.buyer_document || '',
+      buyer_cep: initialSale?.buyer_cep || '',
+      buyer_street: initialSale?.buyer_street || '',
+      buyer_number: initialSale?.buyer_number || '',
+      buyer_complement: initialSale?.buyer_complement || '',
+      buyer_neighborhood: initialSale?.buyer_neighborhood || '',
+      buyer_city: initialSale?.buyer_city || '',
+      buyer_state: initialSale?.buyer_state || 'PE',
+      buyer_address: initialSale?.buyer_address || '',
+      payment_method: (initialSale?.payment_method as any) || 'PIX',
+      payment_status: (initialSale?.payment_status as any) || 'PAID',
+      amount_paid: Number(initialSale?.amount_paid ?? initialSale?.sale_price ?? defaultMotorcycle?.price ?? 0),
+      entry_amount: Number(initialSale?.entry_amount ?? 0),
+      financed_amount: 0,
+      trade_amount: Number(initialSale?.trade_amount ?? 0),
+      legal_terms_accepted: initialSale?.legal_terms_accepted ?? true,
+      receipt_number: initialSale?.receipt_number || initialReceiptNumber,
+      receipt_notes: initialSale?.receipt_notes || '',
+      notes: initialSale?.notes || '',
     },
   });
 
   const selectedMotoId = form.watch('motorcycle_id');
-  const selectedMoto = motorcycles.find((m) => m.id === selectedMotoId);
+  const selectedMoto = motorcycles.find((m) => m.id === selectedMotoId) || defaultMotorcycle;
+  const salePrice = Number(form.watch('sale_price')) || 0;
+  const entryAmount = Number(form.watch('entry_amount')) || 0;
+  const tradeAmount = Number(form.watch('trade_amount')) || 0;
 
+  const hasMotoFiscalInStock = Boolean(selectedMoto?.renavam && selectedMoto?.chassi);
+
+  // Atualiza campos quando o veículo for alterado na criação
   const handleMotorcycleChange = (id: string | null) => {
     if (!id) return;
     form.setValue('motorcycle_id', id, { shouldValidate: true });
     const moto = motorcycles.find((m) => m.id === id);
-    if (moto && moto.price) {
-      form.setValue('sale_price', Number(moto.price), { shouldValidate: true });
-      form.setValue('amount_paid', Number(moto.price), { shouldValidate: true });
+    if (moto) {
+      if (moto.price) {
+        form.setValue('sale_price', Number(moto.price), { shouldValidate: true });
+        form.setValue('amount_paid', Number(moto.price), { shouldValidate: true });
+      }
+      if (moto.renavam) {
+        form.setValue('renavam', moto.renavam);
+      }
+      if (moto.chassi) {
+        form.setValue('chassi', moto.chassi);
+      }
+      if (moto.mileage !== null && moto.mileage !== undefined) {
+        form.setValue('delivery_km', moto.mileage);
+      }
     }
   };
 
-  // Monta a string final do endereço no formulário
-  const updateCombinedAddress = (
-    c = cep,
-    l = logradouro,
-    n = numero,
-    comp = complemento,
-    b = bairro,
-    cid = cidade,
-    uf = estado,
-  ) => {
-    const parts: string[] = [];
-    if (l) parts.push(n ? `${l}, ${n}` : l);
-    if (comp) parts.push(comp);
-    if (b) parts.push(b);
-    if (cid && uf) parts.push(`${cid} - ${uf}`);
-    else if (cid) parts.push(cid);
-    if (c) parts.push(`CEP: ${c}`);
+  // Busca CEP via API pública ViaCEP
+  const handleCepLookup = async (val: string) => {
+    const formatted = formatCep(val);
+    form.setValue('buyer_cep', formatted);
+    const clean = cleanNumeric(formatted);
 
-    const combined = parts.join(' - ');
-    form.setValue('buyer_address', combined);
-  };
-
-  // Busca CEP via API ViaCEP
-  const handleCepChange = async (val: string) => {
-    const formatted = formatCepBR(val);
-    setCep(formatted);
-    const cleanCep = formatted.replace(/\D/g, '');
-
-    if (cleanCep.length === 8) {
+    if (clean.length === 8) {
       setLoadingCep(true);
       try {
-        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
         const data = await res.json();
 
-        if (data && !data.erro) {
-          const newLogradouro = data.logradouro || '';
-          const newBairro = data.bairro || '';
-          const newCidade = data.localidade || '';
-          const newEstado = data.uf || '';
-
-          setLogradouro(newLogradouro);
-          setBairro(newBairro);
-          setCidade(newCidade);
-          setEstado(newEstado);
-
-          updateCombinedAddress(
-            formatted,
-            newLogradouro,
-            numero,
-            complemento,
-            newBairro,
-            newCidade,
-            newEstado,
-          );
-          toast.success(`Endereço localizado: ${newCidade}/${newEstado}`);
+        if (!data.erro) {
+          if (data.logradouro) form.setValue('buyer_street', data.logradouro, { shouldValidate: true });
+          if (data.bairro) form.setValue('buyer_neighborhood', data.bairro, { shouldValidate: true });
+          if (data.localidade) form.setValue('buyer_city', data.localidade, { shouldValidate: true });
+          if (data.uf) form.setValue('buyer_state', data.uf.toUpperCase(), { shouldValidate: true });
+          toast.success('Endereço preenchido com sucesso pelo CEP!');
         } else {
-          toast.error('CEP não localizado');
+          toast.error('CEP não localizado na base dos Correios.');
         }
-      } catch (err) {
-        console.error('Erro ao consultar CEP:', err);
-        toast.error('Erro ao buscar o CEP');
+      } catch {
+        toast.error('Não foi possível consultar o CEP.');
       } finally {
         setLoadingCep(false);
       }
-    } else {
-      updateCombinedAddress(formatted, logradouro, numero, complemento, bairro, cidade, estado);
     }
   };
 
   async function onSubmit(data: SaleFormValues) {
     setLoading(true);
-
     try {
-      // Monta o endereço final unificado
-      const addressParts: string[] = [];
-      if (logradouro) addressParts.push(numero ? `${logradouro}, ${numero}` : logradouro);
-      if (complemento) addressParts.push(complemento);
-      if (bairro) addressParts.push(bairro);
-      if (cidade && estado) addressParts.push(`${cidade} - ${estado}`);
-      else if (cidade) addressParts.push(cidade);
-      if (cep) addressParts.push(`CEP: ${cep}`);
-
-      const finalAddress =
-        addressParts.length > 0 ? addressParts.join(' - ') : data.buyer_address || null;
-
-      const payload: SaleFormValues = {
-        ...data,
-        buyer_address: finalAddress,
-        receipt_number: initialReceiptNumber,
-      };
-
-      const result = await createSaleAction(payload);
-
-      if (result.error) {
-        toast.error(result.error);
-        setLoading(false);
-        return;
+      if (isEditing && initialSale?.id) {
+        const res = await updateSaleAction(initialSale.id, data);
+        if (res?.error) {
+          toast.error(res.error);
+        } else if (res?.success) {
+          toast.success('Registro de venda atualizado com sucesso!');
+          router.push(`/admin/vendas/${initialSale.id}/recibo`);
+          router.refresh();
+        }
+      } else {
+        const res = await createSaleAction(data);
+        if (res?.error) {
+          toast.error(res.error);
+        } else if (res?.success) {
+          toast.success('Venda concluída e registrada com sucesso!');
+          setSuccessSale({
+            id: res.id,
+            receiptNumber: res.receiptNumber || data.receipt_number || 'AFM-2026-0001',
+          });
+        }
       }
-
-      toast.success('Venda cadastrada com sucesso!');
-      router.push('/admin/vendas');
-      router.refresh();
-    } catch (error) {
-      console.error('Error submitting sale:', error);
-      toast.error('Ocorreu um erro ao registrar a venda. Tente novamente.');
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro inesperado ao salvar a venda.');
+    } finally {
       setLoading(false);
     }
   }
 
-  const primaryImage =
-    selectedMoto?.images?.find((img) => img.is_primary)?.public_url ||
-    selectedMoto?.images?.find((img) => img.is_primary)?.display_url ||
-    selectedMoto?.images?.[0]?.public_url ||
-    selectedMoto?.images?.[0]?.display_url;
+  // Se a venda foi concluída com sucesso, exibe tela de confirmação e atalhos imediatos
+  if (successSale) {
+    return (
+      <div className="max-w-3xl mx-auto py-12 px-4 animate-in fade-in-50 duration-300">
+        <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-8 text-center shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -z-10" />
+          
+          <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-8 h-8" />
+          </div>
+
+          <span className="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-mono font-bold rounded-full mb-3">
+            RECIBO OFICIAL: {successSale.receiptNumber}
+          </span>
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+            Venda Registrada com Sucesso!
+          </h2>
+          <p className="text-slate-400 text-sm max-w-md mx-auto mb-8">
+            O veículo foi marcado como vendido e o comprovante oficial A4 com todos os dados fiscais e contratuais está pronto para emissão.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button
+              onClick={() => router.push(`/admin/vendas/${successSale.id}/recibo`)}
+              className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-6 py-2.5 h-auto rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Printer className="w-4 h-4" />
+              Imprimir Recibo Oficial A4
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => router.push('/admin/vendas')}
+              className="w-full sm:w-auto border-slate-700 hover:bg-slate-800 text-slate-200 px-6 py-2.5 h-auto rounded-xl cursor-pointer"
+            >
+              Ver Histórico de Vendas
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit as any)}
-        className="space-y-8 max-w-4xl mx-auto pb-24"
-      >
-        {/* 1. SELEÇÃO DO VEÍCULO */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-border">
-            <Bike className="w-5 h-5 text-[#c9a44c]" />
-            <h2 className="text-lg font-bold text-foreground">1. Veículo Negociado</h2>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8 max-w-5xl mx-auto pb-20">
+        
+        {/* 1. SELEÇÃO & DADOS DO VEÍCULO */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
+          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
+              1
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+                <Bike className="w-5 h-5 text-amber-500" />
+                Identificação do Veículo
+              </h2>
+              <p className="text-xs text-slate-400">
+                {isEditing ? 'Motocicleta vinculada a este registro de venda.' : 'Selecione a motocicleta em estoque.'}
+              </p>
+            </div>
           </div>
 
-          <FormField
-            control={form.control as any}
-            name="motorcycle_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Selecione a Motocicleta do Estoque <span className="text-destructive">*</span>
-                </FormLabel>
-                <Select value={field.value} onValueChange={handleMotorcycleChange}>
-                  <FormControl>
-                    <SelectTrigger className="h-12 bg-background rounded-xl">
-                      <SelectValue placeholder="Escolha uma moto disponível...">
-                        {selectedMoto
-                          ? `${selectedMoto.brand} ${selectedMoto.model} ${selectedMoto.version || ''} (${selectedMoto.year_model})`
-                          : undefined}
-                      </SelectValue>
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="bg-card border-border">
-                    {motorcycles.map((moto) => (
-                      <SelectItem key={moto.id} value={moto.id} className="py-2.5">
-                        <span className="font-semibold text-foreground">
-                          {moto.brand} {moto.model} {moto.version || ''}
-                        </span>
-                        {' - '}
-                        <span className="text-muted-foreground font-mono text-xs">
-                          {moto.year_model}
-                        </span>
-                        {' - '}
-                        <span className="text-amber-500 font-bold text-xs">
-                          {formatCurrency(moto.price || 0)}
-                        </span>
-                        {moto.license_plate && (
-                          <span className="text-muted-foreground text-[11px] ml-2">
-                            ({moto.license_plate})
-                          </span>
-                        )}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {/* Se estiver editando: exibe card da moto selecionada de forma limpa */}
+            {isEditing ? (
+              <div className="md:col-span-2 bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                <div className="w-20 h-16 sm:w-24 sm:h-20 relative rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-slate-800">
+                  {selectedMoto?.images && selectedMoto.images.length > 0 ? (
+                    <Image
+                      src={selectedMoto.images[0].display_url || selectedMoto.images[0].public_url || ''}
+                      alt={selectedMoto.model}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-600">
+                      <Bike className="w-8 h-8" />
+                    </div>
+                  )}
+                </div>
 
-          {/* Preview do veículo selecionado */}
-          {selectedMoto && (
-            <div className="bg-muted/40 border border-border/70 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 animate-in fade-in duration-200">
-              {primaryImage ? (
-                <div className="relative w-32 h-24 rounded-xl overflow-hidden shrink-0 border border-border bg-black/20 shadow-xs">
-                  <Image
-                    src={primaryImage}
-                    alt={`${selectedMoto.brand} ${selectedMoto.model}`}
-                    fill
-                    unoptimized
-                    className="object-cover"
-                  />
+                <div className="flex-1 text-center sm:text-left min-w-0">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-white">
+                      {selectedMoto
+                        ? `${selectedMoto.brand} ${selectedMoto.model} ${selectedMoto.version || ''}`
+                        : initialSale?.motorcycle
+                        ? `${initialSale.motorcycle.brand} ${initialSale.motorcycle.model}`
+                        : 'Motocicleta Vinculada'}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                      Veículo da Venda
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1.5 text-xs text-slate-400">
+                    {selectedMoto && (
+                      <>
+                        <span>Ano: {selectedMoto.year_manufacture}/{selectedMoto.year_model}</span>
+                        <span>•</span>
+                        <span>Cor: {selectedMoto.color || 'Não informada'}</span>
+                        <span>•</span>
+                        <span>Placa: <strong className="text-slate-200">{selectedMoto.license_plate || 'Sem placa'}</strong></span>
+                      </>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="w-32 h-24 rounded-xl border border-border bg-muted flex flex-col items-center justify-center shrink-0 text-muted-foreground">
-                  <Bike className="w-8 h-8 opacity-40" />
-                  <span className="text-[10px] mt-1">Sem foto</span>
-                </div>
-              )}
-              <div className="flex-1 space-y-1 text-center sm:text-left">
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  <h3 className="font-bold text-base text-foreground">
-                    {selectedMoto.brand} {selectedMoto.model} {selectedMoto.version || ''}
-                  </h3>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                    {selectedMoto.year_manufacture}/{selectedMoto.year_model}
+
+                <div className="text-center sm:text-right shrink-0">
+                  <span className="text-[10px] text-slate-400 uppercase font-mono block">Preço de Tabela</span>
+                  <span className="text-base sm:text-lg font-bold text-emerald-400 font-mono">
+                    {formatCurrency(selectedMoto?.price || initialSale?.sale_price || 0)}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  {selectedMoto.color && <span>Cor: {selectedMoto.color}</span>}
-                  {selectedMoto.license_plate && (
-                    <span>
-                      Placa:{' '}
-                      <strong className="text-foreground">{selectedMoto.license_plate}</strong>
-                    </span>
-                  )}
-                  {selectedMoto.fipe_price && (
-                    <span>Tabela FIPE: {formatCurrency(selectedMoto.fipe_price)}</span>
+              </div>
+            ) : (
+              /* Se for nova venda: exibe o select com lista de motos disponíveis */
+              <FormField
+                control={form.control}
+                name="motorcycle_id"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel className="text-slate-300 font-medium">
+                      Motocicleta em Estoque <span className="text-rose-500">*</span>
+                    </FormLabel>
+                    <Select onValueChange={handleMotorcycleChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                          <SelectValue placeholder="Selecione a moto disponível..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-72">
+                        {motorcycles.map((m) => (
+                          <SelectItem key={m.id} value={m.id} className="py-2.5 cursor-pointer">
+                            <span className="font-semibold text-white">
+                              {m.brand} {m.model} {m.version || ''}
+                            </span>{' '}
+                            <span className="text-slate-400 text-xs">
+                              ({m.year_manufacture}/{m.year_model})
+                            </span>{' '}
+                            {m.license_plate && (
+                              <span className="bg-slate-800 px-1.5 py-0.5 rounded text-[11px] text-amber-400 font-mono ml-1">
+                                {m.license_plate}
+                              </span>
+                            )}{' '}
+                            <span className="text-emerald-400 font-medium ml-2">
+                              {formatCurrency(m.price)}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Card de Preview se nova venda e selecionada */}
+            {!isEditing && selectedMoto && (
+              <div className="md:col-span-2 bg-slate-950/60 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                <div className="w-20 h-16 sm:w-24 sm:h-20 relative rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-slate-800">
+                  {selectedMoto.images && selectedMoto.images.length > 0 ? (
+                    <Image
+                      src={selectedMoto.images[0].display_url || selectedMoto.images[0].public_url || ''}
+                      alt={selectedMoto.model}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-600">
+                      <Bike className="w-8 h-8" />
+                    </div>
                   )}
                 </div>
-              </div>
-              <div className="text-center sm:text-right shrink-0">
-                <span className="text-xs text-muted-foreground block">Preço no Estoque</span>
-                <span className="text-lg font-bold text-foreground">
-                  {formatCurrency(selectedMoto.price || 0)}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* 2. DADOS FINANCEIROS & NEGOCIAÇÃO */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-border">
-            <DollarSign className="w-5 h-5 text-[#c9a44c]" />
-            <h2 className="text-lg font-bold text-foreground">
-              2. Valores & Condições de Pagamento
-            </h2>
-          </div>
+                <div className="flex-1 text-center sm:text-left min-w-0">
+                  <h3 className="text-base font-bold text-white">
+                    {selectedMoto.brand} {selectedMoto.model} {selectedMoto.version || ''}
+                  </h3>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1 text-xs text-slate-400">
+                    <span>Ano: {selectedMoto.year_manufacture}/{selectedMoto.year_model}</span>
+                    <span>•</span>
+                    <span>Cor: {selectedMoto.color || 'Não informada'}</span>
+                    <span>•</span>
+                    <span>Placa: <strong className="text-slate-200">{selectedMoto.license_plate || 'Sem placa'}</strong></span>
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="text-center sm:text-right shrink-0">
+                  <span className="text-[10px] text-slate-400 uppercase font-mono block">Preço de Tabela</span>
+                  <span className="text-base sm:text-lg font-bold text-emerald-400">
+                    {formatCurrency(selectedMoto.price)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Bloco Inteligente de Dados Fiscais (Renavam & Chassi) */}
+            {hasMotoFiscalInStock && !showManualFiscal ? (
+              <div className="md:col-span-2 bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>
+                    <strong>Dados Fiscais Vinculados:</strong> Renavam{' '}
+                    <span className="font-mono font-bold text-amber-400">{selectedMoto?.renavam}</span> • Chassi{' '}
+                    <span className="font-mono font-bold text-amber-400">{selectedMoto?.chassi}</span>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowManualFiscal(true)}
+                  className="text-amber-400 hover:text-amber-300 underline font-medium cursor-pointer text-xs shrink-0"
+                >
+                  Alterar nesta venda
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Renavam */}
+                <FormField
+                  control={form.control}
+                  name="renavam"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-300 font-medium flex items-center justify-between">
+                        <span>Renavam</span>
+                        <span className="text-xs text-slate-500 font-normal">11 dígitos</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          maxLength={11}
+                          onChange={(e) => field.onChange(formatRenavam(e.target.value))}
+                          placeholder="Ex: 01234567890"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Chassi */}
+                <FormField
+                  control={form.control}
+                  name="chassi"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-300 font-medium flex items-center justify-between">
+                        <span>Chassi (VIN)</span>
+                        <span className="text-xs text-slate-500 font-normal">17 caracteres</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          maxLength={17}
+                          onChange={(e) => field.onChange(formatChassi(e.target.value))}
+                          placeholder="Ex: 9C2JC4100ER000001"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono uppercase focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {/* KM na Entrega */}
             <FormField
-              control={form.control as any}
-              name="sale_price"
-              render={({ field: { onChange, value, ...fieldProps } }) => (
-                <FormItem>
-                  <FormLabel>
-                    Valor Final da Venda <span className="text-destructive">*</span>
+              control={form.control}
+              name="delivery_km"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel className="text-slate-300 font-medium flex items-center justify-between">
+                    <span>Quilometragem no Ato da Entrega (KM)</span>
+                    <span className="text-xs text-slate-500 font-normal">Registrado no recibo de entrega física</span>
                   </FormLabel>
                   <FormControl>
                     <Input
-                      {...fieldProps}
-                      value={
-                        value !== undefined && value !== null && value !== ''
-                          ? formatCurrency(value)
-                          : ''
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '');
-                        const numVal = val ? Number(val) / 100 : 0;
-                        onChange(numVal);
-                        if (form.getValues('payment_status') === 'PAID') {
-                          form.setValue('amount_paid', numVal);
-                        }
-                      }}
-                      placeholder="R$ 0,00"
-                      className="bg-background h-13 rounded-xl text-lg font-bold text-amber-500"
+                      type="number"
+                      min={0}
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                      placeholder="Ex: 14500"
+                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
                     />
                   </FormControl>
-                  <FormDescription className="text-xs">
-                    Valor negociado e acordado com o cliente.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
+        </div>
 
+        {/* 2. DADOS DO COMPRADOR & ENDEREÇO */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
+          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
+              2
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+                <User className="w-5 h-5 text-amber-500" />
+                Dados do Comprador & Endereço Completo
+              </h2>
+              <p className="text-xs text-slate-400">
+                Informações cadastrais para identificação no recibo e termo de transferência.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {/* Nome do Comprador */}
             <FormField
-              control={form.control as any}
-              name="sale_date"
+              control={form.control}
+              name="buyer_name"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Data da Venda <span className="text-destructive">*</span>
+                <FormItem className="md:col-span-2">
+                  <FormLabel className="text-slate-300 font-medium">
+                    Nome Completo do Comprador <span className="text-rose-500">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} className="bg-background h-13 rounded-xl" />
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      placeholder="Ex: Alex Ricardo da Silva"
+                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* CPF */}
             <FormField
-              control={form.control as any}
+              control={form.control}
+              name="buyer_document"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-300 font-medium">
+                    CPF do Comprador <span className="text-rose-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      maxLength={14}
+                      onChange={(e) => field.onChange(formatCpf(e.target.value))}
+                      placeholder="000.000.000-00"
+                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Telefone / WhatsApp */}
+            <FormField
+              control={form.control}
+              name="buyer_phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-300 font-medium flex items-center gap-1">
+                    <Phone className="w-3.5 h-3.5 text-amber-500" />
+                    Telefone / WhatsApp <span className="text-rose-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(formatPhone(e.target.value))}
+                      placeholder="(11) 98765-4321"
+                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Sub-seção de Endereço */}
+            <div className="md:col-span-2 pt-2 border-t border-slate-800/80">
+              <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-amber-500" />
+                Endereço de Faturamento & Residência
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3.5 sm:gap-4">
+                {/* CEP */}
+                <FormField
+                  control={form.control}
+                  name="buyer_cep"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2 md:col-span-2">
+                      <FormLabel className="text-slate-300 text-xs font-medium flex items-center justify-between">
+                        <span>CEP <span className="text-rose-500">*</span></span>
+                        {loadingCep && <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => handleCepLookup(e.target.value)}
+                          placeholder="00000-000"
+                          maxLength={9}
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl font-mono focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Logradouro */}
+                <FormField
+                  control={form.control}
+                  name="buyer_street"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2 md:col-span-4">
+                      <FormLabel className="text-slate-300 text-xs font-medium">
+                        Rua / Logradouro <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          placeholder="Ex: Av. Principal, Rua das Flores"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Número */}
+                <FormField
+                  control={form.control}
+                  name="buyer_number"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-1 md:col-span-2">
+                      <FormLabel className="text-slate-300 text-xs font-medium">
+                        Número <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          placeholder="Ex: 120 ou S/N"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Complemento */}
+                <FormField
+                  control={form.control}
+                  name="buyer_complement"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-1 md:col-span-4">
+                      <FormLabel className="text-slate-300 text-xs font-medium">Complemento (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          placeholder="Apto, Casa 2, Bloco B"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Bairro */}
+                <FormField
+                  control={form.control}
+                  name="buyer_neighborhood"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-1 md:col-span-2">
+                      <FormLabel className="text-slate-300 text-xs font-medium">
+                        Bairro <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          placeholder="Ex: Centro"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Cidade */}
+                <FormField
+                  control={form.control}
+                  name="buyer_city"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-1 md:col-span-3">
+                      <FormLabel className="text-slate-300 text-xs font-medium">
+                        Cidade <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          placeholder="Ex: São Paulo"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* UF */}
+                <FormField
+                  control={form.control}
+                  name="buyer_state"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-1 md:col-span-1">
+                      <FormLabel className="text-slate-300 text-xs font-medium">
+                        UF <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase().slice(0, 2))}
+                          placeholder="PE"
+                          maxLength={2}
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl uppercase font-mono text-center focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. CONDIÇÕES FINANCEIRAS & DISCRIMINAÇÃO DE VALORES (SEM FINANCIAMENTO) */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
+          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
+              3
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-amber-500" />
+                Condições Financeiras & Discriminação de Valores
+              </h2>
+              <p className="text-xs text-slate-400">
+                Defina o valor fechado, forma de pagamento, valores de entrada ou moto na troca.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+            {/* Valor Total da Venda */}
+            <FormField
+              control={form.control}
+              name="sale_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-300 font-medium">
+                    Valor Total da Venda (R$) <span className="text-rose-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={field.value ?? ''}
+                      onChange={(e) => {
+                        const val = e.target.value ? Number(e.target.value) : 0;
+                        field.onChange(val);
+                        form.setValue('amount_paid', val);
+                      }}
+                      placeholder="0.00"
+                      className="bg-slate-950 border-slate-800 text-emerald-400 font-bold text-lg h-12 rounded-xl focus:border-amber-500"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Forma de Pagamento */}
+            <FormField
+              control={form.control}
               name="payment_method"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Forma de Pagamento Principal <span className="text-destructive">*</span>
+                  <FormLabel className="text-slate-300 font-medium">
+                    Forma de Pagamento <span className="text-rose-500">*</span>
                   </FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="h-12 bg-background rounded-xl">
-                        <SelectValue />
+                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                        <SelectValue placeholder="Selecione a forma..." />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-card border-border">
+                    <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
                       {paymentMethods.map((pm) => (
-                        <SelectItem key={pm.value} value={pm.value}>
+                        <SelectItem key={pm.value} value={pm.value} className="cursor-pointer">
                           {pm.label}
                         </SelectItem>
                       ))}
@@ -501,29 +889,96 @@ export function SaleForm({
               )}
             />
 
+            {/* Data da Venda */}
             <FormField
-              control={form.control as any}
+              control={form.control}
+              name="sale_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-300 font-medium flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-amber-500" />
+                    Data da Venda <span className="text-rose-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Valor de Entrada */}
+            <FormField
+              control={form.control}
+              name="entry_amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-300 text-xs font-medium">
+                    Valor de Entrada (R$)
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={field.value ?? 0}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                      placeholder="0.00"
+                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Valor na Troca */}
+            <FormField
+              control={form.control}
+              name="trade_amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-300 text-xs font-medium">
+                    Valor Moto na Troca (R$)
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={field.value ?? 0}
+                      onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                      placeholder="0.00"
+                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Status de Quitação em Português */}
+            <FormField
+              control={form.control}
               name="payment_status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status do Pagamento</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(val) => {
-                      field.onChange(val);
-                      if (val === 'PAID') {
-                        form.setValue('amount_paid', form.getValues('sale_price'));
-                      }
-                    }}
-                  >
+                  <FormLabel className="text-slate-300 font-medium">
+                    Situação de Quitação <span className="text-rose-500">*</span>
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="h-12 bg-background rounded-xl">
-                        <SelectValue />
+                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                        <SelectValue placeholder="Selecione a situação..." />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-card border-border">
+                    <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
                       {paymentStatuses.map((ps) => (
-                        <SelectItem key={ps.value} value={ps.value}>
+                        <SelectItem key={ps.value} value={ps.value} className="cursor-pointer">
                           {ps.label}
                         </SelectItem>
                       ))}
@@ -533,394 +988,171 @@ export function SaleForm({
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control as any}
-              name="amount_paid"
-              render={({ field: { onChange, value, ...fieldProps } }) => (
-                <FormItem className="sm:col-span-2">
-                  <FormLabel>Valor Recebido / Entrada</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...fieldProps}
-                      value={
-                        value !== undefined && value !== null && value !== ''
-                          ? formatCurrency(value)
-                          : ''
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '');
-                        onChange(val ? Number(val) / 100 : 0);
-                      }}
-                      placeholder="R$ 0,00"
-                      className="bg-background h-12 rounded-xl font-semibold"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    Para vendas pagas integralmente, preencha com o mesmo valor final.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* 3. DADOS DO COMPRADOR */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-border">
-            <User className="w-5 h-5 text-[#c9a44c]" />
-            <h2 className="text-lg font-bold text-foreground">3. Identificação do Comprador</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <FormField
-              control={form.control as any}
-              name="buyer_name"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-2">
-                  <FormLabel>Nome Completo do Comprador</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ex: João da Silva"
-                      {...field}
-                      value={field.value || ''}
-                      className="bg-background h-12 rounded-xl"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control as any}
-              name="buyer_phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Telefone / WhatsApp (Brasil)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="(81) 98272-6402"
-                      {...field}
-                      value={field.value || ''}
-                      onChange={(e) => field.onChange(formatPhoneBR(e.target.value))}
-                      className="bg-background h-12 rounded-xl font-mono"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    Ex: (81) 98272-6402 com DDD.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control as any}
-              name="buyer_document"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CPF / CNPJ (Opcional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="000.000.000-00"
-                      {...field}
-                      value={field.value || ''}
-                      onChange={(e) => field.onChange(formatDocumentBR(e.target.value))}
-                      className="bg-background h-12 rounded-xl font-mono"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    Impresso no Recibo de Venda / Repasse.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control as any}
-              name="buyer_email"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-2">
-                  <FormLabel>E-mail (Opcional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="cliente@email.com"
-                      {...field}
-                      value={field.value || ''}
-                      className="bg-background h-12 rounded-xl"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Seção Estruturada de Endereço com Busca por CEP */}
-          <div className="pt-3 border-t border-border/60 space-y-4">
-            <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-              <MapPin className="w-4 h-4 text-amber-500" />
-              <span>Endereço do Comprador</span>
+          {/* Resumo visual de discriminação sem financiamento */}
+          <div className="bg-slate-950 border border-slate-800/80 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+              <div>
+                <span className="text-slate-500 block text-[11px]">Valor Venda</span>
+                <span className="font-bold text-white text-sm font-mono">{formatCurrency(salePrice)}</span>
+              </div>
+              <span className="text-slate-600 font-bold">=</span>
+              <div>
+                <span className="text-slate-500 block text-[11px]">Entrada</span>
+                <span className="font-medium text-slate-300 font-mono">{formatCurrency(entryAmount)}</span>
+              </div>
+              <span className="text-slate-600 font-bold">+</span>
+              <div>
+                <span className="text-slate-500 block text-[11px]">Moto na Troca</span>
+                <span className="font-medium text-slate-300 font-mono">{formatCurrency(tradeAmount)}</span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
-              {/* CEP */}
-              <div className="sm:col-span-4 space-y-1.5">
-                <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                  <span>CEP</span>
-                  {loadingCep && (
-                    <span className="text-[11px] text-amber-500 flex items-center gap-1">
-                      <Loader2 className="w-3 h-3 animate-spin" /> Buscando...
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <Input
-                    placeholder="00000-000"
-                    value={cep}
-                    onChange={(e) => handleCepChange(e.target.value)}
-                    className="bg-background h-11 rounded-xl font-mono text-xs sm:text-sm pr-9"
-                  />
-                  <Search className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-
-              {/* Logradouro / Rua */}
-              <div className="sm:col-span-8 space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">Rua / Avenida</label>
-                <Input
-                  placeholder="Rua das Flores"
-                  value={logradouro}
-                  onChange={(e) => {
-                    setLogradouro(e.target.value);
-                    updateCombinedAddress(
-                      cep,
-                      e.target.value,
-                      numero,
-                      complemento,
-                      bairro,
-                      cidade,
-                      estado,
-                    );
-                  }}
-                  className="bg-background h-11 rounded-xl text-xs sm:text-sm"
-                />
-              </div>
-
-              {/* Número */}
-              <div className="sm:col-span-3 space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">Número</label>
-                <Input
-                  placeholder="Ex: 123"
-                  value={numero}
-                  onChange={(e) => {
-                    setNumero(e.target.value);
-                    updateCombinedAddress(
-                      cep,
-                      logradouro,
-                      e.target.value,
-                      complemento,
-                      bairro,
-                      cidade,
-                      estado,
-                    );
-                  }}
-                  className="bg-background h-11 rounded-xl text-xs sm:text-sm"
-                />
-              </div>
-
-              {/* Complemento */}
-              <div className="sm:col-span-4 space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">Complemento</label>
-                <Input
-                  placeholder="Apto 101, Bloco B"
-                  value={complemento}
-                  onChange={(e) => {
-                    setComplemento(e.target.value);
-                    updateCombinedAddress(
-                      cep,
-                      logradouro,
-                      numero,
-                      e.target.value,
-                      bairro,
-                      cidade,
-                      estado,
-                    );
-                  }}
-                  className="bg-background h-11 rounded-xl text-xs sm:text-sm"
-                />
-              </div>
-
-              {/* Bairro */}
-              <div className="sm:col-span-5 space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">Bairro</label>
-                <Input
-                  placeholder="Centro"
-                  value={bairro}
-                  onChange={(e) => {
-                    setBairro(e.target.value);
-                    updateCombinedAddress(
-                      cep,
-                      logradouro,
-                      numero,
-                      complemento,
-                      e.target.value,
-                      cidade,
-                      estado,
-                    );
-                  }}
-                  className="bg-background h-11 rounded-xl text-xs sm:text-sm"
-                />
-              </div>
-
-              {/* Cidade */}
-              <div className="sm:col-span-8 space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">Cidade</label>
-                <Input
-                  placeholder="Recife"
-                  value={cidade}
-                  onChange={(e) => {
-                    setCidade(e.target.value);
-                    updateCombinedAddress(
-                      cep,
-                      logradouro,
-                      numero,
-                      complemento,
-                      bairro,
-                      e.target.value,
-                      estado,
-                    );
-                  }}
-                  className="bg-background h-11 rounded-xl text-xs sm:text-sm"
-                />
-              </div>
-
-              {/* Estado */}
-              <div className="sm:col-span-4 space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">Estado (UF)</label>
-                <Input
-                  placeholder="PE"
-                  maxLength={2}
-                  value={estado}
-                  onChange={(e) => {
-                    setEstado(e.target.value.toUpperCase());
-                    updateCombinedAddress(
-                      cep,
-                      logradouro,
-                      numero,
-                      complemento,
-                      bairro,
-                      cidade,
-                      e.target.value.toUpperCase(),
-                    );
-                  }}
-                  className="bg-background h-11 rounded-xl text-xs sm:text-sm uppercase font-bold"
-                />
-              </div>
+            <div className="bg-slate-900 border border-slate-800 px-3.5 py-1.5 rounded-lg text-left sm:text-right w-full sm:w-auto">
+              <span className="text-slate-400 block text-[10px] uppercase font-mono">Saldo em Aberto</span>
+              <span className={`font-bold font-mono text-sm ${salePrice - (entryAmount + tradeAmount) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                {formatCurrency(Math.max(0, salePrice - (entryAmount + tradeAmount)))}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* 4. OBSERVAÇÕES & RECIBO */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-border">
-            <FileText className="w-5 h-5 text-[#c9a44c]" />
-            <h2 className="text-lg font-bold text-foreground">4. Documentação & Recibo</h2>
+        {/* 4. OBSERVAÇÕES COMERCIAIS & TERMOS LEGAIS */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
+          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
+              4
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-amber-500" />
+                Observações Comerciais & Termos de Entrega
+              </h2>
+              <p className="text-xs text-slate-400">
+                Termos impressos no recibo formalizando a entrega física e a responsabilidade de transferência.
+              </p>
+            </div>
           </div>
 
           <div className="space-y-4">
-            <FormField
-              control={form.control as any}
-              name="receipt_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-1.5">
-                    <span>Número do Recibo (Automático e Bloqueado)</span>
-                    <Lock className="w-3.5 h-3.5 text-amber-500" />
-                  </FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        readOnly
-                        value={field.value || initialReceiptNumber}
-                        className="bg-muted/70 h-12 rounded-xl font-mono font-bold text-amber-500 border-dashed cursor-not-allowed pl-10"
-                      />
-                      <Lock className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    </div>
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    Código sequencial exclusivo e imutável gerado para este documento.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Atalhos de Texto Padrão */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-slate-400 flex items-center gap-1 mr-1">
+                <Sparkles className="w-3 h-3 text-amber-400" /> Sugestões de texto rápido:
+              </span>
+              {quickDeliveryTemplates.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => form.setValue('receipt_notes', item.text)}
+                  className="px-2.5 py-1 bg-slate-950 border border-slate-800 hover:border-amber-500/40 text-[11px] text-slate-300 rounded-lg transition-colors cursor-pointer"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
 
+            {/* Observações do Recibo */}
             <FormField
-              control={form.control as any}
+              control={form.control}
               name="receipt_notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Observações Impressas no Recibo PDF</FormLabel>
+                  <FormLabel className="text-slate-300 font-medium">
+                    Observações de Entrega Técnica (Impresso no Recibo)
+                  </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Ex: Veículo entregue revisado, com chave reserva e manual. Garantia de 90 dias para motor e câmbio..."
-                      className="bg-background rounded-xl min-h-[90px] resize-none"
                       {...field}
                       value={field.value || ''}
+                      placeholder="Ex: Veículo entregue revisado, com chave reserva e manual. Vistoria aprovada sem ressalvas..."
+                      rows={3}
+                      className="bg-slate-950 border-slate-800 text-slate-200 rounded-xl focus:border-amber-500 text-sm"
                     />
                   </FormControl>
-                  <FormDescription className="text-xs">
-                    Este texto aparecerá no corpo do documento PDF assinado.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Notas Internas da Loja */}
             <FormField
-              control={form.control as any}
+              control={form.control}
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Anotações Internas (Não visíveis no recibo)</FormLabel>
+                  <FormLabel className="text-slate-400 text-xs font-normal">
+                    Anotações Internas da Loja (Opcional - Não sai no recibo)
+                  </FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Anotações confidenciais da loja sobre a negociação..."
-                      className="bg-background rounded-xl min-h-[70px] resize-none"
+                    <Input
                       {...field}
                       value={field.value || ''}
+                      placeholder="Ex: Venda indicada por parceiro ou detalhes internos..."
+                      className="bg-slate-950 border-slate-800 text-slate-300 h-11 rounded-xl focus:border-slate-700"
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Aceite dos Termos Legais */}
+            <FormField
+              control={form.control}
+              name="legal_terms_accepted"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500 mt-1"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm font-semibold text-slate-200 cursor-pointer">
+                      Aceite das Cláusulas Oficiais de Entrega e Responsabilidade CTB
+                    </FormLabel>
+                    <FormDescription className="text-xs text-slate-400 leading-relaxed">
+                      O comprador declara aprovação na vistoria, assume obrigação de transferência junto ao DETRAN em 30 dias (Art. 123 do CTB) e responsabilidade por infrações a partir da entrega física.
+                    </FormDescription>
+                  </div>
                 </FormItem>
               )}
             />
           </div>
         </div>
 
-        {/* Floating action bar */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/90 backdrop-blur-md border-t border-zinc-800/80 py-3 px-4 md:px-8 flex items-center justify-end gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+        {/* Barra Inferior com Botão de Ação */}
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 pt-2 border-t border-slate-800">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             onClick={() => router.back()}
             disabled={loading}
-            className="h-10 px-4 rounded-xl text-xs sm:text-sm font-medium border-border/80 text-muted-foreground hover:text-foreground cursor-pointer"
+            className="w-full sm:w-auto text-slate-400 hover:text-white cursor-pointer"
           >
             Cancelar
           </Button>
 
           <Button
             type="submit"
-            disabled={loading}
-            className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold h-10 px-5 rounded-xl active:scale-95 transition-all text-xs sm:text-sm cursor-pointer shadow-xs"
+            disabled={loading || !selectedMotoId}
+            className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-8 py-3.5 h-auto rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base"
           >
-            {loading ? 'Salvando...' : 'Salvar Venda'}
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {isEditing ? 'Salvando Alterações no Recibo...' : 'Registrando Venda & Gerando Recibo...'}
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5" />
+                {isEditing ? 'Salvar Alterações no Recibo' : 'Concluir Venda & Emitir Recibo Oficial'}
+              </>
+            )}
           </Button>
         </div>
       </form>

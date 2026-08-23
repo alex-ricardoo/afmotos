@@ -1,33 +1,45 @@
+import React from 'react';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { SaleForm } from '@/components/admin/sales/sale-form';
-import {
-  getAvailableMotorcyclesForSale,
-  getNextSequentialReceiptNumber,
-} from '@/lib/queries/sales';
+import { getSaleById, getAvailableMotorcyclesForSale } from '@/lib/queries/sales';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata = {
-  title: 'Registrar Nova Venda | AF Motos Admin',
-  description: 'Cadastre a venda de uma motocicleta e gere o recibo de compra/venda.',
-};
+interface EditSalePageProps {
+  params: Promise<{ id: string }>;
+}
 
-export default async function NovaVendaPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ motorcycle_id?: string }>;
-}) {
-  const { motorcycle_id } = await searchParams;
-  const [motorcyclesData, nextReceiptNumber] = await Promise.all([
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: EditSalePageProps) {
+  const { id } = await params;
+  const sale = await getSaleById(id);
+  return {
+    title: sale?.receipt_number
+      ? `Editar Venda ${sale.receipt_number} | AF Motos Admin`
+      : 'Editar Venda | AF Motos Admin',
+    description: 'Edite os dados fiscais, valores e informações do comprador da venda.',
+  };
+}
+
+export default async function EditSalePage({ params }: EditSalePageProps) {
+  const { id } = await params;
+
+  const [sale, availableMotorcycles] = await Promise.all([
+    getSaleById(id),
     getAvailableMotorcyclesForSale(),
-    getNextSequentialReceiptNumber(),
   ]);
 
-  let motorcycles = motorcyclesData;
+  if (!sale) {
+    notFound();
+  }
 
-  // If a specific motorcycle_id is provided but not present in available list (e.g. was just marked SOLD), fetch it directly
-  if (motorcycle_id && !motorcycles.some((m) => m.id === motorcycle_id)) {
+  let motorcycles = [...availableMotorcycles];
+
+  // Se a moto da venda não estiver na lista de disponíveis (pois está com status SOLD), busque os detalhes completos dela
+  if (sale.motorcycle && !motorcycles.some((m) => m.id === sale.motorcycle_id)) {
     const supabase = await createClient();
     const { data: specificMoto } = await supabase
       .from('motorcycles')
@@ -56,7 +68,7 @@ export default async function NovaVendaPage({
         )
       `,
       )
-      .eq('id', motorcycle_id)
+      .eq('id', sale.motorcycle_id)
       .maybeSingle();
 
     if (specificMoto) {
@@ -92,22 +104,32 @@ export default async function NovaVendaPage({
             Vendas
           </Link>
           <span>/</span>
-          <span className="text-foreground font-medium">Nova Venda</span>
+          <Link href={`/admin/vendas/${sale.id}/recibo`} className="hover:text-foreground transition-colors font-mono">
+            {sale.receipt_number || 'Recibo'}
+          </Link>
+          <span>/</span>
+          <span className="text-foreground font-medium">Editar</span>
         </div>
 
         <div className="flex items-center gap-4">
           <Link
-            href="/admin/vendas"
+            href={`/admin/vendas/${sale.id}/recibo`}
             className={buttonVariants({ variant: 'outline', size: 'icon' })}
+            title="Voltar ao Recibo"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
-              <span>Registrar Venda</span>
+              <span>Editar Registro de Venda</span>
+              {sale.receipt_number && (
+                <span className="text-xs sm:text-sm font-mono px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-lg">
+                  {sale.receipt_number}
+                </span>
+              )}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Selecione a motocicleta, insira os dados do comprador e gere o recibo formal de venda.
+              Altere dados do comprador, Renavam, Chassi, valores ou condições para atualizar o recibo oficial.
             </p>
           </div>
         </div>
@@ -115,8 +137,9 @@ export default async function NovaVendaPage({
 
       <SaleForm
         motorcycles={motorcycles}
-        selectedMotorcycleId={motorcycle_id}
-        initialReceiptNumber={nextReceiptNumber}
+        selectedMotorcycleId={sale.motorcycle_id}
+        initialReceiptNumber={sale.receipt_number || 'AFM-2026-0001'}
+        initialSale={sale}
       />
     </div>
   );

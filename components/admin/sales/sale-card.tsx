@@ -2,24 +2,15 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Bike, Download, MessageSquare, Phone } from 'lucide-react';
+import Link from 'next/link';
+import { Bike, Download, MessageSquare, Phone, Printer, Pencil } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { SaleWithDetails } from '@/lib/queries/sales';
+import { formatCurrency, formatDate } from '@/lib/utils/formatters';
 
 interface SaleCardProps {
   sale: SaleWithDetails;
 }
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-};
-
-const formatDate = (dateStr?: string) => {
-  if (!dateStr) return '';
-  const parts = dateStr.split('-');
-  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  return dateStr;
-};
 
 const getPaymentStatusBadge = (status?: string | null) => {
   switch (status) {
@@ -142,10 +133,8 @@ export function SaleCard({ sale }: SaleCardProps) {
 
       {/* Actions */}
       <div className="grid grid-cols-2 gap-2 pt-1">
-        <a
-          href={`/api/admin/sales/${sale.id}/receipt`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={`/admin/vendas/${sale.id}/recibo`}
           className={buttonVariants({
             variant: 'outline',
             size: 'sm',
@@ -153,9 +142,22 @@ export function SaleCard({ sale }: SaleCardProps) {
               'h-10 rounded-xl text-xs font-bold border-[#c9a44c]/30 text-[#e3c56c] hover:bg-[#c9a44c]/10 flex items-center justify-center gap-1.5 cursor-pointer',
           })}
         >
-          <Download className="w-3.5 h-3.5" />
-          <span>Recibo PDF</span>
-        </a>
+          <Printer className="w-3.5 h-3.5" />
+          <span>Imprimir A4</span>
+        </Link>
+
+        <Link
+          href={`/admin/vendas/${sale.id}/editar`}
+          className={buttonVariants({
+            variant: 'outline',
+            size: 'sm',
+            className:
+              'h-10 rounded-xl text-xs font-bold border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white flex items-center justify-center gap-1.5 cursor-pointer',
+          })}
+        >
+          <Pencil className="w-3.5 h-3.5" />
+          <span>Editar Venda</span>
+        </Link>
 
         {whatsappUrl ? (
           <a
@@ -166,16 +168,27 @@ export function SaleCard({ sale }: SaleCardProps) {
               variant: 'outline',
               size: 'sm',
               className:
-                'h-10 rounded-xl text-xs font-bold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-center gap-1.5 cursor-pointer',
+                'col-span-2 h-9 rounded-xl text-xs font-bold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-center gap-1.5 cursor-pointer',
             })}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>WhatsApp</span>
+            <span>Falar no WhatsApp</span>
           </a>
         ) : (
-          <span className="h-10 rounded-xl text-xs text-zinc-500 flex items-center justify-center border border-zinc-800/80">
-            Sem WhatsApp
-          </span>
+          <a
+            href={`/api/admin/sales/${sale.id}/receipt`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({
+              variant: 'outline',
+              size: 'sm',
+              className:
+                'col-span-2 h-9 rounded-xl text-xs text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 border border-zinc-800/80',
+            })}
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Baixar PDF</span>
+          </a>
         )}
       </div>
     </div>

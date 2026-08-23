@@ -20,6 +20,8 @@ export const motorcycleSchema = z.object({
     .default('AVAILABLE'),
   featured: z.boolean().default(false),
   license_plate: z.string().optional(),
+  renavam: z.string().optional().nullable(),
+  chassi: z.string().optional().nullable(),
   location: z.string().default('São Paulo, SP'),
   daily_rate: z.number().min(0).optional(),
   weekly_rate: z.number().min(0).optional(),

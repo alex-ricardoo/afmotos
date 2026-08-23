@@ -173,3 +173,39 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(201, 164, 76, 0.6);
 }
+
+/* Regras de Impressão A4 Oficial */
+@page {
+  size: A4 portrait;
+  margin: 8mm 10mm;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  header,
+  footer:not(#official-receipt-a4 *),
+  nav,
+  aside,
+  .no-print,
+  button:not(.print-include) {
+    display: none !important;
+  }
+
+  #official-receipt-a4 {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+

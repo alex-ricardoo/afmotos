@@ -45,6 +45,10 @@ import {
 } from '@/components/ui/accordion';
 
 import {
+  formatRenavam,
+  formatChassi,
+} from '@/lib/utils/formatters';
+import {
   motorcycleStatusLabels,
   operationTypeLabels,
   ownershipTypeLabels,
@@ -103,6 +107,8 @@ const motorcycleSchema = z.object({
   ]),
   featured: z.boolean().default(false),
   license_plate: z.string().optional(),
+  renavam: z.string().optional().nullable().or(z.literal('')),
+  chassi: z.string().optional().nullable().or(z.literal('')),
   location: z.string().optional(),
 });
 
@@ -225,6 +231,8 @@ Fale com nossa equipe e agende um test ride.`;
       status: initialData?.status || 'AVAILABLE',
       featured: initialData?.featured || false,
       license_plate: initialData?.license_plate || '',
+      renavam: initialData?.renavam || '',
+      chassi: initialData?.chassi || '',
       location: initialData?.location || '',
     },
   });
@@ -824,6 +832,57 @@ Fale com nossa equipe e agende um test ride.`;
                       </FormItem>
                     )}
                   />
+
+                  {/* Renavam & Chassi (Dados Fiscais/Detran) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control as any}
+                      name="renavam"
+                      render={({ field: { value, onChange, ...fieldProps } }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center justify-between">
+                            <span>Renavam</span>
+                            <span className="text-[11px] text-muted-foreground font-normal">11 dígitos</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="01234567890"
+                              {...fieldProps}
+                              value={value || ''}
+                              onChange={(e) => onChange(formatRenavam(e.target.value))}
+                              maxLength={11}
+                              className="bg-background h-12 rounded-xl font-mono text-foreground"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control as any}
+                      name="chassi"
+                      render={({ field: { value, onChange, ...fieldProps } }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center justify-between">
+                            <span>Chassi (VIN)</span>
+                            <span className="text-[11px] text-muted-foreground font-normal">17 caracteres</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="9C2JC4100ER000001"
+                              {...fieldProps}
+                              value={value || ''}
+                              onChange={(e) => onChange(formatChassi(e.target.value))}
+                              maxLength={17}
+                              className="bg-background h-12 rounded-xl font-mono uppercase text-foreground"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField

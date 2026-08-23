@@ -16,8 +16,20 @@ export async function createSaleAction(rawData: SaleFormValues) {
   }
 
   const data = parsed.data;
-  // Use sequential receipt number
+  // Gerar número sequencial oficial
   const receiptNumber = data.receipt_number?.trim() || (await getNextSequentialReceiptNumber());
+
+  // Formatar endereço completo unificado para compatibilidade
+  const addressParts = [
+    data.buyer_street?.trim(),
+    data.buyer_number?.trim() ? `nº ${data.buyer_number.trim()}` : null,
+    data.buyer_complement?.trim(),
+    data.buyer_neighborhood?.trim(),
+    data.buyer_city?.trim() ? `${data.buyer_city.trim()}${data.buyer_state ? `/${data.buyer_state.trim()}` : ''}` : null,
+    data.buyer_cep?.trim() ? `CEP ${data.buyer_cep.trim()}` : null,
+  ].filter(Boolean);
+
+  const formattedAddress = addressParts.length > 0 ? addressParts.join(', ') : data.buyer_address?.trim() || null;
 
   const salePayload = {
     motorcycle_id: data.motorcycle_id,
@@ -27,16 +39,30 @@ export async function createSaleAction(rawData: SaleFormValues) {
     buyer_phone: data.buyer_phone?.trim() || null,
     buyer_email: data.buyer_email?.trim() || null,
     buyer_document: data.buyer_document?.trim() || null,
-    buyer_address: data.buyer_address?.trim() || null,
+    buyer_address: formattedAddress,
+    buyer_cep: data.buyer_cep?.trim() || null,
+    buyer_street: data.buyer_street?.trim() || null,
+    buyer_number: data.buyer_number?.trim() || null,
+    buyer_complement: data.buyer_complement?.trim() || null,
+    buyer_neighborhood: data.buyer_neighborhood?.trim() || null,
+    buyer_city: data.buyer_city?.trim() || null,
+    buyer_state: data.buyer_state?.trim() ? data.buyer_state.trim().toUpperCase().slice(0, 2) : null,
     payment_method: data.payment_method,
     payment_status: data.payment_status,
     amount_paid: data.amount_paid ?? data.sale_price,
+    entry_amount: data.entry_amount ?? 0,
+    financed_amount: data.financed_amount ?? 0,
+    trade_amount: data.trade_amount ?? 0,
+    delivery_km: data.delivery_km ?? null,
+    renavam: data.renavam?.trim() || null,
+    chassi: data.chassi?.trim() ? data.chassi.trim().toUpperCase() : null,
+    legal_terms_accepted: data.legal_terms_accepted ?? true,
     receipt_number: receiptNumber,
     receipt_notes: data.receipt_notes?.trim() || null,
     notes: data.notes?.trim() || null,
   };
 
-  // 1. Insert sale record
+  // 1. Inserir registro na tabela sales
   const { data: insertedSale, error: saleError } = await supabase
     .from('sales')
     .insert(salePayload)
@@ -50,10 +76,21 @@ export async function createSaleAction(rawData: SaleFormValues) {
     };
   }
 
-  // 2. Update motorcycle status to SOLD
+  // 2. Atualizar status e dados veiculares da motocicleta
+  const motoUpdatePayload: Record<string, any> = { status: 'SOLD' };
+  if (data.renavam?.trim()) {
+    motoUpdatePayload.renavam = data.renavam.trim();
+  }
+  if (data.chassi?.trim()) {
+    motoUpdatePayload.chassi = data.chassi.trim().toUpperCase();
+  }
+  if (data.delivery_km !== null && data.delivery_km !== undefined) {
+    motoUpdatePayload.mileage = data.delivery_km;
+  }
+
   const { error: motoError } = await supabase
     .from('motorcycles')
-    .update({ status: 'SOLD' })
+    .update(motoUpdatePayload)
     .eq('id', data.motorcycle_id);
 
   if (motoError) {
@@ -76,14 +113,35 @@ export async function createSaleAction(rawData: SaleFormValues) {
 export async function updateSaleAction(id: string, rawData: Partial<SaleFormValues>) {
   const supabase = await createClient();
 
+  const addressParts = [
+    rawData.buyer_street?.trim(),
+    rawData.buyer_number?.trim() ? `nº ${rawData.buyer_number.trim()}` : null,
+    rawData.buyer_complement?.trim(),
+    rawData.buyer_neighborhood?.trim(),
+    rawData.buyer_city?.trim() ? `${rawData.buyer_city.trim()}${rawData.buyer_state ? `/${rawData.buyer_state.trim()}` : ''}` : null,
+    rawData.buyer_cep?.trim() ? `CEP ${rawData.buyer_cep.trim()}` : null,
+  ].filter(Boolean);
+
+  const formattedAddress = addressParts.length > 0 ? addressParts.join(', ') : rawData.buyer_address?.trim() || null;
+
+  const updateData: Record<string, any> = {
+    ...rawData,
+    buyer_address: formattedAddress,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (rawData.chassi) {
+    updateData.chassi = rawData.chassi.trim().toUpperCase();
+  }
+  if (rawData.renavam) {
+    updateData.renavam = rawData.renavam.trim();
+  }
+
   const { data: updatedSale, error } = await supabase
     .from('sales')
-    .update({
-      ...rawData,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('id', id)
-    .select('id, motorcycle_id')
+    .select('id, motorcycle_id, receipt_number')
     .single();
 
   if (error) {
@@ -91,13 +149,28 @@ export async function updateSaleAction(id: string, rawData: Partial<SaleFormValu
     return { error: 'Não foi possível atualizar os dados da venda.' };
   }
 
-  revalidatePath('/admin/vendas');
-  revalidatePath('/admin');
+  // Sincronizar dados veiculares caso alterados
   if (updatedSale?.motorcycle_id) {
+    const motoUpdate: Record<string, any> = {};
+    if (rawData.renavam) motoUpdate.renavam = rawData.renavam.trim();
+    if (rawData.chassi) motoUpdate.chassi = rawData.chassi.trim().toUpperCase();
+    if (rawData.delivery_km !== undefined && rawData.delivery_km !== null) {
+      motoUpdate.mileage = rawData.delivery_km;
+    }
+
+    if (Object.keys(motoUpdate).length > 0) {
+      await supabase.from('motorcycles').update(motoUpdate).eq('id', updatedSale.motorcycle_id);
+    }
     revalidatePath(`/admin/motos/${updatedSale.motorcycle_id}/editar`);
   }
 
-  return { success: true, id };
+  revalidatePath('/admin/vendas');
+  revalidatePath(`/admin/vendas/${id}/recibo`);
+  revalidatePath(`/admin/vendas/${id}/editar`);
+  revalidatePath('/admin');
+  revalidatePath('/admin/motos');
+
+  return { success: true, id, receiptNumber: updatedSale.receipt_number };
 }
 
 export async function deleteSaleAction(id: string, motorcycleId?: string, revertMotoStatus = true) {

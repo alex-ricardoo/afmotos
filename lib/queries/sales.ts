@@ -14,6 +14,9 @@ export interface SaleWithDetails extends Sale {
     status: string;
     license_plate: string | null;
     color: string | null;
+    mileage: number | null;
+    renavam?: string | null;
+    chassi?: string | null;
     images?: Array<{
       id?: string;
       public_url?: string | null;
@@ -106,6 +109,9 @@ export async function getSales(params?: SalesFilterParams): Promise<SaleWithDeta
         status,
         license_plate,
         color,
+        mileage,
+        renavam,
+        chassi,
         images:motorcycle_images(
           id,
           public_url,
@@ -163,12 +169,17 @@ export async function getSales(params?: SalesFilterParams): Promise<SaleWithDeta
         item.buyer_name?.toLowerCase().includes(searchLower) ||
         item.buyer_phone?.toLowerCase().includes(searchLower) ||
         item.buyer_document?.toLowerCase().includes(searchLower) ||
+        item.buyer_address?.toLowerCase().includes(searchLower) ||
+        item.chassi?.toLowerCase().includes(searchLower) ||
+        item.renavam?.toLowerCase().includes(searchLower) ||
         item.receipt_number?.toLowerCase().includes(searchLower);
 
       const motoMatch =
         item.motorcycle?.brand?.toLowerCase().includes(searchLower) ||
         item.motorcycle?.model?.toLowerCase().includes(searchLower) ||
-        item.motorcycle?.license_plate?.toLowerCase().includes(searchLower);
+        item.motorcycle?.license_plate?.toLowerCase().includes(searchLower) ||
+        item.motorcycle?.chassi?.toLowerCase().includes(searchLower) ||
+        item.motorcycle?.renavam?.toLowerCase().includes(searchLower);
 
       return buyerMatch || motoMatch;
     });
@@ -197,6 +208,9 @@ export async function getSaleById(id: string): Promise<SaleWithDetails | null> {
         status,
         license_plate,
         color,
+        mileage,
+        renavam,
+        chassi,
         images:motorcycle_images(
           id,
           public_url,
@@ -285,6 +299,9 @@ export async function getAvailableMotorcyclesForSale() {
       status,
       license_plate,
       color,
+      mileage,
+      renavam,
+      chassi,
       images:motorcycle_images(
         id,
         public_url,

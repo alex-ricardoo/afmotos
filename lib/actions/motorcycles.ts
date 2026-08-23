@@ -50,6 +50,8 @@ type MotorcyclePayload = {
   operation_type: string;
   status: string;
   license_plate: string | null;
+  renavam: string | null;
+  chassi: string | null;
   featured: boolean;
 };
 
@@ -58,6 +60,8 @@ function toMotorcyclePayload(values: any): MotorcyclePayload {
   const version = values.version?.trim();
   const color = values.color?.trim();
   const description = values.description?.trim();
+  const renavam = values.renavam?.trim();
+  const chassi = values.chassi?.trim();
 
   return {
     brand: values.brand,
@@ -76,6 +80,8 @@ function toMotorcyclePayload(values: any): MotorcyclePayload {
     operation_type: values.operation_type,
     status: values.status,
     license_plate: licensePlate || null,
+    renavam: renavam || null,
+    chassi: chassi ? chassi.toUpperCase() : null,
     featured: Boolean(values.featured),
   };
 }

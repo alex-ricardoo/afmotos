@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Bike, Download, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
+import { Bike, Download, MessageSquare, Printer, FileText, Pencil } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import {
   Table,
@@ -13,21 +14,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { SaleWithDetails } from '@/lib/queries/sales';
+import { formatCurrency, formatDate } from '@/lib/utils/formatters';
 
 interface SalesTableProps {
   sales: SaleWithDetails[];
 }
-
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-};
-
-const formatDate = (dateStr?: string) => {
-  if (!dateStr) return '';
-  const parts = dateStr.split('-');
-  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  return dateStr;
-};
 
 const getPaymentStatusBadge = (status?: string | null) => {
   switch (status) {
@@ -177,7 +168,7 @@ export function SalesTable({ sales }: SalesTableProps) {
 
                   {/* Recibo */}
                   <TableCell>
-                    <span className="font-mono text-xs font-bold text-zinc-300">
+                    <span className="font-mono text-xs font-bold text-amber-400">
                       {sale.receipt_number || '-'}
                     </span>
                   </TableCell>
@@ -185,20 +176,46 @@ export function SalesTable({ sales }: SalesTableProps) {
                   {/* Ações */}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <a
-                        href={`/api/admin/sales/${sale.id}/receipt`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Link
+                        href={`/admin/vendas/${sale.id}/editar`}
+                        className={buttonVariants({
+                          variant: 'ghost',
+                          size: 'icon-sm',
+                          className:
+                            'rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800 cursor-pointer',
+                        })}
+                        title="Editar Dados da Venda e Recibo"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Link>
+
+                      <Link
+                        href={`/admin/vendas/${sale.id}/recibo`}
                         className={buttonVariants({
                           variant: 'outline',
                           size: 'sm',
                           className:
                             'h-8 px-2.5 rounded-xl text-xs font-bold border-[#c9a44c]/30 text-[#e3c56c] hover:bg-[#c9a44c]/10 hover:text-amber-300 flex items-center gap-1.5 cursor-pointer',
                         })}
-                        title="Gerar / Baixar Recibo PDF"
+                        title="Visualizar e Imprimir Recibo Oficial A4"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>Imprimir A4</span>
+                      </Link>
+
+                      <a
+                        href={`/api/admin/sales/${sale.id}/receipt`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={buttonVariants({
+                          variant: 'ghost',
+                          size: 'icon-sm',
+                          className:
+                            'rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer',
+                        })}
+                        title="Baixar Arquivo PDF"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>Recibo</span>
                       </a>
 
                       {whatsappUrl && (

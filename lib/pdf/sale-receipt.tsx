@@ -2,62 +2,67 @@ import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import { SaleWithDetails } from '@/lib/queries/sales';
 import { SiteSettings } from '@/types/database';
+import { formatPhone, formatCpf, formatRenavam, formatChassi } from '@/lib/utils/formatters';
 
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
-    paddingBottom: 40,
-    fontSize: 8.5,
+    padding: 26,
+    paddingBottom: 32,
+    fontSize: 8,
     fontFamily: 'Helvetica',
-    color: '#1e293b',
+    color: '#0f172a',
     backgroundColor: '#ffffff',
-    lineHeight: 1.35,
+    lineHeight: 1.3,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingBottom: 10,
+    alignItems: 'flex-start',
+    paddingBottom: 8,
     borderBottomWidth: 2,
-    borderBottomColor: '#c9a44c',
-    marginBottom: 10,
+    borderBottomColor: '#d97706',
+    marginBottom: 8,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     maxWidth: '68%',
   },
-  logo: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    objectFit: 'cover',
+  logoBox: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#090d16',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#d97706',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: {
+    fontSize: 14,
+    fontFamily: 'Helvetica-Bold',
+    color: '#f59e0b',
+  },
+  logoSub: {
+    fontSize: 5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#cbd5e1',
+    marginTop: -2,
   },
   storeInfo: {
     flexDirection: 'column',
     justifyContent: 'center',
   },
   storeName: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
-    letterSpacing: 0.5,
-  },
-  storeTagline: {
-    fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#b45309',
-    marginTop: 1,
+    color: '#090d16',
+    letterSpacing: 0.3,
   },
   storeContact: {
-    fontSize: 7,
+    fontSize: 6.5,
     color: '#475569',
-    marginTop: 2,
-  },
-  storeAddress: {
-    fontSize: 7,
-    color: '#64748b',
     marginTop: 1,
   },
   headerRight: {
@@ -65,244 +70,170 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   receiptBadge: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: '#090d16',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginBottom: 2,
     borderWidth: 1,
     borderColor: '#f59e0b',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    marginBottom: 3,
   },
   receiptBadgeText: {
     fontSize: 7.5,
     fontFamily: 'Helvetica-Bold',
-    color: '#92400e',
-    letterSpacing: 0.5,
-  },
-  receiptNumber: {
-    fontSize: 12,
-    fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
+    color: '#f59e0b',
     letterSpacing: 0.5,
   },
   receiptDate: {
-    fontSize: 7.5,
+    fontSize: 6.5,
     color: '#64748b',
-    marginTop: 2,
-  },
-  docTitleBanner: {
-    backgroundColor: '#0f172a',
-    borderRadius: 4,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  docTitle: {
-    fontSize: 9.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#ffffff',
-    letterSpacing: 0.8,
-    textAlign: 'center',
+    marginTop: 1,
   },
   section: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sectionHeader: {
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 2.5,
+    paddingHorizontal: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#d97706',
+    borderRadius: 2,
+    marginBottom: 3,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
-  },
-  sectionHeaderDot: {
-    width: 3,
-    height: 9,
-    backgroundColor: '#c9a44c',
-    borderRadius: 1.5,
-    marginRight: 4,
   },
   sectionTitle: {
-    fontSize: 8.5,
+    fontSize: 7.5,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
+  },
+  sectionSub: {
+    fontSize: 6,
+    color: '#64748b',
   },
   card: {
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    borderRadius: 5,
-    padding: 7,
-    paddingHorizontal: 9,
+    borderRadius: 4,
+    padding: 5,
+    paddingHorizontal: 7,
   },
-  grid: {
+  grid3: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    rowGap: 4,
-  },
-  col6: {
-    width: '50%',
-    paddingRight: 6,
+    rowGap: 3,
   },
   col4: {
     width: '33.33%',
-    paddingRight: 6,
+    paddingRight: 4,
+  },
+  col6: {
+    width: '50%',
+    paddingRight: 4,
   },
   col12: {
     width: '100%',
-    paddingRight: 6,
+    paddingRight: 4,
   },
   fieldLabel: {
-    fontSize: 6.5,
+    fontSize: 5.8,
     fontFamily: 'Helvetica-Bold',
     color: '#64748b',
     textTransform: 'uppercase',
-    marginBottom: 1,
-    letterSpacing: 0.2,
+    marginBottom: 0.5,
   },
   fieldValue: {
-    fontSize: 8,
+    fontSize: 7.5,
     fontFamily: 'Helvetica',
     color: '#1e293b',
   },
   fieldValueBold: {
-    fontSize: 8.5,
+    fontSize: 7.5,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
   },
-  financeCard: {
-    backgroundColor: '#fefce8',
-    borderWidth: 1,
-    borderColor: '#fef08a',
-    borderRadius: 5,
-    padding: 8,
-    paddingHorizontal: 10,
+  table: {
+    width: '100%',
+  },
+  tableRowHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  financeLeft: {
-    flexDirection: 'column',
-  },
-  financeLabel: {
-    fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
-    color: '#854d0e',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  financeValue: {
-    fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
-    color: '#b45309',
-    marginTop: 1,
-  },
-  financeRight: {
-    alignItems: 'flex-end',
-    flexDirection: 'column',
-  },
-  paymentMethodBadge: {
-    backgroundColor: '#0f172a',
-    borderRadius: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#cbd5e1',
+    paddingBottom: 2,
     marginBottom: 2,
   },
-  paymentMethodText: {
-    fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#ffffff',
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 1.5,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#e2e8f0',
   },
-  paymentStatusText: {
-    fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
-    color: '#15803d',
-    marginTop: 1,
-  },
-  termsCard: {
+  th1: { width: '38%', fontSize: 6, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' },
+  th2: { width: '25%', fontSize: 6, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' },
+  th3: { width: '20%', fontSize: 6, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' },
+  th4: { width: '17%', fontSize: 6, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase', textAlign: 'right' },
+  td1: { width: '38%', fontSize: 7, color: '#0f172a' },
+  td2: { width: '25%', fontSize: 7, color: '#334155' },
+  td3: { width: '20%', fontSize: 7, color: '#15803d', fontFamily: 'Helvetica-Bold' },
+  td4: { width: '17%', fontSize: 7, color: '#0f172a', fontFamily: 'Helvetica-Bold', textAlign: 'right' },
+  legalCard: {
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    borderRadius: 5,
-    padding: 7,
+    borderRadius: 4,
+    padding: 5,
   },
-  notesHighlight: {
-    backgroundColor: '#ffffff',
-    borderLeftWidth: 2.5,
-    borderLeftColor: '#c9a44c',
-    padding: 4,
-    paddingLeft: 6,
-    marginBottom: 4,
-    borderRadius: 2,
-  },
-  notesLabel: {
-    fontSize: 6.5,
-    fontFamily: 'Helvetica-Bold',
-    color: '#b45309',
-    marginBottom: 1,
-    textTransform: 'uppercase',
-  },
-  notesText: {
-    fontSize: 7.5,
-    fontFamily: 'Helvetica-Oblique',
-    color: '#334155',
-  },
-  termsText: {
-    fontSize: 6.5,
+  legalText: {
+    fontSize: 6,
     color: '#475569',
-    lineHeight: 1.35,
-  },
-  locationDateBlock: {
-    marginTop: 12,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  locationDateText: {
-    fontSize: 8,
-    color: '#475569',
-    textAlign: 'center',
+    lineHeight: 1.25,
+    marginBottom: 2,
+    textAlign: 'justify',
   },
   signaturesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginBottom: 10,
+    paddingHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 6,
   },
   signatureBox: {
-    width: '42%',
+    width: '44%',
     alignItems: 'center',
   },
   signatureLine: {
     width: '100%',
     borderTopWidth: 1,
-    borderTopColor: '#334155',
-    marginBottom: 3,
+    borderTopColor: '#475569',
+    marginBottom: 2,
   },
   signatureName: {
-    fontSize: 8,
+    fontSize: 7.5,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
     textAlign: 'center',
   },
   signatureRole: {
-    fontSize: 6.5,
+    fontSize: 6,
     color: '#64748b',
     textAlign: 'center',
   },
   footer: {
-    position: 'absolute',
-    bottom: 16,
-    left: 30,
-    right: 30,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    paddingTop: 5,
+    paddingTop: 3,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 6,
   },
   footerText: {
-    fontSize: 6.5,
+    fontSize: 5.5,
     color: '#94a3b8',
   },
 });
@@ -327,258 +258,232 @@ const formatDateBR = (dateStr?: string | null) => {
   return dateStr;
 };
 
-const formatDocumentBR = (val?: string | null) => {
-  if (!val) return 'Não informado';
-  const clean = val.replace(/\D/g, '');
-  if (clean.length === 11) {
-    return clean
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-  }
-  if (clean.length === 14) {
-    return clean
-      .replace(/(\d{2})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1/$2')
-      .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-  }
-  return val;
-};
-
-const formatPhoneBR = (val?: string | null) => {
-  if (!val) return 'Não informado';
-  const clean = val.replace(/\D/g, '');
-  if (clean.length === 11) {
-    return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7, 11)}`;
-  }
-  if (clean.length === 10) {
-    return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6, 10)}`;
-  }
-  return val;
-};
-
-const getMonthNameBR = (monthIndex: number) => {
-  const months = [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro',
-  ];
-  return months[monthIndex] || '';
-};
-
 export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps) {
   const storeName = settings?.site_name || 'AF Motos';
-  const phone = formatPhoneBR(settings?.whatsapp_phone || '81985901175');
+  /* const cnpj = '58.490.871/0001-30'; */
+  const phone = formatPhone(settings?.whatsapp_phone || '81985901175');
   const email = settings?.contact_email || 'afmotos2026@gmail.com';
   const address = settings?.address || 'Cabo de Santo Agostinho - PE';
 
   const moto = sale.motorcycle;
+  const year = new Date().getFullYear();
+  const receiptCode = sale.receipt_number || `AFM-${year}-${sale.id.slice(0, 4).toUpperCase()}`;
 
-  const dateObj = sale.sale_date ? new Date(`${sale.sale_date}T12:00:00`) : new Date();
-  const day = dateObj.getDate();
-  const monthName = getMonthNameBR(dateObj.getMonth());
-  const year = dateObj.getFullYear();
-  const cityLocation =
-    address.split(',')[1]?.trim() ||
-    address.split('-')[0]?.trim() ||
-    'Cabo de Santo Agostinho - PE';
+  const paymentLabels: Record<string, string> = {
+    PIX: 'PIX (À Vista)',
+    FINANCIAMENTO: 'Financiamento Bancário',
+    CARTAO: 'Cartão de Crédito',
+    DINHEIRO: 'Dinheiro (Espécie)',
+    TROCA: 'Moto na Troca',
+    TRANSFERENCIA: 'Transferência TED',
+    OUTRO: 'Outro',
+  };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* 1. Header with Logo & Store Identification */}
+        {/* CABEÇALHO INSTITUCIONAL */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {logoSrc ? <Image src={logoSrc} style={styles.logo} /> : null}
+            {logoSrc ? (
+              <Image src={logoSrc} style={{ width: 38, height: 38, borderRadius: 6, objectFit: 'contain' }} />
+            ) : (
+              <View style={styles.logoBox}>
+                <Text style={styles.logoText}>AF</Text>
+                <Text style={styles.logoSub}>MOTOS</Text>
+              </View>
+            )}
             <View style={styles.storeInfo}>
+              <Text style={styles.storeName}>{storeName}</Text>
               <Text style={styles.storeContact}>
-                WhatsApp: {phone} • E-mail: {email}
+                WhatsApp: {phone} {email ? `• E-mail: ${email}` : ''}
               </Text>
-              <Text style={styles.storeAddress}>{address}</Text>
+              <Text style={styles.storeContact}>{address}</Text>
             </View>
           </View>
 
           <View style={styles.headerRight}>
             <View style={styles.receiptBadge}>
-              <Text style={styles.receiptBadgeText}>RECIBO DE VENDA</Text>
+              <Text style={styles.receiptBadgeText}>{receiptCode}</Text>
             </View>
-            <Text style={styles.receiptNumber}>{sale.receipt_number || `AFM-${year}-0001`}</Text>
-            <Text style={styles.receiptDate}>Data da Emissão: {formatDateBR(sale.sale_date)}</Text>
+            <Text style={styles.receiptDate}>Emissão: {formatDateBR(sale.sale_date)}</Text>
+            <Text style={{ fontSize: 5.5, color: '#15803d', fontFamily: 'Helvetica-Bold', marginTop: 1 }}>
+              COMPROVANTE OFICIAL DE ENTREGA
+            </Text>
           </View>
         </View>
 
-        {/* 2. Document Title Banner */}
-        <View style={styles.docTitleBanner}>
-          <Text style={styles.docTitle}>COMPROVANTE DE NEGOCIAÇÃO E REPASSE DE VEÍCULO</Text>
-        </View>
-
-        {/* 3. Section: Dados do Veículo */}
+        {/* 1. SEÇÃO VEÍCULO (GRID 3 COLUNAS) */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderDot} />
-            <Text style={styles.sectionTitle}>1. Identificação do Veículo</Text>
+            <Text style={styles.sectionTitle}>1. Identificação do Veículo & Dados Fiscais</Text>
+            <Text style={styles.sectionSub}>Odômetro e Chassi</Text>
           </View>
           <View style={styles.card}>
-            <View style={styles.grid}>
-              <View style={styles.col6}>
+            <View style={styles.grid3}>
+              <View style={styles.col4}>
                 <Text style={styles.fieldLabel}>Marca / Modelo / Versão</Text>
                 <Text style={styles.fieldValueBold}>
-                  {moto?.brand || 'N/A'} {moto?.model || ''} {moto?.version || ''}
+                  {moto?.brand || ''} {moto?.model || ''} {moto?.version || ''}
                 </Text>
               </View>
 
-              <View style={styles.col6}>
-                <Text style={styles.fieldLabel}>Ano Fab. / Ano Mod.</Text>
+              <View style={styles.col4}>
+                <Text style={styles.fieldLabel}>Ano Fab. / Modelo</Text>
                 <Text style={styles.fieldValue}>
-                  {moto ? `${moto.year_manufacture} / ${moto.year_model}` : 'N/A'}
+                  {moto ? `${moto.year_manufacture} / ${moto.year_model}` : '-'}
                 </Text>
               </View>
 
-              <View style={styles.col6}>
+              <View style={styles.col4}>
                 <Text style={styles.fieldLabel}>Placa</Text>
-                <Text style={styles.fieldValueBold}>
-                  {moto?.license_plate || 'Em emplacamento / Não informada'}
-                </Text>
+                <Text style={styles.fieldValueBold}>{moto?.license_plate || 'Em emplacamento'}</Text>
               </View>
 
-              <View style={styles.col6}>
-                <Text style={styles.fieldLabel}>Cor</Text>
+              <View style={styles.col4}>
+                <Text style={styles.fieldLabel}>Cor Predominante</Text>
                 <Text style={styles.fieldValue}>{moto?.color || 'Não informada'}</Text>
               </View>
+
+              <View style={styles.col4}>
+                <Text style={styles.fieldLabel}>Renavam</Text>
+                <Text style={styles.fieldValueBold}>{sale.renavam || moto?.renavam ? formatRenavam(sale.renavam || moto?.renavam) : 'Não informado'}</Text>
+              </View>
+
+              <View style={styles.col4}>
+                <Text style={styles.fieldLabel}>Chassi (VIN)</Text>
+                <Text style={styles.fieldValueBold}>{sale.chassi || moto?.chassi ? formatChassi(sale.chassi || moto?.chassi) : 'Não informado'}</Text>
+              </View>
+
+              <View style={[styles.col12, { borderTopWidth: 0.5, borderTopColor: '#cbd5e1', paddingTop: 2, marginTop: 1 }]}>
+                <Text style={{ fontSize: 6.5, color: '#334155' }}>
+                  KM no ato da entrega técnica: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{sale.delivery_km ?? moto?.mileage ?? 0} km</Text>
+                </Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* 4. Section: Dados do Comprador */}
+        {/* 2. SEÇÃO IDENTIFICAÇÃO DAS PARTES */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderDot} />
-            <Text style={styles.sectionTitle}>2. Identificação do Comprador</Text>
+            <Text style={styles.sectionTitle}>2. Identificação das Partes</Text>
+          </View>
+          <View style={styles.grid3}>
+            {/* Vendedora */}
+            <View style={[styles.col6, styles.card]}>
+              <Text style={[styles.fieldLabel, { color: '#b45309' }]}>Vendedora (Loja)</Text>
+              <Text style={styles.fieldValueBold}>{storeName}</Text>
+              {/* <Text style={{ fontSize: 6.5, color: '#475569' }}>CNPJ: {cnpj}</Text> */}
+              <Text style={{ fontSize: 6.5, color: '#475569' }}>Endereço: {address}</Text>
+              <Text style={{ fontSize: 6.5, color: '#475569' }}>Tel/WhatsApp: {phone}</Text>
+            </View>
+
+            {/* Comprador */}
+            <View style={[styles.col6, styles.card]}>
+              <Text style={styles.fieldLabel}>Adquirente (Comprador)</Text>
+              <Text style={styles.fieldValueBold}>{sale.buyer_name || 'Não informado'}</Text>
+              <Text style={{ fontSize: 6.5, color: '#475569' }}>CPF: {sale.buyer_document ? formatCpf(sale.buyer_document) : 'Não informado'}</Text>
+              <Text style={{ fontSize: 6.5, color: '#475569' }}>Tel/WhatsApp: {sale.buyer_phone ? formatPhone(sale.buyer_phone) : 'Não informado'}</Text>
+              <Text style={{ fontSize: 6.5, color: '#475569' }}>Endereço: {sale.buyer_address || 'Endereço padrão'}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 3. SEÇÃO CONDIÇÕES DE PAGAMENTO */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>3. Condições Financeiras & Quitação</Text>
+            <Text style={styles.sectionSub}>Data: {formatDateBR(sale.sale_date)}</Text>
           </View>
           <View style={styles.card}>
-            <View style={styles.grid}>
-              <View style={styles.col6}>
-                <Text style={styles.fieldLabel}>Nome Completo</Text>
-                <Text style={styles.fieldValueBold}>{sale.buyer_name || 'Não informado'}</Text>
+            <View style={styles.table}>
+              <View style={styles.tableRowHeader}>
+                <Text style={styles.th1}>Discriminação</Text>
+                <Text style={styles.th2}>Modalidade</Text>
+                <Text style={styles.th3}>Situação</Text>
+                <Text style={styles.th4}>Valor (R$)</Text>
+              </View>
+              <View style={styles.tableRow}>
+                <Text style={styles.td1}>Valor Total do Veículo</Text>
+                <Text style={styles.td2}>{paymentLabels[sale.payment_method || 'PIX'] || sale.payment_method}</Text>
+                <Text style={styles.td3}>{sale.payment_status === 'PAID' ? 'Quitado' : 'Parcial'}</Text>
+                <Text style={styles.td4}>{formatCurrencyBRL(sale.sale_price)}</Text>
               </View>
 
-              <View style={styles.col6}>
-                <Text style={styles.fieldLabel}>CPF / CNPJ</Text>
-                <Text style={styles.fieldValue}>{formatDocumentBR(sale.buyer_document)}</Text>
-              </View>
-
-              <View style={styles.col6}>
-                <Text style={styles.fieldLabel}>Telefone / WhatsApp</Text>
-                <Text style={styles.fieldValue}>{formatPhoneBR(sale.buyer_phone)}</Text>
-              </View>
-
-              <View style={styles.col6}>
-                <Text style={styles.fieldLabel}>E-mail</Text>
-                <Text style={styles.fieldValue}>{sale.buyer_email || 'Não informado'}</Text>
-              </View>
-
-              <View style={styles.col12}>
-                <Text style={styles.fieldLabel}>Endereço Completo</Text>
-                <Text style={styles.fieldValue}>{sale.buyer_address || 'Não informado'}</Text>
-              </View>
+              {Number(sale.entry_amount) > 0 && (
+                <View style={styles.tableRow}>
+                  <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4 }]}>↳ Valor de Entrada</Text>
+                  <Text style={[styles.td2, { fontSize: 6.5 }]}>À Vista</Text>
+                  <Text style={[styles.td3, { fontSize: 6.5 }]}>Recebido</Text>
+                  <Text style={[styles.td4, { fontSize: 6.5 }]}>{formatCurrencyBRL(sale.entry_amount)}</Text>
+                </View>
+              )}
+              {Number(sale.financed_amount) > 0 && (
+                <View style={styles.tableRow}>
+                  <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4 }]}>↳ Financiamento</Text>
+                  <Text style={[styles.td2, { fontSize: 6.5 }]}>Bancário</Text>
+                  <Text style={[styles.td3, { fontSize: 6.5, color: '#1d4ed8' }]}>Aprovado</Text>
+                  <Text style={[styles.td4, { fontSize: 6.5 }]}>{formatCurrencyBRL(sale.financed_amount)}</Text>
+                </View>
+              )}
+              {Number(sale.trade_amount) > 0 && (
+                <View style={styles.tableRow}>
+                  <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4 }]}>↳ Moto na Troca</Text>
+                  <Text style={[styles.td2, { fontSize: 6.5 }]}>Avaliação</Text>
+                  <Text style={[styles.td3, { fontSize: 6.5, color: '#7e22ce' }]}>Entregue</Text>
+                  <Text style={[styles.td4, { fontSize: 6.5 }]}>{formatCurrencyBRL(sale.trade_amount)}</Text>
+                </View>
+              )}
             </View>
+
+            {sale.receipt_notes && (
+              <View style={{ marginTop: 3, paddingTop: 2, borderTopWidth: 0.5, borderTopColor: '#cbd5e1' }}>
+                <Text style={{ fontSize: 6, color: '#475569' }}>
+                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Obs:</Text> {sale.receipt_notes}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
-        {/* 5. Section: Condições Financeiras */}
+        {/* 4. SEÇÃO TERMOS LEGAIS & CTB */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderDot} />
-            <Text style={styles.sectionTitle}>3. Dados Financeiros & Condições de Pagamento</Text>
+            <Text style={styles.sectionTitle}>4. Termos Legais, Vistoria & Cláusulas CTB</Text>
           </View>
-          <View style={styles.financeCard}>
-            <View style={styles.financeLeft}>
-              <Text style={styles.financeLabel}>Valor Total Negociado</Text>
-              <Text style={styles.financeValue}>{formatCurrencyBRL(sale.sale_price)}</Text>
-            </View>
-            <View style={styles.financeRight}>
-              <View style={styles.paymentMethodBadge}>
-                <Text style={styles.paymentMethodText}>FORMA: {sale.payment_method || 'PIX'}</Text>
-              </View>
-              <Text style={styles.paymentStatusText}>
-                {sale.payment_status === 'PAID'
-                  ? '✓ PAGO INTEGRALMENTE'
-                  : sale.payment_status === 'PARTIAL'
-                    ? `✓ ENTRADA DE ${formatCurrencyBRL(sale.amount_paid)}`
-                    : '⏳ AGUARDANDO PAGAMENTO'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* 6. Section: Termos de Entrega & Declarações */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderDot} />
-            <Text style={styles.sectionTitle}>4. Observações & Termos de Entrega</Text>
-          </View>
-          <View style={styles.termsCard}>
-            {sale.receipt_notes ? (
-              <View style={styles.notesHighlight}>
-                <Text style={styles.notesLabel}>Observações da Venda:</Text>
-                <Text style={styles.notesText}>{sale.receipt_notes}</Text>
-              </View>
-            ) : null}
-            <Text style={styles.termsText}>
-              • O comprador declara que vistoriou o veículo descrito acima e o recebe nas condições
-              mecânicas e estéticas acordadas entre as partes.
+          <View style={styles.legalCard}>
+            <Text style={styles.legalText}>
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.1. Vistoria:</Text> O adquirente examinou e testou o veículo descrito, aprovando seu estado de conservação mecânica e estética no ato do recebimento das chaves.
             </Text>
-            <Text style={styles.termsText}>
-              • A transferência de propriedade e responsabilidade sobre o veículo perante os órgãos
-              executivos de trânsito (DETRAN) deverá ser efetivada dentro do prazo legal de 30
-              (trinta) dias.
+            <Text style={styles.legalText}>
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.2. Transferência (Art. 123 CTB):</Text> O adquirente obriga-se a transferir a propriedade junto ao DETRAN em até 30 (trinta) dias.
             </Text>
-            <Text style={styles.termsText}>
-              • Este documento formaliza a transação comercial de venda e repasse, servindo como
-              recibo de quitação/sinal acordado.
+            <Text style={styles.legalText}>
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.3. Infrações de Trânsito:</Text> A partir da data/hora da entrega, toda responsabilidade civil, criminal e por multas recai exclusivamente sobre o comprador.
             </Text>
           </View>
         </View>
 
-        {/* 7. Local & Data */}
-        <View style={styles.locationDateBlock}>
-          <Text style={styles.locationDateText}>
-            {cityLocation}, {day} de {monthName} de {year}
-          </Text>
-        </View>
-
-        {/* 8. Signatures */}
+        {/* 5. SEÇÃO ASSINATURAS */}
         <View style={styles.signaturesContainer}>
           <View style={styles.signatureBox}>
             <View style={styles.signatureLine} />
             <Text style={styles.signatureName}>{storeName.toUpperCase()}</Text>
-            <Text style={styles.signatureRole}>Vendedor / Representante Legal</Text>
+            <Text style={styles.signatureRole}>Vendedora / Representante Legal</Text>
           </View>
 
           <View style={styles.signatureBox}>
             <View style={styles.signatureLine} />
-            <Text style={styles.signatureName}>
-              {(sale.buyer_name || 'Comprador').toUpperCase()}
-            </Text>
-            <Text style={styles.signatureRole}>Comprador / Adquirente</Text>
+            <Text style={styles.signatureName}>{(sale.buyer_name || 'Comprador').toUpperCase()}</Text>
+            <Text style={styles.signatureRole}>CPF: {sale.buyer_document ? formatCpf(sale.buyer_document) : 'Documento Registrado'}</Text>
           </View>
         </View>
 
-        {/* 9. Footer */}
+        {/* RODAPÉ */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            {storeName} • Documento e recibo autêntico gerado eletronicamente em{' '}
-            {new Date().toLocaleDateString('pt-BR')}
+            {storeName} • Recibo e Comprovante de Entrega • Autenticidade: {receiptCode}
           </Text>
           <Text style={styles.footerText}>Página 1 de 1</Text>
         </View>
