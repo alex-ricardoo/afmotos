@@ -9,6 +9,7 @@ import { createMotorcycleAction, updateMotorcycleAction } from '@/lib/actions/mo
 import { ImageUploader } from '@/components/gallery/image-uploader';
 import { AlertCircle, CheckCircle2, Sparkles, CarFront, Tag, FileText, Camera, Check, Search, X, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { MotorcycleImage } from '@/types/database';
+import { SaleConfirmationModal } from '@/components/admin/sales/sale-confirmation-modal';
 import { useFipex } from '@/hooks/use-fipex';
 import { fipexFetch } from '@/lib/fipex/client';
 import { mapPrelude } from '@/lib/fipex/mappers';
@@ -352,7 +353,10 @@ Fale com nossa equipe e agende um test ride.`;
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  async function onSubmit(data: MotorcycleFormValues) {
+  const [showSaleModal, setShowSaleModal] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<MotorcycleFormValues | null>(null);
+
+  async function executeSave(data: MotorcycleFormValues, redirectToSale = false) {
     setLoading(true);
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -368,6 +372,13 @@ Fale com nossa equipe e agende um test ride.`;
       if (result?.error) {
         setErrorMsg(`Erro ao salvar: ${result.error}`);
         setLoading(false);
+        return;
+      }
+
+      const motoId = isEditing ? initialData.id : result?.id;
+
+      if (redirectToSale && motoId) {
+        router.push(`/admin/vendas/nova?motorcycle_id=${motoId}`);
         return;
       }
 
@@ -389,6 +400,33 @@ Fale com nossa equipe e agende um test ride.`;
       setLoading(false);
     }
   }
+
+  async function onSubmit(data: MotorcycleFormValues) {
+    // Intercept if status is changed to SOLD
+    if (data.status === 'SOLD' && initialData?.status !== 'SOLD') {
+      setPendingFormData(data);
+      setShowSaleModal(true);
+      return;
+    }
+
+    await executeSave(data, false);
+  }
+
+  const handleSaveStatusOnly = async () => {
+    setShowSaleModal(false);
+    if (pendingFormData) {
+      await executeSave(pendingFormData, false);
+    }
+  };
+
+  const handleRegisterSale = async () => {
+    setShowSaleModal(false);
+    if (pendingFormData) {
+      await executeSave(pendingFormData, true);
+    } else if (initialData?.id) {
+      router.push(`/admin/vendas/nova?motorcycle_id=${initialData.id}`);
+    }
+  };
 
   return (
     <div className="space-y-6 pb-24">
@@ -1048,6 +1086,15 @@ Fale com nossa equipe e agende um test ride.`;
           </div>
         </form>
       </Form>
+
+      <SaleConfirmationModal
+        open={showSaleModal}
+        onOpenChange={setShowSaleModal}
+        motorcycleTitle={`${form.getValues('brand') || ''} ${form.getValues('model') || ''}`.trim() || 'Motocicleta'}
+        onRegisterSale={handleRegisterSale}
+        onSaveStatusOnly={handleSaveStatusOnly}
+        loading={loading}
+      />
     </div>
   );
 }

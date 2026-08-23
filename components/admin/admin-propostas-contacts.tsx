@@ -21,7 +21,7 @@ import {
   MapPin,
   Image as ImageIcon
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -460,14 +460,15 @@ export function AdminPropostasContacts({ initialData }: Props) {
                     </a>
 
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-9 px-2 rounded-xl border-border/60 text-xs font-semibold text-muted-foreground hover:text-foreground shrink-0"
-                        >
-                          Status <ChevronDown className="w-3.5 h-3.5 ml-1" />
-                        </Button>
+                      <DropdownMenuTrigger
+                        className={buttonVariants({
+                          variant: 'outline',
+                          size: 'sm',
+                          className:
+                            'h-9 px-2 rounded-xl border-border/60 text-xs font-semibold text-muted-foreground hover:text-foreground shrink-0 cursor-pointer',
+                        })}
+                      >
+                        Status <ChevronDown className="w-3.5 h-3.5 ml-1" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-44">
                         <DropdownMenuLabel className="text-xs">Alterar Status</DropdownMenuLabel>
@@ -546,10 +547,14 @@ export function AdminPropostasContacts({ initialData }: Props) {
                       </td>
                       <td className="py-3 px-4 text-right space-x-2 whitespace-nowrap">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
-                              Status <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
-                            </Button>
+                          <DropdownMenuTrigger
+                            className={buttonVariants({
+                              variant: 'ghost',
+                              size: 'sm',
+                              className: 'h-8 px-2 text-xs cursor-pointer',
+                            })}
+                          >
+                            Status <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                              {Object.entries(proposalStatusLabels).map(([key, label]) => (

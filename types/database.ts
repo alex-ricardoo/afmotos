@@ -119,6 +119,38 @@ export interface FipeConsultation {
   updated_at: string;
 }
 
+export interface Sale {
+  id: string;
+  motorcycle_id: string;
+  sale_price: number;
+  sale_date: string;
+  buyer_name: string | null;
+  buyer_phone: string | null;
+  buyer_email: string | null;
+  buyer_document: string | null;
+  buyer_address: string | null;
+  payment_method: string | null;
+  payment_status: string | null;
+  amount_paid: number | null;
+  receipt_number: string | null;
+  receipt_notes: string | null;
+  consignment_id: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SiteSettings {
+  id: string;
+  site_name: string;
+  whatsapp_phone: string;
+  contact_email?: string | null;
+  address?: string | null;
+  settings?: Json;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -419,6 +451,71 @@ export interface Database {
           query_payload?: Json;
           response_snapshot?: Json;
           notes?: string | null;
+          created_at?: string;
+        };
+      };
+      sales: {
+        Row: Sale;
+        Insert: {
+          id?: string;
+          motorcycle_id: string;
+          sale_price: number;
+          sale_date?: string;
+          buyer_name?: string | null;
+          buyer_phone?: string | null;
+          buyer_email?: string | null;
+          buyer_document?: string | null;
+          buyer_address?: string | null;
+          payment_method?: string | null;
+          payment_status?: string | null;
+          amount_paid?: number | null;
+          receipt_number?: string | null;
+          receipt_notes?: string | null;
+          consignment_id?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          motorcycle_id?: string;
+          sale_price?: number;
+          sale_date?: string;
+          buyer_name?: string | null;
+          buyer_phone?: string | null;
+          buyer_email?: string | null;
+          buyer_document?: string | null;
+          buyer_address?: string | null;
+          payment_method?: string | null;
+          payment_status?: string | null;
+          amount_paid?: number | null;
+          receipt_number?: string | null;
+          receipt_notes?: string | null;
+          consignment_id?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      site_settings: {
+        Row: SiteSettings;
+        Insert: {
+          id?: string;
+          site_name?: string;
+          whatsapp_phone?: string;
+          contact_email?: string | null;
+          address?: string | null;
+          settings?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          site_name?: string;
+          whatsapp_phone?: string;
+          contact_email?: string | null;
+          address?: string | null;
+          settings?: Json;
           created_at?: string;
           updated_at?: string;
         };

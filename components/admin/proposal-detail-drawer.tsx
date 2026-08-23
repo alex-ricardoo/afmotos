@@ -17,7 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProposalViewModel } from '@/lib/admin/proposal-view-model';
 import { format } from 'date-fns';
@@ -247,11 +247,13 @@ export function ProposalDetail({ proposal, open, onOpenChange, typeBadgeClass }:
           {Content}
         </div>
         <SheetFooter className="border-t border-border/40 pt-4 pb-6 px-4">
-          {ActionButtons}
-          <SheetClose asChild>
-            <Button variant="outline" className="w-full h-12 rounded-xl font-semibold mt-2">
-              Fechar
-            </Button>
+          <SheetClose
+            className={buttonVariants({
+              variant: 'outline',
+              className: 'w-full h-12 rounded-xl font-semibold mt-2 cursor-pointer',
+            })}
+          >
+            Fechar
           </SheetClose>
         </SheetFooter>
       </SheetContent>

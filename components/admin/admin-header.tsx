@@ -2,6 +2,7 @@
 
 import { Menu, ShieldCheck, Globe, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AdminSidebar } from './admin-sidebar';
 
@@ -22,12 +23,17 @@ export function AdminHeader() {
           </Sheet>
 
           {/* Mobile Title */}
-          <div className="flex items-center gap-2 lg:hidden">
-            <span className="text-base font-bold tracking-tight text-foreground">AF Motos</span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/30">
+          <Link href="/admin" className="flex items-center gap-2 lg:hidden">
+            <div className="relative w-7 h-7 rounded-full overflow-hidden shrink-0 border border-[#c9a44c]/40 shadow-xs bg-black/40">
+              <Image src="/logo.png" alt="AF Motos" fill className="object-cover" />
+            </div>
+            <span className="text-sm font-bold tracking-tight text-foreground">
+              AF <span className="text-[#c9a44c]">Motos</span>
+            </span>
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/30">
               Admin
             </span>
-          </div>
+          </Link>
 
           {/* Desktop Title & Status */}
           <div className="hidden lg:flex items-center gap-2.5">
