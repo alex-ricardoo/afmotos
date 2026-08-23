@@ -132,21 +132,19 @@ export function RecentSalesFeed({ sales }: RecentSalesFeedProps) {
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <a
-                      href={`/api/admin/sales/${sale.id}/receipt`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      href={`/admin/vendas/${sale.id}/recibo`}
                       className={buttonVariants({
                         variant: 'outline',
                         size: 'sm',
                         className:
-                          'h-8 px-2.5 rounded-xl text-xs font-semibold border-amber-500/30 text-[#e3c56c] hover:bg-amber-500/10 cursor-pointer flex items-center gap-1.5',
+                          'h-8 px-2.5 rounded-xl text-xs font-bold border-[#c9a44c]/30 text-[#e3c56c] hover:bg-[#c9a44c]/10 hover:text-amber-300 cursor-pointer flex items-center gap-1.5',
                       })}
-                      title="Baixar Recibo PDF"
+                      title="Visualizar e Imprimir Recibo Oficial A4"
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Recibo</span>
-                    </a>
+                      <Receipt className="w-3.5 h-3.5" />
+                      <span>Recibo</span>
+                    </Link>
 
                     {whatsappUrl && (
                       <a

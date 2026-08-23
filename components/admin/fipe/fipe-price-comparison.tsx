@@ -15,16 +15,16 @@ export function FipePriceComparison({
   const diff = calculatePriceDifference(advertisedPrice, fipePrice);
 
   return (
-    <div className="rounded-xl border border-border/80 bg-secondary/30 p-4 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl space-y-4">
+      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
-          <Scale className="h-4 w-4 text-[#c9a44c]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+          <Scale className="h-4 w-4 text-amber-400" />
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
             Comparativo de Preços
           </span>
         </div>
         {motorcycleTitle && (
-          <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+          <span className="text-xs text-slate-400 truncate max-w-[240px] font-medium">
             {motorcycleTitle}
           </span>
         )}
@@ -32,35 +32,35 @@ export function FipePriceComparison({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Preço Anunciado */}
-        <div className="rounded-lg border border-border/60 bg-background/60 p-3">
-          <span className="text-[11px] font-medium text-muted-foreground">Preço Anunciado</span>
-          <p className="text-base font-extrabold text-foreground mt-0.5">
+        <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5">
+          <span className="text-[11px] font-medium text-slate-400 block">Preço Anunciado</span>
+          <p className="text-base font-extrabold text-white mt-1 font-mono">
             {advertisedPrice ? formatFipeCurrency(advertisedPrice) : 'Não informado'}
           </p>
         </div>
 
         {/* Valor de Referência FIPE */}
-        <div className="rounded-lg border border-border/60 bg-background/60 p-3">
-          <span className="text-[11px] font-medium text-muted-foreground">Referência FIPE</span>
-          <p className="text-base font-extrabold text-[#e3c56c] mt-0.5">
+        <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5">
+          <span className="text-[11px] font-medium text-slate-400 block">Referência FIPE</span>
+          <p className="text-base font-extrabold text-amber-400 mt-1 font-mono">
             {formatFipeCurrency(fipePrice)}
           </p>
         </div>
 
         {/* Diferença */}
         <div
-          className={`rounded-lg border p-3 ${
+          className={`rounded-xl border p-3.5 ${
             diff.direction === 'above'
               ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
               : diff.direction === 'below'
                 ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
                 : diff.direction === 'equal'
                   ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
-                  : 'border-border/60 bg-background/60 text-muted-foreground'
+                  : 'border-slate-800 bg-slate-950 text-slate-400'
           }`}
         >
-          <span className="text-[11px] font-medium opacity-80">Diferença</span>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <span className="text-[11px] font-medium opacity-80 block">Diferença</span>
+          <div className="flex items-center gap-1.5 mt-1 font-mono">
             {diff.direction === 'above' && <ArrowUpRight className="h-4 w-4 text-amber-400" />}
             {diff.direction === 'below' && <ArrowDownRight className="h-4 w-4 text-emerald-400" />}
             {diff.direction === 'equal' && <Minus className="h-4 w-4 text-blue-400" />}
@@ -70,7 +70,7 @@ export function FipePriceComparison({
                 : '—'}
             </span>
           </div>
-          <span className="text-[10px] font-medium opacity-90 block mt-0.5">{diff.label}</span>
+          <span className="text-[10px] font-medium opacity-90 block mt-1">{diff.label}</span>
         </div>
       </div>
     </div>

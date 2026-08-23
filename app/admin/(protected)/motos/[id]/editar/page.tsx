@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { MotorcycleForm } from '@/components/admin/motorcycle-form';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -80,7 +81,9 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <MotorcycleForm initialData={initialData} />
+      <Suspense fallback={<div className="p-8 text-center text-slate-400 text-sm">Carregando formulário...</div>}>
+        <MotorcycleForm initialData={initialData} />
+      </Suspense>
     </div>
   );
 }

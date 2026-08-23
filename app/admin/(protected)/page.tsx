@@ -21,11 +21,8 @@ export default async function AdminDashboardPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Painel de Gestão & Inteligência
+              Painel de Gestão
             </h1>
-            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
-              <Sparkles className="w-3 h-3" /> AF Motos
-            </span>
           </div>
           <p className="text-sm text-zinc-400 mt-1">
             Acompanhe o faturamento em tempo real, giro do estoque e propostas comerciais.

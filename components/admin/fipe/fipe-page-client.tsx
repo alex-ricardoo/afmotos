@@ -276,40 +276,54 @@ export function FipePageClient({ initialMotorcycles, initialConsultations }: Fip
   const selectedLinkedMoto = initialMotorcycles.find((m) => m.id === linkedMotorcycleId);
 
   return (
-    <div className="space-y-6 max-w-md mx-auto sm:max-w-xl md:max-w-3xl lg:max-w-7xl pb-12">
-      {/* Header Compacto da Página */}
-      <div className="flex items-center justify-between gap-4 border-b border-border/60 pb-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            <span>FIPE</span>
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/30">
-              FipeX
-            </span>
-          </h1>
+    <div className="space-y-6 max-w-md mx-auto sm:max-w-xl md:max-w-3xl lg:max-w-7xl pb-16">
+      {/* Header com Breadcrumb e Título */}
+      <div className="flex flex-col gap-2 border-b border-slate-800 pb-5">
+        <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
+          <a href="/admin" className="hover:text-amber-400 transition-colors">
+            Admin
+          </a>
+          <span>/</span>
+          <span className="text-white font-medium">Tabela FIPE</span>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+              <span>Consulta Tabela FIPE Oficial</span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                FipeX Live
+              </span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              Avaliação de mercado em tempo real, histórico de consultas e precificação de estoque.
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Segmented Control (Tabs) */}
-      <div className="flex p-1 bg-secondary/50 rounded-xl border border-border/50">
+      <div className="flex p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-lg">
         <button
           onClick={() => setActiveTab('search')}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+          className={`flex-1 py-2.5 px-4 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === 'search'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+              : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          🔍 Nova Consulta
+          <span>🔍</span>
+          <span>Nova Consulta</span>
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+          className={`flex-1 py-2.5 px-4 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === 'history'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+              : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          📑 Histórico ({historyList.length})
+          <span>📑</span>
+          <span>Histórico Salvo ({historyList.length})</span>
         </button>
       </div>
 
@@ -358,14 +372,14 @@ export function FipePageClient({ initialMotorcycles, initialConsultations }: Fip
                   )}
                 </div>
               ) : (
-                <div className="hidden lg:flex rounded-2xl border border-dashed border-border/80 bg-secondary/10 p-12 text-center space-y-3 flex-col items-center justify-center min-h-[380px]">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary/60 text-muted-foreground border border-border/60">
-                    <Search className="h-6 w-6 opacity-60" />
+                <div className="hidden lg:flex rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 p-12 text-center space-y-3 flex-col items-center justify-center min-h-[420px]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800/80 text-slate-400 border border-slate-700">
+                    <Search className="h-6 w-6 opacity-70" />
                   </div>
-                  <h3 className="font-bold text-base text-foreground">Nenhuma cotação ativa</h3>
-                  <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
-                    Selecione o tipo, marca, modelo, ano e combustível no formulário ao lado para
-                    consultar a cotação oficial de referência FIPE.
+                  <h3 className="font-bold text-base text-white">Nenhuma cotação ativa</h3>
+                  <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+                    Selecione a marca, modelo e ano no formulário ao lado para
+                    obter a cotação oficial e métricas de mercado.
                   </p>
                 </div>
               )}

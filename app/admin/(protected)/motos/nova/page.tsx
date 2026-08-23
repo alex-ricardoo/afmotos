@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { MotorcycleForm } from '@/components/admin/motorcycle-form';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -34,13 +35,15 @@ export default function NovaMotoPage() {
               Cadastrar motocicleta
             </h1>
             <p className="text-muted-foreground mt-1">
-              Preencha os dados abaixo para criar um novo anúncio.
+              Preencha o fluxo guiado para cadastrar o novo veículo no estoque.
             </p>
           </div>
         </div>
       </div>
 
-      <MotorcycleForm />
+      <Suspense fallback={<div className="p-8 text-center text-slate-400 text-sm">Carregando formulário...</div>}>
+        <MotorcycleForm />
+      </Suspense>
     </div>
   );
 }
