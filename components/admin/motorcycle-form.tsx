@@ -47,6 +47,7 @@ import {
 import {
   formatRenavam,
   formatChassi,
+  formatCurrency,
 } from '@/lib/utils/formatters';
 import {
   motorcycleStatusLabels,
@@ -148,18 +149,6 @@ function normalizeTransmission(val?: string): 'manual' | 'automatico' | 'semiaut
   return 'manual';
 }
 
-const formatCurrency = (value: number | string) => {
-  const clean = String(value).replace(/\D/g, '');
-  if (!clean) return '';
-  const num = Number(clean) / 100;
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
-};
-
-const parseCurrency = (value: string) => {
-  if (!value) return 0;
-  return Number(value.replace(/\D/g, '')) / 100;
-};
-
 const formatKM = (value: number | string) => {
   const num = String(value).replace(/\D/g, '');
   if (!num) return '';
@@ -203,8 +192,7 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
 🎨 Cor: ${values.color || 'Não informada'}
 ⚙️ Motor: ${values.engine_capacity ? `${values.engine_capacity}cc` : 'Não informada'}
 ${values.fipe_price ? `📊 Preço Tabela FIPE: ${formatCurrency(values.fipe_price)}\n` : ''}
-Moto revisada, documentação em dia e garantia de motor e câmbio.
-Financiamos em até 48x e aceitamos seu usado na troca!
+Moto revisada, documentação em dia.
 
 Fale com nossa equipe e agende um test ride.`;
     form.setValue('description', desc.trim(), { shouldDirty: true });
