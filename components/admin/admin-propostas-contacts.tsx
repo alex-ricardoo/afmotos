@@ -1,30 +1,27 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Search,
   LayoutGrid,
   List,
-  Filter,
   MessageSquare,
   Phone,
-  Mail,
-  Calendar,
   Clock,
   CheckCircle2,
   Bike,
   Tag,
   KeyRound,
-  FileText,
+  Calendar,
   User,
-  ExternalLink,
-  ChevronDown,
   X,
   Sparkles,
+  ChevronDown,
+  MapPin,
+  Image as ImageIcon
 } from 'lucide-react';
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -36,42 +33,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { leadTypeLabels, leadStatusLabels } from '@/lib/utils/translations';
 import { updateLeadStatus } from '@/lib/actions/leads';
-import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
+import { ProposalViewModel } from '@/lib/admin/proposal-view-model';
+import { proposalTypeLabels, proposalStatusLabels, proposalStatusStyles } from '@/lib/admin/proposal-labels';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-
-export interface LeadContact {
-  id: string;
-  type:
-    | 'MOTORCYCLE_INTEREST'
-    | 'SELL_MOTORCYCLE'
-    | 'CONSIGNMENT'
-    | 'RENTAL'
-    | 'MOTORCYCLE_REQUEST'
-    | 'GENERAL_CONTACT'
-    | string;
-  name: string;
-  phone: string;
-  email?: string | null;
-  message?: string | null;
-  status: 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED' | 'LOST' | 'CLOSED' | string;
-  metadata?: any;
-  created_at: string;
-}
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
+import { generateWhatsAppLink, generateProposalWhatsAppMessage } from '@/lib/utils/whatsapp';
+import { ProposalDetail } from './proposal-detail-drawer';
 
 interface Props {
-  initialData: LeadContact[];
+  initialData: ProposalViewModel[];
 }
 
 export function AdminPropostasContacts({ initialData }: Props) {
@@ -80,10 +54,10 @@ export function AdminPropostasContacts({ initialData }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeStatus, setActiveStatus] = useState<string>('ALL');
   const [activeType, setActiveType] = useState<string>('ALL');
-  const [selectedContact, setSelectedContact] = useState<LeadContact | null>(null);
+  const [selectedProposal, setSelectedProposal] = useState<ProposalViewModel | null>(null);
 
-  // Filter contacts locally
-  const filteredContacts = initialData.filter((item) => {
+  // Filter local data
+  const filteredProposals = initialData.filter((item) => {
     const matchesStatus =
       activeStatus === 'ALL'
         ? true
@@ -103,7 +77,9 @@ export function AdminPropostasContacts({ initialData }: Props) {
       item.name.toLowerCase().includes(queryLower) ||
       item.phone.includes(queryLower) ||
       (item.email && item.email.toLowerCase().includes(queryLower)) ||
-      (item.message && item.message.toLowerCase().includes(queryLower));
+      (item.message && item.message.toLowerCase().includes(queryLower)) ||
+      (item.motorcycle?.brand && item.motorcycle.brand.toLowerCase().includes(queryLower)) ||
+      (item.motorcycle?.model && item.motorcycle.model.toLowerCase().includes(queryLower));
 
     return matchesStatus && matchesType && matchesSearch;
   });
@@ -116,92 +92,48 @@ export function AdminPropostasContacts({ initialData }: Props) {
   ).length;
   const convertedCount = initialData.filter((i) => i.status === 'CONVERTED').length;
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    toast.promise(updateLeadStatus(id, newStatus), {
-      loading: 'Atualizando status do contato...',
-      success: (res) => {
-        if (res.error) throw new Error(res.error);
+  const handleStatusChange = async (proposal: ProposalViewModel, newStatus: string) => {
+    toast.promise(updateLeadStatus(proposal.id, newStatus, proposal.source, proposal.sourceId), {
+      loading: 'Atualizando status...',
+      success: () => {
         router.refresh();
         return 'Status atualizado com sucesso!';
       },
-      error: (err) => err.message || 'Erro ao alterar status',
+      error: 'Erro ao alterar status',
     });
   };
 
-  const getTypeBadgeDetails = (type: string) => {
+  const getTypeStyle = (type: string) => {
     switch (type) {
       case 'MOTORCYCLE_INTEREST':
-        return {
-          label: 'Interesse em Moto',
-          icon: Bike,
-          className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-        };
+        return { icon: Bike, className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' };
       case 'SELL_MOTORCYCLE':
-        return {
-          label: 'Venda de Moto',
-          icon: Tag,
-          className: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-        };
+        return { icon: Tag, className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' };
       case 'CONSIGNMENT':
-        return {
-          label: 'Anúncio / Consignação',
-          icon: KeyRound,
-          className: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-        };
+        return { icon: KeyRound, className: 'bg-purple-500/15 text-purple-400 border-purple-500/30' };
       case 'RENTAL':
-        return {
-          label: 'Aluguel de Moto',
-          icon: Calendar,
-          className: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-        };
+        return { icon: Calendar, className: 'bg-blue-500/15 text-blue-400 border-blue-500/30' };
       default:
-        return {
-          label: 'Contato Geral',
-          icon: MessageSquare,
-          className: 'bg-zinc-800 text-zinc-300 border-zinc-700',
-        };
+        return { icon: MessageSquare, className: 'bg-zinc-800 text-zinc-300 border-zinc-700' };
     }
   };
 
-  const getStatusBadgeDetails = (status: string) => {
+  const getStatusStyle = (status: string) => {
     switch (status) {
       case 'NEW':
-        return {
-          label: 'Novo (Não lido)',
-          className: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 animate-pulse',
-        };
+        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 animate-pulse';
       case 'CONTACTED':
-        return {
-          label: 'Em Atendimento',
-          className: 'bg-blue-500/20 text-blue-400 border-blue-500/40',
-        };
+        return 'bg-blue-500/20 text-blue-400 border-blue-500/40';
       case 'QUALIFIED':
-        return {
-          label: 'Proposta Enviada',
-          className: 'bg-purple-500/20 text-purple-400 border-purple-500/40',
-        };
+        return 'bg-purple-500/20 text-purple-400 border-purple-500/40';
       case 'CONVERTED':
-        return {
-          label: 'Negócio Fechado',
-          className: 'bg-[#c9a44c]/20 text-[#e3c56c] border-[#c9a44c]/40 font-bold',
-        };
+        return 'bg-[#c9a44c]/20 text-[#e3c56c] border-[#c9a44c]/40 font-bold';
       case 'CLOSED':
       case 'LOST':
-        return {
-          label: 'Encerrado',
-          className: 'bg-zinc-800 text-zinc-400 border-zinc-700',
-        };
+        return 'bg-zinc-800 text-zinc-400 border-zinc-700';
       default:
-        return {
-          label: status,
-          className: 'bg-zinc-800 text-zinc-400 border-zinc-700',
-        };
+        return 'bg-zinc-800 text-zinc-400 border-zinc-700';
     }
-  };
-
-  const getWhatsAppMessage = (contact: LeadContact) => {
-    const typeLabel = leadTypeLabels[contact.type as keyof typeof leadTypeLabels] || 'seu contato';
-    return `Olá ${contact.name}! Sou da equipe AF Motos. Vi sua mensagem referente a ${typeLabel.toLowerCase()}. Como podemos te ajudar?`;
   };
 
   return (
@@ -210,10 +142,10 @@ export function AdminPropostasContacts({ initialData }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/40">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
-            Contatos & Propostas de Clientes
+            Propostas e contatos
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Acompanhe mensagens de interessados, propostas de troca e solicitações de orçamento.
+            Acompanhe quem entrou em contato e responda rapidamente.
           </p>
         </div>
       </div>
@@ -223,7 +155,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         <div className="bg-card p-3.5 rounded-xl border border-border/60 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-muted-foreground block uppercase">
-              Total de Contatos
+              Todos os contatos
             </span>
             <span className="text-xl font-bold text-foreground tabular-nums">{totalContacts}</span>
           </div>
@@ -235,7 +167,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         <div className="bg-card p-3.5 rounded-xl border border-emerald-500/30 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-emerald-400 block uppercase">
-              Novos (Pendente)
+              Novos
             </span>
             <span className="text-xl font-bold text-emerald-400 tabular-nums">{newCount}</span>
           </div>
@@ -261,7 +193,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         <div className="bg-card p-3.5 rounded-xl border border-[#c9a44c]/30 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-[#e3c56c] block uppercase">
-              Negócios Fechados
+              Convertidos
             </span>
             <span className="text-xl font-bold text-[#e3c56c] tabular-nums">
               {convertedCount}
@@ -281,7 +213,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               type="text"
-              placeholder="Buscar por nome do cliente, telefone ou mensagem..."
+              placeholder="Buscar por nome, telefone, modelo ou mensagem..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-9 h-11 bg-background/50 border-border/60 focus:border-[#c9a44c] rounded-xl text-sm w-full"
@@ -304,11 +236,9 @@ export function AdminPropostasContacts({ initialData }: Props) {
               className="h-10 px-3 rounded-xl bg-background border border-border/60 text-xs font-semibold text-foreground outline-none focus:border-[#c9a44c] w-full sm:w-auto shrink-0"
             >
               <option value="ALL">Todos os Tipos</option>
-              <option value="MOTORCYCLE_INTEREST">Interesse em Moto</option>
-              <option value="SELL_MOTORCYCLE">Venda de Moto</option>
-              <option value="CONSIGNMENT">Anúncio / Consignação</option>
-              <option value="RENTAL">Aluguel de Moto</option>
-              <option value="GENERAL_CONTACT">Contato Geral</option>
+              {Object.entries(proposalTypeLabels).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
             </select>
 
             <div className="flex items-center justify-center gap-1 bg-background/60 p-1 rounded-xl border border-border/60 shrink-0">
@@ -348,9 +278,10 @@ export function AdminPropostasContacts({ initialData }: Props) {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
           {[
             { id: 'ALL', label: 'Todos os Contatos' },
-            { id: 'NEW', label: 'Novos (Não Lidos)' },
-            { id: 'CONTACTED', label: 'Em Atendimento' },
-            { id: 'CONVERTED', label: 'Negócios Fechados' },
+            { id: 'NEW', label: 'Novos contatos' },
+            { id: 'CONTACTED', label: 'Em atendimento' },
+            { id: 'QUALIFIED', label: 'Qualificados' },
+            { id: 'CONVERTED', label: 'Convertidos' },
             { id: 'CLOSED', label: 'Encerrados' },
           ].map((tab) => {
             const isActive = activeStatus === tab.id;
@@ -373,15 +304,15 @@ export function AdminPropostasContacts({ initialData }: Props) {
       </div>
 
       {/* 4. Main Contact Showcase */}
-      {filteredContacts.length === 0 ? (
+      {filteredProposals.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border p-12 text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-secondary mx-auto flex items-center justify-center text-muted-foreground">
             <MessageSquare className="w-8 h-8 text-[#c9a44c]" />
           </div>
           <div className="max-w-md mx-auto space-y-1">
-            <h3 className="text-lg font-bold text-foreground">Nenhum contato encontrado</h3>
+            <h3 className="text-lg font-bold text-foreground">Nenhum contato encontrado com esses filtros.</h3>
             <p className="text-xs text-muted-foreground">
-              Não encontramos nenhuma mensagem ou proposta correspondente aos filtros atuais.
+              Ainda não há contatos por aqui. Quando alguém enviar uma solicitação, ela aparecerá nesta tela.
             </p>
           </div>
           {(searchQuery || activeStatus !== 'ALL' || activeType !== 'ALL') && (
@@ -401,167 +332,158 @@ export function AdminPropostasContacts({ initialData }: Props) {
         </div>
       ) : viewMode === 'grid' ? (
         /* CARDS GRID VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredContacts.map((contact) => {
-            const typeInfo = getTypeBadgeDetails(contact.type);
-            const statusInfo = getStatusBadgeDetails(contact.status);
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {filteredProposals.map((proposal) => {
+            const typeInfo = getTypeStyle(proposal.type);
             const TypeIcon = typeInfo.icon;
-            const whatsappLink = generateWhatsAppLink(
-              contact.phone,
-              getWhatsAppMessage(contact),
-            );
-
+            
             return (
               <div
-                key={contact.id}
-                className="bg-card rounded-2xl border border-border/80 hover:border-[#c9a44c]/50 p-5 shadow-xs hover:shadow-[0_0_20px_rgba(201,164,76,0.12)] transition-all flex flex-col justify-between space-y-4"
+                key={proposal.id}
+                className="group flex flex-col bg-card rounded-2xl border border-border/80 hover:border-[#c9a44c]/50 shadow-xs hover:shadow-[0_0_20px_rgba(201,164,76,0.12)] transition-all overflow-hidden cursor-pointer"
+                onClick={(e) => {
+                  // Previne abrir se clicar em botões/links
+                  if ((e.target as HTMLElement).closest('button, a, select')) return;
+                  setSelectedProposal(proposal);
+                }}
               >
-                {/* Header: Type Badge & Status */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 flex items-center gap-1.5',
-                        typeInfo.className,
-                      )}
-                    >
-                      <TypeIcon className="w-3.5 h-3.5" />
-                      <span>{typeInfo.label}</span>
-                    </Badge>
-
-                    <Badge
-                      variant="outline"
-                      className={cn('text-[10px] font-bold px-2 py-0.5', statusInfo.className)}
-                    >
-                      {statusInfo.label}
-                    </Badge>
+                {/* Imagem de Capa se houver */}
+                {proposal.images && proposal.images.length > 0 && (
+                  <div className="relative h-36 w-full bg-secondary/50 overflow-hidden border-b border-border/40">
+                    <img 
+                      src={proposal.images[0].url} 
+                      alt="Foto enviada" 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1.5 text-[10px] text-white font-bold border border-white/10">
+                      <ImageIcon className="w-3 h-3" />
+                      {proposal.images.length}
+                    </div>
                   </div>
+                )}
+                
+                <div className="p-4 flex flex-col flex-1 gap-4">
+                  {/* Cabeçalho do Card */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 flex items-center gap-1.5 border-transparent bg-transparent pl-0',
+                          typeInfo.className.split(' ')[1] // Pega só a cor do texto
+                        )}
+                      >
+                        <TypeIcon className="w-3.5 h-3.5" />
+                        <span>{proposal.typeLabel}</span>
+                      </Badge>
+                      
+                      <Badge
+                        variant="outline"
+                        className={cn('text-[10px] font-bold px-2 py-0.5', getStatusStyle(proposal.status))}
+                      >
+                        {proposal.statusLabel}
+                      </Badge>
+                    </div>
 
-                  {/* Client Info */}
-                  <div>
-                    <h3 className="font-extrabold text-lg text-foreground flex items-center gap-2">
-                      <User className="w-4 h-4 text-[#c9a44c]" />
-                      <span>{contact.name}</span>
-                    </h3>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                       <span className="flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5 text-[#c9a44c]" />
-                        <span className="font-mono">{contact.phone}</span>
+                        <Clock className="w-3 h-3" />
+                        {format(new Date(proposal.createdAt), "dd/MM 'às' HH:mm", { locale: ptBR })}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>
-                          {format(new Date(contact.created_at), "dd/MM 'às' HH:mm", {
-                            locale: ptBR,
-                          })}
+                    </div>
+
+                    {/* Dados do Cliente */}
+                    <div className="space-y-1">
+                      <h3 className="font-extrabold text-base text-foreground flex items-center gap-2 leading-tight">
+                        <span>{proposal.name}</span>
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Phone className="w-3.5 h-3.5 text-[#c9a44c]" />
+                          <span className="font-mono">{proposal.phone}</span>
                         </span>
-                      </span>
+                        {proposal.city && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span className="truncate max-w-[120px]">{proposal.city}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Message Quote Box */}
-                  {contact.message && (
-                    <div className="bg-secondary/50 p-3 rounded-xl border border-border/60 text-xs text-muted-foreground leading-relaxed line-clamp-3 italic">
-                      &quot;{contact.message}&quot;
-                    </div>
-                  )}
-
-                  {/* Metadata Chips if present */}
-                  {contact.metadata && Object.keys(contact.metadata).length > 0 && (
-                    <div className="bg-background/80 p-2.5 rounded-xl border border-border/40 text-[11px] text-foreground space-y-1">
-                      {contact.metadata.brand && (
+                  {/* Dados da Moto */}
+                  {proposal.motorcycle?.brand && (
+                    <div className="bg-secondary/40 p-2.5 rounded-xl border border-border/40 text-xs text-foreground space-y-1.5 mt-auto">
+                      <div className="font-bold flex justify-between">
+                        <span className="text-muted-foreground">Moto</span>
+                        <span className="text-right truncate ml-2">
+                          {proposal.motorcycle.brand} {proposal.motorcycle.model}
+                        </span>
+                      </div>
+                      {proposal.motorcycle.year && (
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Moto:</span>
-                          <span className="font-bold">
-                            {contact.metadata.brand} {contact.metadata.model}
-                          </span>
+                          <span className="text-muted-foreground">Ano</span>
+                          <span>{proposal.motorcycle.year}</span>
                         </div>
                       )}
-                      {contact.metadata.year_model && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Ano:</span>
-                          <span className="font-bold">{contact.metadata.year_model}</span>
-                        </div>
-                      )}
-                      {contact.metadata.price && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Valor sugerido:</span>
-                          <span className="font-bold text-[#e3c56c]">
-                            R$ {Number(contact.metadata.price).toLocaleString('pt-BR')}
+                      {proposal.motorcycle.desiredPrice && (
+                        <div className="flex justify-between font-bold">
+                          <span className="text-muted-foreground font-normal">Valor desejado</span>
+                          <span className="text-[#c9a44c]">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(proposal.motorcycle.desiredPrice)}
                           </span>
                         </div>
                       )}
                     </div>
                   )}
-                </div>
 
-                {/* Footer Action Buttons */}
-                <div className="pt-3 border-t border-border/60 flex items-center gap-2">
-                  <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      buttonVariants({ size: 'sm' }),
-                      'flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl h-10 shadow-[0_0_12px_rgba(37,211,102,0.2)] transition-all flex items-center justify-center gap-1.5 text-xs',
-                    )}
-                  >
-                    <WhatsAppIcon className="w-4 h-4 fill-current" />
-                    <span>Falar no WhatsApp</span>
-                  </a>
+                  {/* Mensagem Truncada */}
+                  {!proposal.motorcycle?.brand && proposal.message && (
+                    <div className="bg-secondary/30 p-2.5 rounded-xl border border-border/40 text-xs text-muted-foreground leading-relaxed line-clamp-3 italic mt-auto">
+                      &quot;{proposal.message}&quot;
+                    </div>
+                  )}
 
-                  {/* Status Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
+                  {/* Botões Base */}
+                  <div className="pt-2 border-t border-border/60 flex items-center gap-2">
+                    <a
+                      href={generateWhatsAppLink(proposal.phone, generateProposalWhatsAppMessage(proposal))}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl h-9 transition-all flex items-center justify-center gap-1.5 text-[11px] shadow-[0_0_10px_rgba(37,211,102,0.15)]"
+                      )}
+                    >
+                      <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
+                      <span>Falar no WhatsApp</span>
+                    </a>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-10 px-2.5 rounded-xl border-border/60 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                          className="h-9 px-2 rounded-xl border-border/60 text-xs font-semibold text-muted-foreground hover:text-foreground shrink-0"
                         >
-                          <ChevronDown className="w-4 h-4" />
+                          Status <ChevronDown className="w-3.5 h-3.5 ml-1" />
                         </Button>
-                      }
-                    />
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuGroup>
-                        <DropdownMenuLabel>Alterar Status</DropdownMenuLabel>
-                      </DropdownMenuGroup>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleStatusChange(contact.id, 'NEW')}>
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2" />
-                        <span>Novo (Não lido)</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleStatusChange(contact.id, 'CONTACTED')}
-                      >
-                        <span className="w-2 h-2 rounded-full bg-blue-400 mr-2" />
-                        <span>Em Atendimento</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleStatusChange(contact.id, 'CONVERTED')}
-                      >
-                        <span className="w-2 h-2 rounded-full bg-[#c9a44c] mr-2" />
-                        <span>Negócio Fechado</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleStatusChange(contact.id, 'CLOSED')}>
-                        <span className="w-2 h-2 rounded-full bg-zinc-500 mr-2" />
-                        <span>Encerrar</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  {/* View Details Modal Button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedContact(contact)}
-                    className="h-10 w-10 p-0 rounded-xl border border-border/60 text-muted-foreground hover:bg-secondary hover:text-foreground shrink-0"
-                    title="Ver detalhes completos"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuLabel className="text-xs">Alterar Status</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {Object.entries(proposalStatusLabels).map(([key, label]) => (
+                          <DropdownMenuItem key={key} onClick={() => handleStatusChange(proposal, key)} className="text-xs">
+                            <span className={cn(
+                              "w-2 h-2 rounded-full mr-2", 
+                              getStatusStyle(key).split(' ')[0] // Extrai a cor de background baseada na função
+                            )} />
+                            <span>{label}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </div>
             );
@@ -574,65 +496,80 @@ export function AdminPropostasContacts({ initialData }: Props) {
             <table className="w-full text-left text-sm">
               <thead className="bg-secondary/60 text-xs uppercase font-bold text-muted-foreground border-b border-border/60">
                 <tr>
-                  <th className="py-3.5 px-4">Tipo</th>
-                  <th className="py-3.5 px-4">Cliente</th>
-                  <th className="py-3.5 px-4">Telefone</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Data</th>
-                  <th className="py-3.5 px-4 text-right">Ação</th>
+                  <th className="py-3.5 px-4 min-w-[120px]">Tipo</th>
+                  <th className="py-3.5 px-4 min-w-[150px]">Cliente</th>
+                  <th className="py-3.5 px-4 min-w-[130px]">Contato</th>
+                  <th className="py-3.5 px-4 min-w-[150px]">Moto Ref.</th>
+                  <th className="py-3.5 px-4 min-w-[120px]">Status</th>
+                  <th className="py-3.5 px-4 text-right min-w-[140px]">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {filteredContacts.map((contact) => {
-                  const typeInfo = getTypeBadgeDetails(contact.type);
-                  const statusInfo = getStatusBadgeDetails(contact.status);
-                  const whatsappLink = generateWhatsAppLink(
-                    contact.phone,
-                    getWhatsAppMessage(contact),
-                  );
-
+                {filteredProposals.map((proposal) => {
+                  const typeInfo = getTypeStyle(proposal.type);
+                  const TypeIcon = typeInfo.icon;
+                  
                   return (
-                    <tr key={contact.id} className="hover:bg-secondary/30 transition-colors">
+                    <tr key={proposal.id} className="hover:bg-secondary/30 transition-colors group cursor-pointer" onClick={(e) => {
+                      if ((e.target as HTMLElement).closest('button, a, select')) return;
+                      setSelectedProposal(proposal);
+                    }}>
                       <td className="py-3 px-4">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5',
-                            typeInfo.className,
-                          )}
-                        >
-                          {typeInfo.label}
+                        <Badge variant="outline" className={cn('text-[10px] font-bold uppercase tracking-wider px-2 py-0.5', typeInfo.className)}>
+                          {proposal.typeLabel}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 font-bold text-foreground">{contact.name}</td>
-                      <td className="py-3 px-4 text-xs font-mono text-muted-foreground">
-                        {contact.phone}
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-foreground truncate max-w-[150px]">{proposal.name}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {format(new Date(proposal.createdAt), 'dd/MM/yy', { locale: ptBR })}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge
-                          variant="outline"
-                          className={cn('text-[10px] font-bold px-2 py-0.5', statusInfo.className)}
-                        >
-                          {statusInfo.label}
+                        <div className="text-xs font-mono text-foreground">{proposal.phone}</div>
+                        {proposal.city && <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{proposal.city}</div>}
+                      </td>
+                      <td className="py-3 px-4">
+                        {proposal.motorcycle?.brand ? (
+                          <div className="text-xs">
+                            <span className="font-bold">{proposal.motorcycle.brand}</span> {proposal.motorcycle.model}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className={cn('text-[10px] font-bold px-2 py-0.5', getStatusStyle(proposal.status))}>
+                          {proposal.statusLabel}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-xs text-muted-foreground">
-                        {format(new Date(contact.created_at), 'dd/MM/yyyy HH:mm', {
-                          locale: ptBR,
-                        })}
-                      </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-right space-x-2 whitespace-nowrap">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                              Status <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                             {Object.entries(proposalStatusLabels).map(([key, label]) => (
+                               <DropdownMenuItem key={key} onClick={() => handleStatusChange(proposal, key)} className="text-xs">
+                                 {label}
+                               </DropdownMenuItem>
+                             ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
                         <a
-                          href={whatsappLink}
+                          href={generateWhatsAppLink(proposal.phone, generateProposalWhatsAppMessage(proposal))}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={cn(
-                            buttonVariants({ size: 'sm' }),
-                            'bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-xs h-8 px-3 rounded-lg gap-1.5',
+                            "inline-flex items-center justify-center bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-xs h-8 px-3 rounded-lg gap-1.5 transition-colors"
                           )}
                         >
                           <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
-                          <span>WhatsApp</span>
+                          <span>Falar</span>
                         </a>
                       </td>
                     </tr>
@@ -644,95 +581,13 @@ export function AdminPropostasContacts({ initialData }: Props) {
         </div>
       )}
 
-      {/* Contact Details Full Dialog */}
-      <Dialog open={!!selectedContact} onOpenChange={(open) => !open && setSelectedContact(null)}>
-        {selectedContact && (
-          <DialogContent className="max-w-md bg-[#151515] border-[#c9a44c]/30 text-[#f4f4f2]">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-white flex items-center justify-between">
-                <span>{selectedContact.name}</span>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    'text-[10px] uppercase font-bold',
-                    getTypeBadgeDetails(selectedContact.type).className,
-                  )}
-                >
-                  {getTypeBadgeDetails(selectedContact.type).label}
-                </Badge>
-              </DialogTitle>
-              <DialogDescription className="text-xs text-[#a6a6a1]">
-                Recebido em{' '}
-                {format(new Date(selectedContact.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                  locale: ptBR,
-                })}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-2">
-              <div className="space-y-1 bg-[#0d0d0d] p-3 rounded-xl border border-[#c9a44c]/20 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-[#a6a6a1]">Telefone:</span>
-                  <span className="font-mono font-bold text-white">{selectedContact.phone}</span>
-                </div>
-                {selectedContact.email && (
-                  <div className="flex justify-between">
-                    <span className="text-[#a6a6a1]">E-mail:</span>
-                    <span className="font-bold text-white">{selectedContact.email}</span>
-                  </div>
-                )}
-              </div>
-
-              {selectedContact.message && (
-                <div className="space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#e3c56c]">
-                    Mensagem Enviada
-                  </span>
-                  <div className="bg-[#0d0d0d] p-3.5 rounded-xl border border-[#c9a44c]/20 text-xs text-white leading-relaxed">
-                    {selectedContact.message}
-                  </div>
-                </div>
-              )}
-
-              {selectedContact.metadata && Object.keys(selectedContact.metadata).length > 0 && (
-                <div className="space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#e3c56c]">
-                    Dados Adicionais
-                  </span>
-                  <div className="bg-[#0d0d0d] p-3.5 rounded-xl border border-[#c9a44c]/20 text-xs space-y-1.5">
-                    {Object.entries(selectedContact.metadata).map(([key, val]) => (
-                      <div key={key} className="flex justify-between border-b border-white/5 pb-1">
-                        <span className="text-[#a6a6a1] capitalize">
-                          {key.replace('_', ' ')}:
-                        </span>
-                        <span className="font-bold text-white">{String(val)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-2 flex items-center gap-2">
-              <a
-                href={generateWhatsAppLink(
-                  selectedContact.phone,
-                  getWhatsAppMessage(selectedContact),
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  buttonVariants({ size: 'lg' }),
-                  'flex-1 bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl h-12 shadow-[0_0_15px_rgba(37,211,102,0.2)] flex items-center justify-center gap-2',
-                )}
-              >
-                <WhatsAppIcon className="w-5 h-5 fill-current" />
-                <span>Conversar no WhatsApp</span>
-              </a>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
+      {/* Contact Details Drawer / Modal */}
+      <ProposalDetail 
+        proposal={selectedProposal} 
+        open={!!selectedProposal} 
+        onOpenChange={(open) => !open && setSelectedProposal(null)} 
+        typeBadgeClass={selectedProposal ? getTypeStyle(selectedProposal.type).className : ''}
+      />
     </div>
   );
 }

@@ -80,3 +80,25 @@ export function generateRentalMessage(): string {
   return 'Olá! Tenho interesse em alugar uma moto. Gostaria de saber as opções disponíveis.';
 }
 
+import { ProposalViewModel } from '../admin/proposal-view-model';
+
+export function generateProposalWhatsAppMessage(proposal: ProposalViewModel): string {
+  let greeting = `Olá ${proposal.name}! `;
+  
+  switch (proposal.type) {
+    case 'SELL_MOTORCYCLE':
+      return greeting + `Vi seu interesse em anunciar sua moto${proposal.motorcycle?.brand ? ` (${proposal.motorcycle.brand} ${proposal.motorcycle.model})` : ''} no site da AF Motos e gostaria de conversar sobre os próximos passos.`;
+      
+    case 'CONSIGNMENT':
+      return greeting + `Recebemos sua solicitação para consignar sua moto${proposal.motorcycle?.brand ? ` (${proposal.motorcycle.brand} ${proposal.motorcycle.model})` : ''}. Gostaria de passar mais detalhes sobre o nosso formato de trabalho.`;
+      
+    case 'MOTORCYCLE_INTEREST':
+      return greeting + `Vi seu interesse na moto informada pelo site da AF Motos e gostaria de passar mais detalhes.`;
+      
+    case 'RENTAL':
+      return greeting + `Recebemos seu contato pelo site referente ao aluguel de motos. Como podemos ajudar?`;
+      
+    default:
+      return greeting + `Vim falar sobre o contato enviado pelo site da AF Motos. Como podemos ajudar?`;
+  }
+}

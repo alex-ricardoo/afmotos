@@ -6,6 +6,7 @@ import { UploadedImage } from '@/lib/uploads/types';
 import { fipexFetch } from '@/lib/fipex/client';
 import { RawApiResponse, RawExpandedPriceData, RawModelDetail } from '@/lib/fipex/types';
 import { mapModelDetail } from '@/lib/fipex/mappers';
+import { ProposalViewModel, mapLeadToProposal } from '../admin/proposal-view-model';
 
 export interface CreateLeadPayload {
   type:
@@ -308,7 +309,7 @@ export async function createSellRequestAction(data: SellRequestPayload) {
   return { success: true, id: sellRequestId };
 }
 
-export async function getLeads() {
+export async function getLeads(): Promise<ProposalViewModel[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -321,17 +322,27 @@ export async function getLeads() {
     return [];
   }
 
-  return data;
+  return (data || []).map(mapLeadToProposal);
 }
 
-export async function updateLeadStatus(id: string, status: string) {
+export async function updateLeadStatus(id: string, status: string, source: string = 'lead', sourceId: string = '') {
   const supabase = await createClient();
 
+  // Atualiza sempre a tabela leads como hub central
   const { error } = await supabase.from('leads').update({ status }).eq('id', id);
 
   if (error) {
     console.error('Error updating lead status:', error);
     return { error: error.message };
+  }
+
+  // Se houver tabelas relacionadas, atualiza o status também
+  if (sourceId) {
+    if (source === 'sell_request') {
+       await supabase.from('sell_requests').update({ status }).eq('id', sourceId);
+    } else if (source === 'consignment_request') {
+       await supabase.from('consignment_requests').update({ status }).eq('id', sourceId);
+    }
   }
 
   return { success: true };
