@@ -36,7 +36,7 @@ export function WhatsAppButton({
   isFloating = true,
 }: WhatsAppButtonProps) {
   const contactPhone = phone || settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
-  const siteName = settings?.site_name || 'AF Motos';
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
 
   const finalMessage =
     message ||

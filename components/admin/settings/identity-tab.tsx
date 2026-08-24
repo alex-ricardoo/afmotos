@@ -99,7 +99,7 @@ export function IdentityTab({ form }: IdentityTabProps) {
         <div>
           <h3 className="text-lg font-bold text-white">Identidade da Loja & Marca</h3>
           <p className="text-xs text-zinc-400">
-            Configure o nome oficial, logotipo, slogan e identidade visual da AF Motos.
+            Configure o nome oficial, logotipo, slogan e identidade visual da sua loja.
           </p>
         </div>
       </div>

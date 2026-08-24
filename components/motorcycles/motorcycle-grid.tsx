@@ -13,6 +13,7 @@ interface MotorcycleGridProps {
   emptyMessage?: string;
   viewMode?: 'grid' | 'list';
   whatsappPhone?: string;
+  siteName?: string;
 }
 
 export function MotorcycleGrid({
@@ -20,6 +21,7 @@ export function MotorcycleGrid({
   emptyMessage = 'Nenhuma moto encontrada com os filtros selecionados.',
   viewMode = 'grid',
   whatsappPhone,
+  siteName,
 }: MotorcycleGridProps) {
   const whatsappUrl = generateWhatsAppLink(
     whatsappPhone,
@@ -78,7 +80,7 @@ export function MotorcycleGrid({
     >
       {motorcycles.map((moto) => (
         <div key={moto.id} className={viewMode === 'list' ? 'w-full' : ''}>
-          <MotorcycleCard motorcycle={moto} whatsappPhone={whatsappPhone} />
+          <MotorcycleCard motorcycle={moto} whatsappPhone={whatsappPhone} siteName={siteName} />
         </div>
       ))}
       

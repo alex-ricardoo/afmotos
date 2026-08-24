@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { Settings as SettingsIcon, Sliders } from 'lucide-react';
 
 export const metadata = {
-  title: 'Configurações da Loja | AF Motos Admin',
+  title: 'Configurações da Loja',
 };
 
 export default async function ConfiguracoesPage() {
   const settings = await getSettings();
+  const siteName = settings?.site_name || 'sua loja';
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -29,7 +30,7 @@ export default async function ConfiguracoesPage() {
               Configurações da Loja
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-              Gerencie a identidade visual, canais de contato e links públicos da AF Motos.
+              Gerencie a identidade visual, canais de contato e links públicos da {siteName}.
             </p>
           </div>
         </div>

@@ -14,6 +14,8 @@ import {
 import { formatCurrency } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
+import { CONSTANTS } from '@/lib/utils/constants';
+
 export interface VendaMotoSummaryCardProps {
   brand?: string;
   model?: string;
@@ -26,6 +28,7 @@ export interface VendaMotoSummaryCardProps {
   desiredPrice?: number | null;
   photosCount?: number;
   currentStep?: number;
+  siteName?: string;
 }
 
 export function VendaMotoSummaryCard({
@@ -39,8 +42,10 @@ export function VendaMotoSummaryCard({
   desiredPrice,
   photosCount = 0,
   currentStep = 1,
+  siteName,
 }: VendaMotoSummaryCardProps) {
   const hasMotorcycle = Boolean(brand && model);
+  const storeName = siteName || CONSTANTS.STORE_NAME;
 
   return (
     <div className="sticky top-24 space-y-4">
@@ -56,7 +61,7 @@ export function VendaMotoSummaryCard({
             </div>
             <div>
               <h3 className="text-sm font-black text-white leading-none">Resumo da Proposta</h3>
-              <p className="text-[11px] text-zinc-400 mt-0.5">Venda direta para a AF Motos</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Venda direta para a {storeName}</p>
             </div>
           </div>
           <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-zinc-800 text-amber-400 border border-zinc-700">

@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { StoreImage } from '@/types/site-settings';
+import { CONSTANTS } from '@/lib/utils/constants';
 
 interface AboutHeroProps {
   title?: string;
@@ -7,10 +8,11 @@ interface AboutHeroProps {
   description?: string;
   additionalText?: string;
   storeImages?: StoreImage[];
+  siteName?: string;
 }
 
-export function AboutHero({ title, subtitle, description, additionalText, storeImages = [] }: AboutHeroProps) {
-  const displayTitle = title || 'Sobre a AF Motos';
+export function AboutHero({ title, subtitle, description, additionalText, storeImages = [], siteName }: AboutHeroProps) {
+  const displayTitle = title || `Sobre a ${siteName || CONSTANTS.STORE_NAME}`;
   const activeImages = storeImages.filter(img => img.isActive && img.url);
   const hasImages = activeImages.length > 0;
   const isSingleImage = activeImages.length === 1;

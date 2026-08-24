@@ -18,8 +18,8 @@ export async function generateMetadata({ params }: EditSalePageProps) {
   const sale = await getSaleById(id);
   return {
     title: sale?.receipt_number
-      ? `Editar Venda ${sale.receipt_number} | AF Motos Admin`
-      : 'Editar Venda | AF Motos Admin',
+      ? `Editar Venda ${sale.receipt_number}`
+      : 'Editar Venda',
     description: 'Edite os dados fiscais, valores e informações do comprador da venda.',
   };
 }

@@ -15,6 +15,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+import { CONSTANTS } from '@/lib/utils/constants';
+
 interface LeafletMapProps {
   latitude?: number | null;
   longitude?: number | null;
@@ -23,7 +25,7 @@ interface LeafletMapProps {
   logoUrl?: string;
 }
 
-export default function LeafletMap({ latitude, longitude, address, storeName = 'AF Motos', logoUrl }: LeafletMapProps) {
+export default function LeafletMap({ latitude, longitude, address, storeName = CONSTANTS.STORE_NAME, logoUrl }: LeafletMapProps) {
   const [position, setPosition] = useState<[number, number] | null>(
     latitude && longitude ? [latitude, longitude] : null
   );

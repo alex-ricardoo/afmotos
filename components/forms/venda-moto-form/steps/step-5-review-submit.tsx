@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { formatPhoneForDisplay } from '@/lib/utils/whatsapp';
+import { CONSTANTS } from '@/lib/utils/constants';
 import { SellRequestInput } from '@/lib/validations/sell-request';
 
 interface Step5ReviewSubmitProps {
@@ -25,6 +26,7 @@ interface Step5ReviewSubmitProps {
   onPrev: () => void;
   onSubmit: () => void;
   isSubmitting: boolean;
+  siteName?: string;
 }
 
 export function Step5ReviewSubmit({
@@ -33,9 +35,11 @@ export function Step5ReviewSubmit({
   onPrev,
   onSubmit,
   isSubmitting,
+  siteName,
 }: Step5ReviewSubmitProps) {
   const [agreed, setAgreed] = useState(false);
   const values = form.getValues();
+  const storeName = siteName || CONSTANTS.STORE_NAME;
 
   return (
     <div className="space-y-6">
@@ -48,7 +52,7 @@ export function Step5ReviewSubmit({
           Revisão da sua Proposta
         </h2>
         <p className="text-xs sm:text-sm text-zinc-400">
-          Confira todos os dados antes de enviar para a equipe comercial da AF Motos.
+          Confira todos os dados antes de enviar para a equipe comercial da {storeName}.
         </p>
       </div>
 
@@ -170,7 +174,7 @@ export function Step5ReviewSubmit({
           />
           <span className="text-xs text-zinc-300 leading-relaxed">
             Confirmo que as informações fornecidas são verdadeiras e autorizo a{' '}
-            <strong>AF Motos</strong> a entrar em contato via WhatsApp para apresentar a avaliação e
+            <strong>{storeName}</strong> a entrar em contato via WhatsApp para apresentar a avaliação e
             proposta de compra.
           </span>
         </label>

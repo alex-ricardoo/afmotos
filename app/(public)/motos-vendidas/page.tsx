@@ -9,12 +9,16 @@ import { buttonVariants } from '@/components/ui/button';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 import { cn } from '@/lib/utils';
+import { Metadata } from 'next';
 
-export const metadata = {
-  title: 'Motos Vendidas | AF Motos',
-  description:
-    'Confira o histórico de motos negociadas pela AF Motos. Fale conosco pelo WhatsApp para saber sobre novos modelos disponíveis.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  return {
+    title: `Motos Vendidas | ${siteName}`,
+    description: `Confira o histórico de motos negociadas pela ${siteName}. Fale conosco pelo WhatsApp para saber sobre novos modelos disponíveis.`,
+  };
+}
 
 export default async function MotosVendidasPage() {
   const [motorcycles, settings] = await Promise.all([
@@ -22,9 +26,11 @@ export default async function MotosVendidasPage() {
     getSettings(),
   ]);
 
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+
   const customOrderWhatsappUrl = generateWhatsAppLink(
     settings?.whatsapp_phone,
-    'Olá! Vi um modelo na lista de motos vendidas da AF Motos e gostaria de saber se há previsão de alguma similar.',
+    `Olá! Vi um modelo na lista de motos vendidas da ${siteName} e gostaria de saber se há previsão de alguma similar.`,
   );
 
 
@@ -78,6 +84,7 @@ export default async function MotosVendidasPage() {
           motorcycles={motorcycles}
           emptyMessage="O histórico de motos vendidas está sendo atualizado."
           whatsappPhone={settings?.whatsapp_phone}
+          siteName={siteName}
         />
 
         {/* Custom Order Callout Box */}

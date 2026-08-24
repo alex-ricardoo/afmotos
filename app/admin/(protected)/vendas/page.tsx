@@ -9,7 +9,7 @@ import { SaleCard } from '@/components/admin/sales/sale-card';
 import { cn } from '@/lib/utils';
 
 export const metadata = {
-  title: 'Vendas & Recibos | AF Motos Admin',
+  title: 'Vendas & Recibos',
   description: 'Histórico de vendas, emissão de recibos e controle de faturamento.',
 };
 

@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 
 export const metadata = {
-  title: 'Editar Moto | AF Motos Admin',
+  title: 'Editar Moto',
 };
 
 export default async function EditarMotoPage({ params }: { params: Promise<{ id: string }> }) {

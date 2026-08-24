@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Bike, Download, ArrowRight, Receipt, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { SaleWithDetails } from '@/lib/queries/sales';
+import { CONSTANTS } from '@/lib/utils/constants';
 
 interface RecentSalesFeedProps {
   sales: SaleWithDetails[];
@@ -67,9 +68,10 @@ export function RecentSalesFeed({ sales }: RecentSalesFeedProps) {
 
             const cleanPhone = sale.buyer_phone ? sale.buyer_phone.replace(/\D/g, '') : '';
             const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+            const storeName = CONSTANTS.STORE_NAME;
             const whatsappUrl = cleanPhone
               ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(
-                  `Olá ${sale.buyer_name || ''}, tudo bem? Falamos da AF Motos a respeito da sua compra.`,
+                  `Olá ${sale.buyer_name || ''}, tudo bem? Falamos da ${storeName} a respeito da sua compra.`,
                 )}`
               : null;
 

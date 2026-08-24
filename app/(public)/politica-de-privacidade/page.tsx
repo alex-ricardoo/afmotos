@@ -4,11 +4,16 @@ import { CONSTANTS } from '@/lib/utils/constants';
 import { getSettings } from '@/lib/actions/settings';
 import { formatPhoneForDisplay } from '@/lib/utils/whatsapp';
 
-export const metadata = {
-  title: 'Política de Privacidade | AF Motos',
-  description:
-    'Política de Privacidade e Proteção de Dados da AF Motos em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).',
-};
+import { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  return {
+    title: `Política de Privacidade | ${siteName}`,
+    description: `Política de Privacidade e Proteção de Dados da ${siteName} em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).`,
+  };
+}
 
 export default async function PoliticaPrivacidadePage() {
   const settings = await getSettings();
@@ -41,7 +46,7 @@ export default async function PoliticaPrivacidadePage() {
         {/* Intro Card */}
         <div className="bg-[#151515] p-6 sm:p-8 rounded-3xl border border-[#c9a44c]/20 space-y-4 text-sm text-[#d1d5db] leading-relaxed">
           <p>
-            A <strong>AF Motos</strong> preza pela segurança, privacidade e transparência no
+            A <strong>{siteName}</strong> preza pela segurança, privacidade e transparência no
             tratamento de informações de seus clientes e visitantes. Este documento explica de forma
             simples e clara quais dados coletamos, a finalidade do uso e quais são os seus direitos
             como titular de dados pessoais.
@@ -99,7 +104,7 @@ export default async function PoliticaPrivacidadePage() {
               <li>Cumprimento de obrigações legais e regulatórias.</li>
             </ul>
             <p className="pt-2 text-xs text-[#e3c56c] font-semibold">
-              Importante: A AF Motos não comercializa, não aluga e não repassa seus dados pessoais a
+              Importante: A {siteName} não comercializa, não aluga e não repassa seus dados pessoais a
               terceiros para fins publicitários ou disparos em massa.
             </p>
           </section>

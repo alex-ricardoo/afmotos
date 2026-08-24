@@ -58,12 +58,15 @@ import {
   formatPhoneForDisplay,
 } from '@/lib/utils/whatsapp';
 import { ProposalDetail } from './proposal-detail-drawer';
+import { CONSTANTS } from '@/lib/utils/constants';
 
 interface Props {
   initialData: ProposalViewModel[];
+  siteName?: string;
 }
 
-export function AdminPropostasContacts({ initialData }: Props) {
+export function AdminPropostasContacts({ initialData, siteName }: Props) {
+  const storeName = siteName || CONSTANTS.STORE_NAME;
   const router = useRouter();
   const [proposals, setProposals] = useState<ProposalViewModel[]>(initialData);
   const [prevInitialData, setPrevInitialData] = useState<ProposalViewModel[]>(initialData);
@@ -295,7 +298,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
               Propostas & Leads
             </h1>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
-              <Sparkles className="w-3 h-3" /> CRM AF Motos
+              <Sparkles className="w-3 h-3" /> CRM {storeName}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
@@ -1030,6 +1033,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         open={!!selectedProposal}
         onOpenChange={(open) => !open && setSelectedProposal(null)}
         onStatusChange={handleStatusChange}
+        siteName={storeName}
       />
     </div>
   );

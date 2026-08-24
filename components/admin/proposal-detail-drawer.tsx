@@ -83,12 +83,15 @@ export function useMediaQuery(query: string) {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
+import { CONSTANTS } from '@/lib/utils/constants';
+
 interface ProposalDetailProps {
   proposal: ProposalViewModel | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   typeBadgeClass?: string;
   onStatusChange?: (proposal: ProposalViewModel, newStatus: string) => Promise<void> | void;
+  siteName?: string;
 }
 
 export function ProposalDetail({
@@ -96,7 +99,9 @@ export function ProposalDetail({
   open,
   onOpenChange,
   onStatusChange,
+  siteName,
 }: ProposalDetailProps) {
+  const storeName = siteName || CONSTANTS.STORE_NAME;
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -118,11 +123,11 @@ export function ProposalDetail({
   > = {
     NEW: {
       label: getProposalStatusLabel('NEW', proposal.type),
-      bg: 'bg-emerald-500/15',
-      text: 'text-emerald-400',
-      border: 'border-emerald-500/30',
-      dot: 'bg-emerald-400',
-      line: 'from-emerald-500 to-teal-400',
+      bg: 'bg-amber-500/15',
+      text: 'text-amber-400',
+      border: 'border-amber-500/30',
+      dot: 'bg-amber-400',
+      line: 'bg-amber-500',
     },
     CONTACTED: {
       label: getProposalStatusLabel('CONTACTED', proposal.type),
@@ -130,7 +135,7 @@ export function ProposalDetail({
       text: 'text-blue-400',
       border: 'border-blue-500/30',
       dot: 'bg-blue-400',
-      line: 'from-blue-500 to-cyan-400',
+      line: 'bg-blue-500',
     },
     QUALIFIED: {
       label: getProposalStatusLabel('QUALIFIED', proposal.type),
@@ -138,15 +143,23 @@ export function ProposalDetail({
       text: 'text-purple-400',
       border: 'border-purple-500/30',
       dot: 'bg-purple-400',
-      line: 'from-purple-500 to-pink-400',
+      line: 'bg-purple-500',
     },
     CONVERTED: {
       label: getProposalStatusLabel('CONVERTED', proposal.type),
-      bg: 'bg-[#c9a44c]/20',
-      text: 'text-[#e3c56c]',
-      border: 'border-[#c9a44c]/40',
-      dot: 'bg-[#e3c56c]',
-      line: 'from-[#c9a44c] to-amber-300',
+      bg: 'bg-emerald-500/15',
+      text: 'text-emerald-400',
+      border: 'border-emerald-500/30',
+      dot: 'bg-emerald-400',
+      line: 'bg-emerald-500',
+    },
+    CLOSED: {
+      label: getProposalStatusLabel('CLOSED', proposal.type),
+      bg: 'bg-zinc-800',
+      text: 'text-zinc-400',
+      border: 'border-zinc-700',
+      dot: 'bg-zinc-500',
+      line: 'bg-zinc-600',
     },
     LOST: {
       label: getProposalStatusLabel('LOST', proposal.type),
@@ -154,19 +167,9 @@ export function ProposalDetail({
       text: 'text-rose-400',
       border: 'border-rose-500/30',
       dot: 'bg-rose-400',
-      line: 'from-rose-500 to-red-400',
-    },
-    CLOSED: {
-      label: getProposalStatusLabel('CLOSED', proposal.type),
-      bg: 'bg-zinc-800/80',
-      text: 'text-zinc-400',
-      border: 'border-zinc-700',
-      dot: 'bg-zinc-500',
-      line: 'from-zinc-600 to-zinc-700',
+      line: 'bg-rose-500',
     },
   };
-
-  const currentStatusInfo = statusConfig[proposal.status] || statusConfig.CLOSED;
 
   // Type styling
   const getTypeBadge = (type: string) => {
@@ -207,25 +210,25 @@ export function ProposalDetail({
   const typeInfo = getTypeBadge(proposal.type);
   const TypeIcon = typeInfo.icon;
 
-  // FIPE Calculations
+  const currentStatusInfo = statusConfig[proposal.status] || statusConfig.NEW;
 
-  const desiredPrice = proposal.motorcycle?.desiredPrice;
-  const fipePrice = proposal.motorcycle?.fipePrice;
+  // Calculador de valores da FIPE e simulação do administrador
+  const desiredPrice = proposal.motorcycle?.desiredPrice || null;
+  const fipePrice = proposal.motorcycle?.fipePrice || null;
   let fipeDiffPercent: number | null = null;
   if (desiredPrice && fipePrice && fipePrice > 0) {
     fipeDiffPercent = Number((((desiredPrice - fipePrice) / fipePrice) * 100).toFixed(1));
   }
 
+  const simulatedOfferFromFipe = fipePrice ? (fipePrice * adminOfferPercent) / 100 : null;
   const effectiveAdminOffer =
-    adminCustomOffer != null
+    adminCustomOffer !== null
       ? adminCustomOffer
-      : fipePrice && fipePrice > 0
-        ? (fipePrice * adminOfferPercent) / 100
-        : null;
+      : simulatedOfferFromFipe || proposal.motorcycle?.estimatedOffer || null;
 
-  // WhatsApp Message Presets
+  // Presets de resposta rápida no WhatsApp
   const getWhatsAppMessageByPreset = () => {
-    const name = proposal.name.trim();
+    const name = proposal.name ? proposal.name.trim() : 'Cliente';
     const moto = proposal.motorcycle?.brand
       ? `${proposal.motorcycle.brand} ${proposal.motorcycle.model || ''}`.trim()
       : '';
@@ -238,17 +241,17 @@ export function ProposalDetail({
         const offerText = effectiveAdminOffer
           ? ` Temos uma proposta inicial de compra no valor de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(effectiveAdminOffer)} à vista no PIX.`
           : '';
-        return `Olá ${name}! Aqui é da equipe da AF Motos. Analisamos a proposta para a sua moto${moto ? ` (${moto})` : ''}.${fipeText}${offerText} Gostaria de agendar um horário para você vir à loja para finalizarmos a avaliação e fecharmos negócio?`;
+        return `Olá ${name}! Aqui é da equipe da ${storeName}. Analisamos a proposta para a sua moto${moto ? ` (${moto})` : ''}.${fipeText}${offerText} Gostaria de agendar um horário para você vir à loja para finalizarmos a avaliação e fecharmos negócio?`;
       }
       case 'photos':
-        return `Olá ${name}, tudo bem? Aqui é da equipe da AF Motos! Recebemos sua proposta sobre ${moto ? `a moto ${moto}` : 'sua moto'}. Você teria mais fotos e o documento dela para adiantarmos a avaliação?`;
+        return `Olá ${name}, tudo bem? Aqui é da equipe da ${storeName}! Recebemos sua proposta sobre ${moto ? `a moto ${moto}` : 'sua moto'}. Você teria mais fotos e o documento dela para adiantarmos a avaliação?`;
       case 'visit':
         return `Olá ${name}! Tudo bem? Gostamos muito da proposta${moto ? ` para a moto ${moto}` : ''}. Gostaria de agendar um horário para você vir à nossa loja para finalizarmos a negociação?`;
       case 'counter':
         return `Olá ${name}! Tudo bem? Analisamos sua proposta${moto ? ` para ${moto}` : ''} com nossa equipe comercial e gostaríamos de apresentar uma proposta especial para você fechar negócio hoje.`;
       case 'default':
       default:
-        return generateProposalWhatsAppMessage(proposal);
+        return generateProposalWhatsAppMessage(proposal, storeName);
     }
   };
 
@@ -580,7 +583,7 @@ export function ProposalDetail({
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                         <Sparkles className="w-4 h-4 text-amber-400" />
-                        <span>Simulador de Proposta da AF Motos</span>
+                        <span>Simulador de Proposta da {storeName}</span>
                       </span>
                       <span className="text-xs font-mono font-bold text-zinc-300">
                         FIPE:{' '}
@@ -745,7 +748,7 @@ export function ProposalDetail({
                 <a
                   href={generateWhatsAppLink(
                     proposal.phone,
-                    `Olá ${proposal.name}, tudo bem? Aqui é da AF Motos! Entrando em contato sobre a compra da sua moto.`,
+                    `Olá ${proposal.name}, tudo bem? Aqui é da ${storeName}! Entrando em contato sobre a compra da sua moto.`,
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -912,7 +915,7 @@ export function ProposalDetail({
             {/* Modal Footer */}
             <div className="px-6 py-3.5 border-t border-zinc-800/80 bg-zinc-950/80 flex items-center justify-between shrink-0">
               <div className="text-xs text-zinc-500 font-mono">
-                AF Motos CRM • Atendimento ao Cliente
+                {storeName} CRM • Atendimento ao Cliente
               </div>
 
               <div className="flex items-center gap-3">

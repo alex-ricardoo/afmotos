@@ -138,7 +138,7 @@ export function Footer({ settings }: { settings?: any }) {
             {socialLinks.length > 0 && (
               <div className="pt-2 space-y-2">
                 <span className="text-[11px] font-bold text-[#e3c56c] uppercase tracking-wider block">
-                  Siga a AF Motos
+                  Siga a {siteName}
                 </span>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   {socialLinks.map((social) => (

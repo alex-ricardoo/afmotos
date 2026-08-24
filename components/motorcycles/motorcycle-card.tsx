@@ -10,6 +10,8 @@ import { formatCurrency } from '@/lib/utils/format';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 import { cn } from '@/lib/utils';
 import { MotorcycleShareDialog } from './motorcycle-share-dialog';
+import { CONSTANTS } from '@/lib/utils/constants';
+import { getSiteInitials } from '@/lib/site-settings';
 
 export interface MotorcycleCardData {
   id: string;
@@ -32,14 +34,17 @@ export interface MotorcycleCardData {
 export interface MotorcycleCardProps {
   motorcycle: MotorcycleCardData;
   whatsappPhone?: string;
+  siteName?: string;
 }
 
-export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProps) {
+export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: MotorcycleCardProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const isSold = motorcycle.status?.toUpperCase() === 'SOLD';
   const isFeatured = Boolean(motorcycle.featured) && !isSold;
+  const storeName = siteName || CONSTANTS.STORE_NAME;
+  const initials = getSiteInitials(storeName);
 
-  const whatsappMessage = `Olá! Tenho interesse na ${motorcycle.brand} ${motorcycle.model} ${motorcycle.year_model}${motorcycle.price ? ` (R$ ${motorcycle.price.toLocaleString('pt-BR')})` : ''} anunciada no site da AF Motos. Poderia me passar mais detalhes?`;
+  const whatsappMessage = `Olá! Tenho interesse na ${motorcycle.brand} ${motorcycle.model} ${motorcycle.year_model}${motorcycle.price ? ` (R$ ${motorcycle.price.toLocaleString('pt-BR')})` : ''} anunciada no site da ${storeName}. Poderia me passar mais detalhes?`;
 
   const whatsappUrl = generateWhatsAppLink(whatsappPhone, whatsappMessage);
 
@@ -158,7 +163,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
               {isFeatured && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-400">
                   <Sparkles className="w-2.5 h-2.5" />
-                  <span>Seleção AF</span>
+                  <span>Seleção {initials}</span>
                 </span>
               )}
             </div>

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Bike, Home, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Bike, Home, ShieldCheck, Clock } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { formatCurrency } from '@/lib/utils';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
@@ -16,6 +16,7 @@ interface VendaMotoSuccessViewProps {
   fipePrice?: number | null;
   estimatedOffer?: number | null;
   name: string;
+  siteName?: string;
   onReset?: () => void;
 }
 
@@ -27,11 +28,13 @@ export function VendaMotoSuccessView({
   fipePrice,
   estimatedOffer,
   name,
+  siteName,
   onReset,
 }: VendaMotoSuccessViewProps) {
+  const storeName = siteName || CONSTANTS.STORE_NAME;
   const whatsappUrl = generateWhatsAppLink(
     CONSTANTS.CONTACT_PHONE,
-    `Olá! Sou ${name}, acabei de enviar a proposta de venda da minha moto ${brand} ${model} (${yearModel}) pelo site da AF Motos e gostaria de acompanhar a avaliação.`,
+    `Olá! Sou ${name}, acabei de enviar a proposta de venda da minha moto ${brand} ${model} (${yearModel}) pelo site da ${storeName} e gostaria de acompanhar a avaliação.`,
   );
 
   return (
@@ -58,43 +61,37 @@ export function VendaMotoSuccessView({
             {brand} {model}
           </strong>
           . Nossa equipe vai analisar os dados e entrar em contato pelo WhatsApp para alinhar a
-          avaliação.
+          melhor proposta.
         </p>
       </div>
 
-      {/* Resumo Card da Proposta */}
-      <div className="bg-zinc-950/80 border border-zinc-800/90 rounded-2xl p-5 text-left space-y-3 shadow-xl">
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-          <div className="flex items-center gap-2">
-            <Bike className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-black text-white">
-              {brand} {model} ({yearModel})
-            </span>
-          </div>
-          {proposalId && (
-            <span className="text-[10px] font-mono text-zinc-500">
-              ID: {proposalId.slice(0, 8)}
-            </span>
-          )}
+      {/* Protocol Card */}
+      <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 sm:p-5 max-w-md mx-auto space-y-3">
+        <div className="flex items-center justify-between text-xs border-b border-zinc-800 pb-2.5">
+          <span className="text-zinc-400">Protocolo da Proposta</span>
+          <span className="font-mono font-bold text-amber-400">
+            #{proposalId ? proposalId.slice(0, 8).toUpperCase() : 'PENDENTE'}
+          </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          {fipePrice != null && fipePrice > 0 && (
-            <div>
-              <span className="text-zinc-500 block text-[11px]">Referência FIPE</span>
-              <span className="font-bold text-zinc-300 font-mono">{formatCurrency(fipePrice)}</span>
-            </div>
-          )}
-          {estimatedOffer != null && estimatedOffer > 0 && (
-            <div>
-              <span className="text-amber-400/90 block text-[11px] font-bold">
-                Estimativa Simulada
-              </span>
-              <span className="font-black text-amber-400 font-mono text-sm">
-                {formatCurrency(estimatedOffer)}
-              </span>
-            </div>
-          )}
+        <div className="grid grid-cols-2 gap-3 text-left text-xs">
+          <div>
+            <span className="text-zinc-500 block">Moto</span>
+            <span className="font-extrabold text-white">
+              {brand} {model}
+            </span>
+          </div>
+          <div>
+            <span className="text-zinc-500 block">Ano</span>
+            <span className="font-extrabold text-white">{yearModel}</span>
+          </div>
+        </div>
+
+        <div className="pt-2 text-left text-xs text-zinc-400 bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 flex items-start gap-2">
+          <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            Nossa equipe costuma responder dentro do horário comercial em menos de 30 minutos.
+          </span>
         </div>
       </div>
 
@@ -107,7 +104,7 @@ export function VendaMotoSuccessView({
           className="w-full h-12 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(37,211,102,0.3)] cursor-pointer"
         >
           <WhatsAppIcon className="w-4 h-4 fill-current" />
-          <span>Falar com a AF Motos no WhatsApp</span>
+          <span>Falar com a {storeName} no WhatsApp</span>
         </a>
 
         <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">

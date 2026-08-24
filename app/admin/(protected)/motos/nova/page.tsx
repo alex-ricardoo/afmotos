@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 
 export const metadata = {
-  title: 'Nova Moto | AF Motos Admin',
+  title: 'Nova Moto',
 };
 
 export default function NovaMotoPage() {

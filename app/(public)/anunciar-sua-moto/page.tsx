@@ -10,14 +10,23 @@ import {
   MessageSquare,
   TrendingUp,
 } from 'lucide-react';
+import { getSettings } from '@/lib/actions/settings';
+import { CONSTANTS } from '@/lib/utils/constants';
+import { Metadata } from 'next';
 
-export const metadata = {
-  title: 'Anuncie sua Moto | AF Motos',
-  description:
-    'Quer vender sua moto? Envie as informações e fotos para a AF Motos. Analisamos os dados e combinamos os próximos passos diretamente pelo WhatsApp.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  return {
+    title: `Anuncie sua Moto | ${siteName}`,
+    description: `Quer vender sua moto? Envie as informações e fotos para a ${siteName}. Analisamos os dados e combinamos os próximos passos diretamente pelo WhatsApp.`,
+  };
+}
 
-export default function AnunciarSuaMotoPage() {
+export default async function AnunciarSuaMotoPage() {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+
   const steps = [
     {
       number: '1',
@@ -59,7 +68,7 @@ export default function AnunciarSuaMotoPage() {
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white font-heading">
-            Anuncie sua moto com a AF Motos
+            Anuncie sua moto com a {siteName}
           </h1>
 
           <p className="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto font-normal">

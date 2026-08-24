@@ -18,6 +18,7 @@ import {
   Calculator,
   Copy,
 } from 'lucide-react';
+import { CONSTANTS } from '@/lib/utils/constants';
 import { toast } from 'sonner';
 
 interface FipeResultCardProps {
@@ -29,6 +30,7 @@ interface FipeResultCardProps {
   isSaving?: boolean;
   isSaved?: boolean;
   savedId?: string | null;
+  siteName?: string;
 }
 
 export function FipeResultCard({
@@ -40,14 +42,16 @@ export function FipeResultCard({
   isSaving = false,
   isSaved = false,
   savedId,
+  siteName,
 }: FipeResultCardProps) {
   const analytics = expanded?.analytics;
   const [margin, setMargin] = useState<number>(0.80); // Default 80%
+  const storeName = siteName || CONSTANTS.STORE_NAME;
 
   const suggestedPrice = quote.priceReais * margin;
 
   const handleShare = async () => {
-    const text = `*Consulta FIPE - AF Motos*\n🏍️ *${quote.brandName} ${quote.modelName}*\nAno: ${formatModelYear(quote.year, quote.isZeroKm)}\nFIPE: ${formatFipeCurrency(quote.priceReais)}\nSugestão de Compra (${Math.round(margin * 100)}%): ${formatFipeCurrency(suggestedPrice)}\nRef: ${quote.referenceLabel}`;
+    const text = `*Consulta FIPE - ${storeName}*\n🏍️ *${quote.brandName} ${quote.modelName}*\nAno: ${formatModelYear(quote.year, quote.isZeroKm)}\nFIPE: ${formatFipeCurrency(quote.priceReais)}\nSugestão de Compra (${Math.round(margin * 100)}%): ${formatFipeCurrency(suggestedPrice)}\nRef: ${quote.referenceLabel}`;
     
     try {
       await navigator.clipboard.writeText(text);

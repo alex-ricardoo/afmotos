@@ -3,19 +3,27 @@ import { Metadata } from 'next';
 import { VendaMotoForm } from '@/components/forms/venda-moto-form';
 import { Banknote, ShieldCheck, Zap, FileCheck, Scale } from 'lucide-react';
 
-export const metadata: Metadata = {
-  title: 'Venda sua Moto para a AF Motos | Avaliação Justa e Pagamento Seguro',
-  description:
-    'Quer vender sua moto com rapidez e segurança? Consulte o valor na Tabela FIPE, simule uma proposta e venda diretamente para a AF Motos sem dor de cabeça.',
-  openGraph: {
-    title: 'Venda sua Moto para a AF Motos | Avaliação Justa e Pagamento Seguro',
-    description:
-      'Receba uma avaliação transparente e venda sua motocicleta diretamente para a AF Motos com pagamento via PIX.',
-    type: 'website',
-  },
-};
+import { getSettings } from '@/lib/actions/settings';
+import { CONSTANTS } from '@/lib/utils/constants';
 
-export default function VenderMinhaMotoPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  return {
+    title: `Venda sua Moto para a ${siteName} | Avaliação Justa e Pagamento Seguro`,
+    description: `Quer vender sua moto com rapidez e segurança? Consulte o valor na Tabela FIPE, simule uma proposta e venda diretamente para a ${siteName} sem dor de cabeça.`,
+    openGraph: {
+      title: `Venda sua Moto para a ${siteName} | Avaliação Justa e Pagamento Seguro`,
+      description: `Receba uma avaliação transparente e venda sua motocicleta diretamente para a ${siteName} com pagamento via PIX.`,
+      type: 'website',
+    },
+  };
+}
+
+export default async function VenderMinhaMotoPage() {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+
   return (
     <div className="bg-[#050505] min-h-screen pb-20 text-zinc-100">
       {/* Header Hero Section */}
@@ -30,7 +38,7 @@ export default function VenderMinhaMotoPage() {
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white font-heading">
-            Venda sua moto para a AF Motos
+            Venda sua moto para a {siteName}
           </h1>
 
           <p className="text-base sm:text-lg text-zinc-300 leading-relaxed max-w-2xl mx-auto font-normal">
@@ -58,13 +66,13 @@ export default function VenderMinhaMotoPage() {
 
       <div className="container mx-auto px-4 sm:px-6 py-10 md:py-14 max-w-6xl space-y-16">
         {/* Main Interactive Wizard Form */}
-        <VendaMotoForm />
+        <VendaMotoForm siteName={siteName} />
 
         {/* Institutional Trust Bar */}
         <div className="pt-6 border-t border-zinc-800/80">
           <div className="text-center max-w-md mx-auto mb-8 space-y-1.5">
             <h3 className="text-xl font-bold text-white font-heading">
-              Por que vender sua moto para a AF Motos?
+              Por que vender sua moto para a {siteName}?
             </h3>
             <p className="text-xs text-zinc-400">
               Compromisso com honestidade, agilidade e segurança jurídica em cada negociação.

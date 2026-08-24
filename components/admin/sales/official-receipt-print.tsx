@@ -25,19 +25,21 @@ interface OfficialReceiptPrintProps {
   onBack?: () => void;
 }
 
+import { CONSTANTS } from '@/lib/utils/constants';
+
 export function OfficialReceiptPrint({
   sale,
   siteSettings,
   onBack,
 }: OfficialReceiptPrintProps) {
   const moto = sale.motorcycle;
-  const storeName = siteSettings?.site_name || 'AF Motos';
+  const storeName = siteSettings?.site_name || CONSTANTS.STORE_NAME;
   const logoInfo = getSiteLogo(siteSettings as any);
   /* CNPJ da loja (em breve): const cnpj = '58.490.871/0001-30'; */
-  const address = siteSettings?.address || 'Cabo de Santo Agostinho - PE';
-  const rawPhone = siteSettings?.whatsapp_phone || '81985901175';
+  const address = siteSettings?.address || CONSTANTS.STORE_ADDRESS;
+  const rawPhone = siteSettings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
   const phone = formatPhone(rawPhone);
-  const email = siteSettings?.contact_email || 'afmotos2026@gmail.com';
+  const email = siteSettings?.contact_email || CONSTANTS.CONTACT_EMAIL;
 
   const receiptCode = sale.receipt_number || `AFM-2026-${sale.id.slice(0, 4).toUpperCase()}`;
   const emissionDate = formatDateTime(sale.created_at || new Date().toISOString());

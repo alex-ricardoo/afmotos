@@ -32,17 +32,22 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const moto = await getMotorcycleBySlug(slug);
+  const [moto, settings] = await Promise.all([
+    getMotorcycleBySlug(slug),
+    getSettings(),
+  ]);
+
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
 
   if (!moto) {
-    return { title: 'Moto não encontrada | AF Motos' };
+    return { title: `Moto não encontrada | ${siteName}` };
   }
 
   const priceFormatted = moto.price ? ` - ${formatCurrency(moto.price)}` : '';
-  const title = `${moto.brand} ${moto.model} ${moto.year_model}${priceFormatted} | AF Motos`;
+  const title = `${moto.brand} ${moto.model} ${moto.year_model}${priceFormatted} | ${siteName}`;
   const description = moto.description
     ? moto.description.substring(0, 160)
-    : `Confira a ${moto.brand} ${moto.model} (${moto.year_model}) na AF Motos. Negociação direta e atendimento pelo WhatsApp.`;
+    : `Confira a ${moto.brand} ${moto.model} (${moto.year_model}) na ${siteName}. Negociação direta e atendimento pelo WhatsApp.`;
 
   const canonicalUrl = getPublicMotorcycleUrl(moto);
 
@@ -271,7 +276,7 @@ export default async function MotorcycleDetailPage({ params }: Props) {
               </Link>
             </div>
 
-            <MotorcycleGrid motorcycles={relatedMotos} whatsappPhone={whatsappPhone} />
+            <MotorcycleGrid motorcycles={relatedMotos} whatsappPhone={whatsappPhone} siteName={siteName} />
           </div>
         )}
       </div>

@@ -43,7 +43,7 @@ export function SocialTab({ form }: SocialTabProps) {
           <span>Redes Sociais & Canais Oficiais</span>
         </h3>
         <p className="text-xs text-zinc-400 mt-1">
-          Links exibidos dinamicamente no rodapé e canais de divulgação da AF Motos. Somente links com HTTPS válidos serão exibidos para os visitantes.
+          Links exibidos dinamicamente no rodapé e canais de divulgação da sua loja. Somente links com HTTPS válidos serão exibidos para os visitantes.
         </p>
       </div>
 

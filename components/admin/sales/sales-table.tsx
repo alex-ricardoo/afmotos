@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table';
 import { SaleWithDetails } from '@/lib/queries/sales';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
+import { CONSTANTS } from '@/lib/utils/constants';
 
 interface SalesTableProps {
   sales: SaleWithDetails[];
@@ -83,9 +84,10 @@ export function SalesTable({ sales }: SalesTableProps) {
               const formattedCleanPhone = cleanPhone.startsWith('55')
                 ? cleanPhone
                 : `55${cleanPhone}`;
+              const storeName = CONSTANTS.STORE_NAME;
               const whatsappUrl = cleanPhone
                 ? `https://wa.me/${formattedCleanPhone}?text=${encodeURIComponent(
-                    `Olá ${sale.buyer_name || ''}, tudo bem? Falamos da AF Motos sobre a sua compra da ${moto?.brand || ''} ${moto?.model || ''}.`,
+                    `Olá ${sale.buyer_name || ''}, tudo bem? Falamos da ${storeName} sobre a sua compra da ${moto?.brand || ''} ${moto?.model || ''}.`,
                   )}`
                 : null;
 

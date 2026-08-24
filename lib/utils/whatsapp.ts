@@ -73,15 +73,20 @@ export function generateMotorcycleInterestMessage(motorcycle: {
   return `Olá! Tenho interesse na ${motorcycle.brand} ${motorcycle.model} (${motorcycle.year_model}). Pode me passar mais informações?`;
 }
 
-export function generateSellOrConsignMessage(): string {
-  return 'Olá! Quero anunciar minha moto com a AF Motos. Como faço?';
+export function generateSellOrConsignMessage(siteName?: string): string {
+  const storeName = siteName || CONSTANTS.STORE_NAME;
+  return `Olá! Quero anunciar minha moto com a ${storeName}. Como faço?`;
 }
 
 export function generateRentalMessage(): string {
   return 'Olá! Tenho interesse em alugar uma moto. Gostaria de saber as opções disponíveis.';
 }
 
-export function generateProposalWhatsAppMessage(proposal: ProposalViewModel): string {
+export function generateProposalWhatsAppMessage(
+  proposal: ProposalViewModel,
+  siteName?: string,
+): string {
+  const storeName = siteName || CONSTANTS.STORE_NAME;
   const name = proposal.name ? proposal.name.trim() : 'Cliente';
   const moto = proposal.motorcycle?.brand
     ? `${proposal.motorcycle.brand} ${proposal.motorcycle.model || ''}`.trim()
@@ -116,14 +121,14 @@ export function generateProposalWhatsAppMessage(proposal: ProposalViewModel): st
       }
 
       const detailsBlock = details.length > 0 ? `\n\n${details.join('\n')}` : '';
-      return `Olá, ${name}! Aqui é da AF Motos. Recebemos sua proposta para vender sua moto${moto ? ` (${moto})` : ''} e gostaríamos de confirmar as informações para darmos sequência à avaliação.${detailsBlock}`;
+      return `Olá, ${name}! Aqui é da ${storeName}. Recebemos sua proposta para vender sua moto${moto ? ` (${moto})` : ''} e gostaríamos de confirmar as informações para darmos sequência à avaliação.${detailsBlock}`;
     }
 
     case 'CONSIGNMENT':
       return `Olá ${name}! Recebemos sua solicitação para anunciar/consignar sua moto${moto ? ` (${moto})` : ''}. Gostaria de passar os detalhes do nosso modelo de venda.`;
 
     case 'MOTORCYCLE_INTEREST':
-      return `Olá ${name}! Vi seu interesse${moto ? ` na moto ${moto}` : ' em uma moto'} pelo site da AF Motos e gostaria de passar mais informações e condições especiais.`;
+      return `Olá ${name}! Vi seu interesse${moto ? ` na moto ${moto}` : ' em uma moto'} pelo site da ${storeName} e gostaria de passar mais informações e condições especiais.`;
 
     case 'RENTAL': {
       const plano = proposal.rental?.desiredPlan || 'Não informado';
@@ -131,14 +136,14 @@ export function generateProposalWhatsAppMessage(proposal: ProposalViewModel): st
       const dataFormatted = rawDate ? rawDate.split('-').reverse().join('/') : 'Não informada';
       const motoDesc = moto || 'Ainda não selecionou uma moto específica';
 
-      return `Olá, ${name}! Aqui é da AF Motos. Recebemos sua proposta de aluguel de uma moto pelo nosso site e gostaríamos de confirmar alguns detalhes com você.\n\nPlano desejado: ${plano}\nData prevista: ${dataFormatted}\nMoto: ${motoDesc}`;
+      return `Olá, ${name}! Aqui é da ${storeName}. Recebemos sua proposta de aluguel de uma moto pelo nosso site e gostaríamos de confirmar alguns detalhes com você.\n\nPlano desejado: ${plano}\nData prevista: ${dataFormatted}\nMoto: ${motoDesc}`;
     }
 
     case 'MOTORCYCLE_REQUEST':
-      return `Olá ${name}! Recebemos seu pedido de moto pelo site da AF Motos e estamos buscando as melhores opções para você.`;
+      return `Olá ${name}! Recebemos seu pedido de moto pelo site da ${storeName} e estamos buscando as melhores opções para você.`;
 
     case 'GENERAL_CONTACT':
     default:
-      return `Olá ${name}! Vi seu contato enviado pelo site da AF Motos. Como posso te ajudar hoje?`;
+      return `Olá ${name}! Vi seu contato enviado pelo site da ${storeName}. Como posso te ajudar hoje?`;
   }
 }

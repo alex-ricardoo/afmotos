@@ -9,7 +9,7 @@ import {
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata = {
-  title: 'Registrar Nova Venda | AF Motos Admin',
+  title: 'Registrar Nova Venda',
   description: 'Cadastre a venda de uma motocicleta e gere o recibo de compra/venda.',
 };
 

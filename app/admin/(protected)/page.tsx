@@ -7,7 +7,7 @@ import { RecentSalesFeed } from '@/components/admin/dashboard/recent-sales-feed'
 import { Sparkles } from 'lucide-react';
 
 export const metadata = {
-  title: 'Dashboard Geral | AF Motos Admin',
+  title: 'Dashboard Geral',
   description: 'Visão executiva de faturamento, estoque, vendas e propostas.',
 };
 

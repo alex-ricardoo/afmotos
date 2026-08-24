@@ -307,7 +307,11 @@ Cansado de andar de ônibus, pegar trânsito todo santo dia e gastar com transpo
     return { success: true, description: fallbackText, isFallback: true };
   }
 
-  const prompt = `Você é um vendedor amigável e direto de moto usada da concessionária de bairro AF Motos.
+  const supabase = await createClient();
+  const settingsRes = await supabase.from('site_settings').select('site_name').limit(1).maybeSingle();
+  const siteName = settingsRes?.data?.site_name || 'nossa loja';
+
+  const prompt = `Você é um vendedor amigável e direto de moto usada da loja ${siteName}.
 Crie um texto de anúncio comercial ENXUTO, CURTO, FÁCIL DE LER E COM BONS GATILHOS DE VENDA.
 
 MOTOCICLETA: ${brand} ${model}${version}
@@ -321,7 +325,7 @@ REGRAS RÍGIDAS DE CONTEÚDO (SIGA RIGOROSAMENTE):
    - REGRA ABSOLUTA DE PROIBIÇÃO: NUNCA mencione "financiamento" e NUNCA mencione "consórcio" ou "carta contemplada" (a loja não trabalha com financiamento/consórcio).
 4. ENCERRAMENTO E URGÊNCIA:
    - Inclua obrigatoriamente a frase de gatilho: "Essa joia não vai durar muito em nosso estoque!"
-   - Convide o cliente de forma simples a enviar mensagem no WhatsApp da AF Motos ou vir na loja conferir.
+   - Convide o cliente de forma simples a enviar mensagem no WhatsApp da ${siteName} ou vir na loja conferir.
    - REGRA ABSOLUTA DE PROIBIÇÃO: NUNCA use a expressão "link da bio", pois o cliente já está navegando diretamente no site.
 5. FORMATO DE SAÍDA: Texto curto, em torno de 2 a 3 parágrafos bem espaçados, com emojis discretos. Retorne APENAS o texto pronto do anúncio.`;
 

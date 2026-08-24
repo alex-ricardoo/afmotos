@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { cn } from '@/lib/utils';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
-import { getSiteLogo } from '@/lib/site-settings';
+import { getSiteLogo, getSiteInitials } from '@/lib/site-settings';
 
 const baseNavLinks = [
   { href: '/', label: 'Início' },
@@ -30,6 +30,7 @@ export function Header({ settings }: { settings?: any }) {
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
   const slogan = settings?.settings?.slogan || 'Compra e Venda de Motos';
   const logoInfo = getSiteLogo(settings);
+  const initials = getSiteInitials(siteName, settings?.settings?.shortName || settings?.settings?.short_name);
   const isAboutPublished = settings?.settings?.about?.isPublished === true;
 
   const navLinks = [...baseNavLinks];
@@ -62,7 +63,7 @@ export function Header({ settings }: { settings?: any }) {
             </div>
           ) : (
             <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-zinc-900 border border-amber-500/40 flex items-center justify-center font-black text-lg text-amber-400">
-              AF
+              {initials}
             </div>
           )}
 

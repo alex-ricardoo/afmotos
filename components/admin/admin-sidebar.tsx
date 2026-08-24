@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { getSiteLogo } from '@/lib/site-settings';
+import { getSiteLogo, getSiteName } from '@/lib/site-settings';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -34,7 +34,7 @@ export function AdminSidebar({ settings }: { settings?: any }) {
   const supabase = createClient();
 
   const logoInfo = getSiteLogo(settings);
-  const siteName = settings?.site_name || 'AF Motos';
+  const siteName = getSiteName(settings);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

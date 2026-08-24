@@ -22,6 +22,8 @@ import {
   ShareableMotorcycle,
 } from '@/lib/utils/share';
 
+import { CONSTANTS } from '@/lib/utils/constants';
+
 interface MotorcycleShareDialogProps {
   motorcycle: ShareableMotorcycle;
   isOpen: boolean;
@@ -34,7 +36,7 @@ export function MotorcycleShareDialog({
   motorcycle,
   isOpen,
   onClose,
-  siteName = 'AF Motos',
+  siteName = CONSTANTS.STORE_NAME,
 }: MotorcycleShareDialogProps) {
   const [copied, setCopied] = useState(false);
 

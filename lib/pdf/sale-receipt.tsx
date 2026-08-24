@@ -258,12 +258,14 @@ const formatDateBR = (dateStr?: string | null) => {
   return dateStr;
 };
 
+import { CONSTANTS } from '@/lib/utils/constants';
+
 export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps) {
-  const storeName = settings?.site_name || 'AF Motos';
+  const storeName = settings?.site_name || CONSTANTS.STORE_NAME;
   /* const cnpj = '58.490.871/0001-30'; */
-  const phone = formatPhone(settings?.whatsapp_phone || '81985901175');
-  const email = settings?.contact_email || 'afmotos2026@gmail.com';
-  const address = settings?.address || 'Cabo de Santo Agostinho - PE';
+  const phone = formatPhone(settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE);
+  const email = settings?.contact_email || CONSTANTS.CONTACT_EMAIL;
+  const address = settings?.address || CONSTANTS.STORE_ADDRESS;
 
   const moto = sale.motorcycle;
   const year = new Date().getFullYear();

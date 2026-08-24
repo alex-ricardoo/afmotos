@@ -15,6 +15,8 @@ import {
   ShareableMotorcycle,
 } from '@/lib/utils/share';
 
+import { CONSTANTS } from '@/lib/utils/constants';
+
 interface MotorcycleShareSectionProps {
   motorcycle: ShareableMotorcycle;
   whatsappPhone?: string;
@@ -23,7 +25,7 @@ interface MotorcycleShareSectionProps {
 
 export function MotorcycleShareSection({
   motorcycle,
-  siteName = 'AF Motos',
+  siteName = CONSTANTS.STORE_NAME,
 }: MotorcycleShareSectionProps) {
   const [copied, setCopied] = useState(false);
 

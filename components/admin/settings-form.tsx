@@ -7,6 +7,7 @@ import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { saveSettingsAction } from '@/lib/actions/settings';
 import { toast } from 'sonner';
+import { CONSTANTS } from '@/lib/utils/constants';
 import {
   Store,
   Phone,
@@ -135,12 +136,12 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
 
   const defaultValues: SettingsFormValues = {
     id: initialData?.id || undefined,
-    site_name: initialData?.site_name || 'AF Motos',
+    site_name: initialData?.site_name || CONSTANTS.STORE_NAME,
     whatsapp_phone: initialData?.whatsapp_phone || '',
     contact_email: initialData?.contact_email || '',
     address: initialData?.address || '',
     settings: {
-      shortName: rawSettings.shortName || rawSettings.short_name || 'AF Motos',
+      shortName: rawSettings.shortName || rawSettings.short_name || CONSTANTS.STORE_NAME,
       slogan: rawSettings.slogan || '',
       description: rawSettings.description || rawSettings.institutional_description || '',
       branding: {

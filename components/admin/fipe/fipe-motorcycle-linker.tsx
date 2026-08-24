@@ -66,7 +66,7 @@ export function FipeMotorcycleLinker({
             <div>
               <h3 className="text-lg font-bold text-white">Vincular a Moto do Estoque</h3>
               <p className="text-xs text-slate-400">
-                Associe esta cotação FIPE ao cadastro de uma moto na AF Motos
+                Associe esta cotação FIPE ao cadastro de uma moto no estoque
               </p>
             </div>
           </div>

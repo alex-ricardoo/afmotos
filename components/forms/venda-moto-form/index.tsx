@@ -10,6 +10,7 @@ import {
   createSellRequestAction,
   uploadPublicSellRequestImageAction,
   SellRequestImageItem,
+  SellRequestPayload,
 } from '@/lib/actions/leads';
 import { VendaMotoStepper } from './venda-moto-stepper';
 import { VendaMotoSummaryCard } from './venda-moto-summary-card';
@@ -18,10 +19,12 @@ import { Step3OwnerContact } from './steps/step-3-owner-contact';
 import { Step4PhotosUpload } from './steps/step-4-photos-upload';
 import { Step5ReviewSubmit } from './steps/step-5-review-submit';
 import { VendaMotoSuccessView } from './venda-moto-success-view';
+import { CONSTANTS } from '@/lib/utils/constants';
 
 const currentYear = new Date().getFullYear();
 
-export function VendaMotoForm() {
+export function VendaMotoForm({ siteName }: { siteName?: string }) {
+  const storeName = siteName || CONSTANTS.STORE_NAME;
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStepReached, setMaxStepReached] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,31 +45,31 @@ export function VendaMotoForm() {
   const form = useForm<SellRequestInput>({
     resolver: zodResolver(sellRequestSchema) as unknown as Resolver<SellRequestInput>,
     defaultValues: {
-      name: '',
-      phone: '',
-      email: '',
       brand: '',
-      brand_id: null,
+      brand_id: '',
       model: '',
-      model_id: null,
+      model_id: '',
       year_manufacture: currentYear,
       year_model: currentYear,
-      year_id: null,
-      fuel_id: null,
-      fuel_name: null,
-      color: '',
+      year_id: '',
+      fuel_id: '',
+      fuel_name: '',
       mileage: 0,
-      desired_price: undefined,
-      offer_percentage: undefined,
-      estimated_offer: undefined,
+      color: '',
+      desired_price: 0,
+      offer_percentage: 85,
+      fipe_price: null,
       fipe_code: null,
-      fipe_price: undefined,
       fipe_reference_period: null,
       fipe_snapshot: null,
       state: 'PE',
-      city: '',
+      city: 'Cabo de Santo Agostinho',
+      name: '',
+      phone: '',
+      email: '',
       notes: '',
     },
+    mode: 'onChange',
   });
 
   const goToStep = (stepNumber: number) => {
@@ -85,12 +88,12 @@ export function VendaMotoForm() {
   const handleSubmitProposal = async () => {
     const isValid = await form.trigger();
     if (!isValid) {
-      toast.error('Por favor, revise os campos do formulário antes de enviar.');
+      toast.error('Revise os campos obrigatórios antes de enviar.');
       return;
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading('Enviando os dados da moto e fotos para a AF Motos...');
+    const toastId = toast.loading(`Enviando os dados da moto e fotos para a ${storeName}...`);
 
     try {
       // 1. Upload assíncrono das fotos
@@ -101,40 +104,43 @@ export function VendaMotoForm() {
           const file = selectedFiles[i];
           const formData = new FormData();
           formData.append('file', file);
+          formData.append('index', String(i));
 
-          const uploadRes = await uploadPublicSellRequestImageAction(formData);
-          if (uploadRes.success && uploadRes.url) {
+          const res = await uploadPublicSellRequestImageAction(formData);
+          if (res.success && res.image) {
             uploadedImages.push({
-              url: uploadRes.url,
-              provider: uploadRes.image?.provider || 'supabase',
-              storage_path: uploadRes.image?.storagePath || null,
-              delete_url: uploadRes.image?.deleteUrl || null,
+              url: res.image.publicUrl,
+              provider: res.image.provider,
+              storage_path: res.image.storagePath,
+              delete_url: res.image.deleteUrl,
             });
           }
         }
       }
 
-      // 2. Montar payload tipado
-      const formValues = form.getValues();
-      const payload = {
-        ...formValues,
+      // 2. Criação do Lead no Banco de Dados
+      const values = form.getValues();
+      const payload: SellRequestPayload = {
+        ...values,
         images: uploadedImages,
       };
 
-      // 3. Executar Server Action
       const result = await createSellRequestAction(payload);
 
-      if (result.success) {
-        toast.success('Dados enviados com sucesso!', { id: toastId });
-        setCreatedProposalId(result.id || null);
-        setIsSuccess(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        toast.error(result.error || 'Não foi possível enviar sua proposta.', { id: toastId });
+      if (!result.success) {
+        toast.error(result.error || 'Erro ao enviar os dados da proposta.', { id: toastId });
+        setIsSubmitting(false);
+        return;
       }
-    } catch (err) {
-      console.error('Erro na submissão da proposta de venda:', err);
-      toast.error('Ocorreu um erro ao processar sua proposta. Tente novamente.', { id: toastId });
+
+      // 3. Sucesso total
+      toast.success('Proposta enviada com sucesso!', { id: toastId });
+      setCreatedProposalId(result.id || null);
+      setIsSuccess(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
+      console.error('[VendaMotoForm] Erro inesperado:', err);
+      toast.error('Erro de conexão ao enviar a proposta. Tente novamente.', { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
@@ -173,6 +179,7 @@ export function VendaMotoForm() {
         model={watchedModel}
         yearModel={watchedYearModel}
         name={form.getValues('name')}
+        siteName={storeName}
         onReset={handleReset}
       />
     );
@@ -184,7 +191,11 @@ export function VendaMotoForm() {
       <VendaMotoStepper
         currentStep={currentStep}
         maxStepReached={maxStepReached}
-        onStepClick={goToStep}
+        onStepClick={(step) => {
+          if (step <= maxStepReached) {
+            goToStep(step);
+          }
+        }}
       />
 
       {/* Main Grid: Form Left, Sticky Summary Right */}
@@ -233,6 +244,7 @@ export function VendaMotoForm() {
                   onPrev={() => goToStep(3)}
                   onSubmit={handleSubmitProposal}
                   isSubmitting={isSubmitting}
+                  siteName={storeName}
                 />
               )}
             </form>
@@ -252,6 +264,7 @@ export function VendaMotoForm() {
             desiredPrice={watchedDesired}
             photosCount={selectedFiles.length}
             currentStep={currentStep}
+            siteName={storeName}
           />
         </div>
       </div>

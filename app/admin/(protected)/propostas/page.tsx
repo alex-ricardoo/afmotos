@@ -1,12 +1,13 @@
 import { getLeads } from '@/lib/actions/leads';
+import { getSettings } from '@/lib/actions/settings';
 import { AdminPropostasContacts } from '@/components/admin/admin-propostas-contacts';
 
 export const metadata = {
-  title: 'Contatos & Propostas | AF Motos Admin',
+  title: 'Contatos & Propostas',
 };
 
 export default async function AdminPropostasPage() {
-  const data = await getLeads();
+  const [data, settings] = await Promise.all([getLeads(), getSettings()]);
 
-  return <AdminPropostasContacts initialData={data || []} />;
+  return <AdminPropostasContacts initialData={data || []} siteName={settings?.site_name} />;
 }

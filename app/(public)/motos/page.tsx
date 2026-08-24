@@ -1,16 +1,20 @@
 import React from 'react';
-import { SlidersHorizontal, ShieldCheck } from 'lucide-react';
+import { SlidersHorizontal, ShieldCheck, Wrench, FileCheck } from 'lucide-react';
 import { MotorcycleGrid } from '@/components/motorcycles/motorcycle-grid';
 import { MotorcycleFilters, MobileFiltersDrawer, CatalogControls } from '@/components/filters/motorcycle-filters';
 import { getAllMotorcycles, getMotorcycleFilterFacets } from '@/lib/queries/motorcycles';
 import { getSettings } from '@/lib/actions/settings';
-import { FileCheck, Award, Wrench } from 'lucide-react';
+import { CONSTANTS } from '@/lib/utils/constants';
+import { Metadata } from 'next';
 
-export const metadata = {
-  title: 'Motos Disponíveis | AF Motos',
-  description:
-    'Confira as motos disponíveis na AF Motos. Negociação direta e atendimento transparente pelo WhatsApp.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  return {
+    title: `Motos Disponíveis | ${siteName}`,
+    description: `Confira as motos disponíveis na ${siteName}. Negociação direta e atendimento transparente pelo WhatsApp.`,
+  };
+}
 
 interface CatalogProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -24,7 +28,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
     getSettings(),
   ]);
 
-
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
   const activeBrand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand : undefined;
   const activeSearch =
     typeof (resolvedParams.search || resolvedParams.q) === 'string'
@@ -42,7 +46,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
             <div className="max-w-2xl space-y-3">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-500">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Estoque Garantido AF Motos</span>
+                <span>Estoque Garantido {siteName}</span>
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white">
                 Motos Disponíveis
@@ -97,6 +101,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
               emptyMessage="Nenhuma moto encontrada com os filtros atuais. Tente ajustar a busca ou limpar os filtros."
               viewMode={currentView}
               whatsappPhone={settings?.whatsapp_phone}
+              siteName={siteName}
             />
           </main>
         </div>

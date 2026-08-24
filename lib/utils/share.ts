@@ -2,6 +2,8 @@
  * AF Motos - Utilitários de Compartilhamento de Motocicletas e URLs Canônicas
  */
 
+import { CONSTANTS } from './constants';
+
 export interface ShareableMotorcycle {
   slug: string;
   brand: string;
@@ -42,7 +44,9 @@ export function buildMotorcycleWhatsAppShareUrl(
   phone: string | undefined | null,
   motorcycle: ShareableMotorcycle,
   url?: string,
+  siteName?: string,
 ): string {
+  const storeName = siteName || CONSTANTS.STORE_NAME;
   const canonicalUrl = url || getPublicMotorcycleUrl(motorcycle);
   const priceText = motorcycle.price
     ? ` (R$ ${motorcycle.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`
@@ -50,7 +54,7 @@ export function buildMotorcycleWhatsAppShareUrl(
 
   const yearText = motorcycle.year_model ? ` — ${motorcycle.year_model}` : '';
 
-  const message = `Olá! Encontrei esta moto no site da AF Motos e gostaria de saber mais:\n\n${motorcycle.brand} ${motorcycle.model}${yearText}${priceText}\n\nLink: ${canonicalUrl}`;
+  const message = `Olá! Encontrei esta moto no site da ${storeName} e gostaria de saber mais:\n\n${motorcycle.brand} ${motorcycle.model}${yearText}${priceText}\n\nLink: ${canonicalUrl}`;
 
   const cleanDigits = (phone || '5511999999999').replace(/\D/g, '');
   const finalPhone = cleanDigits.startsWith('55') ? cleanDigits : `55${cleanDigits}`;
@@ -70,7 +74,7 @@ export function buildFacebookShareUrl(url: string): string {
  */
 export function buildInstagramShareText(
   motorcycle: ShareableMotorcycle,
-  siteName: string = 'AF Motos',
+  siteName: string = CONSTANTS.STORE_NAME,
   url?: string,
 ): string {
   const canonicalUrl = url || getPublicMotorcycleUrl(motorcycle);

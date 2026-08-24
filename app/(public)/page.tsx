@@ -127,6 +127,7 @@ export default async function HomePage() {
           motorcycles={featuredMotos}
           emptyMessage="Nenhuma moto disponível no momento. Fale conosco pelo WhatsApp para saber sobre novas opções!"
           whatsappPhone={settings?.whatsapp_phone}
+          siteName={siteName}
         />
 
         <div className="mt-8 flex justify-center sm:hidden">
@@ -173,7 +174,7 @@ export default async function HomePage() {
                   </span>
                 </h2>
                 <p className="text-sm sm:text-base text-zinc-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                  Na AF Motos você escolhe o melhor caminho: a gente compra a sua moto à vista com pagamento no PIX, ou coloca para anunciar no nosso site para vender rápido e sem dor de cabeça.
+                  Na {siteName} você escolhe o melhor caminho: a gente compra a sua moto à vista com pagamento no PIX, ou coloca para anunciar no nosso site para vender rápido e sem dor de cabeça.
                 </p>
               </div>
 
@@ -246,7 +247,7 @@ export default async function HomePage() {
                   <a
                     href={generateWhatsAppLink(
                       settings?.whatsapp_phone,
-                      'Olá! Gostaria de conversar sobre a venda ou anúncio da minha moto com a AF Motos.',
+                      `Olá! Gostaria de conversar sobre a venda ou anúncio da minha moto com a ${siteName}.`,
                     )}
                     target="_blank"
                     rel="noopener noreferrer"

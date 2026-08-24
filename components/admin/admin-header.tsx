@@ -3,11 +3,11 @@
 import { ShieldCheck, Globe, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getSiteLogo } from '@/lib/site-settings';
+import { getSiteLogo, getSiteName } from '@/lib/site-settings';
 
 export function AdminHeader({ settings }: { settings?: any }) {
   const logoInfo = getSiteLogo(settings);
-  const siteName = settings?.site_name || 'AF Motos';
+  const siteName = getSiteName(settings);
 
   return (
     <header className="sticky top-0 z-20 flex h-16 flex-shrink-0 items-center justify-between bg-[#08080a]/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8 border-b border-zinc-900/50 select-none">
@@ -56,7 +56,7 @@ export function AdminHeader({ settings }: { settings?: any }) {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-100 transition-all px-3 py-1.5 rounded-xl border border-zinc-800/80 hover:bg-zinc-900/60 shadow-xs"
-          title="Abrir o site público da AF Motos em uma nova aba"
+          title={`Abrir o site público da ${siteName} em uma nova aba`}
         >
           <Globe className="w-3.5 h-3.5 text-[#e3c56c]" />
           <span className="hidden sm:inline">Ver Site Público</span>

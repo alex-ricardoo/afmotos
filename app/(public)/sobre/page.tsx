@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   
   if (!settings || (settings.about && !settings.about.isPublished)) {
     return {
-      title: 'Sobre - AF Motos',
+      title: `Sobre - ${settings?.siteName || 'Sobre Nós'}`,
     };
   }
 
@@ -54,10 +54,11 @@ export default async function SobrePage() {
         description={about.description}
         additionalText={about.additionalText}
         storeImages={about.storeImages}
+        siteName={settings.siteName}
       />
       
       {about.differentials && about.differentials.length > 0 && (
-        <AboutDifferentials differentials={about.differentials} />
+        <AboutDifferentials differentials={about.differentials} siteName={settings.siteName} />
       )}
       
       <AboutLocation

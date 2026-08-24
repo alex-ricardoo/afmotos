@@ -2,6 +2,18 @@ import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { AdminHeader } from '@/components/admin/admin-header';
 import { AdminBottomNav } from '@/components/admin/admin-bottom-nav';
 import { getSettings } from '@/lib/actions/settings';
+import { CONSTANTS } from '@/lib/utils/constants';
+
+export async function generateMetadata() {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  return {
+    title: {
+      template: `%s | ${siteName} Admin`,
+      default: `Painel Administrativo | ${siteName}`,
+    },
+  };
+}
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const settings = await getSettings();

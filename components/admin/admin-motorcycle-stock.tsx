@@ -74,11 +74,15 @@ interface MotorcycleItem {
   internal_code?: string | null;
 }
 
+import { CONSTANTS } from '@/lib/utils/constants';
+
 interface Props {
   initialData: MotorcycleItem[];
+  siteName?: string;
 }
 
-export function AdminMotorcycleStock({ initialData }: Props) {
+export function AdminMotorcycleStock({ initialData, siteName }: Props) {
+  const storeName = siteName || CONSTANTS.STORE_NAME;
   const router = useRouter();
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -175,7 +179,7 @@ export function AdminMotorcycleStock({ initialData }: Props) {
               Estoque de Motos
             </h1>
             <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
-              <Sparkles className="w-3 h-3" /> AF Motos
+              <Sparkles className="w-3 h-3" /> {storeName}
             </span>
           </div>
           <p className="text-sm text-zinc-400 mt-1">

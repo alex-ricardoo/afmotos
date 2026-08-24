@@ -1,12 +1,15 @@
 import * as LucideIcons from 'lucide-react';
 import { StoreDifferential } from '@/types/site-settings';
 import { cn } from '@/lib/utils';
+import { CONSTANTS } from '@/lib/utils/constants';
 
 interface AboutDifferentialsProps {
   differentials: StoreDifferential[];
+  siteName?: string;
 }
 
-export function AboutDifferentials({ differentials }: AboutDifferentialsProps) {
+export function AboutDifferentials({ differentials, siteName }: AboutDifferentialsProps) {
+  const storeName = siteName || CONSTANTS.STORE_NAME;
   const activeDifferentials = differentials
     .filter((d) => d.isActive)
     .sort((a, b) => a.sortOrder - b.sortOrder);
@@ -23,7 +26,7 @@ export function AboutDifferentials({ differentials }: AboutDifferentialsProps) {
             Nossos Diferenciais
           </h2>
           <p className="mt-4 text-zinc-600 dark:text-zinc-400">
-            Por que escolher a AF Motos para o seu próximo negócio.
+            Por que escolher a {storeName} para o seu próximo negócio.
           </p>
         </div>
 

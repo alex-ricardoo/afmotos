@@ -14,16 +14,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
+import { CONSTANTS } from '@/lib/utils/constants';
+
 interface SeoTabProps {
   form: UseFormReturn<any>;
 }
 
 export function SeoTab({ form }: SeoTabProps) {
-  const metaTitle = form.watch('settings.seo.title') || form.watch('site_name') || 'AF Motos';
+  const currentSiteName = form.watch('site_name') || CONSTANTS.STORE_NAME;
+  const metaTitle = form.watch('settings.seo.title') || currentSiteName;
   const metaDescription =
     form.watch('settings.seo.description') ||
     form.watch('settings.description') ||
-    'Encontre motos selecionadas para compra ou anúncio na AF Motos.';
+    `Encontre motos selecionadas para compra ou anúncio na ${currentSiteName}.`;
 
   return (
     <div className="space-y-6">

@@ -10,6 +10,51 @@ import {
 } from '@/types/site-settings';
 
 /**
+ * Obtém o nome da loja de forma segura e dinâmica.
+ */
+export function getSiteName(settings?: any): string {
+  return (
+    settings?.site_name ||
+    settings?.siteName ||
+    (typeof settings === 'string' && settings.trim() ? settings.trim() : CONSTANTS.STORE_NAME)
+  );
+}
+
+/**
+ * Obtém o nome curto da loja.
+ */
+export function getSiteShortName(settings?: any): string {
+  return (
+    settings?.settings?.shortName ||
+    settings?.settings?.short_name ||
+    settings?.shortName ||
+    getSiteName(settings)
+  );
+}
+
+/**
+ * Obtém as iniciais ou sigla da loja (ex: "AF Motos" -> "AF", "Auto Fácil" -> "AF").
+ */
+export function getSiteInitials(siteName?: string | null, shortName?: string | null): string {
+  if (shortName && shortName.trim().length > 0 && shortName.trim().length <= 4) {
+    return shortName.trim().toUpperCase();
+  }
+  const name = (siteName || CONSTANTS.STORE_NAME).trim();
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
+/**
+ * Retorna o nome da loja em caixa alta (ex: "AF MOTOS").
+ */
+export function getSiteUppercase(settings?: any): string {
+  return getSiteName(settings).toUpperCase();
+}
+
+/**
  * Retorna as configurações públicas processadas a partir de um registro de site_settings.
  * Função pura e segura para componentes Server e Client.
  */

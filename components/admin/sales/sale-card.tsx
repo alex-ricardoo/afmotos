@@ -7,6 +7,7 @@ import { Bike, Download, MessageSquare, Phone, Printer, Pencil } from 'lucide-re
 import { buttonVariants } from '@/components/ui/button';
 import { SaleWithDetails } from '@/lib/queries/sales';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
+import { CONSTANTS } from '@/lib/utils/constants';
 
 interface SaleCardProps {
   sale: SaleWithDetails;
@@ -35,6 +36,7 @@ const getPaymentStatusBadge = (status?: string | null) => {
 
 export function SaleCard({ sale }: SaleCardProps) {
   const moto = sale.motorcycle;
+  const storeName = CONSTANTS.STORE_NAME;
   const primaryImage =
     moto?.images?.find((img) => img.is_primary)?.public_url ||
     moto?.images?.find((img) => img.is_primary)?.display_url ||
@@ -45,7 +47,7 @@ export function SaleCard({ sale }: SaleCardProps) {
   const formattedCleanPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
   const whatsappUrl = cleanPhone
     ? `https://wa.me/${formattedCleanPhone}?text=${encodeURIComponent(
-        `Olá ${sale.buyer_name || ''}, tudo bem? Falamos da AF Motos a respeito da sua compra da ${moto?.brand || ''} ${moto?.model || ''}.`,
+        `Olá ${sale.buyer_name || ''}, tudo bem? Falamos da ${storeName} a respeito da sua compra da ${moto?.brand || ''} ${moto?.model || ''}.`,
       )}`
     : null;
 
