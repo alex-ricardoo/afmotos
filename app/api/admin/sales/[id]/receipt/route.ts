@@ -36,14 +36,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // 4. Load official logo if exists
     let logoBase64: string | undefined;
-    try {
-      const logoPath = path.join(process.cwd(), 'public', 'logo.jpg');
-      if (fs.existsSync(logoPath)) {
-        const fileBuffer = fs.readFileSync(logoPath);
-        logoBase64 = `data:image/jpeg;base64,${fileBuffer.toString('base64')}`;
+    const customLogoUrl = (settings?.settings as any)?.branding?.logoUrl || (settings?.settings as any)?.logo_path;
+    if (customLogoUrl && (customLogoUrl.startsWith('http://') || customLogoUrl.startsWith('https://'))) {
+      logoBase64 = customLogoUrl;
+    } else {
+      try {
+        const logoPath = path.join(process.cwd(), 'public', 'logo.jpg');
+        if (fs.existsSync(logoPath)) {
+          const fileBuffer = fs.readFileSync(logoPath);
+          logoBase64 = `data:image/jpeg;base64,${fileBuffer.toString('base64')}`;
+        }
+      } catch (e) {
+        console.warn('Could not load local logo.jpg:', e);
       }
-    } catch (e) {
-      console.warn('Could not load local logo.jpg:', e);
     }
 
     // 5. Render PDF to Buffer

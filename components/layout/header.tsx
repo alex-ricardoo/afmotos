@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { cn } from '@/lib/utils';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
+import { getSiteLogo } from '@/lib/site-settings';
 
 const navLinks = [
   { href: '/', label: 'Início' },
@@ -27,6 +28,8 @@ export function Header({ settings }: { settings?: any }) {
 
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  const slogan = settings?.settings?.slogan || 'Compra, Venda e Locação';
+  const logoInfo = getSiteLogo(settings);
 
   const whatsappUrl = generateWhatsAppLink(
     contactPhone,
@@ -41,12 +44,13 @@ export function Header({ settings }: { settings?: any }) {
           {!logoError ? (
             <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-amber-500/30 group-hover:border-amber-400/80 shadow-[0_0_12px_rgba(201,164,76,0.15)] group-hover:shadow-[0_0_18px_rgba(201,164,76,0.3)] transition-all bg-zinc-950 shrink-0">
               <Image
-                src="/logo.jpg"
-                alt={siteName}
+                src={logoInfo.src}
+                alt={logoInfo.alt || siteName}
                 fill
                 sizes="(max-width: 768px) 44px, 48px"
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                 priority
+                unoptimized={logoInfo.isCustom}
                 onError={() => setLogoError(true)}
               />
             </div>
@@ -61,8 +65,8 @@ export function Header({ settings }: { settings?: any }) {
               {siteName}
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
             </span>
-            <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-widest text-zinc-400 mt-1">
-              Compra, Venda e Locação
+            <span className="text-[10px] sm:text-[11px] uppercase font-bold tracking-widest text-zinc-400 mt-1 line-clamp-1 max-w-[200px] sm:max-w-none">
+              {slogan}
             </span>
           </div>
         </Link>
@@ -126,11 +130,12 @@ export function Header({ settings }: { settings?: any }) {
                   <SheetTitle className="flex items-center gap-3">
                     <div className="relative w-10 h-10 rounded-full overflow-hidden border border-amber-500/40 bg-zinc-900 shrink-0">
                       <Image
-                        src="/logo.jpg"
-                        alt={siteName}
+                        src={logoInfo.src}
+                        alt={logoInfo.alt || siteName}
                         fill
                         sizes="40px"
                         className="object-cover"
+                        unoptimized={logoInfo.isCustom}
                       />
                     </div>
                     <div className="flex flex-col text-left">
@@ -138,7 +143,7 @@ export function Header({ settings }: { settings?: any }) {
                         {siteName}
                       </span>
                       <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider mt-0.5">
-                        Compra, Venda e Locação
+                        {slogan}
                       </span>
                     </div>
                   </SheetTitle>

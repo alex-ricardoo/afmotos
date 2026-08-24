@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import {
   ChevronRight,
   ArrowLeft,
-  ShieldCheck,
   MapPin,
   Clock,
 } from 'lucide-react';
@@ -23,6 +22,9 @@ import { MotorcycleGrid } from '@/components/motorcycles/motorcycle-grid';
 import { formatCurrency } from '@/lib/utils/format';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink, generateMotorcycleInterestMessage } from '@/lib/utils/whatsapp';
+import { getBusinessHours, getMapsUrl } from '@/lib/site-settings';
+import { MotorcycleShareSection } from '@/components/motorcycles/motorcycle-share-section';
+import { getPublicMotorcycleUrl } from '@/lib/utils/share';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -42,12 +44,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? moto.description.substring(0, 160)
     : `Confira a ${moto.brand} ${moto.model} (${moto.year_model}) na AF Motos. Negociação direta e atendimento pelo WhatsApp.`;
 
+  const canonicalUrl = getPublicMotorcycleUrl(moto);
+
   return {
     title,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title,
       description,
+      url: canonicalUrl,
       images: moto.images?.[0] ? [moto.images[0].url] : [],
     },
   };
@@ -66,6 +74,10 @@ export default async function MotorcycleDetailPage({ params }: Props) {
   }
 
   const whatsappPhone = settings?.whatsapp_phone;
+  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  const businessHours = getBusinessHours(settings);
+  const addressText = settings?.address || 'Visitação e checagem da moto disponíveis com agendamento prévio pelo WhatsApp.';
+  const mapsUrl = getMapsUrl(settings);
 
   const relatedMotos = allFeatured
     .filter((m) => m.slug !== moto.slug)
@@ -82,7 +94,6 @@ export default async function MotorcycleDetailPage({ params }: Props) {
     whatsappPhone,
     generateMotorcycleInterestMessage(moto),
   );
-
 
   return (
     <div className="bg-[#050505] min-h-screen pb-24 md:pb-16 text-[#f4f4f2]">
@@ -116,7 +127,7 @@ export default async function MotorcycleDetailPage({ params }: Props) {
       {/* Main Vehicle Showcase */}
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-          {/* Left Column (8 cols): Gallery + Specs */}
+          {/* Left Column (8 cols): Gallery + Specs + Share Section */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-8">
             {/* Gallery */}
             <ImageCarousel images={images} />
@@ -140,6 +151,13 @@ export default async function MotorcycleDetailPage({ params }: Props) {
 
             {/* Technical Specifications */}
             <MotorcycleSpecs motorcycle={moto} />
+
+            {/* Dedicated Motorcycle Sharing Section */}
+            <MotorcycleShareSection
+              motorcycle={moto}
+              whatsappPhone={whatsappPhone}
+              siteName={siteName}
+            />
           </div>
 
           {/* Right Column (4 cols): Sticky Summary Card & Lead Box */}
@@ -203,21 +221,33 @@ export default async function MotorcycleDetailPage({ params }: Props) {
               {/* WhatsApp Conversion CTAs */}
               <WhatsAppCTA motorcycle={moto} whatsappPhone={whatsappPhone} />
 
-              {/* Showroom / Visitação info */}
+              {/* Showroom / Visitação & Horários Dinâmicos */}
               <div className="pt-2 border-t border-[#c9a44c]/20 space-y-2 text-xs text-[#a6a6a1]">
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-[#e3c56c] shrink-0 mt-0.5" />
-                  <span>
-                    Visitação e checagem da moto disponíveis com agendamento prévio pelo WhatsApp.
-                  </span>
+                  <div>
+                    <span>{addressText}</span>
+                    {mapsUrl && (
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-[#e3c56c] font-semibold hover:underline mt-0.5"
+                      >
+                        Ver no Google Maps &rarr;
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#e3c56c] shrink-0" />
-                  <span>Segunda a Sexta das 08h às 18h | Sábado das 08h às 13h</span>
+                <div className="flex items-start gap-2">
+                  <Clock className="w-4 h-4 text-[#e3c56c] shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <p>{businessHours.weekdays}</p>
+                    <p>{businessHours.saturday}</p>
+                  </div>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
 

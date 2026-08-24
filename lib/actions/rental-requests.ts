@@ -48,7 +48,8 @@ export async function createRentalRequestAction(data: RentalRequestValues) {
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { error: error.errors[0].message };
+      const firstIssue = error.issues?.[0];
+      return { error: firstIssue?.message || 'Dados de formulário inválidos.' };
     }
     return { error: 'Erro inesperado ao enviar solicitação.' };
   }

@@ -14,10 +14,10 @@ import {
   ExternalLink,
   Scale,
   Receipt,
-  Sparkles,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { getSiteLogo } from '@/lib/site-settings';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -28,10 +28,13 @@ const navigation = [
   { name: 'Configurações', href: '/admin/configuracoes', icon: Settings },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ settings }: { settings?: any }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+
+  const logoInfo = getSiteLogo(settings);
+  const siteName = settings?.site_name || 'AF Motos';
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -45,12 +48,20 @@ export function AdminSidebar() {
       <div className="flex h-20 shrink-0 items-center justify-between px-6 pt-2">
         <Link href="/admin" className="flex items-center gap-3.5 group">
           <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[#c9a44c]/50 shadow-[0_0_15px_rgba(201,164,76,0.15)] bg-black/60 group-hover:border-[#c9a44c] group-hover:shadow-[0_0_20px_rgba(201,164,76,0.3)] transition-all">
-            <Image src="/logo.png" alt="AF Motos Logo" fill sizes="40px" className="object-cover" priority />
+            <Image
+              src={logoInfo.src}
+              alt={siteName}
+              fill
+              sizes="40px"
+              className="object-cover"
+              priority
+              unoptimized={logoInfo.isCustom}
+            />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <span className="text-base font-black tracking-tight text-white">
-                AF <span className="text-[#c9a44c]">Motos</span>
+                {siteName}
               </span>
               <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
                 Admin

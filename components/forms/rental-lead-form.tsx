@@ -30,8 +30,8 @@ import { cn } from '@/lib/utils';
 const rentalSchema = z.object({
   name: z.string().min(2, 'Nome é obrigatório'),
   phone: z.string().min(14, 'Telefone inválido'),
-  age: z.coerce.number({ invalid_type_error: 'Idade inválida' }).min(18, 'A idade mínima é 18 anos').max(70, 'A idade máxima permitida é 70 anos'),
-  has_cnh_a: z.enum(['Sim', 'Provisória', 'Não'], { required_error: 'Selecione uma opção de CNH' }),
+  age: z.coerce.number().min(18, 'A idade mínima é 18 anos').max(70, 'A idade máxima permitida é 70 anos'),
+  has_cnh_a: z.enum(['Sim', 'Provisória', 'Não']),
   purpose_of_use: z.string().min(1, 'Selecione a finalidade de uso'),
   motorcycle_id: z.string().optional(),
   desired_plan: z.string().min(1, 'Selecione o plano desejado'),

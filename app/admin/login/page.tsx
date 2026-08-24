@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -10,14 +10,40 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { getSiteLogo } from '@/lib/site-settings';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [logoSrc, setLogoSrc] = useState<string>('/logo.jpg');
+  const [siteName, setSiteName] = useState<string>('AF Motos');
+  const [isCustomLogo, setIsCustomLogo] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    async function loadBranding() {
+      try {
+        const { data } = await supabase
+          .from('site_settings')
+          .select('*')
+          .limit(1)
+          .maybeSingle();
+
+        if (data) {
+          const logo = getSiteLogo(data as any);
+          setLogoSrc(logo.src);
+          setIsCustomLogo(logo.isCustom);
+          if (data.site_name) setSiteName(data.site_name);
+        }
+      } catch (err) {
+        console.warn('Could not load dynamic branding on login:', err);
+      }
+    }
+    loadBranding();
+  }, [supabase]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,14 +102,22 @@ export default function AdminLoginPage() {
           <div className="relative group">
             <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-[#c9a44c]/40 to-amber-500/20 blur-md group-hover:blur-lg transition-all duration-300 opacity-75" />
             <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-[#c9a44c]/70 bg-black/60 shadow-[0_0_20px_rgba(201,164,76,0.25)] flex items-center justify-center">
-              <Image src="/logo.png" alt="AF Motos Logo" fill priority sizes="80px" className="object-cover" />
+              <Image
+                src={logoSrc}
+                alt={`${siteName} Logo`}
+                fill
+                priority
+                sizes="80px"
+                className="object-cover"
+                unoptimized={isCustomLogo}
+              />
             </div>
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-2">
               <h1 className="text-2xl font-extrabold tracking-tight text-white">
-                AF <span className="text-[#c9a44c]">Motos</span>
+                {siteName}
               </h1>
               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
                 Admin
@@ -174,7 +208,7 @@ export default function AdminLoginPage() {
 
       {/* Footer copyright */}
       <p className="text-center text-[11px] text-zinc-500">
-        © {new Date().getFullYear()} AF Motos. Todos os direitos reservados.
+        © {new Date().getFullYear()} {siteName}. Todos os direitos reservados.
       </p>
     </div>
   );

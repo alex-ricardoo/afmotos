@@ -17,6 +17,7 @@ import {
 } from '@/lib/utils/formatters';
 import { Printer, ArrowLeft, Download, CheckCircle2, Clock, Pencil } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { getSiteLogo } from '@/lib/site-settings';
 
 interface OfficialReceiptPrintProps {
   sale: SaleWithDetails;
@@ -31,6 +32,7 @@ export function OfficialReceiptPrint({
 }: OfficialReceiptPrintProps) {
   const moto = sale.motorcycle;
   const storeName = siteSettings?.site_name || 'AF Motos';
+  const logoInfo = getSiteLogo(siteSettings as any);
   /* CNPJ da loja (em breve): const cnpj = '58.490.871/0001-30'; */
   const address = siteSettings?.address || 'Cabo de Santo Agostinho - PE';
   const rawPhone = siteSettings?.whatsapp_phone || '81985901175';
@@ -144,12 +146,13 @@ export function OfficialReceiptPrint({
               {/* Logotipo Real da Loja */}
               <div className="w-13 h-13 sm:w-16 sm:h-16 relative rounded-xl overflow-hidden bg-slate-950 border border-amber-500/40 shrink-0 shadow-sm flex items-center justify-center p-1">
                 <Image
-                  src="/logo.jpg"
-                  alt="AF Motos Logo"
+                  src={logoInfo.src}
+                  alt={`${storeName} Logo`}
                   width={64}
                   height={64}
                   priority
                   className="w-full h-full object-contain"
+                  unoptimized={logoInfo.isCustom}
                 />
               </div>
 

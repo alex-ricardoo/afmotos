@@ -3,8 +3,12 @@
 import { ShieldCheck, Globe, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getSiteLogo } from '@/lib/site-settings';
 
-export function AdminHeader() {
+export function AdminHeader({ settings }: { settings?: any }) {
+  const logoInfo = getSiteLogo(settings);
+  const siteName = settings?.site_name || 'AF Motos';
+
   return (
     <header className="sticky top-0 z-20 flex h-16 flex-shrink-0 items-center justify-between bg-[#08080a]/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8 border-b border-zinc-900/50 select-none">
       {/* Left side: Branding / Screen title */}
@@ -12,11 +16,18 @@ export function AdminHeader() {
         {/* Mobile Logo Branding */}
         <Link href="/admin" className="flex items-center gap-2.5 lg:hidden">
           <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border border-[#c9a44c]/50 shadow-xs bg-black/50">
-            <Image src="/logo.png" alt="AF Motos" fill sizes="32px" className="object-cover" />
+            <Image
+              src={logoInfo.src}
+              alt={siteName}
+              fill
+              sizes="32px"
+              className="object-cover"
+              unoptimized={logoInfo.isCustom}
+            />
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-black tracking-tight text-white">
-              AF <span className="text-[#c9a44c]">Motos</span>
+              {siteName}
             </span>
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
               Admin

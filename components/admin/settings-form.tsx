@@ -11,68 +11,191 @@ import {
   Store,
   Phone,
   MapPin,
-  Mail,
-  Globe,
+  Clock,
   Share2,
+  FileText,
+  Search,
   CheckCircle2,
   Loader2,
-  Sparkles,
   ArrowLeft,
+  Sparkles,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Form } from '@/components/ui/form';
+import { cn } from '@/lib/utils';
+import { IdentityTab } from './settings/identity-tab';
+import { ContactTab } from './settings/contact-tab';
+import { AddressTab } from './settings/address-tab';
+import { HoursTab } from './settings/hours-tab';
+import { SocialTab } from './settings/social-tab';
+import { ContentTab } from './settings/content-tab';
+import { SeoTab } from './settings/seo-tab';
 
 const settingsSchema = z.object({
   id: z.string().optional(),
   site_name: z.string().min(2, 'Nome da loja é obrigatório'),
   whatsapp_phone: z.string().min(10, 'WhatsApp é obrigatório'),
-  contact_email: z.string().email('E-mail inválido'),
-  address: z.string().optional(),
-  short_name: z.string().optional(),
-  slogan: z.string().optional(),
-  institutional_description: z.string().optional(),
-  logo_path: z.string().optional(),
-  favicon_path: z.string().optional(),
-  instagram_url: z.string().url('URL inválida').optional().or(z.literal('')),
-  facebook_url: z.string().url('URL inválida').optional().or(z.literal('')),
-  tiktok_url: z.string().url('URL inválida').optional().or(z.literal('')),
+  contact_email: z.string().email('E-mail inválido').optional().or(z.literal('')),
+  address: z.string().optional().nullable(),
+  settings: z.object({
+    shortName: z.string().optional(),
+    slogan: z.string().optional(),
+    description: z.string().optional(),
+    branding: z
+      .object({
+        logoProvider: z.enum(['local', 'imgbb', 'supabase']).optional(),
+        logoUrl: z.string().optional().nullable(),
+        logoPath: z.string().optional().nullable(),
+        faviconProvider: z.enum(['local', 'imgbb', 'supabase']).optional(),
+        faviconUrl: z.string().optional().nullable(),
+        faviconPath: z.string().optional().nullable(),
+      })
+      .optional(),
+    address: z
+      .object({
+        cep: z.string().optional(),
+        street: z.string().optional(),
+        number: z.string().optional(),
+        complement: z.string().optional(),
+        neighborhood: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        country: z.string().optional(),
+        mapsUrl: z.string().optional().nullable(),
+      })
+      .optional(),
+    socialLinks: z
+      .object({
+        instagram: z.string().optional().nullable(),
+        facebook: z.string().optional().nullable(),
+        tiktok: z.string().optional().nullable(),
+        youtube: z.string().optional().nullable(),
+      })
+      .optional(),
+    businessHours: z.record(z.string(), z.any()).optional(),
+    publicContent: z
+      .object({
+        heroTitle: z.string().optional(),
+        heroSubtitle: z.string().optional(),
+        aboutText: z.string().optional(),
+        footerText: z.string().optional(),
+        whatsappMessage: z.string().optional(),
+        commercialNotice: z.string().optional(),
+      })
+      .optional(),
+    seo: z
+      .object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        ogImageUrl: z.string().optional().nullable(),
+        canonicalUrl: z.string().optional().nullable(),
+      })
+      .optional(),
+    // Chaves legadas
+    short_name: z.string().optional(),
+    institutional_description: z.string().optional(),
+    logo_path: z.string().optional(),
+    favicon_path: z.string().optional(),
+    instagram_url: z.string().optional(),
+    facebook_url: z.string().optional(),
+    tiktok_url: z.string().optional(),
+    youtube_url: z.string().optional(),
+  }),
 });
 
-type SettingsFormValues = z.infer<typeof settingsSchema>;
+export type SettingsFormValues = z.infer<typeof settingsSchema>;
+export type SiteSettingsFormValues = SettingsFormValues;
 
-interface SettingsFormProps {
+export interface SettingsFormProps {
   initialData?: any;
 }
 
+const TABS = [
+  { id: 'identity', label: 'Identidade', icon: Store },
+  { id: 'contact', label: 'Contato', icon: Phone },
+  { id: 'address', label: 'Endereço & Maps', icon: MapPin },
+  { id: 'hours', label: 'Horários', icon: Clock },
+  { id: 'social', label: 'Redes Sociais', icon: Share2 },
+  { id: 'content', label: 'Conteúdo', icon: FileText },
+  { id: 'seo', label: 'SEO & Buscas', icon: Search },
+] as const;
+
 export function SettingsForm({ initialData }: SettingsFormProps) {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('identity');
   const [loading, setLoading] = useState(false);
+
+  const rawSettings = initialData?.settings || {};
 
   const defaultValues: SettingsFormValues = {
     id: initialData?.id || undefined,
-    site_name: initialData?.site_name || '',
+    site_name: initialData?.site_name || 'AF Motos',
     whatsapp_phone: initialData?.whatsapp_phone || '',
     contact_email: initialData?.contact_email || '',
     address: initialData?.address || '',
-    short_name: initialData?.settings?.short_name || '',
-    slogan: initialData?.settings?.slogan || '',
-    institutional_description: initialData?.settings?.institutional_description || '',
-    logo_path: initialData?.settings?.logo_path || '',
-    favicon_path: initialData?.settings?.favicon_path || '',
-    instagram_url: initialData?.settings?.instagram_url || '',
-    facebook_url: initialData?.settings?.facebook_url || '',
-    tiktok_url: initialData?.settings?.tiktok_url || '',
+    settings: {
+      shortName: rawSettings.shortName || rawSettings.short_name || 'AF Motos',
+      slogan: rawSettings.slogan || '',
+      description: rawSettings.description || rawSettings.institutional_description || '',
+      branding: {
+        logoProvider: rawSettings.branding?.logoProvider || 'imgbb',
+        logoUrl: rawSettings.branding?.logoUrl || rawSettings.logo_path || '',
+        logoPath: rawSettings.branding?.logoPath || '',
+        faviconProvider: rawSettings.branding?.faviconProvider || 'imgbb',
+        faviconUrl: rawSettings.branding?.faviconUrl || rawSettings.favicon_path || '',
+        faviconPath: rawSettings.branding?.faviconPath || '',
+      },
+      address: {
+        cep: rawSettings.address?.cep || '',
+        street: rawSettings.address?.street || '',
+        number: rawSettings.address?.number || '',
+        complement: rawSettings.address?.complement || '',
+        neighborhood: rawSettings.address?.neighborhood || '',
+        city: rawSettings.address?.city || '',
+        state: rawSettings.address?.state || '',
+        country: rawSettings.address?.country || 'Brasil',
+        mapsUrl: rawSettings.address?.mapsUrl || '',
+      },
+      socialLinks: {
+        instagram: rawSettings.socialLinks?.instagram || rawSettings.instagram_url || '',
+        facebook: rawSettings.socialLinks?.facebook || rawSettings.facebook_url || '',
+        tiktok: rawSettings.socialLinks?.tiktok || rawSettings.tiktok_url || '',
+        youtube: rawSettings.socialLinks?.youtube || rawSettings.youtube_url || '',
+      },
+      businessHours: rawSettings.businessHours || {
+        monday: { isOpen: true, periods: [{ opensAt: '08:00', closesAt: '18:00' }] },
+        tuesday: { isOpen: true, periods: [{ opensAt: '08:00', closesAt: '18:00' }] },
+        wednesday: { isOpen: true, periods: [{ opensAt: '08:00', closesAt: '18:00' }] },
+        thursday: { isOpen: true, periods: [{ opensAt: '08:00', closesAt: '18:00' }] },
+        friday: { isOpen: true, periods: [{ opensAt: '08:00', closesAt: '18:00' }] },
+        saturday: { isOpen: true, periods: [{ opensAt: '08:00', closesAt: '13:00' }] },
+        sunday: { isOpen: false, periods: [] },
+      },
+      publicContent: {
+        heroTitle: rawSettings.publicContent?.heroTitle || '',
+        heroSubtitle: rawSettings.publicContent?.heroSubtitle || '',
+        aboutText: rawSettings.publicContent?.aboutText || '',
+        footerText: rawSettings.publicContent?.footerText || '',
+        whatsappMessage: rawSettings.publicContent?.whatsappMessage || '',
+        commercialNotice: rawSettings.publicContent?.commercialNotice || '',
+      },
+      seo: {
+        title: rawSettings.seo?.title || '',
+        description: rawSettings.seo?.description || '',
+        ogImageUrl: rawSettings.seo?.ogImageUrl || '',
+        canonicalUrl: rawSettings.seo?.canonicalUrl || '',
+      },
+      // Compatibilidade legada
+      short_name: rawSettings.short_name || rawSettings.shortName || '',
+      institutional_description: rawSettings.institutional_description || rawSettings.description || '',
+      logo_path: rawSettings.logo_path || rawSettings.branding?.logoUrl || '',
+      favicon_path: rawSettings.favicon_path || rawSettings.branding?.faviconUrl || '',
+      instagram_url: rawSettings.instagram_url || rawSettings.socialLinks?.instagram || '',
+      facebook_url: rawSettings.facebook_url || rawSettings.socialLinks?.facebook || '',
+      tiktok_url: rawSettings.tiktok_url || rawSettings.socialLinks?.tiktok || '',
+      youtube_url: rawSettings.youtube_url || rawSettings.socialLinks?.youtube || '',
+    },
   };
 
   const form = useForm<SettingsFormValues>({
@@ -80,11 +203,50 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
     defaultValues,
   });
 
+  const { isDirty } = form.formState;
+
   async function onSubmit(data: SettingsFormValues) {
     setLoading(true);
 
     try {
-      const result = await saveSettingsAction(data);
+      // Monta texto plano do endereço se os campos estruturados existirem
+      const addrObj = data.settings.address;
+      let computedAddress = data.address;
+      if (addrObj?.street || addrObj?.city) {
+        const parts = [
+          addrObj.street,
+          addrObj.number,
+          addrObj.complement,
+          addrObj.neighborhood,
+          addrObj.city && addrObj.state ? `${addrObj.city} - ${addrObj.state}` : addrObj.city,
+          addrObj.cep,
+        ].filter(Boolean);
+        if (parts.length > 0) {
+          computedAddress = parts.join(', ');
+        }
+      }
+
+      // Sincroniza chaves legadas e novas
+      const payload = {
+        id: data.id,
+        site_name: data.site_name,
+        whatsapp_phone: data.whatsapp_phone,
+        contact_email: data.contact_email || null,
+        address: computedAddress || null,
+        settings: {
+          ...data.settings,
+          short_name: data.settings.shortName,
+          institutional_description: data.settings.description,
+          logo_path: data.settings.branding?.logoUrl || data.settings.logo_path,
+          favicon_path: data.settings.branding?.faviconUrl || data.settings.favicon_path,
+          instagram_url: data.settings.socialLinks?.instagram,
+          facebook_url: data.settings.socialLinks?.facebook,
+          tiktok_url: data.settings.socialLinks?.tiktok,
+          youtube_url: data.settings.socialLinks?.youtube,
+        },
+      };
+
+      const result = await saveSettingsAction(payload as any);
 
       if (result.error) {
         toast.error('Erro ao salvar configurações', {
@@ -92,6 +254,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
         });
       } else {
         toast.success('Configurações salvas com sucesso!');
+        form.reset(data);
         router.refresh();
       }
     } catch (error) {
@@ -104,305 +267,90 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
 
   return (
     <div className="space-y-6 pb-24">
+      {/* Barra de Abas / Navegação de Categorias */}
+      <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-1.5 shadow-md backdrop-blur-md overflow-x-auto scrollbar-none">
+        <nav className="flex items-center gap-1.5 min-w-max">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none',
+                  isActive
+                    ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 shadow-md shadow-amber-500/10 font-bold'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60',
+                )}
+              >
+                <Icon className={cn('w-4 h-4', isActive ? 'text-zinc-950' : 'text-zinc-400')} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Formulário Principal */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
-          
-          {/* SEÇÃO 1: IDENTIDADE DA LOJA */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xl space-y-6">
-            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-                <Store className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Identidade da Loja</h2>
-                <p className="text-xs text-slate-400">
-                  Defina o nome oficial, slogan e a história institucional da AF Motos.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <FormField
-                control={form.control as any}
-                name="site_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      Nome Principal da Loja <span className="text-rose-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: AF Motos"
-                        {...field}
-                        className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control as any}
-                name="short_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      Nome Abreviado
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: AF Motos"
-                        {...field}
-                        className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control as any}
-                name="slogan"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      Slogan Comercial
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: Locações e Vendas de Motocicletas com Confiança"
-                        {...field}
-                        className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control as any}
-                name="institutional_description"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      Descrição Institucional
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Apresente sua concessionária, diferenciais, tradição e atendimento..."
-                        rows={4}
-                        {...field}
-                        className="bg-slate-950 border-slate-800 text-slate-200 rounded-xl focus:border-amber-500 text-sm leading-relaxed p-4"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-5 sm:p-8 shadow-xl backdrop-blur-xl">
+            {activeTab === 'identity' && <IdentityTab form={form} />}
+            {activeTab === 'contact' && <ContactTab form={form} />}
+            {activeTab === 'address' && <AddressTab form={form} />}
+            {activeTab === 'hours' && <HoursTab form={form} />}
+            {activeTab === 'social' && <SocialTab form={form} />}
+            {activeTab === 'content' && <ContentTab form={form} />}
+            {activeTab === 'seo' && <SeoTab form={form} />}
           </div>
 
-          {/* SEÇÃO 2: CONTATO & LOCALIZAÇÃO */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xl space-y-6">
-            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-                <Phone className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Canais de Contato & Localização</h2>
-                <p className="text-xs text-slate-400">
-                  Esses dados alimentam os botões de atendimento via WhatsApp e rodapé do site.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <FormField
-                control={form.control as any}
-                name="whatsapp_phone"
-                render={({ field: { value, onChange, ...fieldProps } }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      Telefone / WhatsApp Comercial <span className="text-rose-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="(11) 99999-9999"
-                        {...fieldProps}
-                        value={value || ''}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-                          if (digits.length <= 10) {
-                            onChange(digits.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3'));
-                          } else {
-                            onChange(digits.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3'));
-                          }
-                        }}
-                        className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
-                      />
-                    </FormControl>
-                    <FormDescription className="text-[11px] text-slate-500">
-                      Utilizado nos redirecionamentos para conversa do WhatsApp.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control as any}
-                name="contact_email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      E-mail Oficial <span className="text-rose-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="contato@afmotos.com.br"
-                        {...field}
-                        className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control as any}
-                name="address"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      Endereço da Loja Física
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Av. Principal, 1000 - Bairro, Cidade - Estado"
-                        {...field}
-                        className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          {/* SEÇÃO 3: REDES SOCIAIS */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-7 shadow-xl space-y-6">
-            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-                <Share2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Redes Sociais & Links Oficiais</h2>
-                <p className="text-xs text-slate-400">
-                  Links diretos exibidos no topo e rodapé da plataforma.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-              <FormField
-                control={form.control as any}
-                name="instagram_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      Instagram URL
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://instagram.com/afmotos"
-                        {...field}
-                        className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500 text-xs"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control as any}
-                name="facebook_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      Facebook URL
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://facebook.com/afmotos"
-                        {...field}
-                        className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500 text-xs"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control as any}
-                name="tiktok_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                      TikTok URL
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://tiktok.com/@afmotos"
-                        {...field}
-                        className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500 text-xs"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          {/* BARRA DE AÇÕES INFERIOR */}
-          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-800">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              disabled={loading}
-              className="w-full sm:w-auto border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 h-12 px-6 rounded-xl cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1.5" />
-              <span>Voltar</span>
-            </Button>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-8 h-12 rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Salvando Alterações...</span>
-                </>
+          {/* Barra Fixa / Inferior de Ações */}
+          <div className="sticky bottom-4 z-30 bg-zinc-950/90 border border-zinc-800 rounded-2xl p-4 shadow-2xl backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              {isDirty ? (
+                <span className="flex items-center gap-1.5 text-amber-400 font-medium">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Você possui alterações não salvas</span>
+                </span>
               ) : (
-                <>
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>Salvar Configurações da Loja</span>
-                </>
+                <span>Todas as configurações estão sincronizadas</span>
               )}
-            </Button>
-          </div>
+            </div>
 
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                disabled={loading}
+                className="w-full sm:w-auto border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 h-11 px-5 rounded-xl cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1.5" />
+                <span>Voltar</span>
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full sm:w-auto bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] hover:opacity-95 text-zinc-950 font-extrabold px-7 h-11 rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                    <span>Salvando...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Salvar Configurações</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </form>
       </Form>
     </div>

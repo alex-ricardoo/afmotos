@@ -1,25 +1,67 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShieldCheck, FileCheck, Award, Phone, Mail, Clock } from 'lucide-react';
+import {
+  ShieldCheck,
+  FileCheck,
+  Award,
+  Phone,
+  Mail,
+  Clock,
+  MapPin,
+  ExternalLink,
+} from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
+import {
+  InstagramIcon,
+  FacebookIcon,
+  TikTokIcon,
+  YouTubeIcon,
+} from '@/components/icons/social-icons';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink, formatPhoneForDisplay } from '@/lib/utils/whatsapp';
+import {
+  getSiteLogo,
+  getSocialLinks,
+  getBusinessHours,
+  getMapsUrl,
+} from '@/lib/site-settings';
 
 export function Footer({ settings }: { settings?: any }) {
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
   const slogan = settings?.settings?.slogan || 'Compra, venda e locação de motos de forma simples';
   const description =
+    settings?.settings?.description ||
     settings?.settings?.institutional_description ||
     'Compra, venda e locação de motos com atendimento direto e transparente pelo WhatsApp.';
   const contactEmail = settings?.contact_email || CONSTANTS.CONTACT_EMAIL;
+  const addressText = settings?.address || CONSTANTS.STORE_ADDRESS;
+
+  const logoInfo = getSiteLogo(settings);
+  const socialLinks = getSocialLinks(settings);
+  const businessHours = getBusinessHours(settings);
+  const mapsUrl = getMapsUrl(settings);
 
   const whatsappUrl = generateWhatsAppLink(
     contactPhone,
     `Olá! Gostaria de mais informações sobre a ${siteName}.`,
   );
 
+  const getSocialIcon = (key: string) => {
+    switch (key) {
+      case 'instagram':
+        return <InstagramIcon className="w-4 h-4" />;
+      case 'facebook':
+        return <FacebookIcon className="w-4 h-4" />;
+      case 'tiktok':
+        return <TikTokIcon className="w-4 h-4" />;
+      case 'youtube':
+        return <YouTubeIcon className="w-4 h-4" />;
+      default:
+        return <ExternalLink className="w-4 h-4" />;
+    }
+  };
 
   return (
     <footer className="bg-[#050505] text-[#b8bcc2] border-t border-[#c9a44c]/20">
@@ -75,7 +117,14 @@ export function Footer({ settings }: { settings?: any }) {
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="flex items-center gap-3.5 group">
               <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#c9a44c]/40 bg-[#050505] shrink-0 shadow-[0_0_15px_rgba(201,164,76,0.15)]">
-                <Image src="/logo.jpg" alt={siteName} fill sizes="48px" className="object-cover" />
+                <Image
+                  src={logoInfo.src}
+                  alt={logoInfo.alt || siteName}
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                  unoptimized={logoInfo.isCustom}
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5 font-heading">
@@ -88,6 +137,31 @@ export function Footer({ settings }: { settings?: any }) {
               </div>
             </Link>
             <p className="text-sm text-[#a6a6a1] max-w-sm leading-relaxed">{description}</p>
+
+            {/* Redes Sociais Dinâmicas */}
+            {socialLinks.length > 0 && (
+              <div className="pt-2 space-y-2">
+                <span className="text-[11px] font-bold text-[#e3c56c] uppercase tracking-wider block">
+                  Siga a AF Motos
+                </span>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  {socialLinks.map((social) => (
+                    <a
+                      key={social.key}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Acessar nosso ${social.label}`}
+                      className="w-9 h-9 rounded-xl bg-zinc-900/90 border border-zinc-800 text-zinc-300 hover:text-amber-400 hover:border-amber-500/40 hover:bg-zinc-800 transition-all flex items-center justify-center cursor-pointer shadow-xs"
+                      title={social.label}
+                    >
+                      {getSocialIcon(social.key)}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="pt-2">
               <a
                 href={whatsappUrl}
@@ -152,35 +226,67 @@ export function Footer({ settings }: { settings?: any }) {
             </ul>
           </div>
 
-          {/* Contato & Atendimento */}
+          {/* Contato, Localização & Horários */}
           <div className="space-y-4">
             <h4 className="text-white text-xs font-bold uppercase tracking-widest text-[#e3c56c]">
-              Atendimento
+              Atendimento & Loja
             </h4>
             <ul className="space-y-3 text-xs text-[#a6a6a1]">
               <li>
                 <a
-                  href={`tel:${contactPhone.replace(/\D/g, "")}`}
+                  href={`tel:${contactPhone.replace(/\D/g, '')}`}
                   className="flex items-center gap-2 transition-colors duration-200 hover:text-amber-500"
                 >
                   <Phone className="h-4 w-4 shrink-0 text-[#c9a44c]" />
-
                   <span className="font-medium text-white hover:text-amber-500">
                     {formatPhoneForDisplay(contactPhone)}
                   </span>
                 </a>
               </li>
+              {contactEmail && (
+                <li>
+                  <a
+                    href={`mailto:${contactEmail}`}
+                    className="flex items-center gap-2 hover:text-amber-500 transition-colors duration-200"
+                  >
+                    <Mail className="w-4 h-4 text-[#c9a44c] shrink-0" />
+                    <span>{contactEmail}</span>
+                  </a>
+                </li>
+              )}
+              {/* Endereço clicável com link para Google Maps */}
               <li>
-                <a href={`mailto:${contactEmail}`} className="flex items-center gap-2 hover:text-amber-500 transition-colors duration-200">
-                  <Mail className="w-4 h-4 text-[#c9a44c] shrink-0" />
-                  <span>{contactEmail}</span>
-                </a>
+                {mapsUrl ? (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-2 text-zinc-300 hover:text-amber-400 transition-colors group cursor-pointer"
+                    title="Clique para ver a localização no Google Maps"
+                  >
+                    <MapPin className="w-4 h-4 text-[#c9a44c] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                    <div>
+                      <span className="leading-relaxed block">{addressText}</span>
+                      <span className="text-[10px] text-amber-400 font-semibold flex items-center gap-1 mt-0.5">
+                        <span>Ver no Google Maps</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </a>
+                ) : (
+                  <div className="flex items-start gap-2 text-zinc-400">
+                    <MapPin className="w-4 h-4 text-[#c9a44c] shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{addressText}</span>
+                  </div>
+                )}
               </li>
-              <li className="flex items-start gap-2">
+              {/* Horários de funcionamento */}
+              <li className="flex items-start gap-2 pt-1 border-t border-zinc-900">
                 <Clock className="w-4 h-4 text-[#c9a44c] shrink-0 mt-0.5" />
-                <div>
-                  <p>Segunda a Sexta: 08h às 18h</p>
-                  <p>Sábado: 08h às 13h</p>
+                <div className="space-y-0.5">
+                  <p>{businessHours.weekdays}</p>
+                  <p>{businessHours.saturday}</p>
+                  {businessHours.sunday && <p className="text-zinc-500">{businessHours.sunday}</p>}
                 </div>
               </li>
             </ul>
