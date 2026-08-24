@@ -319,6 +319,68 @@ export function ProposalDetail({
             </div>
           </div>
 
+          {/* Card: Dados de Aluguel (Se for proposta de aluguel) */}
+          {(proposal.rental || proposal.type === 'RENTAL') && (
+            <div className="bg-blue-950/30 rounded-2xl border border-blue-500/30 p-4.5 space-y-3.5 shadow-xs">
+              <div className="flex items-center justify-between pb-2.5 border-b border-blue-500/30">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                  Detalhes do Aluguel
+                </h4>
+                <Badge variant="outline" className="text-[10px] font-bold px-2 py-0.5 border-blue-500/40 bg-blue-500/10 text-blue-300">
+                  Solicitação de Locação
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                {proposal.rental?.desiredPlan && (
+                  <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
+                    <span className="text-zinc-500 text-[10px] block">Plano Desejado</span>
+                    <span className="font-bold text-blue-400 font-heading text-sm block">{proposal.rental.desiredPlan}</span>
+                  </div>
+                )}
+
+                {proposal.rental?.expectedStartDate && (
+                  <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
+                    <span className="text-zinc-500 text-[10px] block">Início Previsto</span>
+                    <span className="font-bold text-zinc-200 font-mono text-sm block">
+                      {proposal.rental.expectedStartDate.split('-').reverse().join('/')}
+                    </span>
+                  </div>
+                )}
+
+                {proposal.rental?.hasCnhA && (
+                  <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
+                    <span className="text-zinc-500 text-[10px] block">CNH Categoria A</span>
+                    <span className="font-bold text-white block">{proposal.rental.hasCnhA}</span>
+                  </div>
+                )}
+
+                {proposal.rental?.age != null && (
+                  <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
+                    <span className="text-zinc-500 text-[10px] block">Idade</span>
+                    <span className="font-bold text-zinc-200 block">{proposal.rental.age} anos</span>
+                  </div>
+                )}
+
+                {proposal.rental?.purposeOfUse && (
+                  <div className="col-span-2 sm:col-span-2 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
+                    <span className="text-zinc-500 text-[10px] block">Finalidade de Uso</span>
+                    <span className="font-semibold text-zinc-200 block truncate">{proposal.rental.purposeOfUse}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Aviso caso não haja moto selecionada para o aluguel */}
+          {proposal.type === 'RENTAL' && !proposal.motorcycle?.brand && (
+            <div className="bg-zinc-900/40 p-4 rounded-2xl border border-zinc-800/60 text-xs text-zinc-400 flex items-center gap-2 italic">
+              <Bike className="w-4 h-4 text-zinc-500 shrink-0" />
+              <span>Cliente ainda não selecionou uma moto específica.</span>
+            </div>
+          )}
+
           {/* Card 2: Dados da Moto & Análise Financeira */}
           {proposal.motorcycle && (proposal.motorcycle.brand || proposal.motorcycle.model) && (
             <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3.5 shadow-xs">

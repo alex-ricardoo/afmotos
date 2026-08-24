@@ -97,8 +97,15 @@ export function generateProposalWhatsAppMessage(proposal: ProposalViewModel): st
     case 'MOTORCYCLE_INTEREST':
       return `Olá ${name}! Vi seu interesse${moto ? ` na moto ${moto}` : ' em uma moto'} pelo site da AF Motos e gostaria de passar mais informações e condições especiais.`;
 
-    case 'RENTAL':
-      return `Olá ${name}! Recebemos sua solicitação de aluguel de moto enviada pelo site da AF Motos. Como podemos te ajudar com as opções disponíveis?`;
+    case 'RENTAL': {
+      const plano = proposal.rental?.desiredPlan || 'Não informado';
+      const rawDate = proposal.rental?.expectedStartDate;
+      const dataFormatted = rawDate ? rawDate.split('-').reverse().join('/') : 'Não informada';
+      const motoDesc = moto || 'Ainda não selecionou uma moto específica';
+
+      return `Olá, ${name}! Aqui é da AF Motos. Recebemos sua proposta de aluguel de uma moto pelo nosso site e gostaríamos de confirmar alguns detalhes com você.\n\nPlano desejado: ${plano}\nData prevista: ${dataFormatted}\nMoto: ${motoDesc}`;
+    }
+
 
     case 'MOTORCYCLE_REQUEST':
       return `Olá ${name}! Recebemos seu pedido de moto pelo site da AF Motos e estamos buscando as melhores opções para você.`;

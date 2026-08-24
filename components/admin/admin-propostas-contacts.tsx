@@ -97,7 +97,10 @@ export function AdminPropostasContacts({ initialData }: Props) {
       (item.message && item.message.toLowerCase().includes(queryLower)) ||
       (item.motorcycle?.brand && item.motorcycle.brand.toLowerCase().includes(queryLower)) ||
       (item.motorcycle?.model && item.motorcycle.model.toLowerCase().includes(queryLower)) ||
-      (item.city && item.city.toLowerCase().includes(queryLower));
+      (item.city && item.city.toLowerCase().includes(queryLower)) ||
+      (item.rental?.desiredPlan && item.rental.desiredPlan.toLowerCase().includes(queryLower)) ||
+      (item.rental?.purposeOfUse && item.rental.purposeOfUse.toLowerCase().includes(queryLower)) ||
+      (item.rental?.hasCnhA && item.rental.hasCnhA.toLowerCase().includes(queryLower));
 
     return matchesStatus && matchesType && matchesSearch;
   });
@@ -195,11 +198,11 @@ export function AdminPropostasContacts({ initialData }: Props) {
     }
   };
 
-  const getStatusConfig = (status: string) => {
+  const getStatusConfig = (status: string, isRental: boolean = false) => {
     switch (status) {
       case 'NEW':
         return {
-          label: 'Novo Lead',
+          label: isRental ? 'Nova proposta' : 'Novo Lead',
           badgeClass: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 font-bold',
           cardBorder: 'border-emerald-500/35 hover:border-emerald-400',
           cardGlow: 'hover:shadow-[0_12px_35px_rgba(16,185,129,0.15)]',
@@ -208,7 +211,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         };
       case 'CONTACTED':
         return {
-          label: 'Em atendimento',
+          label: isRental ? 'Cliente contatado' : 'Em atendimento',
           badgeClass: 'bg-blue-500/20 text-blue-400 border-blue-500/40 font-bold',
           cardBorder: 'border-blue-500/30 hover:border-blue-400',
           cardGlow: 'hover:shadow-[0_12px_35px_rgba(59,130,246,0.12)]',
@@ -226,7 +229,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         };
       case 'CONVERTED':
         return {
-          label: 'Convertido',
+          label: isRental ? 'Aprovada' : 'Convertido',
           badgeClass: 'bg-[#c9a44c]/25 text-[#f5d77f] border-[#c9a44c]/50 font-bold',
           cardBorder: 'border-[#c9a44c]/40 hover:border-[#c9a44c]',
           cardGlow: 'hover:shadow-[0_12px_35px_rgba(201,164,76,0.18)]',
@@ -235,7 +238,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         };
       case 'LOST':
         return {
-          label: 'Perdido',
+          label: isRental ? 'Recusada' : 'Perdido',
           badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/30 font-semibold',
           cardBorder: 'border-rose-500/20 hover:border-rose-500/40',
           cardGlow: '',
@@ -245,7 +248,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
       case 'CLOSED':
       default:
         return {
-          label: 'Encerrado',
+          label: isRental ? 'Recusada' : 'Encerrado',
           badgeClass: 'bg-zinc-800 text-zinc-400 border-zinc-700 font-medium',
           cardBorder: 'border-zinc-800/80 hover:border-zinc-700',
           cardGlow: '',
@@ -535,9 +538,10 @@ export function AdminPropostasContacts({ initialData }: Props) {
         /* CARDS GRID VIEW */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredProposals.map((proposal) => {
+            const isRental = proposal.source === 'rental_request' || proposal.type === 'RENTAL';
             const typeInfo = getTypeStyle(proposal.type);
             const TypeIcon = typeInfo.icon;
-            const statusConfig = getStatusConfig(proposal.status);
+            const statusConfig = getStatusConfig(proposal.status, isRental);
             const isCopied = copiedPhoneId === proposal.id;
 
             // FIPE delta
@@ -639,15 +643,51 @@ export function AdminPropostasContacts({ initialData }: Props) {
 
                       {proposal.city && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900/60 border border-zinc-800/60 text-[11px] text-zinc-400">
-                          <MapPin className="w-3 h-3 text-zinc-500" />
+                          <MapPin className="w-3.5 h-3.5 text-zinc-500" />
                           <span className="truncate max-w-[110px]">{proposal.city}</span>
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Row 3: Motorcycle Info Card (if present) */}
-                  {proposal.motorcycle?.brand ? (
+                  {/* Row 3: Rental or Motorcycle Info Card */}
+                  {proposal.rental ? (
+                    <div className="bg-blue-950/20 p-3 rounded-2xl border border-blue-500/25 text-xs text-zinc-200 space-y-1.5 mt-auto">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-blue-400 font-bold">Plano</span>
+                        <span className="font-extrabold text-white">
+                          {proposal.rental.desiredPlan || 'Não informado'}
+                        </span>
+                      </div>
+                      {proposal.rental.expectedStartDate && (
+                        <div className="flex justify-between items-center text-[11px]">
+                          <span className="text-zinc-400">Início previsto</span>
+                          <span className="font-mono text-zinc-300">
+                            {proposal.rental.expectedStartDate.split('-').reverse().join('/')}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-zinc-400">CNH A / Idade</span>
+                        <span className="text-zinc-300">
+                          {proposal.rental.hasCnhA || '-'}{' '}
+                          {proposal.rental.age ? `• ${proposal.rental.age} anos` : ''}
+                        </span>
+                      </div>
+                      {proposal.motorcycle?.brand ? (
+                        <div className="flex justify-between items-center pt-1 border-t border-blue-500/20 text-[11px]">
+                          <span className="text-zinc-400">Moto</span>
+                          <span className="font-bold text-[#e3c56c] truncate max-w-[130px]">
+                            {proposal.motorcycle.brand} {proposal.motorcycle.model}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="pt-1 border-t border-blue-500/20 text-[10px] text-zinc-400 italic">
+                          Cliente ainda não selecionou uma moto específica.
+                        </div>
+                      )}
+                    </div>
+                  ) : proposal.motorcycle?.brand ? (
                     <div className="bg-zinc-900/70 p-3 rounded-2xl border border-zinc-800/80 text-xs text-zinc-200 space-y-1.5 mt-auto">
                       <div className="flex justify-between items-center">
                         <span className="text-zinc-400 font-medium text-[11px]">Moto</span>
@@ -784,9 +824,10 @@ export function AdminPropostasContacts({ initialData }: Props) {
               </thead>
               <tbody className="divide-y divide-zinc-900">
                 {filteredProposals.map((proposal) => {
+                  const isRental = proposal.source === 'rental_request' || proposal.type === 'RENTAL';
                   const typeInfo = getTypeStyle(proposal.type);
                   const TypeIcon = typeInfo.icon;
-                  const statusConfig = getStatusConfig(proposal.status);
+                  const statusConfig = getStatusConfig(proposal.status, isRental);
 
                   return (
                     <tr

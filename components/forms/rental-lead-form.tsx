@@ -75,6 +75,17 @@ export function RentalLeadForm({ defaultMotorcycleId, availableMotorcycles, what
     }
   }, [defaultMotorcycleId, form]);
 
+  const [submittedData, setSubmittedData] = useState<{
+    name: string;
+    phone: string;
+    age: number;
+    has_cnh_a: string;
+    purpose_of_use: string;
+    desired_plan: string;
+    expected_start_date: string;
+    motoName: string;
+  } | null>(null);
+
   async function onSubmit(data: RentalFormValues) {
     setLoading(true);
     try {
@@ -86,22 +97,27 @@ export function RentalLeadForm({ defaultMotorcycleId, availableMotorcycles, what
       if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success('Solicitação registrada! Você será redirecionado para o WhatsApp.');
-        setSuccess(true);
-        form.reset();
-        
-        // Find motorcycle name for the whatsapp message
+        toast.success('Proposta enviada com sucesso!');
+
         let motoName = 'Ainda não decidi';
         if (data.motorcycle_id && data.motorcycle_id !== 'none') {
           const m = availableMotorcycles.find(x => x.id === data.motorcycle_id);
           if (m) motoName = `${m.brand} ${m.model} ${m.version || ''}`.trim();
         }
 
-        // Redirect to WhatsApp
-        const message = `Olá AF Motos! Gostaria de solicitar um aluguel de moto. Seguem meus dados:\n\n*Nome:* ${data.name}\n*Idade:* ${data.age} anos\n*CNH A:* ${data.has_cnh_a}\n*Uso:* ${data.purpose_of_use}\n*Plano:* ${data.desired_plan}\n*Início Previsto:* ${data.expected_start_date.split('-').reverse().join('/')}\n*Moto de Interesse:* ${motoName}\n\nPodemos conversar sobre as condições?`;
-        
-        const waUrl = generateWhatsAppLink(whatsappPhone, message);
-        window.open(waUrl, '_blank');
+        setSubmittedData({
+          name: data.name,
+          phone: data.phone,
+          age: data.age,
+          has_cnh_a: data.has_cnh_a,
+          purpose_of_use: data.purpose_of_use,
+          desired_plan: data.desired_plan,
+          expected_start_date: data.expected_start_date,
+          motoName,
+        });
+
+        setSuccess(true);
+        form.reset();
       }
     } catch (error) {
       toast.error('Não foi possível enviar agora. Verifique os campos e tente novamente.');
@@ -111,24 +127,50 @@ export function RentalLeadForm({ defaultMotorcycleId, availableMotorcycles, what
   }
 
   if (success) {
+    const waMessage = submittedData
+      ? `Olá AF Motos! Gostaria de falar sobre minha proposta de aluguel enviada pelo site.\n\n*Nome:* ${submittedData.name}\n*Plano:* ${submittedData.desired_plan}\n*Início:* ${submittedData.expected_start_date.split('-').reverse().join('/')}\n*Moto:* ${submittedData.motoName}`
+      : 'Olá! Enviei uma proposta de aluguel pelo site da AF Motos.';
+    
+    const waUrl = generateWhatsAppLink(whatsappPhone, waMessage);
+
     return (
-      <div className="bg-[#151515] border border-emerald-500/40 text-[#f4f4f2] p-8 rounded-2xl text-center space-y-4">
-        <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
-          <CheckCircle2 className="w-8 h-8" />
+      <div className="bg-[#151515] border border-[#c9a44c]/30 text-[#f4f4f2] p-8 sm:p-10 rounded-3xl text-center space-y-6 shadow-[0_0_30px_rgba(201,164,76,0.1)]">
+        <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center border border-emerald-500/40">
+          <CheckCircle2 className="w-9 h-9" />
         </div>
-        <h3 className="text-xl font-bold text-white font-heading">
-          Sua solicitação está a caminho!
-        </h3>
-        <p className="text-sm text-[#a6a6a1] max-w-md mx-auto leading-relaxed">
-          Se o WhatsApp não abriu automaticamente, clique no botão abaixo para nos enviar a mensagem pré-formatada.
-        </p>
-        <div className="pt-2">
+
+        <div className="space-y-2 max-w-lg mx-auto">
+          <h3 className="text-2xl font-black text-white font-heading">
+            Proposta enviada com sucesso!
+          </h3>
+          <p className="text-base text-zinc-300 leading-relaxed font-medium">
+            Recebemos seu interesse em alugar uma moto. Nossa equipe analisará as informações e entrará em contato para confirmar os detalhes.
+          </p>
+          <p className="text-xs text-[#a6a6a1] leading-relaxed pt-1">
+            Guarde seu telefone disponível. Podemos entrar em contato para confirmar a moto, o plano e as condições do aluguel.
+          </p>
+        </div>
+
+        <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
           <Button
-            className="bg-[#c9a44c] hover:bg-[#e3c56c] text-[#050505] font-bold px-6 h-11 rounded-xl cursor-pointer"
-            onClick={() => setSuccess(false)}
+            className="w-full sm:flex-1 bg-[#c9a44c] hover:bg-[#e3c56c] text-[#050505] font-extrabold h-12 rounded-xl cursor-pointer transition-all shadow-md"
+            onClick={() => {
+              setSuccess(false);
+              setSubmittedData(null);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           >
-            Nova Solicitação
+            Voltar para as motos
           </Button>
+
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full sm:flex-1 border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold h-12 rounded-xl flex items-center justify-center gap-2 text-xs transition-colors cursor-pointer"
+          >
+            <span>Falar no WhatsApp (Opcional)</span>
+          </a>
         </div>
       </div>
     );
@@ -354,7 +396,7 @@ export function RentalLeadForm({ defaultMotorcycleId, availableMotorcycles, what
             {loading ? (
                <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-               <span>Solicitar Aluguel via WhatsApp</span>
+               <span>Enviar Proposta de Aluguel</span>
             )}
           </Button>
         </div>

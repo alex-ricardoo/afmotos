@@ -5,7 +5,7 @@ import {
   proposalStatusLabels,
 } from './proposal-labels';
 
-export type ProposalSource = 'lead' | 'sell_request' | 'consignment_request';
+export type ProposalSource = 'lead' | 'sell_request' | 'consignment_request' | 'rental_request';
 
 export interface ProposalImage {
   id?: string;
@@ -32,6 +32,14 @@ export interface ProposalMotorcycle {
   fipeCode?: string | null;
 }
 
+export interface ProposalRental {
+  age: number | null;
+  hasCnhA: string | null;
+  purposeOfUse: string | null;
+  desiredPlan: string | null;
+  expectedStartDate: string | null;
+}
+
 export type ProposalViewModel = {
   id: string;
   source: ProposalSource;
@@ -49,6 +57,7 @@ export type ProposalViewModel = {
   notes?: string | null;
   createdAt: string;
   motorcycle: ProposalMotorcycle | null;
+  rental?: ProposalRental | null;
   images: ProposalImage[];
   metadata: Record<string, unknown>;
 };
@@ -60,6 +69,8 @@ export function normalizeStatus(status: string | undefined): ProposalStatus {
     NEW: 'NEW',
     novo: 'NEW',
     novo_contato: 'NEW',
+    PENDING: 'NEW',
+    pending: 'NEW',
     IN_CONTACT: 'CONTACTED',
     em_contato: 'CONTACTED',
     em_atendimento: 'CONTACTED',
@@ -71,10 +82,14 @@ export function normalizeStatus(status: string | undefined): ProposalStatus {
     CONVERTED: 'CONVERTED',
     convertido: 'CONVERTED',
     ganho: 'CONVERTED',
+    APPROVED: 'CONVERTED',
+    approved: 'CONVERTED',
     CLOSED: 'CLOSED',
     encerrado: 'CLOSED',
     LOST: 'LOST',
     perdido: 'LOST',
+    REJECTED: 'LOST',
+    rejected: 'LOST',
   };
 
   return statusMap[status.toUpperCase()] || statusMap[status.toLowerCase()] || 'NEW';
@@ -234,7 +249,89 @@ export function mapLeadToProposal(
             fipeCode: (metadata.fipe_code as string | undefined) || null,
           }
         : null,
+    rental: null,
     images: extractImages(metadata),
     metadata,
   };
 }
+
+export function mapRentalRequestToProposal(
+  row: Record<string, any>,
+): ProposalViewModel {
+  const status = normalizeStatus(row.status);
+  const type: ProposalType = 'RENTAL';
+
+  const motorcycleData = row.motorcycle;
+  let motorcycle: ProposalMotorcycle | null = null;
+  let images: ProposalImage[] = [];
+
+  if (motorcycleData) {
+    motorcycle = {
+      id: motorcycleData.id || null,
+      brand: motorcycleData.brand || null,
+      model: motorcycleData.model || null,
+      version: motorcycleData.version || null,
+      year: motorcycleData.year_model || motorcycleData.year_manufacture || null,
+      yearManufacture: motorcycleData.year_manufacture || null,
+      yearModel: motorcycleData.year_model || null,
+      mileage: motorcycleData.mileage != null ? Number(motorcycleData.mileage) : null,
+      color: motorcycleData.color || null,
+      desiredPrice: motorcycleData.price != null ? Number(motorcycleData.price) : null,
+      fipePrice: null,
+    };
+
+    if (Array.isArray(motorcycleData.motorcycle_images) && motorcycleData.motorcycle_images.length > 0) {
+      images = motorcycleData.motorcycle_images.map((img: any, idx: number) => {
+        let publicUrl = img.storage_path || img.public_url || '';
+        if (publicUrl && !publicUrl.startsWith('http') && !publicUrl.startsWith('/')) {
+          publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL || ''}/storage/v1/object/public/motorcycle-images/${publicUrl}`;
+        }
+        return {
+          id: img.id || String(idx),
+          url: publicUrl,
+          thumbnailUrl: publicUrl,
+          altText: `Foto ${idx + 1}`,
+          provider: 'supabase',
+          sortOrder: idx,
+          isPrimary: img.is_primary || idx === 0,
+        };
+      });
+    }
+  }
+
+  return {
+    id: row.id,
+    source: 'rental_request',
+    sourceId: row.id,
+    type,
+    typeLabel: proposalTypeLabels[type] || 'Aluguel de moto',
+    status,
+    statusLabel: proposalStatusLabels[status] || status,
+    name: row.name || 'Cliente sem nome',
+    phone: row.phone || '',
+    email: null,
+    city: null,
+    state: null,
+    message: row.notes || null,
+    notes: row.notes || null,
+    createdAt: row.created_at || new Date().toISOString(),
+    motorcycle,
+    rental: {
+      age: row.age != null ? Number(row.age) : null,
+      hasCnhA: row.has_cnh_a || null,
+      purposeOfUse: row.purpose_of_use || null,
+      desiredPlan: row.desired_plan || null,
+      expectedStartDate: row.expected_start_date || null,
+    },
+    images,
+    metadata: {
+      rental_request_id: row.id,
+      age: row.age,
+      has_cnh_a: row.has_cnh_a,
+      purpose_of_use: row.purpose_of_use,
+      desired_plan: row.desired_plan,
+      expected_start_date: row.expected_start_date,
+    },
+  };
+}
+

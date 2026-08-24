@@ -7,7 +7,11 @@ import { UploadedImage } from '@/lib/uploads/types';
 import { fipexFetch } from '@/lib/fipex/client';
 import { RawApiResponse, RawExpandedPriceData, RawModelDetail } from '@/lib/fipex/types';
 import { mapModelDetail } from '@/lib/fipex/mappers';
-import { ProposalViewModel, mapLeadToProposal } from '../admin/proposal-view-model';
+import {
+  ProposalViewModel,
+  mapLeadToProposal,
+  mapRentalRequestToProposal,
+} from '../admin/proposal-view-model';
 
 export interface CreateLeadPayload {
   type:
@@ -313,17 +317,53 @@ export async function createSellRequestAction(data: SellRequestPayload) {
 export async function getLeads(): Promise<ProposalViewModel[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from('leads')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const [leadsRes, rentalRes] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('rental_requests')
+      .select(`
+        *,
+        motorcycle:motorcycles (
+          id,
+          slug,
+          brand,
+          model,
+          version,
+          year_manufacture,
+          year_model,
+          mileage,
+          color,
+          price,
+          status,
+          motorcycle_images (
+            id,
+            storage_path,
+            is_primary
+          )
+        )
+      `)
+      .order('created_at', { ascending: false }),
+  ]);
 
-  if (error) {
-    console.error('Error fetching leads:', error);
-    return [];
+  if (leadsRes.error) {
+    console.error('Error fetching leads:', leadsRes.error);
   }
 
-  return (data || []).map(mapLeadToProposal);
+  if (rentalRes.error) {
+    console.error('Error fetching rental requests:', rentalRes.error);
+  }
+
+  const mappedLeads = (leadsRes.data || []).map(mapLeadToProposal);
+  const mappedRentals = (rentalRes.data || []).map(mapRentalRequestToProposal);
+
+  const combined = [...mappedLeads, ...mappedRentals];
+
+  combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return combined;
 }
 
 export async function updateLeadStatus(
@@ -334,20 +374,41 @@ export async function updateLeadStatus(
 ) {
   const supabase = await createClient();
 
-  // Atualiza sempre a tabela leads como hub central
-  const { error } = await supabase.from('leads').update({ status }).eq('id', id);
+  if (source === 'rental_request') {
+    let dbStatus = 'PENDING';
+    const s = status.toUpperCase();
+    if (s === 'CONTACTED') dbStatus = 'CONTACTED';
+    else if (s === 'APPROVED' || s === 'CONVERTED' || s === 'QUALIFIED') dbStatus = 'APPROVED';
+    else if (s === 'REJECTED' || s === 'LOST' || s === 'CLOSED') dbStatus = 'REJECTED';
+    else if (s === 'NEW' || s === 'PENDING') dbStatus = 'PENDING';
+    else dbStatus = status;
 
-  if (error) {
-    console.error('Error updating lead status:', error);
-    return { error: error.message };
-  }
+    const targetId = sourceId || id;
+    const { error } = await supabase
+      .from('rental_requests')
+      .update({ status: dbStatus, updated_at: new Date().toISOString() })
+      .eq('id', targetId);
 
-  // Se houver tabelas relacionadas, atualiza o status também
-  if (sourceId) {
-    if (source === 'sell_request') {
-      await supabase.from('sell_requests').update({ status }).eq('id', sourceId);
-    } else if (source === 'consignment_request') {
-      await supabase.from('consignment_requests').update({ status }).eq('id', sourceId);
+    if (error) {
+      console.error('Error updating rental request status:', error);
+      return { error: error.message };
+    }
+  } else {
+    // Atualiza sempre a tabela leads como hub central para leads, sell_requests, etc.
+    const { error } = await supabase.from('leads').update({ status }).eq('id', id);
+
+    if (error) {
+      console.error('Error updating lead status:', error);
+      return { error: error.message };
+    }
+
+    // Se houver tabelas relacionadas, atualiza o status também
+    if (sourceId) {
+      if (source === 'sell_request') {
+        await supabase.from('sell_requests').update({ status }).eq('id', sourceId);
+      } else if (source === 'consignment_request') {
+        await supabase.from('consignment_requests').update({ status }).eq('id', sourceId);
+      }
     }
   }
 

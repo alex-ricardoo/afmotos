@@ -44,8 +44,8 @@ export async function createRentalRequestAction(data: RentalRequestValues) {
       return { error: 'Ocorreu um erro ao enviar sua solicitação. Tente novamente.' };
     }
 
-    revalidatePath('/admin/alugueis');
-    return { success: true, data: result };
+    revalidatePath('/admin/propostas');
+    return { success: true, id: result.id, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {
       const firstIssue = error.issues?.[0];

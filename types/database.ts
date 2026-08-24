@@ -36,6 +36,23 @@ export interface Lead {
   updated_at?: string;
 }
 
+export interface RentalRequest {
+  id: string;
+  name: string;
+  phone: string;
+  age: number;
+  has_cnh_a: 'Sim' | 'Provisória' | 'Não';
+  purpose_of_use: string;
+  motorcycle_id?: string | null;
+  desired_plan: string;
+  expected_start_date: string;
+  status: 'PENDING' | 'CONTACTED' | 'APPROVED' | 'REJECTED' | string;
+  notes?: string | null;
+  created_at: string;
+  updated_at?: string;
+}
+
+
 export interface SellRequest {
   id: string;
   lead_id?: string | null;
@@ -540,7 +557,41 @@ export interface Database {
           updated_at?: string;
         };
       };
+      rental_requests: {
+        Row: RentalRequest;
+        Insert: {
+          id?: string;
+          name: string;
+          phone: string;
+          age: number;
+          has_cnh_a: 'Sim' | 'Provisória' | 'Não';
+          purpose_of_use: string;
+          motorcycle_id?: string | null;
+          desired_plan: string;
+          expected_start_date: string;
+          status?: string;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          phone?: string;
+          age?: number;
+          has_cnh_a?: 'Sim' | 'Provisória' | 'Não';
+          purpose_of_use?: string;
+          motorcycle_id?: string | null;
+          desired_plan?: string;
+          expected_start_date?: string;
+          status?: string;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
+
     Views: {
       [_ in never]: never;
     };
