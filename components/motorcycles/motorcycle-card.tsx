@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bike, Calendar, Gauge, Zap, ArrowUpRight, Share2 } from 'lucide-react';
+import { Bike, Calendar, Gauge, Zap, ArrowUpRight, Share2, Sparkles } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { MotorcycleStatusBadge } from './motorcycle-status-badge';
 import { formatCurrency } from '@/lib/utils/format';
@@ -24,6 +24,7 @@ export interface MotorcycleCardData {
   mileage: number | null;
   engine_capacity: number | null;
   status: string;
+  featured?: boolean | null;
   image_url?: string;
   differentials?: string[] | null;
 }
@@ -36,6 +37,7 @@ export interface MotorcycleCardProps {
 export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const isSold = motorcycle.status?.toUpperCase() === 'SOLD';
+  const isFeatured = Boolean(motorcycle.featured) && !isSold;
 
   const whatsappMessage = `Olá! Tenho interesse na ${motorcycle.brand} ${motorcycle.model} ${motorcycle.year_model}${motorcycle.price ? ` (R$ ${motorcycle.price.toLocaleString('pt-BR')})` : ''} anunciada no site da AF Motos. Poderia me passar mais detalhes?`;
 
@@ -45,10 +47,12 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
     <>
       <div
         className={cn(
-          'relative flex flex-col overflow-hidden rounded-2xl bg-[#151515] border shadow-sm w-full h-full transition-all duration-200',
+          'relative flex flex-col overflow-hidden rounded-2xl bg-[#151515] border shadow-sm w-full h-full transition-all duration-300',
           isSold
             ? 'border-zinc-800/80 hover:border-zinc-700/80'
-            : 'group border-[#c9a44c]/20 hover:border-[#e3c56c]/60 hover:shadow-[0_0_25px_rgba(201,164,76,0.15)] active:scale-[0.98] sm:duration-300',
+            : isFeatured
+              ? 'group border-amber-500/60 bg-gradient-to-b from-[#1c160c] via-[#151515] to-[#151515] shadow-[0_0_25px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/30 hover:border-amber-400 hover:shadow-[0_0_35px_rgba(245,158,11,0.25)] active:scale-[0.98]'
+              : 'group border-[#c9a44c]/20 hover:border-[#e3c56c]/60 hover:shadow-[0_0_25px_rgba(201,164,76,0.15)] active:scale-[0.98]',
         )}
       >
         {/* Top Image Container */}
@@ -109,11 +113,17 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
               )}
             </Link>
 
-            {/* Top Floating Status Badge */}
-            <div className="absolute top-3 left-3 z-20 pointer-events-none">
+            {/* Top Floating Status + Featured Badge */}
+            <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
+              {isFeatured && (
+                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 font-black text-[10px] sm:text-[10.5px] uppercase tracking-wider shadow-lg shadow-amber-500/30 border border-amber-300/40">
+                  <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-zinc-950 text-zinc-950 shrink-0" />
+                  <span>Destaque</span>
+                </div>
+              )}
               <MotorcycleStatusBadge
                 status={motorcycle.status}
-                className="backdrop-blur-md bg-black/70 border-zinc-700/50 text-white shadow-lg"
+                className="backdrop-blur-md bg-black/75 border-zinc-700/60 text-white shadow-lg"
               />
             </div>
 
@@ -141,9 +151,17 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
         <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between space-y-3">
           {/* Cabeçalho */}
           <div>
-            <span className="block text-[11px] text-zinc-400 font-semibold tracking-wider uppercase mb-0.5">
-              {motorcycle.brand}
-            </span>
+            <div className="flex items-center justify-between gap-2 mb-0.5">
+              <span className="block text-[11px] text-zinc-400 font-semibold tracking-wider uppercase">
+                {motorcycle.brand}
+              </span>
+              {isFeatured && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-400">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  <span>Seleção AF</span>
+                </span>
+              )}
+            </div>
             {isSold ? (
               <h3 className="text-base font-bold text-white line-clamp-1 leading-tight flex items-center gap-1.5 flex-wrap">
                 {motorcycle.model}

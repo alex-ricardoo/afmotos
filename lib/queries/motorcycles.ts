@@ -72,6 +72,7 @@ export async function getFeaturedMotorcycles() {
       mileage,
       engine_capacity,
       status,
+      featured,
       motorcycle_images (*)
     `,
     )
@@ -184,6 +185,9 @@ export async function getAllMotorcycles(searchParams?: FilterSearchParams) {
       query = query.eq('status', status);
     }
 
+    // Sempre prioriza motos em destaque no topo do catálogo
+    query = query.order('featured', { ascending: false, nullsFirst: false });
+
     // Sort handling
     if (sort === 'price_asc') {
       query = query.order('price', { ascending: true, nullsFirst: false });
@@ -197,7 +201,9 @@ export async function getAllMotorcycles(searchParams?: FilterSearchParams) {
       query = query.order('created_at', { ascending: false });
     }
   } else {
-    query = query.order('created_at', { ascending: false });
+    query = query
+      .order('featured', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false });
   }
 
   const { data, error } = await query;
