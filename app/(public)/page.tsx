@@ -12,7 +12,6 @@ import {
   Bike,
   Tag,
   Banknote,
-  Clock,
   Megaphone,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
@@ -23,6 +22,7 @@ import { getFeaturedMotorcycles, getMotorcycleFilterFacets } from '@/lib/queries
 import { cn } from '@/lib/utils';
 import { getSettings } from '@/lib/actions/settings';
 import { CONSTANTS } from '@/lib/utils/constants';
+import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 
 export default async function HomePage() {
   const [featuredMotos, facets, settings] = await Promise.all([
@@ -144,41 +144,120 @@ export default async function HomePage() {
 
       {/* 4. Sell / List Motorcycle Spotlight Banner */}
       <section className="container mx-auto px-4 md:px-6">
-        <div className="bg-gradient-to-r from-[#151515] via-[#1a1a1a] to-[#151515] rounded-3xl border border-[#c9a44c]/30 p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col lg:flex-row items-center justify-between gap-8">
-          <div className="space-y-4 max-w-2xl text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c9a44c]/15 border border-[#c9a44c]/30 text-xs font-bold text-[#e3c56c]">
-              <KeyRound className="w-3.5 h-3.5" />
-              <span>Anúncio & Venda</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white font-heading">
-              Quer vender sua moto?
-            </h2>
-            <p className="text-sm sm:text-base text-[#a6a6a1] leading-relaxed">
-              Envie as informações e algumas fotos da sua moto. Vamos analisar os dados e conversar
-              com você sobre os próximos passos para anunciar ou negociar.
-            </p>
-            <div className="flex flex-wrap gap-4 pt-2 justify-center lg:justify-start text-xs text-[#b8bcc2]">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#e3c56c]" />
-                <span>Combinamos preço e condições</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#e3c56c]" />
-                <span>Atendimento direto pelo WhatsApp</span>
-              </div>
-            </div>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1c1810] via-[#141414] to-[#0d0d0d] border border-amber-500/30 p-8 sm:p-10 md:p-14 shadow-2xl shadow-black/80">
+          {/* Subtle Ambient Golden Gradients & Glow */}
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(227,197,108,0.06),transparent_70%)] pointer-events-none" />
+
+          {/* Decorative watermark icon */}
+          <div className="absolute right-4 bottom-[-20px] opacity-[0.03] text-amber-400 pointer-events-none select-none hidden lg:block">
+            <Bike className="w-96 h-96" />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto shrink-0">
-            <Link
-              href="/anunciar-sua-moto"
-              className={cn(
-                buttonVariants({ size: 'lg' }),
-                'bg-[#c9a44c] hover:bg-[#e3c56c] text-black font-extrabold h-13 px-8 rounded-xl shadow-md transition-all text-center cursor-pointer',
-              )}
-            >
-              Anunciar minha moto
-            </Link>
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Column: Headline, Description & Features */}
+            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+              {/* Floating Pill Tag */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 to-amber-500/5 border border-amber-500/30 text-xs font-extrabold text-amber-400 shadow-sm backdrop-blur-md">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Venda Rápida ou Anúncio Fácil</span>
+              </div>
+
+              {/* Main Headline */}
+              <div className="space-y-3">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white font-heading leading-tight">
+                  Quer vender ou anunciar{' '}
+                  <span className="bg-gradient-to-r from-[#fef08a] via-[#e3c56c] to-[#c9a44c] bg-clip-text text-transparent">
+                    sua moto?
+                  </span>
+                </h2>
+                <p className="text-sm sm:text-base text-zinc-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                  Na AF Motos você escolhe o melhor caminho: a gente compra a sua moto à vista com pagamento no PIX, ou coloca para anunciar no nosso site para vender rápido e sem dor de cabeça.
+                </p>
+              </div>
+
+              {/* Benefit Badges Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs text-zinc-300">
+                <div className="flex items-center gap-2.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
+                  <div className="w-5 h-5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
+                  </div>
+                  <span className="font-medium text-zinc-200">Pagamento rápido à vista no PIX</span>
+                </div>
+
+                <div className="flex items-center gap-2.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
+                  <div className="w-5 h-5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
+                  </div>
+                  <span className="font-medium text-zinc-200">Avaliação justa e na hora</span>
+                </div>
+
+                <div className="flex items-center gap-2.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
+                  <div className="w-5 h-5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
+                  </div>
+                  <span className="font-medium text-zinc-200">Divulgação para centenas de compradores</span>
+                </div>
+
+                <div className="flex items-center gap-2.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
+                  <div className="w-5 h-5 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                    <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400 fill-current" />
+                  </div>
+                  <span className="font-medium text-zinc-200">Atendimento direto pelo WhatsApp</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Interactive Action Box */}
+            <div className="lg:col-span-5 flex flex-col items-center justify-center">
+              <div className="w-full max-w-md bg-zinc-950/85 border border-amber-500/25 rounded-2xl p-6 sm:p-7 shadow-xl backdrop-blur-xl space-y-5 text-center">
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-400">
+                    100% Gratuito & Sem Compromisso
+                  </span>
+                  <h3 className="text-xl font-bold text-white">
+                    Escolha como quer negociar
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Envie os dados e fotos da sua moto em menos de 2 minutos.
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 pt-1">
+                  {/* Opção 1: Vender para a Loja */}
+                  <Link
+                    href="/vender-minha-moto"
+                    className="w-full bg-gradient-to-r from-[#fef08a] via-[#e3c56c] to-[#c9a44c] hover:opacity-95 text-zinc-950 font-black h-12 px-5 rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-sm group cursor-pointer"
+                  >
+                    <span>Quero Vender Minha Moto</span>
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+
+                  {/* Opção 2: Anunciar no Site */}
+                  <Link
+                    href="/anunciar-sua-moto"
+                    className="w-full bg-zinc-900/90 hover:bg-zinc-800/90 border border-amber-500/30 hover:border-amber-400 text-amber-400 hover:text-amber-300 font-bold h-11 px-5 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-xs cursor-pointer shadow-sm"
+                  >
+                    <span>Quero Anunciar no Site</span>
+                  </Link>
+
+                  {/* Opção 3: WhatsApp */}
+                  <a
+                    href={generateWhatsAppLink(
+                      settings?.whatsapp_phone,
+                      'Olá! Gostaria de conversar sobre a venda ou anúncio da minha moto com a AF Motos.',
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full text-zinc-400 hover:text-emerald-400 font-medium py-1.5 flex items-center justify-center gap-1.5 transition-colors text-xs cursor-pointer"
+                  >
+                    <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400 fill-current" />
+                    <span>Prefiro conversar pelo WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -260,12 +339,12 @@ export default async function HomePage() {
             O que fazemos
           </h2>
           <p className="text-zinc-400 text-sm sm:text-base mt-2">
-            Soluções completas para você comprar, vender ou alugar sua moto com facilidade e
+            Soluções completas para você comprar, vender ou anunciar sua moto com facilidade e
             segurança.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {/* Card 1: Comprar */}
           <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 hover:border-amber-500/40 hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
             <div className="space-y-4">
@@ -332,39 +411,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Card 3: Aluguel */}
-          <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 hover:border-amber-500/40 hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="bg-amber-500/10 text-amber-400 p-3.5 rounded-xl inline-flex w-fit">
-                <Clock className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Aluguel de Motos</h3>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                Precisa de moto para trabalhar em entregas ou para o seu dia a dia? Alugue por
-                semana ou mês.
-              </p>
-              <ul className="space-y-2 pt-2">
-                <li className="flex items-start gap-2 text-sm text-zinc-300">
-                  <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span>Ideal para entregadores de app</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm text-zinc-300">
-                  <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span>Manutenção preventiva inclusa</span>
-                </li>
-              </ul>
-            </div>
-            <div className="pt-6 mt-auto">
-              <Link
-                href="/aluguel"
-                className="block w-full py-2.5 rounded-xl border border-zinc-700 text-center hover:bg-amber-500 hover:text-zinc-950 font-semibold text-sm transition-colors text-white"
-              >
-                Ver Planos de Aluguel
-              </Link>
-            </div>
-          </div>
-
-          {/* Card 4: Anúncio */}
+          {/* Card 3: Anúncio */}
           <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 hover:border-amber-500/40 hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between">
             <div className="space-y-4">
               <div className="bg-amber-500/10 text-amber-400 p-3.5 rounded-xl inline-flex w-fit">

@@ -23,7 +23,7 @@ export function SeoTab({ form }: SeoTabProps) {
   const metaDescription =
     form.watch('settings.seo.description') ||
     form.watch('settings.description') ||
-    'Encontre motos selecionadas para compra ou aluguel na AF Motos.';
+    'Encontre motos selecionadas para compra ou anúncio na AF Motos.';
 
   return (
     <div className="space-y-6">
@@ -51,7 +51,7 @@ export function SeoTab({ form }: SeoTabProps) {
               </FormLabel>
               <FormControl>
                 <Input
-                  placeholder="AF Motos | Compra, Venda e Locação de Motos"
+                  placeholder="AF Motos | Compra e Venda de Motos"
                   {...field}
                   value={field.value || ''}
                   className="bg-zinc-950 border-zinc-800 text-zinc-100 h-11 rounded-xl focus:border-amber-500 text-sm"

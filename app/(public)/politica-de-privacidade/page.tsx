@@ -89,7 +89,7 @@ export default async function PoliticaPrivacidadePage() {
             <p>Os dados fornecidos são utilizados exclusivamente para as seguintes finalidades:</p>
             <ul className="list-disc list-inside space-y-1 text-[#a6a6a1] pl-2">
               <li>
-                Responder a dúvidas e solicitações de compra, venda ou aluguel de motocicletas.
+                Responder a dúvidas e solicitações de compra, venda ou anúncio de motocicletas.
               </li>
               <li>
                 Entrar em contato via WhatsApp ou telefone para fornecer detalhes de motos

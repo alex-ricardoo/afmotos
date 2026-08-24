@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Tag, Bike, SlidersHorizontal, ArrowRight } from 'lucide-react';
+import { Search, Tag, Bike } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -13,7 +12,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { MotorcycleFilterFacets } from '@/lib/queries/motorcycles';
-import { cn } from '@/lib/utils';
 
 const DEFAULT_BRANDS = [
   'Honda',
@@ -42,7 +40,6 @@ interface QuickSearchProps {
 
 export function QuickSearch({ facets }: QuickSearchProps) {
   const router = useRouter();
-  const [operation, setOperation] = useState<'buy' | 'rent'>('buy');
   const [brand, setBrand] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
 
@@ -51,11 +48,6 @@ export function QuickSearch({ facets }: QuickSearchProps) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (operation === 'rent') {
-      router.push('/aluguel');
-      return;
-    }
-
     const params = new URLSearchParams();
     if (brand && brand !== 'all') params.set('brand', brand);
     if (maxPrice && maxPrice !== 'all') params.set('maxPrice', maxPrice);
@@ -73,45 +65,13 @@ export function QuickSearch({ facets }: QuickSearchProps) {
   return (
     <form
       onSubmit={handleSearch}
-      className="bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/80 rounded-2xl shadow-2xl shadow-black/80 p-4 lg:p-6 max-w-5xl mx-auto w-full transition-all duration-300"
+      className="bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/80 rounded-2xl shadow-2xl shadow-black/80 p-4 lg:p-6 max-w-4xl mx-auto w-full transition-all duration-300"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-end">
-        {/* Coluna 1: Tipo de Operação (Pill Switcher) */}
-        <div className="space-y-1.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
+        {/* Coluna 1: Marca / Modelo */}
+        <div className="space-y-1.5 lg:col-span-5">
           <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 ml-1 flex items-center gap-1.5">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" /> Operação
-          </label>
-          <div className="bg-zinc-950/60 border border-zinc-800 rounded-xl p-1 flex items-center h-[48px] gap-1">
-            <button
-              type="button"
-              onClick={() => setOperation('buy')}
-              className={cn(
-                'flex-1 h-full rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer',
-                operation === 'buy'
-                  ? 'bg-amber-500 text-zinc-950 shadow-xs'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/40',
-              )}
-            >
-              <span>Comprar</span>
-            </button>
-            <Link
-              href="/aluguel"
-              className={cn(
-                'flex-1 h-full rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer',
-                operation === 'rent'
-                  ? 'bg-amber-500 text-zinc-950 shadow-xs'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/40',
-              )}
-            >
-              <span>Alugar</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Coluna 2: Marca / Modelo */}
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 ml-1 flex items-center gap-1.5">
-            <Bike className="w-3.5 h-3.5 text-amber-400" /> Marca / Modelo
+            <Bike className="w-3.5 h-3.5 text-amber-400" /> Marca / Fabricante
           </label>
           <div className="bg-zinc-950/60 border border-zinc-800 focus-within:border-amber-500/50 rounded-xl px-2 transition-all h-[48px] flex items-center">
             <Select
@@ -133,8 +93,8 @@ export function QuickSearch({ facets }: QuickSearchProps) {
           </div>
         </div>
 
-        {/* Coluna 3: Faixa de Preço */}
-        <div className="space-y-1.5">
+        {/* Coluna 2: Faixa de Preço */}
+        <div className="space-y-1.5 lg:col-span-4">
           <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 ml-1 flex items-center gap-1.5">
             <Tag className="w-3.5 h-3.5 text-amber-400" /> Faixa de Preço
           </label>
@@ -158,23 +118,14 @@ export function QuickSearch({ facets }: QuickSearchProps) {
           </div>
         </div>
 
-        {/* Coluna 4: Botão de Busca */}
-        <div>
+        {/* Coluna 3: Botão de Busca */}
+        <div className="lg:col-span-3">
           <Button
             type="submit"
             className="w-full h-[48px] bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer text-sm"
           >
-            {operation === 'rent' ? (
-              <>
-                <span>Ver Opções de Aluguel</span>
-                <ArrowRight className="w-4 h-4 text-zinc-950" />
-              </>
-            ) : (
-              <>
-                <Search className="w-4 h-4 text-zinc-950" />
-                <span>Buscar motos</span>
-              </>
-            )}
+            <Search className="w-4 h-4 text-zinc-950" />
+            <span>Buscar motos</span>
           </Button>
         </div>
       </div>

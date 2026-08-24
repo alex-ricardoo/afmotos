@@ -25,11 +25,11 @@ import { getSiteLogo, getSocialLinks, getBusinessHours, getMapsUrl } from '@/lib
 export function Footer({ settings }: { settings?: any }) {
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
-  const slogan = settings?.settings?.slogan || 'Compra, venda e locação de motos de forma simples';
+  const slogan = settings?.settings?.slogan || 'Compra e venda de motos com procedência';
   const description =
     settings?.settings?.description ||
     settings?.settings?.institutional_description ||
-    'Compra, venda e locação de motos com atendimento direto e transparente pelo WhatsApp.';
+    'Compra e venda de motos com atendimento direto e transparente pelo WhatsApp.';
   const contactEmail = settings?.contact_email || CONSTANTS.CONTACT_EMAIL;
   const addressText = settings?.address || CONSTANTS.STORE_ADDRESS;
 
@@ -225,14 +225,6 @@ export function Footer({ settings }: { settings?: any }) {
                   className="hover:text-amber-500 transition-colors duration-200"
                 >
                   Anuncie sua Moto
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/aluguel"
-                  className="hover:text-amber-500 transition-colors duration-200"
-                >
-                  Aluguel de Motos
                 </Link>
               </li>
 

@@ -18,7 +18,6 @@ const baseNavLinks = [
   { href: '/motos', label: 'Motos disponíveis' },
   { href: '/motos-vendidas', label: 'Motos vendidas' },
   { href: '/anunciar-sua-moto', label: 'Anuncie sua moto' },
-  { href: '/aluguel', label: 'Aluguel de Motos' },
   { href: '/vender-minha-moto', label: 'Venda sua moto' },
 ];
 
@@ -29,7 +28,7 @@ export function Header({ settings }: { settings?: any }) {
 
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
-  const slogan = settings?.settings?.slogan || 'Compra, Venda e Locação';
+  const slogan = settings?.settings?.slogan || 'Compra e Venda de Motos';
   const logoInfo = getSiteLogo(settings);
   const isAboutPublished = settings?.settings?.about?.isPublished === true;
 
