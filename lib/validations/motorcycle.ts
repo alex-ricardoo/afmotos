@@ -26,4 +26,7 @@ export const motorcycleSchema = z.object({
   daily_rate: z.number().min(0).optional(),
   weekly_rate: z.number().min(0).optional(),
   monthly_rate: z.number().min(0).optional(),
+}).refine((data) => data.year_model >= data.year_manufacture, {
+  message: 'O ano do modelo deve ser igual ou maior que o ano de fabricação.',
+  path: ['year_model'],
 });

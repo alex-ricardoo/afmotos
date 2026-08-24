@@ -30,6 +30,9 @@ const consignmentSchema = z.object({
   mileage: z.coerce.number().optional(),
   desired_price: z.coerce.number().optional(),
   message: z.string().optional(),
+}).refine((data) => data.year_model >= data.year_manufacture, {
+  message: 'O ano do modelo deve ser igual ou maior que o ano de fabricação.',
+  path: ['year_model'],
 });
 
 type ConsignmentFormValues = z.infer<typeof consignmentSchema>;

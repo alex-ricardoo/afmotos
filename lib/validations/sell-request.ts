@@ -114,6 +114,9 @@ export const sellRequestSchema = z.object({
     .max(1000, 'As observações não podem ultrapassar 1000 caracteres.')
     .optional()
     .nullable(),
+}).refine((data) => data.year_model >= data.year_manufacture, {
+  message: 'O ano do modelo deve ser igual ou maior que o ano de fabricação.',
+  path: ['year_model'],
 });
 
 export type SellRequestInput = z.infer<typeof sellRequestSchema>;

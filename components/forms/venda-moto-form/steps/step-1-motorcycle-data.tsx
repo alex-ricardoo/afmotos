@@ -109,7 +109,7 @@ export function Step1MotorcycleData({
       const targetYear = latest.isZeroKm ? currentYearVal : (latest.year ?? currentYearVal);
       const primaryFuel = latest.fuels && latest.fuels.length > 0 ? latest.fuels[0] : null;
 
-      const fabYear = targetYear - 1;
+      const fabYear = targetYear;
       form.setValue('year_manufacture', fabYear, { shouldValidate: true });
       form.setValue('year_model', targetYear, { shouldValidate: true });
       form.setValue('year_id', latest.isZeroKm ? 'zero' : String(targetYear));

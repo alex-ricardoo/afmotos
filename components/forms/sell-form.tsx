@@ -29,6 +29,9 @@ const sellSchema = z.object({
   year_model: z.coerce.number().min(1900),
   mileage: z.coerce.number().optional(),
   message: z.string().optional(),
+}).refine((data) => data.year_model >= data.year_manufacture, {
+  message: 'O ano do modelo deve ser igual ou maior que o ano de fabricação.',
+  path: ['year_model'],
 });
 
 type SellFormValues = z.infer<typeof sellSchema>;
