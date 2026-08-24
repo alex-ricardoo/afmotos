@@ -302,7 +302,7 @@ export default async function HomePage() {
               <div className="bg-amber-500/10 text-amber-400 p-3.5 rounded-xl inline-flex w-fit">
                 <Banknote className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Vendemos sua Moto pra Nós</h3>
+              <h3 className="text-xl font-bold text-white tracking-tight">Venda sua Moto pra Nós</h3>
               <p className="text-sm text-zinc-400 leading-relaxed">
                 Quer vender rápido? Avaliamos sua moto na hora e pagamos à vista no PIX com segurança total.
               </p>

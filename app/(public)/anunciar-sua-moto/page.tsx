@@ -1,7 +1,15 @@
 import React from 'react';
 import { AnunciarMotoForm } from '@/components/forms/anunciar-moto-form';
-import { KeyRound, ShieldCheck, MessageCircle, FileCheck, Info } from 'lucide-react';
-import { CONSTANTS } from '@/lib/utils/constants';
+import {
+  KeyRound,
+  ShieldCheck,
+  MessageCircle,
+  FileCheck,
+  FileText,
+  SearchCheck,
+  MessageSquare,
+  TrendingUp,
+} from 'lucide-react';
 
 export const metadata = {
   title: 'Anuncie sua Moto | AF Motos',
@@ -10,132 +18,142 @@ export const metadata = {
 };
 
 export default function AnunciarSuaMotoPage() {
+  const steps = [
+    {
+      number: '1',
+      icon: FileText,
+      title: 'Envio dos Dados',
+      description: 'Preencha as informações básicas e envie fotos da sua moto.',
+    },
+    {
+      number: '2',
+      icon: SearchCheck,
+      title: 'Análise da sua Moto',
+      description: 'Avaliamos a tabela FIPE e as fotos para te passar o melhor valor.',
+    },
+    {
+      number: '3',
+      icon: MessageSquare,
+      title: 'Combinamos no WhatsApp',
+      description: 'Conversamos com você para definir a proposta e tirar todas as dúvidas.',
+    },
+    {
+      number: '4',
+      icon: TrendingUp,
+      title: 'Vendemos pra Você',
+      description: 'Anunciamos para compradores reais e cuidamos de tudo até o pagamento.',
+    },
+  ];
+
   return (
-    <div className="bg-[#050505] min-h-screen pb-16 text-[#f4f4f2]">
-      {/* Header Hero */}
-      <div className="bg-[#0d0d0d] text-white py-12 md:py-16 border-b border-[#c9a44c]/20">
-        <div className="container mx-auto px-4 md:px-6 text-center max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#151515] border border-[#c9a44c]/30 text-xs font-bold text-[#e3c56c]">
-            <KeyRound className="w-4 h-4 text-[#e3c56c]" />
-            <span>Divulgação e Negociação Transparente</span>
+    <div className="bg-[#050505] min-h-screen pb-20 text-zinc-100">
+      {/* Header Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-b from-zinc-950 via-zinc-900 to-[#050505] py-16 sm:py-20 border-b border-zinc-800/80">
+        {/* Subtle Luxury Glow Effects */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-64 bg-amber-500/5 blur-[120px] pointer-events-none rounded-full" />
+
+        <div className="container mx-auto px-4 sm:px-6 text-center max-w-3xl space-y-5 relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+            <KeyRound className="w-4 h-4 text-amber-400" />
+            <span>Venda sua Moto com Facilidade e Segurança</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white font-heading">
             Anuncie sua moto com a AF Motos
           </h1>
 
-          <p className="text-base md:text-lg text-[#a6a6a1] leading-relaxed">
-            Envie as informações e algumas fotos da sua moto. Vamos analisar os dados e conversar
-            com você sobre os próximos passos para anunciar ou encontrar um comprador.
+          <p className="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto font-normal">
+            Preencha as informações abaixo e receba uma avaliação justa da nossa equipe para vender sua moto de forma rápida, simples e sem dor de cabeça.
           </p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 md:px-6 py-12 max-w-5xl space-y-12">
-        {/* Step-by-Step Explanation */}
-        <div className="space-y-6">
-          <div className="text-center max-w-2xl mx-auto">
+      <div className="container mx-auto px-4 sm:px-6 py-12 md:py-16 max-w-5xl space-y-16">
+        {/* Stepper Conectado ("Como Funciona") */}
+        <div className="space-y-8">
+          <div className="text-center max-w-xl mx-auto space-y-2">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-heading">
-              Como funciona o processo
+              Como Funciona o Processo
             </h2>
-            <p className="text-[#a6a6a1] text-sm mt-1">
-              Simples, transparente e direto, com atendimento humano pelo WhatsApp.
+            <p className="text-zinc-400 text-sm">
+              Conheça o passo a passo simples até a venda da sua moto.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-[#151515] p-5 rounded-2xl border border-[#c9a44c]/20 space-y-2">
-              <span className="w-8 h-8 rounded-lg bg-[#c9a44c] text-[#050505] font-extrabold flex items-center justify-center text-sm">
-                1
-              </span>
-              <h3 className="font-bold text-white text-base">Envio dos Dados</h3>
-              <p className="text-xs text-[#a6a6a1] leading-relaxed">
-                Você preenche a marca, modelo, ano, quilometragem e envia fotos da moto.
-              </p>
-            </div>
+          {/* Stepper Timeline Conectada (Desktop & Mobile) */}
+          <div className="relative">
+            {/* Horizontal Line Connector (Desktop) */}
+            <div className="hidden md:block absolute top-7 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-amber-500/40 via-amber-500 to-amber-500/40 z-0" />
 
-            <div className="bg-[#151515] p-5 rounded-2xl border border-[#c9a44c]/20 space-y-2">
-              <span className="w-8 h-8 rounded-lg bg-[#202020] border border-[#c9a44c]/30 text-[#e3c56c] font-extrabold flex items-center justify-center text-sm">
-                2
-              </span>
-              <h3 className="font-bold text-white text-base">Análise da Equipe</h3>
-              <p className="text-xs text-[#a6a6a1] leading-relaxed">
-                Avaliamos os detalhes técnicos e o estado do veículo para entender o potencial de
-                anúncio.
-              </p>
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8 relative z-10">
+              {steps.map((step, idx) => {
+                const StepIcon = step.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="flex flex-col items-center text-center group bg-zinc-950/60 md:bg-transparent p-5 md:p-0 rounded-2xl border border-zinc-800/80 md:border-none shadow-sm"
+                  >
+                    {/* Circle Node */}
+                    <div className="w-14 h-14 rounded-2xl bg-zinc-900 border-2 border-amber-500 text-amber-400 font-extrabold flex items-center justify-center text-base shadow-[0_0_20px_rgba(245,158,11,0.25)] group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-zinc-950 transition-all duration-300 mb-4 relative">
+                      <StepIcon className="w-6 h-6" />
+                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-black flex items-center justify-center border border-zinc-950">
+                        {step.number}
+                      </span>
+                    </div>
 
-            <div className="bg-[#151515] p-5 rounded-2xl border border-[#c9a44c]/20 space-y-2">
-              <span className="w-8 h-8 rounded-lg bg-[#202020] border border-[#c9a44c]/30 text-[#e3c56c] font-extrabold flex items-center justify-center text-sm">
-                3
-              </span>
-              <h3 className="font-bold text-white text-base">Conversa no WhatsApp</h3>
-              <p className="text-xs text-[#a6a6a1] leading-relaxed">
-                Entramos em contato para alinhar os valores pretendidos e as condições com total
-                clareza.
-              </p>
-            </div>
-
-            <div className="bg-[#151515] p-5 rounded-2xl border border-[#c9a44c]/20 space-y-2">
-              <span className="w-8 h-8 rounded-lg bg-[#202020] border border-[#c9a44c]/30 text-[#e3c56c] font-extrabold flex items-center justify-center text-sm">
-                4
-              </span>
-              <h3 className="font-bold text-white text-base">Divulgação e Venda</h3>
-              <p className="text-xs text-[#a6a6a1] leading-relaxed">
-                A moto pode ser divulgada aos clientes interessados para concretizar o negócio.
-              </p>
+                    <h3 className="font-extrabold text-white text-base mb-1.5 group-hover:text-amber-400 transition-colors">
+                      {step.title}
+                    </h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed max-w-[220px]">
+                      {step.description}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* Lead Capture Form Card */}
-        <div className="bg-[#151515] rounded-3xl border border-[#c9a44c]/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden max-w-3xl mx-auto">
-          <div className="p-6 sm:p-8 bg-[#0d0d0d] border-b border-[#c9a44c]/20 space-y-2">
-            <h2 className="text-2xl font-extrabold tracking-tight text-white font-heading">
-              Formulário para envio da sua moto
-            </h2>
-            <p className="text-sm text-[#a6a6a1]">
-              Preencha os campos abaixo. Entraremos em contato pelo WhatsApp para detalhar os
-              próximos passos.
-            </p>
-          </div>
+        {/* Form Card Encapsulado com Design System Dark Luxury */}
+        <div className="max-w-3xl mx-auto bg-zinc-900/70 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 sm:p-10 shadow-2xl shadow-black/60 relative overflow-hidden">
+          {/* Subtle Top Accent Border Glow */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
 
-          <div className="p-6 sm:p-8">
-            <AnunciarMotoForm />
-          </div>
-
-          {/* Transparent Notice Footer */}
-          <div className="px-6 py-4 bg-[#0a0a0a] border-t border-[#c9a44c]/15 flex items-start gap-2.5 text-xs text-[#a6a6a1]">
-            <Info className="w-4 h-4 text-[#e3c56c] shrink-0 mt-0.5" />
-            <p>
-              O envio do formulário não garante venda automática nem pagamento imediato. Valores e
-              condições são combinados diretamente entre você e a AF Motos.
-            </p>
-          </div>
+          <AnunciarMotoForm />
         </div>
 
-        {/* Trust Differentials */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 text-center max-w-3xl mx-auto">
-          <div className="space-y-2">
-            <ShieldCheck className="w-8 h-8 text-[#e3c56c] mx-auto" />
-            <h4 className="font-bold text-sm text-white">Negociação Transparente</h4>
-            <p className="text-xs text-[#a6a6a1]">
-              Você sabe exatamente as condições e o valor antes de qualquer decisão.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <MessageCircle className="w-8 h-8 text-[#e3c56c] mx-auto" />
-            <h4 className="font-bold text-sm text-white">Atendimento Direto</h4>
-            <p className="text-xs text-[#a6a6a1]">
-              Conversa pessoal e sem intermediários pelo WhatsApp.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <FileCheck className="w-8 h-8 text-[#e3c56c] mx-auto" />
-            <h4 className="font-bold text-sm text-white">Documentação Segura</h4>
-            <p className="text-xs text-[#a6a6a1]">
-              Orientação completa sobre a transferência e documentação da moto.
-            </p>
+        {/* Trust Bar Institucional Unificada */}
+        <div className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h4 className="font-extrabold text-sm text-white">Avaliação Justa & Transparente</h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Análise baseada no valor de mercado FIPE e no estado de conservação real da sua moto.
+              </p>
+            </div>
+
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+                <MessageCircle className="w-6 h-6" />
+              </div>
+              <h4 className="font-extrabold text-sm text-white">Atendimento Direto no WhatsApp</h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Sem intermediários ou burocracia. Você conversa diretamente com a nossa equipe.
+              </p>
+            </div>
+
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+                <FileCheck className="w-6 h-6" />
+              </div>
+              <h4 className="font-extrabold text-sm text-white">Segurança na Transferência Legal</h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Ajudamos com toda a documentação e transferência no DETRAN de forma segura.
+              </p>
+            </div>
           </div>
         </div>
       </div>

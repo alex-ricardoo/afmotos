@@ -29,6 +29,12 @@ import {
 } from 'lucide-react';
 import { MotorcycleImage } from '@/types/database';
 import { SaleConfirmationModal } from '@/components/admin/sales/sale-confirmation-modal';
+import { MotorcycleDocumentOcr } from '@/components/admin/motorcycle-document-ocr';
+import {
+  MotorcycleOcrConflictModal,
+  OcrFieldConflict,
+} from '@/components/admin/motorcycle-ocr-conflict-modal';
+import { MotorcycleOcrResult } from '@/lib/ocr/schemas';
 import { useFipex } from '@/hooks/use-fipex';
 import { fipexFetch } from '@/lib/fipex/client';
 import { mapPrelude } from '@/lib/fipex/mappers';
@@ -56,12 +62,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 
-import {
-  formatRenavam,
-  formatChassi,
-  formatCurrency,
-  formatKm,
-} from '@/lib/utils/formatters';
+import { formatRenavam, formatChassi, formatCurrency, formatKm } from '@/lib/utils/formatters';
 import {
   motorcycleStatusLabels,
   operationTypeLabels,
@@ -83,7 +84,20 @@ const transmissionLabels: Record<string, string> = {
   cvt: 'CVT',
 };
 
-const POPULAR_BRANDS = new Set(['HONDA', 'YAMAHA', 'KAWASAKI', 'SUZUKI', 'BMW', 'TRIUMPH', 'DUCATI', 'HARLEY-DAVIDSON', 'ROYAL ENFIELD', 'BAJAJ', 'SHINERAY', 'DAFRA']);
+const POPULAR_BRANDS = new Set([
+  'HONDA',
+  'YAMAHA',
+  'KAWASAKI',
+  'SUZUKI',
+  'BMW',
+  'TRIUMPH',
+  'DUCATI',
+  'HARLEY-DAVIDSON',
+  'ROYAL ENFIELD',
+  'BAJAJ',
+  'SHINERAY',
+  'DAFRA',
+]);
 
 const motorcycleSchema = z.object({
   brand: z.string().min(2, 'Marca é obrigatória'),
@@ -203,18 +217,55 @@ const WIZARD_STEPS = [
   { id: 4, label: 'Fotos do Veículo', icon: Camera, description: 'Galeria e capa oficial' },
 ];
 
+const AiFieldBadge = ({
+  fieldName,
+  isAiFilled,
+  confidence,
+}: {
+  fieldName: string;
+  isAiFilled?: boolean;
+  confidence?: number;
+}) => {
+  if (!isAiFilled) return null;
+  const isLowConfidence = confidence !== undefined && confidence < 0.75;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider transition-colors ${
+        isLowConfidence
+          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+          : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+      }`}
+      title={
+        isLowConfidence
+          ? 'Identificado pela IA com confiança moderada. Confira com atenção!'
+          : 'Preenchido automaticamente pela leitura do documento.'
+      }
+    >
+      <Sparkles className="w-2.5 h-2.5" />
+      <span>{isLowConfidence ? 'IA • Conferir' : 'IA'}</span>
+    </span>
+  );
+};
+
 export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialStepParam = searchParams.get('step');
 
-  const [currentStep, setCurrentStep] = useState<number>(
-    initialStepParam === 'fotos' ? 4 : 1
-  );
+  const [currentStep, setCurrentStep] = useState<number>(initialStepParam === 'fotos' ? 4 : 1);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [images, setImages] = useState<MotorcycleImage[]>(initialData?.images || []);
+
+  // Estados de OCR Inteligente
+  const [ocrFilledFields, setOcrFilledFields] = useState<Record<string, boolean>>({});
+  const [ocrConfidenceMap, setOcrConfidenceMap] = useState<Record<string, number>>({});
+  const [ocrWarnings, setOcrWarnings] = useState<string[]>([]);
+  const [pendingOcrResult, setPendingOcrResult] = useState<MotorcycleOcrResult | null>(null);
+  const [ocrConflicts, setOcrConflicts] = useState<OcrFieldConflict[]>([]);
+  const [showOcrConflictModal, setShowOcrConflictModal] = useState(false);
 
   const isEditing = !!initialData?.id;
 
@@ -245,6 +296,127 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
     },
   });
 
+  const applyOcrValues = (result: MotorcycleOcrResult, overwriteAll: boolean) => {
+    const current = form.getValues();
+    const newFilledFields: Record<string, boolean> = { ...ocrFilledFields };
+
+    const setField = (fieldKey: keyof MotorcycleFormValues, val: any) => {
+      if (val === null || val === undefined || val === '') return;
+      const currentVal = current[fieldKey];
+      const isCurrentlyEmpty =
+        currentVal === null ||
+        currentVal === undefined ||
+        currentVal === '' ||
+        (typeof currentVal === 'number' &&
+          (currentVal === 0 || currentVal === new Date().getFullYear()));
+
+      if (overwriteAll || isCurrentlyEmpty) {
+        form.setValue(fieldKey as any, val, { shouldDirty: true, shouldValidate: true });
+        newFilledFields[fieldKey] = true;
+      }
+    };
+
+    if (result.brand) {
+      setField('brand', result.brand);
+      const matchingBrand = fipe.allBrands.find(
+        (b) => b.name.toLowerCase() === result.brand?.toLowerCase(),
+      );
+      if (matchingBrand) {
+        setSelectedBrandId(matchingBrand.id);
+        if (fipeMotoTypeId) {
+          fipe.fetchModelsForBrand(matchingBrand.id, fipeMotoTypeId);
+        }
+      }
+    }
+    if (result.model) setField('model', result.model);
+    if (result.version) setField('version', result.version);
+    if (result.yearManufacture) setField('year_manufacture', result.yearManufacture);
+    if (result.yearModel) setField('year_model', result.yearModel);
+    if (result.licensePlate) setField('license_plate', result.licensePlate);
+    if (result.renavam) setField('renavam', result.renavam);
+    if (result.chassi) setField('chassi', result.chassi);
+    if (result.color) setField('color', result.color);
+    if (result.fuel) setField('fuel', result.fuel);
+    if (result.engineCapacity) setField('engine_capacity', result.engineCapacity);
+
+    setOcrFilledFields(newFilledFields);
+    if (result.confidence) setOcrConfidenceMap(result.confidence);
+    if (result.warnings) setOcrWarnings(result.warnings);
+  };
+
+  const handleOcrSuccess = (result: MotorcycleOcrResult) => {
+    const current = form.getValues();
+    const conflicts: OcrFieldConflict[] = [];
+
+    const checkConflict = (fieldKey: string, fieldLabel: string, currentVal: any, newVal: any) => {
+      if (
+        newVal !== null &&
+        newVal !== undefined &&
+        newVal !== '' &&
+        currentVal !== null &&
+        currentVal !== undefined &&
+        currentVal !== '' &&
+        String(currentVal).trim().toLowerCase() !== String(newVal).trim().toLowerCase()
+      ) {
+        conflicts.push({
+          fieldKey,
+          fieldLabel,
+          currentValue: currentVal,
+          newValue: newVal,
+        });
+      }
+    };
+
+    checkConflict('brand', 'Marca', current.brand, result.brand);
+    checkConflict('model', 'Modelo', current.model, result.model);
+    checkConflict('version', 'Versão', current.version, result.version);
+    checkConflict(
+      'year_manufacture',
+      'Ano de Fabricação',
+      current.year_manufacture,
+      result.yearManufacture,
+    );
+    checkConflict('year_model', 'Ano do Modelo', current.year_model, result.yearModel);
+    checkConflict('license_plate', 'Placa', current.license_plate, result.licensePlate);
+    checkConflict('renavam', 'RENAVAM', current.renavam, result.renavam);
+    checkConflict('chassi', 'Chassi', current.chassi, result.chassi);
+    checkConflict('color', 'Cor', current.color, result.color);
+    checkConflict('fuel', 'Combustível', current.fuel, result.fuel);
+    checkConflict('engine_capacity', 'Cilindrada', current.engine_capacity, result.engineCapacity);
+
+    if (conflicts.length > 0) {
+      setPendingOcrResult(result);
+      setOcrConflicts(conflicts);
+      setShowOcrConflictModal(true);
+    } else {
+      applyOcrValues(result, true);
+    }
+  };
+
+  const handleConfirmOcrOverwrite = () => {
+    if (pendingOcrResult) {
+      applyOcrValues(pendingOcrResult, true);
+    }
+    setShowOcrConflictModal(false);
+    setPendingOcrResult(null);
+    setOcrConflicts([]);
+  };
+
+  const handleKeepManualOcr = () => {
+    if (pendingOcrResult) {
+      applyOcrValues(pendingOcrResult, false);
+    }
+    setShowOcrConflictModal(false);
+    setPendingOcrResult(null);
+    setOcrConflicts([]);
+  };
+
+  const handleCancelOcrConflicts = () => {
+    setShowOcrConflictModal(false);
+    setPendingOcrResult(null);
+    setOcrConflicts([]);
+  };
+
   const generateAiDescription = () => {
     const values = form.getValues();
     const kmStr = values.mileage ? formatKM(values.mileage) + ' km' : '0 km';
@@ -266,7 +438,7 @@ Entre em contato com nossa equipe e agende um test ride!`;
   const fipe = useFipex();
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
   const [selectedModelId, setSelectedModelId] = useState<string>('');
-  
+
   const [isBrandOpen, setIsBrandOpen] = useState(false);
   const [brandSearchTerm, setBrandSearchTerm] = useState('');
   const [onlyPopularBrands, setOnlyPopularBrands] = useState(true);
@@ -275,7 +447,7 @@ Entre em contato com nossa equipe e agende um test ride!`;
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [modelSearchTerm, setModelSearchTerm] = useState('');
   const modelComboboxRef = useRef<HTMLDivElement>(null);
-  
+
   const [fipeMotoTypeId, setFipeMotoTypeId] = useState<string>('');
 
   // Initialize FIPE
@@ -283,11 +455,13 @@ Entre em contato com nossa equipe e agende um test ride!`;
     let isMounted = true;
     async function loadFipeMotoBrands() {
       try {
-        const cached = fipexCache.get<{ vehicleTypes: { id: string; slug: string; name: string }[] }>('prelude');
+        const cached = fipexCache.get<{
+          vehicleTypes: { id: string; slug: string; name: string }[];
+        }>('prelude');
         let motoTypeId = '';
         if (cached) {
           const motoType = cached.vehicleTypes.find(
-            (t) => t.slug === 'motocicletas' || t.name.toLowerCase().includes('moto')
+            (t) => t.slug === 'motocicletas' || t.name.toLowerCase().includes('moto'),
           );
           if (motoType) motoTypeId = motoType.id;
         } else {
@@ -295,11 +469,11 @@ Entre em contato com nossa equipe e agende um test ride!`;
           const mapped = mapPrelude(raw.data);
           fipexCache.set('prelude', mapped, FIPEX_CACHE_TTL.PRELUDE);
           const motoType = mapped.vehicleTypes.find(
-            (t) => t.slug === 'motocicletas' || t.name.toLowerCase().includes('moto')
+            (t) => t.slug === 'motocicletas' || t.name.toLowerCase().includes('moto'),
           );
           if (motoType) motoTypeId = motoType.id;
         }
-        
+
         if (isMounted && motoTypeId) {
           setFipeMotoTypeId(motoTypeId);
           fipe.fetchBrandsForType(motoTypeId);
@@ -309,7 +483,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
       }
     }
     loadFipeMotoBrands();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [fipe.fetchBrandsForType]);
 
   const filteredBrands = fipe.allBrands.filter((b) => {
@@ -317,8 +493,8 @@ Entre em contato com nossa equipe e agende um test ride!`;
     return b.name.toLowerCase().includes(brandSearchTerm.toLowerCase());
   });
 
-  const filteredModels = fipe.allModels.filter((m) => 
-    m.name.toLowerCase().includes(modelSearchTerm.toLowerCase())
+  const filteredModels = fipe.allModels.filter((m) =>
+    m.name.toLowerCase().includes(modelSearchTerm.toLowerCase()),
   );
 
   const handleBrandSelect = (id: string, name: string) => {
@@ -326,14 +502,14 @@ Entre em contato com nossa equipe e agende um test ride!`;
     form.setValue('brand', name, { shouldValidate: true });
     setIsBrandOpen(false);
     setBrandSearchTerm('');
-    
+
     // reset model and year
     setSelectedModelId('');
     form.setValue('model', '');
     form.setValue('year_manufacture', new Date().getFullYear());
     form.setValue('year_model', new Date().getFullYear());
     form.setValue('fipe_price', 0);
-    
+
     fipe.fetchModelsForBrand(id, fipeMotoTypeId);
   };
 
@@ -342,24 +518,24 @@ Entre em contato com nossa equipe e agende um test ride!`;
     form.setValue('model', name, { shouldValidate: true });
     setIsModelOpen(false);
     setModelSearchTerm('');
-    
+
     // reset year and price
     form.setValue('year_manufacture', new Date().getFullYear());
     form.setValue('year_model', new Date().getFullYear());
     form.setValue('fipe_price', 0);
-    
+
     fipe.fetchModelDetail(id);
   };
 
   const handleYearChange = async (val: string) => {
     form.setValue('year_model', parseInt(val), { shouldValidate: true });
     form.setValue('year_manufacture', parseInt(val), { shouldValidate: true });
-    
+
     if (selectedModelId) {
       const yearOpt = fipe.years.find((y) => y.value === val);
       if (yearOpt && fipe.modelDetail) {
         const yf = fipe.modelDetail.yearFuels.find(
-          (item) => item.year === yearOpt.year || (item.isZeroKm && yearOpt.isZeroKm)
+          (item) => item.year === yearOpt.year || (item.isZeroKm && yearOpt.isZeroKm),
         );
         const fuelId = yf?.fuels?.[0]?.id;
         if (yf && fuelId) {
@@ -420,7 +596,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
       }
 
       setSuccessMsg(
-        isEditing ? 'Motocicleta atualizada com sucesso!' : 'Motocicleta cadastrada com sucesso! Abrindo galeria de fotos...'
+        isEditing
+          ? 'Motocicleta atualizada com sucesso!'
+          : 'Motocicleta cadastrada com sucesso! Abrindo galeria de fotos...',
       );
 
       setTimeout(() => {
@@ -512,7 +690,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-amber-400 flex items-center gap-1.5">
               <span>Etapa {currentStep} de 4:</span>
-              <span className="text-white font-semibold">{WIZARD_STEPS[currentStep - 1].label}</span>
+              <span className="text-white font-semibold">
+                {WIZARD_STEPS[currentStep - 1].label}
+              </span>
             </span>
             <span className="text-slate-400 font-mono">{Math.round((currentStep / 4) * 100)}%</span>
           </div>
@@ -546,8 +726,8 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   isCurrent
                     ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.1)] cursor-default'
                     : isCompleted
-                    ? 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700 cursor-pointer'
-                    : 'bg-slate-950/30 border-transparent text-slate-500 cursor-not-allowed opacity-60'
+                      ? 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700 cursor-pointer'
+                      : 'bg-slate-950/30 border-transparent text-slate-500 cursor-not-allowed opacity-60'
                 }`}
               >
                 <div
@@ -555,8 +735,8 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     isCurrent
                       ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                       : isCompleted
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-slate-800 text-slate-400'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-slate-800 text-slate-400'
                   }`}
                 >
                   {isCompleted ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
@@ -573,7 +753,6 @@ Entre em contato com nossa equipe e agende um test ride!`;
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
-          
           {/* ============================================================ */}
           {/* PASSO 1: DADOS DO VEÍCULO & FICHA TÉCNICA */}
           {/* ============================================================ */}
@@ -587,7 +766,7 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   <div>
                     <h2 className="text-lg font-bold text-white">Ficha Técnica & Identificação</h2>
                     <p className="text-xs text-slate-400">
-                      Pesquise a marca e modelo na FIPE oficial ou digite manualmente.
+                      Tire foto do documento para preenchimento com IA ou pesquise na FIPE oficial.
                     </p>
                   </div>
                 </div>
@@ -595,6 +774,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   Passo 1/4
                 </span>
               </div>
+
+              {/* Componente de Leitura Inteligente por Documento com Google Gemini */}
+              <MotorcycleDocumentOcr onOcrSuccess={handleOcrSuccess} disabled={loading} />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* MARCA */}
@@ -608,8 +790,15 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     return (
                       <FormItem className="col-span-1">
                         <div className="flex items-center justify-between mb-1.5">
-                          <FormLabel className="text-slate-300 font-medium">
-                            Marca <span className="text-rose-500">*</span>
+                          <FormLabel className="text-slate-300 font-medium flex items-center gap-2">
+                            <span>
+                              Marca <span className="text-rose-500">*</span>
+                            </span>
+                            <AiFieldBadge
+                              fieldName="brand"
+                              isAiFilled={ocrFilledFields['brand']}
+                              confidence={ocrConfidenceMap['brand']}
+                            />
                           </FormLabel>
                           {fipe.loadingBrands && (
                             <span className="inline-flex items-center gap-1 text-[11px] text-amber-400">
@@ -629,7 +818,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
                                   : 'border-slate-800 hover:border-amber-500/50'
                               }`}
                             >
-                              <span className={displayValue ? 'font-bold text-white' : 'text-slate-500'}>
+                              <span
+                                className={displayValue ? 'font-bold text-white' : 'text-slate-500'}
+                              >
                                 {displayValue || 'Selecione a marca...'}
                               </span>
                               <ChevronsUpDown className="h-4 w-4 text-slate-400 shrink-0" />
@@ -676,14 +867,18 @@ Entre em contato com nossa equipe e agende um test ride!`;
                                 <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
                                   {filteredBrands.length === 0 ? (
                                     <div className="p-4 text-center text-xs text-slate-400 space-y-2">
-                                      <p className="font-medium text-white">Nenhuma marca na lista.</p>
+                                      <p className="font-medium text-white">
+                                        Nenhuma marca na lista.
+                                      </p>
                                       <Button
                                         type="button"
                                         variant="outline"
                                         size="sm"
                                         className="w-full text-xs h-8 border-slate-700 text-slate-200"
                                         onClick={() => {
-                                          form.setValue('brand', brandSearchTerm, { shouldValidate: true });
+                                          form.setValue('brand', brandSearchTerm, {
+                                            shouldValidate: true,
+                                          });
                                           setSelectedBrandId('');
                                           setIsBrandOpen(false);
                                         }}
@@ -703,7 +898,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
                                         }`}
                                       >
                                         <span>{b.name}</span>
-                                        {selectedBrandId === b.id && <Check className="h-3.5 w-3.5" />}
+                                        {selectedBrandId === b.id && (
+                                          <Check className="h-3.5 w-3.5" />
+                                        )}
                                       </div>
                                     ))
                                   )}
@@ -729,8 +926,15 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     return (
                       <FormItem className="col-span-1">
                         <div className="flex items-center justify-between mb-1.5">
-                          <FormLabel className="text-slate-300 font-medium">
-                            Modelo <span className="text-rose-500">*</span>
+                          <FormLabel className="text-slate-300 font-medium flex items-center gap-2">
+                            <span>
+                              Modelo <span className="text-rose-500">*</span>
+                            </span>
+                            <AiFieldBadge
+                              fieldName="model"
+                              isAiFilled={ocrFilledFields['model']}
+                              confidence={ocrConfidenceMap['model']}
+                            />
                           </FormLabel>
                           {fipe.loadingModels && (
                             <span className="inline-flex items-center gap-1 text-[11px] text-amber-400">
@@ -750,7 +954,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
                                   : 'border-slate-800 hover:border-amber-500/50'
                               }`}
                             >
-                              <span className={displayValue ? 'font-bold text-white' : 'text-slate-500'}>
+                              <span
+                                className={displayValue ? 'font-bold text-white' : 'text-slate-500'}
+                              >
                                 {displayValue || 'Pesquisar ou selecionar modelo...'}
                               </span>
                               <ChevronsUpDown className="h-4 w-4 text-slate-400 shrink-0" />
@@ -782,14 +988,18 @@ Entre em contato com nossa equipe e agende um test ride!`;
                                 <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
                                   {filteredModels.length === 0 ? (
                                     <div className="p-4 text-center text-xs text-slate-400 space-y-2">
-                                      <p className="font-medium text-white">Nenhum modelo na lista FIPE.</p>
+                                      <p className="font-medium text-white">
+                                        Nenhum modelo na lista FIPE.
+                                      </p>
                                       <Button
                                         type="button"
                                         variant="outline"
                                         size="sm"
                                         className="w-full text-xs h-8 border-slate-700 text-slate-200"
                                         onClick={() => {
-                                          form.setValue('model', modelSearchTerm, { shouldValidate: true });
+                                          form.setValue('model', modelSearchTerm, {
+                                            shouldValidate: true,
+                                          });
                                           setSelectedModelId('');
                                           setIsModelOpen(false);
                                         }}
@@ -809,7 +1019,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
                                         }`}
                                       >
                                         <span>{m.name}</span>
-                                        {selectedModelId === m.id && <Check className="h-3.5 w-3.5" />}
+                                        {selectedModelId === m.id && (
+                                          <Check className="h-3.5 w-3.5" />
+                                        )}
                                       </div>
                                     ))
                                   )}
@@ -830,7 +1042,14 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   name="version"
                   render={({ field }) => (
                     <FormItem className="col-span-1 md:col-span-2">
-                      <FormLabel className="text-slate-300 font-medium">Versão / Edição Especial (Opcional)</FormLabel>
+                      <FormLabel className="text-slate-300 font-medium flex items-center gap-2">
+                        <span>Versão / Edição Especial (Opcional)</span>
+                        <AiFieldBadge
+                          fieldName="version"
+                          isAiFilled={ocrFilledFields['version']}
+                          confidence={ocrConfidenceMap['version']}
+                        />
+                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Ex: ABS, Rally, Special Edition, CBS"
@@ -851,8 +1070,15 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     name="year_manufacture"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                          Ano Fab. <span className="text-rose-500">*</span>
+                        <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm flex items-center gap-2">
+                          <span>
+                            Ano Fab. <span className="text-rose-500">*</span>
+                          </span>
+                          <AiFieldBadge
+                            fieldName="year_manufacture"
+                            isAiFilled={ocrFilledFields['year_manufacture']}
+                            confidence={ocrConfidenceMap['yearManufacture']}
+                          />
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -871,8 +1097,15 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     name="year_model"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                          Ano Mod. <span className="text-rose-500">*</span>
+                        <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm flex items-center gap-2">
+                          <span>
+                            Ano Mod. <span className="text-rose-500">*</span>
+                          </span>
+                          <AiFieldBadge
+                            fieldName="year_model"
+                            isAiFilled={ocrFilledFields['year_model']}
+                            confidence={ocrConfidenceMap['yearModel']}
+                          />
                         </FormLabel>
                         <FormControl>
                           {selectedModelId && fipe.years.length > 0 ? (
@@ -887,7 +1120,11 @@ Entre em contato com nossa equipe e agende um test ride!`;
                               </SelectTrigger>
                               <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
                                 {fipe.years.map((y) => (
-                                  <SelectItem key={y.value} value={y.value} className="cursor-pointer">
+                                  <SelectItem
+                                    key={y.value}
+                                    value={y.value}
+                                    className="cursor-pointer"
+                                  >
                                     {y.label}
                                   </SelectItem>
                                 ))}
@@ -936,8 +1173,13 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     name="license_plate"
                     render={({ field: { value, onChange, ...fieldProps } }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm">
-                          Placa
+                        <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm flex items-center gap-2">
+                          <span>Placa</span>
+                          <AiFieldBadge
+                            fieldName="license_plate"
+                            isAiFilled={ocrFilledFields['license_plate']}
+                            confidence={ocrConfidenceMap['licensePlate']}
+                          />
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -945,7 +1187,10 @@ Entre em contato com nossa equipe e agende um test ride!`;
                             {...fieldProps}
                             value={value || ''}
                             onChange={(e) => {
-                              const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+                              const v = e.target.value
+                                .toUpperCase()
+                                .replace(/[^A-Z0-9]/g, '')
+                                .slice(0, 7);
                               if (v.length > 3) {
                                 onChange(`${v.slice(0, 3)}-${v.slice(3)}`);
                               } else {
@@ -970,7 +1215,14 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     render={({ field: { value, onChange, ...fieldProps } }) => (
                       <FormItem>
                         <FormLabel className="text-slate-300 text-xs font-medium flex items-center justify-between">
-                          <span>Renavam</span>
+                          <span className="flex items-center gap-2">
+                            <span>Renavam</span>
+                            <AiFieldBadge
+                              fieldName="renavam"
+                              isAiFilled={ocrFilledFields['renavam']}
+                              confidence={ocrConfidenceMap['renavam']}
+                            />
+                          </span>
                           <span className="text-[11px] text-slate-500 font-normal">11 dígitos</span>
                         </FormLabel>
                         <FormControl>
@@ -994,8 +1246,17 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     render={({ field: { value, onChange, ...fieldProps } }) => (
                       <FormItem>
                         <FormLabel className="text-slate-300 text-xs font-medium flex items-center justify-between">
-                          <span>Chassi (VIN)</span>
-                          <span className="text-[11px] text-slate-500 font-normal">17 caracteres</span>
+                          <span className="flex items-center gap-2">
+                            <span>Chassi (VIN)</span>
+                            <AiFieldBadge
+                              fieldName="chassi"
+                              isAiFilled={ocrFilledFields['chassi']}
+                              confidence={ocrConfidenceMap['chassi']}
+                            />
+                          </span>
+                          <span className="text-[11px] text-slate-500 font-normal">
+                            17 caracteres
+                          </span>
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -1020,7 +1281,14 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     name="color"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-300 font-medium">Cor</FormLabel>
+                        <FormLabel className="text-slate-300 font-medium flex items-center gap-2">
+                          <span>Cor</span>
+                          <AiFieldBadge
+                            fieldName="color"
+                            isAiFilled={ocrFilledFields['color']}
+                            confidence={ocrConfidenceMap['color']}
+                          />
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Ex: Preto, Vermelho Metálico"
@@ -1039,7 +1307,14 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     name="engine_capacity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-300 font-medium">Cilindrada (cc)</FormLabel>
+                        <FormLabel className="text-slate-300 font-medium flex items-center gap-2">
+                          <span>Cilindrada (cc)</span>
+                          <AiFieldBadge
+                            fieldName="engine_capacity"
+                            isAiFilled={ocrFilledFields['engine_capacity']}
+                            confidence={ocrConfidenceMap['engineCapacity']}
+                          />
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -1061,7 +1336,14 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     name="fuel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-300 font-medium">Combustível</FormLabel>
+                        <FormLabel className="text-slate-300 font-medium flex items-center gap-2">
+                          <span>Combustível</span>
+                          <AiFieldBadge
+                            fieldName="fuel"
+                            isAiFilled={ocrFilledFields['fuel']}
+                            confidence={ocrConfidenceMap['fuel']}
+                          />
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || 'gasolina'}>
                           <FormControl>
                             <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
@@ -1086,7 +1368,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     name="transmission"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-300 font-medium">Câmbio / Transmissão</FormLabel>
+                        <FormLabel className="text-slate-300 font-medium">
+                          Câmbio / Transmissão
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || 'manual'}>
                           <FormControl>
                             <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
@@ -1157,7 +1441,11 @@ Entre em contato com nossa equipe e agende um test ride!`;
                       <FormControl>
                         <Input
                           {...fieldProps}
-                          value={value !== undefined && value !== null && value !== '' ? formatCurrency(value) : ''}
+                          value={
+                            value !== undefined && value !== null && value !== ''
+                              ? formatCurrency(value)
+                              : ''
+                          }
                           onChange={(e) => {
                             const val = e.target.value.replace(/\D/g, '');
                             onChange(val ? Number(val) / 100 : 0);
@@ -1176,7 +1464,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   name="fipe_price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-300 font-medium">Preço Tabela FIPE Oficial</FormLabel>
+                      <FormLabel className="text-slate-300 font-medium">
+                        Preço Tabela FIPE Oficial
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -1253,7 +1543,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   name="status"
                   render={({ field }) => (
                     <FormItem className="col-span-1">
-                      <FormLabel className="text-slate-300 font-medium">Status do Estoque</FormLabel>
+                      <FormLabel className="text-slate-300 font-medium">
+                        Status do Estoque
+                      </FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
@@ -1335,7 +1627,9 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">Descrição & Conteúdo do Anúncio</h2>
+                    <h2 className="text-lg font-bold text-white">
+                      Descrição & Conteúdo do Anúncio
+                    </h2>
                     <p className="text-xs text-slate-400">
                       Gere o texto comercial persuasivo com IA ou escreva detalhes específicos.
                     </p>
@@ -1444,17 +1738,23 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   </div>
                   <div>
                     <h3 className="text-base font-extrabold text-white">
-                      {watchedValues.brand || 'Marca'} {watchedValues.model || 'Modelo'} {watchedValues.version || ''}
+                      {watchedValues.brand || 'Marca'} {watchedValues.model || 'Modelo'}{' '}
+                      {watchedValues.version || ''}
                     </h3>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Ano {watchedValues.year_manufacture}/{watchedValues.year_model} • {formatKm(watchedValues.mileage)} • Placa:{' '}
-                      <strong className="text-slate-200">{watchedValues.license_plate || 'Sem placa'}</strong>
+                      Ano {watchedValues.year_manufacture}/{watchedValues.year_model} •{' '}
+                      {formatKm(watchedValues.mileage)} • Placa:{' '}
+                      <strong className="text-slate-200">
+                        {watchedValues.license_plate || 'Sem placa'}
+                      </strong>
                     </p>
                   </div>
                 </div>
 
                 <div className="text-center sm:text-right shrink-0">
-                  <span className="text-[11px] text-slate-400 uppercase font-mono block">Preço de Venda</span>
+                  <span className="text-[11px] text-slate-400 uppercase font-mono block">
+                    Preço de Venda
+                  </span>
                   <span className="text-xl font-black text-amber-400 font-mono">
                     {formatCurrency(watchedValues.price)}
                   </span>
@@ -1514,7 +1814,11 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   ) : (
                     <>
                       <CheckCircle2 className="w-5 h-5" />
-                      <span>{isEditing ? 'Salvar Alterações da Moto' : 'Cadastrar Motocicleta no Estoque'}</span>
+                      <span>
+                        {isEditing
+                          ? 'Salvar Alterações da Moto'
+                          : 'Cadastrar Motocicleta no Estoque'}
+                      </span>
                     </>
                   )}
                 </Button>
@@ -1534,6 +1838,15 @@ Entre em contato com nossa equipe e agende um test ride!`;
           motorcycleTitle={`${form.getValues('brand')} ${form.getValues('model')}`}
         />
       )}
+
+      {/* Modal de confirmação para conflitos de preenchimento do OCR */}
+      <MotorcycleOcrConflictModal
+        isOpen={showOcrConflictModal}
+        conflicts={ocrConflicts}
+        onConfirmOverwrite={handleConfirmOcrOverwrite}
+        onKeepManual={handleKeepManualOcr}
+        onCancel={handleCancelOcrConflicts}
+      />
     </div>
   );
 }
