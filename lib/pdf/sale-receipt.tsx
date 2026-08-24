@@ -6,8 +6,9 @@ import { formatPhone, formatCpf, formatRenavam, formatChassi } from '@/lib/utils
 
 const styles = StyleSheet.create({
   page: {
-    padding: 26,
-    paddingBottom: 32,
+    padding: 24,
+    paddingTop: 20,
+    paddingBottom: 20,
     fontSize: 8,
     fontFamily: 'Helvetica',
     color: '#0f172a',
@@ -21,26 +22,26 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderBottomWidth: 2,
     borderBottomColor: '#d97706',
-    marginBottom: 8,
+    marginBottom: 7,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 9,
     maxWidth: '68%',
   },
   logoBox: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     backgroundColor: '#090d16',
     borderRadius: 6,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#d97706',
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Helvetica-Bold',
     color: '#f59e0b',
   },
@@ -53,16 +54,22 @@ const styles = StyleSheet.create({
   storeInfo: {
     flexDirection: 'column',
     justifyContent: 'center',
+    paddingLeft: 2,
+  },
+  storeNameBox: {
+    marginBottom: 5,
+    paddingBottom: 1,
   },
   storeName: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Helvetica-Bold',
     color: '#090d16',
     letterSpacing: 0.3,
   },
   storeContact: {
-    fontSize: 6.5,
+    fontSize: 6.8,
     color: '#475569',
+    lineHeight: 1.35,
     marginTop: 1,
   },
   headerRight: {
@@ -71,62 +78,62 @@ const styles = StyleSheet.create({
   },
   receiptBadge: {
     backgroundColor: '#090d16',
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    borderRadius: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
     marginBottom: 2,
     borderWidth: 1,
     borderColor: '#f59e0b',
   },
   receiptBadgeText: {
-    fontSize: 7.5,
+    fontSize: 8.5,
     fontFamily: 'Helvetica-Bold',
     color: '#f59e0b',
     letterSpacing: 0.5,
   },
   receiptDate: {
-    fontSize: 6.5,
+    fontSize: 6.8,
     color: '#64748b',
-    marginTop: 1,
+    marginTop: 1.5,
   },
   section: {
     marginBottom: 6,
   },
   sectionHeader: {
     backgroundColor: '#f1f5f9',
-    paddingVertical: 2.5,
+    paddingVertical: 2.6,
     paddingHorizontal: 6,
-    borderLeftWidth: 3,
+    borderLeftWidth: 3.5,
     borderLeftColor: '#d97706',
-    borderRadius: 2,
+    borderRadius: 2.5,
     marginBottom: 3,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 7.5,
+    fontSize: 7.8,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   sectionSub: {
-    fontSize: 6,
+    fontSize: 6.2,
     color: '#64748b',
   },
   card: {
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    borderRadius: 4,
+    borderRadius: 4.5,
     padding: 5,
-    paddingHorizontal: 7,
+    paddingHorizontal: 7.5,
   },
   grid3: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    rowGap: 3,
+    rowGap: 3.5,
   },
   col4: {
     width: '33.33%',
@@ -141,19 +148,19 @@ const styles = StyleSheet.create({
     paddingRight: 4,
   },
   fieldLabel: {
-    fontSize: 5.8,
+    fontSize: 6,
     fontFamily: 'Helvetica-Bold',
     color: '#64748b',
     textTransform: 'uppercase',
-    marginBottom: 0.5,
+    marginBottom: 0.8,
   },
   fieldValue: {
-    fontSize: 7.5,
+    fontSize: 8,
     fontFamily: 'Helvetica',
     color: '#1e293b',
   },
   fieldValueBold: {
-    fontSize: 7.5,
+    fontSize: 8,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
   },
@@ -169,27 +176,28 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 1.5,
+    paddingVertical: 2,
     borderBottomWidth: 0.5,
     borderBottomColor: '#e2e8f0',
   },
-  th1: { width: '38%', fontSize: 6, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' },
-  th2: { width: '25%', fontSize: 6, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' },
-  th3: { width: '20%', fontSize: 6, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' },
-  th4: { width: '17%', fontSize: 6, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase', textAlign: 'right' },
-  td1: { width: '38%', fontSize: 7, color: '#0f172a' },
-  td2: { width: '25%', fontSize: 7, color: '#334155' },
-  td3: { width: '20%', fontSize: 7, color: '#15803d', fontFamily: 'Helvetica-Bold' },
-  td4: { width: '17%', fontSize: 7, color: '#0f172a', fontFamily: 'Helvetica-Bold', textAlign: 'right' },
+  th1: { width: '38%', fontSize: 6.2, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' },
+  th2: { width: '25%', fontSize: 6.2, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' },
+  th3: { width: '20%', fontSize: 6.2, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase' },
+  th4: { width: '17%', fontSize: 6.2, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase', textAlign: 'right' },
+  td1: { width: '38%', fontSize: 7.5, color: '#0f172a' },
+  td2: { width: '25%', fontSize: 7.5, color: '#334155' },
+  td3: { width: '20%', fontSize: 7.5, color: '#15803d', fontFamily: 'Helvetica-Bold' },
+  td4: { width: '17%', fontSize: 7.5, color: '#0f172a', fontFamily: 'Helvetica-Bold', textAlign: 'right' },
   legalCard: {
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    borderRadius: 4,
+    borderRadius: 4.5,
     padding: 5,
+    paddingHorizontal: 7,
   },
   legalText: {
-    fontSize: 6,
+    fontSize: 5.6,
     color: '#475569',
     lineHeight: 1.25,
     marginBottom: 2,
@@ -198,28 +206,28 @@ const styles = StyleSheet.create({
   signaturesContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 6,
+    paddingHorizontal: 24,
+    marginTop: 12,
+    marginBottom: 5,
   },
   signatureBox: {
-    width: '44%',
+    width: '42%',
     alignItems: 'center',
   },
   signatureLine: {
     width: '100%',
     borderTopWidth: 1,
     borderTopColor: '#475569',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   signatureName: {
-    fontSize: 7.5,
+    fontSize: 8,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
     textAlign: 'center',
   },
   signatureRole: {
-    fontSize: 6,
+    fontSize: 6.2,
     color: '#64748b',
     textAlign: 'center',
   },
@@ -230,10 +238,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 5,
   },
   footerText: {
-    fontSize: 5.5,
+    fontSize: 5.8,
     color: '#94a3b8',
   },
 });
@@ -288,7 +296,7 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             {logoSrc ? (
-              <Image src={logoSrc} style={{ width: 38, height: 38, borderRadius: 6, objectFit: 'contain' }} />
+              <Image src={logoSrc} style={{ width: 44, height: 44, borderRadius: 7, objectFit: 'contain' }} />
             ) : (
               <View style={styles.logoBox}>
                 <Text style={styles.logoText}>AF</Text>
@@ -296,7 +304,9 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
               </View>
             )}
             <View style={styles.storeInfo}>
-              <Text style={styles.storeName}>{storeName}</Text>
+              <View style={styles.storeNameBox}>
+                <Text style={styles.storeName}>{storeName}</Text>
+              </View>
               <Text style={styles.storeContact}>
                 WhatsApp: {phone} {email ? `• E-mail: ${email}` : ''}
               </Text>
@@ -309,7 +319,7 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
               <Text style={styles.receiptBadgeText}>{receiptCode}</Text>
             </View>
             <Text style={styles.receiptDate}>Emissão: {formatDateBR(sale.sale_date)}</Text>
-            <Text style={{ fontSize: 5.5, color: '#15803d', fontFamily: 'Helvetica-Bold', marginTop: 1 }}>
+            <Text style={{ fontSize: 6, color: '#15803d', fontFamily: 'Helvetica-Bold', marginTop: 1.5 }}>
               COMPROVANTE OFICIAL DE ENTREGA
             </Text>
           </View>
@@ -449,20 +459,30 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
           </View>
         </View>
 
-        {/* 4. SEÇÃO TERMOS LEGAIS & CTB */}
+        {/* 4. SEÇÃO TERMO DE GARANTIA (90 DIAS OU 3.000 KM) & PROTEÇÃO JURÍDICA */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>4. Termos Legais, Vistoria & Cláusulas CTB</Text>
+            <Text style={styles.sectionTitle}>4. Termo de Garantia (90 Dias / 3.000 KM), Vistoria & Proteção Legal</Text>
+            <Text style={styles.sectionSub}>Art. 18 e 26 CDC & Art. 123 e 134 CTB</Text>
           </View>
           <View style={styles.legalCard}>
             <Text style={styles.legalText}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.1. Vistoria:</Text> O adquirente examinou e testou o veículo descrito, aprovando seu estado de conservação mecânica e estética no ato do recebimento das chaves.
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.1. Garantia Legal de 90 Dias ou 3.000 KM (Motor e Câmbio):</Text> A Loja "{storeName}" concede ao ADQUIRENTE garantia legal pelo prazo improrrogável de 90 (noventa) dias corridos ou 3.000 (três mil) quilômetros rodados, o que primeiro ocorrer, a contar da data de entrega do veículo, nos termos do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO.
             </Text>
             <Text style={styles.legalText}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.2. Transferência (Art. 123 CTB):</Text> O adquirente obriga-se a transferir a propriedade junto ao DETRAN em até 30 (trinta) dias.
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.2. Exclusões Expressas por Mau Uso, Modificações e Negligência:</Text> A garantia NÃO COBRE avarias decorrentes de: a) Mau uso, sobre-rotação ("corte de giro"), empinar/manobras, sobrecarga de carga/passageiros ou competições; b) Falta, atraso na troca de óleo, nível insuficiente de lubrificante ou uso de combustível adulterado; c) Quedas, colisões, acidentes ou submersão em água/alagamentos; d) Instalação de escapamento esportivo, remap de injeção, corte de chicote elétrico, alarmes ou rastreadores não homologados pela LOJA.
             </Text>
             <Text style={styles.legalText}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.3. Infrações de Trânsito:</Text> A partir da data/hora da entrega, toda responsabilidade civil, criminal e por multas recai exclusivamente sobre o comprador.
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.3. Perda Imediata da Garantia por Intervenção de Terceiros e Prazos:</Text> Havendo suspeita de anomalia, o ADQUIRENTE deve comunicar imediatamente a LOJA e apresentar o veículo na sede da {storeName}. Qualquer desmontagem, abertura de motor, rompimento de lacres ou tentativa de conserto por mecânicos terceiros sem autorização formal por escrito implicará na PERDA TOTAL E IMEDIATA DA GARANTIA. Em caso de reparo coberto, a LOJA disporá do prazo legal de até 30 (trinta) dias para solução do vício (Art. 18, § 1º do CDC).
+            </Text>
+            <Text style={styles.legalText}>
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.4. Transporte e Despesas de Reboque:</Text> O transporte, guincho ou reboque do veículo até a sede da Loja "{storeName}" para diagnóstico ou reparo é de responsabilidade e custo exclusivo do ADQUIRENTE.
+            </Text>
+            <Text style={styles.legalText}>
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.5. Itens de Desgaste Natural e Manutenção Preventiva:</Text> Fica expressamente convencionado que NÃO são cobertos pela garantia componentes sujeitos a desgaste natural por atrito e rodagem (pneus, câmaras de ar, pastilhas/lonas de freio, relação/transmissão, cabos de embreagem/acelerador, bateria, lâmpadas, velas e filtros), cabendo sua manutenção periódica exclusivamente ao COMPRADOR.
+            </Text>
+            <Text style={styles.legalText}>
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.6. Vistoria, Infrações e Transferência DETRAN (CTB):</Text> O COMPRADOR declara que vistoriou, testou e aprovou as condições estéticas, mecânicas e estruturais do veículo. A partir da presente data e hora da entrega física, todas as responsabilidades civis, criminais e multas/infrações de trânsito recaem exclusivamente sobre o COMPRADOR, que se obriga a efetivar a transferência no DETRAN no prazo legal de 30 (trinta) dias (Art. 123 do CTB), ficando a LOJA autorizada a realizar a devida Comunicação de Venda (Art. 134 do CTB).
             </Text>
           </View>
         </View>
@@ -472,7 +492,7 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
           <View style={styles.signatureBox}>
             <View style={styles.signatureLine} />
             <Text style={styles.signatureName}>{storeName.toUpperCase()}</Text>
-            <Text style={styles.signatureRole}>Vendedora / Representante Legal</Text>
+            <Text style={styles.signatureRole}>Representante Legal</Text>
           </View>
 
           <View style={styles.signatureBox}>
@@ -487,7 +507,6 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
           <Text style={styles.footerText}>
             {storeName} • Recibo e Comprovante de Entrega • Autenticidade: {receiptCode}
           </Text>
-          <Text style={styles.footerText}>Página 1 de 1</Text>
         </View>
       </Page>
     </Document>

@@ -402,23 +402,37 @@ export function OfficialReceiptPrint({
             </div>
           </div>
 
-          {/* SEÇÃO 4: TERMOS LEGAIS, CTB & CLÁUSULAS */}
+          {/* SEÇÃO 4: TERMO DE GARANTIA (90 DIAS OU 3.000 KM), VISTORIA & CLÁUSULAS LEGAIS */}
           <div className="mb-3.5 sm:mb-4">
-            <div className="bg-slate-100 px-3 py-1.5 rounded border-l-4 border-amber-500 mb-2">
+            <div className="bg-slate-100 px-3 py-1.5 rounded border-l-4 border-amber-500 mb-2 flex items-center justify-between">
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-800">
-                4. Termos Legais, Vistoria & Cláusulas de Trânsito
+                4. Termo de Garantia (90 Dias / 3.000 KM), Vistoria & Proteção Legal
               </span>
+              <span className="text-[10px] text-slate-500 font-mono">Art. 18 e 26 CDC & Art. 123 e 134 CTB</span>
             </div>
 
-            <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200 text-[10px] sm:text-[10.5px] text-slate-600 space-y-1.5 leading-relaxed text-justify">
+            <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200 text-[10px] sm:text-[10.5px] text-slate-700 space-y-2 leading-relaxed text-justify">
               <p>
-                <strong>4.1. Vistoria & Estado do Veículo:</strong> O adquirente declara expressamente que examinou e testou o veículo descrito na Seção 1, aprovando seu estado de conservação mecânica, elétrica, funilaria e pneus no ato do recebimento das chaves.
+                <strong>4.1. Garantia Legal de 90 Dias ou 3.000 KM (Motor e Câmbio):</strong> A Loja <strong>"{storeName}"</strong> concede ao ADQUIRENTE garantia legal pelo prazo improrrogável de <strong>90 (noventa) dias corridos ou 3.000 (três mil) quilômetros rodados</strong>, o que primeiro ocorrer, a contar da data de entrega do veículo, nos termos do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é <strong>restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO</strong>.
               </p>
               <p>
-                <strong>4.2. Transferência Obrigatória (Art. 123 do CTB):</strong> Fica o adquirente expressamente obrigado a efetivar a transferência de propriedade do veículo junto ao DETRAN no prazo legal improrrogável de 30 (trinta) dias corridos, sob pena das cominações legais cabíveis.
+                <strong>4.2. Exclusões Expressas por Mau Uso, Modificações e Negligência:</strong> A garantia <strong>NÃO COBRE</strong> avarias decorrentes de: 
+                <strong> a)</strong> Mau uso, sobre-rotação ("corte de giro"), empinar/manobras, sobrecarga de carga/passageiros ou competições; 
+                <strong> b)</strong> Falta, atraso na troca de óleo, nível insuficiente de lubrificante ou uso de combustível adulterado; 
+                <strong> c)</strong> Quedas, colisões, acidentes ou submersão em água/alagamentos; 
+                <strong> d)</strong> Instalação de escapamento esportivo, remap de injeção, corte de chicote elétrico, alarmes ou rastreadores não homologados pela LOJA.
               </p>
               <p>
-                <strong>4.3. Responsabilidade por Infrações de Trânsito:</strong> A partir da data e hora da efetiva entrega física do veículo registrada neste comprovante, toda e qualquer responsabilidade civil, criminal e por multas ou infrações de trânsito é transferida integralmente ao comprador.
+                <strong>4.3. Perda Imediata da Garantia por Intervenção de Terceiros e Prazos:</strong> Havendo suspeita de anomalia, o ADQUIRENTE deve comunicar imediatamente a LOJA e apresentar o veículo na sede da <strong>Loja "{storeName}"</strong>. Qualquer desmontagem, abertura de motor, rompimento de lacres ou tentativa de conserto por mecânicos terceiros sem autorização formal por escrito implicará na <strong>PERDA TOTAL E IMEDIATA DA GARANTIA</strong>. Em caso de reparo coberto, a LOJA disporá do <strong>prazo legal de até 30 (trinta) dias para solução do vício (Art. 18, § 1º do CDC)</strong>.
+              </p>
+              <p>
+                <strong>4.4. Transporte e Despesas de Reboque:</strong> O transporte, guincho ou reboque do veículo até a sede da Loja <strong>"{storeName}"</strong> para diagnóstico ou reparo é de <strong>responsabilidade e custo exclusivo do ADQUIRENTE</strong>.
+              </p>
+              <p>
+                <strong>4.5. Itens de Desgaste Natural e Manutenção Preventiva:</strong> Fica expressamente convencionado que <strong>NÃO</strong> são cobertos pela garantia componentes sujeitos a desgaste natural por atrito e rodagem (pneus, câmaras de ar, pastilhas/lonas de freio, relação/transmissão, cabos de embreagem/acelerador, bateria, lâmpadas, velas e filtros), cabendo sua manutenção periódica exclusivamente ao COMPRADOR.
+              </p>
+              <p>
+                <strong>4.6. Vistoria, Infrações e Transferência DETRAN (CTB):</strong> O COMPRADOR declara que vistoriou, testou e aprovou as condições estéticas, mecânicas e estruturais do veículo. A partir da presente data e hora da entrega física, todas as responsabilidades civis, criminais e multas/infrações de trânsito recaem exclusivamente sobre o COMPRADOR, que se obriga a efetivar a transferência no DETRAN no prazo legal de 30 (trinta) dias (Art. 123 do CTB), ficando a LOJA autorizada a realizar a devida Comunicação de Venda (Art. 134 do CTB).
               </p>
             </div>
           </div>
@@ -430,7 +444,7 @@ export function OfficialReceiptPrint({
             <div>
               <div className="border-b border-slate-400 pb-1 mb-1 h-7 sm:h-9 flex items-end justify-center" />
               <p className="text-xs font-bold text-slate-900">{storeName}</p>
-              <p className="text-[10px] text-slate-500">Vendedora / Representante Legal</p>
+              <p className="text-[10px] text-slate-500">Representante Legal</p>
             </div>
 
             <div>
@@ -444,7 +458,6 @@ export function OfficialReceiptPrint({
 
           <div className="mt-3.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[9px] text-slate-400 font-mono">
             <span>AUTENTICIDADE: {receiptCode} • {emissionDate}</span>
-            <span>PÁGINA 1 DE 1</span>
           </div>
         </div>
       </div>
