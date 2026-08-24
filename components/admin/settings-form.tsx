@@ -19,6 +19,7 @@ import {
   Loader2,
   ArrowLeft,
   Sparkles,
+  Info,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,8 @@ import { HoursTab } from './settings/hours-tab';
 import { SocialTab } from './settings/social-tab';
 import { ContentTab } from './settings/content-tab';
 import { SeoTab } from './settings/seo-tab';
+import { AboutTab } from './settings/about-tab';
+import { aboutSettingsSchema } from '@/lib/settings/schema';
 
 const settingsSchema = z.object({
   id: z.string().optional(),
@@ -92,6 +95,7 @@ const settingsSchema = z.object({
         canonicalUrl: z.string().optional().nullable(),
       })
       .optional(),
+    about: aboutSettingsSchema.optional(),
     // Chaves legadas
     short_name: z.string().optional(),
     institutional_description: z.string().optional(),
@@ -118,6 +122,7 @@ const TABS = [
   { id: 'hours', label: 'Horários', icon: Clock },
   { id: 'social', label: 'Redes Sociais', icon: Share2 },
   { id: 'content', label: 'Conteúdo', icon: FileText },
+  { id: 'about', label: 'Sobre a Loja', icon: Info },
   { id: 'seo', label: 'SEO & Buscas', icon: Search },
 ] as const;
 
@@ -185,6 +190,28 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
         description: rawSettings.seo?.description || '',
         ogImageUrl: rawSettings.seo?.ogImageUrl || '',
         canonicalUrl: rawSettings.seo?.canonicalUrl || '',
+      },
+      about: rawSettings.about || {
+        isPublished: false,
+        heroTitle: '',
+        heroSubtitle: '',
+        description: '',
+        additionalText: '',
+        storeImage: {
+          provider: 'supabase',
+          url: '',
+          isActive: true,
+        },
+        differentials: [],
+        location: {
+          mapsUrl: '',
+          instructions: '',
+        },
+        seo: {
+          title: '',
+          description: '',
+          ogImageUrl: '',
+        },
       },
       // Compatibilidade legada
       short_name: rawSettings.short_name || rawSettings.shortName || '',
@@ -268,8 +295,8 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
   return (
     <div className="space-y-6 pb-24">
       {/* Barra de Abas / Navegação de Categorias */}
-      <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-1.5 shadow-md backdrop-blur-md overflow-x-auto scrollbar-none">
-        <nav className="flex items-center gap-1.5 min-w-max">
+      <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-1.5 shadow-md backdrop-blur-md">
+        <nav className="flex flex-wrap items-center gap-1.5">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -280,13 +307,13 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none',
+                  'flex-1 min-w-[120px] sm:min-w-[130px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none whitespace-nowrap',
                   isActive
                     ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 shadow-md shadow-amber-500/10 font-bold'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60',
                 )}
               >
-                <Icon className={cn('w-4 h-4', isActive ? 'text-zinc-950' : 'text-zinc-400')} />
+                <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-zinc-950' : 'text-zinc-400')} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -304,6 +331,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
             {activeTab === 'hours' && <HoursTab form={form} />}
             {activeTab === 'social' && <SocialTab form={form} />}
             {activeTab === 'content' && <ContentTab form={form} />}
+            {activeTab === 'about' && <AboutTab form={form} />}
             {activeTab === 'seo' && <SeoTab form={form} />}
           </div>
 

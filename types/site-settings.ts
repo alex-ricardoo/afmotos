@@ -71,6 +71,42 @@ export interface SeoSettings {
   canonicalUrl?: string | null;
 }
 
+export interface StoreImage {
+  provider: ImageStorageProvider;
+  url: string;
+  path?: string;
+  alt?: string;
+  isActive: boolean;
+}
+
+export interface StoreDifferential {
+  id: string;
+  title: string;
+  description?: string;
+  icon: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface LocationSettings {
+  mapsUrl?: string | null;
+  latitude?: number;
+  longitude?: number;
+  instructions?: string;
+}
+
+export interface AboutSettings {
+  isPublished: boolean;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  description?: string;
+  additionalText?: string;
+  storeImages?: StoreImage[];
+  differentials: StoreDifferential[];
+  location?: LocationSettings;
+  seo?: SeoSettings;
+}
+
 export interface SiteSettingsData {
   shortName?: string;
   slogan?: string;
@@ -90,6 +126,8 @@ export interface SiteSettingsData {
   facebook_url?: string;
   tiktok_url?: string;
   youtube_url?: string;
+  
+  about?: AboutSettings;
 }
 
 export interface SiteSettingsRecord {

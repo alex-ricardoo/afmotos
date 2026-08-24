@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { uploadImage } from '@/lib/uploads';
 import { SiteSettingsData } from '@/types/site-settings';
+import { aboutSettingsSchema } from '@/lib/settings/schema';
 
 export async function getSettings() {
   const supabase = await createClient();
@@ -31,6 +32,23 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
   const supabase = await createClient();
 
   const { id, site_name, whatsapp_phone, contact_email, address, settings } = payload;
+
+  if (settings.about) {
+    // Auto-generate SEO
+    settings.about.seo = {
+      title: `${settings.about.heroTitle || 'Sobre'} | ${site_name}`,
+      description: settings.about.description ? settings.about.description.substring(0, 155) : '',
+      ogImageUrl: settings.about.storeImages?.[0]?.url || null,
+    };
+
+    const aboutValidation = aboutSettingsSchema.safeParse(settings.about);
+    if (!aboutValidation.success) {
+      console.error('Erro de validação em Sobre a Loja:', aboutValidation.error);
+      return { error: 'Dados da seção Sobre a Loja são inválidos.' };
+    }
+    // Opcionalmente reatribuir settings.about com os dados limpos/validados
+    settings.about = aboutValidation.data;
+  }
 
   const dbPayload = {
     site_name,

@@ -11,7 +11,7 @@ export default async function ConfiguracoesPage() {
   const settings = await getSettings();
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col gap-2 mb-6">
         <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
           <Link href="/admin" className="hover:text-amber-400 transition-colors">

@@ -13,13 +13,13 @@ import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 import { getSiteLogo } from '@/lib/site-settings';
 
-const navLinks = [
+const baseNavLinks = [
   { href: '/', label: 'Início' },
   { href: '/motos', label: 'Motos disponíveis' },
-  { href: '/vender-minha-moto', label: 'Venda sua moto' },
-  { href: '/anunciar-sua-moto', label: 'Anuncie sua moto' },
-  { href: '/aluguel', label: 'Aluguel' },
   { href: '/motos-vendidas', label: 'Motos vendidas' },
+  { href: '/anunciar-sua-moto', label: 'Anuncie sua moto' },
+  { href: '/aluguel', label: 'Aluguel de Motos' },
+  { href: '/vender-minha-moto', label: 'Venda sua moto' },
 ];
 
 export function Header({ settings }: { settings?: any }) {
@@ -31,6 +31,12 @@ export function Header({ settings }: { settings?: any }) {
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
   const slogan = settings?.settings?.slogan || 'Compra, Venda e Locação';
   const logoInfo = getSiteLogo(settings);
+  const isAboutPublished = settings?.settings?.about?.isPublished === true;
+
+  const navLinks = [...baseNavLinks];
+  if (isAboutPublished) {
+    navLinks.push({ href: '/sobre', label: 'Sobre nós' }); // Inserir no final
+  }
 
   const whatsappUrl = generateWhatsAppLink(
     contactPhone,
@@ -98,15 +104,7 @@ export function Header({ settings }: { settings?: any }) {
 
         {/* Actions (WhatsApp CTA + Mobile Menu Trigger) */}
         <div className="flex items-center gap-3">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white font-bold text-xs sm:text-sm transition-all duration-200 shadow-xs group"
-          >
-            <WhatsAppIcon className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" />
-            <span>Fale Conosco</span>
-          </a>
+
 
           {/* Mobile Sheet Navigation */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>

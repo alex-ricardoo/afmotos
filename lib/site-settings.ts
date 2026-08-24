@@ -6,6 +6,7 @@ import {
   SocialLinkItem,
   DetailedAddress,
   FormattedBusinessHours,
+  AboutSettings,
 } from '@/types/site-settings';
 
 /**
@@ -29,6 +30,7 @@ export function resolvePublicSiteSettings(raw?: SiteSettingsRecord | null): {
   heroSubtitle?: string;
   aboutText?: string;
   footerText?: string;
+  about?: AboutSettings;
 } {
   const siteName = raw?.site_name || CONSTANTS.STORE_NAME;
   const shortName = raw?.settings?.shortName || raw?.settings?.short_name || siteName;
@@ -65,6 +67,7 @@ export function resolvePublicSiteSettings(raw?: SiteSettingsRecord | null): {
     heroSubtitle: raw?.settings?.publicContent?.heroSubtitle,
     aboutText: raw?.settings?.publicContent?.aboutText,
     footerText: raw?.settings?.publicContent?.footerText,
+    about: raw?.settings?.about,
   };
 }
 

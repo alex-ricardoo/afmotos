@@ -42,6 +42,7 @@ export function Footer({ settings }: { settings?: any }) {
     contactPhone,
     `Olá! Gostaria de mais informações sobre a ${siteName}.`,
   );
+  const isAboutPublished = settings?.settings?.about?.isPublished === true;
 
   const getSocialIcon = (key: string) => {
     switch (key) {
@@ -181,6 +182,13 @@ export function Footer({ settings }: { settings?: any }) {
                   Início
                 </Link>
               </li>
+              {isAboutPublished && (
+                <li>
+                  <Link href="/sobre" className="hover:text-amber-500 transition-colors duration-200">
+                    Sobre a {siteName}
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link href="/motos" className="hover:text-amber-500 transition-colors duration-200">
                   Motos Disponíveis
