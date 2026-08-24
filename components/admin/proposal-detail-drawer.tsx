@@ -17,14 +17,19 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ProposalViewModel } from '@/lib/admin/proposal-view-model';
+import {
+  ProposalViewModel,
+  getStockRegistrationUrlFromProposal,
+} from '@/lib/admin/proposal-view-model';
 import {
   proposalTypeLabels,
   proposalStatusLabels,
   getProposalStatusLabel,
 } from '@/lib/admin/proposal-labels';
+
 
 
 import { format } from 'date-fns';
@@ -52,7 +57,9 @@ import {
   Sparkles,
   Eye,
   User,
+  PlusCircle,
 } from 'lucide-react';
+
 import { toast } from 'sonner';
 
 export function useMediaQuery(query: string) {
@@ -432,6 +439,38 @@ export function ProposalDetail({
                 </Badge>
               </div>
 
+              {/* Card Destaque: Moto Comprada -> Cadastrar no Estoque com 1 clique */}
+              {proposal.status === 'CONVERTED' && (
+                <div className="bg-gradient-to-br from-amber-500/20 via-zinc-900 to-zinc-950 p-4 rounded-2xl border border-amber-500/50 space-y-2.5 shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-amber-500 text-zinc-950 flex items-center justify-center font-black">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
+                        Moto Pronta para o Estoque
+                      </span>
+                    </div>
+                    <Badge className="bg-amber-500 text-zinc-950 font-black text-[10px]">
+                      Ação Recomendada
+                    </Badge>
+                  </div>
+
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    Esta moto foi adquirida pela loja! Os dados cadastrais (marca, modelo, anos, cor, km e fotos) já estão prontos para serem integrados ao catálogo.
+                  </p>
+
+                  <Link
+                    href={getStockRegistrationUrlFromProposal(proposal)}
+                    className="w-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-zinc-950 font-black rounded-xl h-10 shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2 text-xs transition-all cursor-pointer"
+                  >
+                    <PlusCircle className="w-4 h-4 text-zinc-950" />
+                    <span>Cadastrar Moto no Estoque</span>
+                  </Link>
+                </div>
+              )}
+
+
               {/* Motorcycle Title */}
               <div className="bg-zinc-950/60 p-3.5 rounded-xl border border-zinc-800/60 flex items-center justify-between">
                 <div>
@@ -536,7 +575,7 @@ export function ProposalDetail({
                 )}
 
                 {/* Simulador de Oferta da Loja (FIPE) para o Lojista */}
-                {fipePrice != null && fipePrice > 0 && (
+                {proposal.status !== 'CONVERTED' && fipePrice != null && fipePrice > 0 && (
                   <div className="sm:col-span-2 bg-gradient-to-br from-amber-500/15 via-zinc-900 to-zinc-950 p-4 rounded-2xl border border-amber-500/40 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -613,28 +652,14 @@ export function ProposalDetail({
 
           {/* Card 3: Mensagem do Cliente */}
           {proposal.message && (
-            <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-2.5 shadow-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-[#c9a44c]" />
-                  Mensagem / Observações
-                </h4>
-                <button
-                  type="button"
-                  onClick={handleCopyMessage}
-                  className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  {copiedMessage ? (
-                    <Check className="w-3 h-3 text-emerald-400" />
-                  ) : (
-                    <Copy className="w-3 h-3" />
-                  )}
-                  <span>{copiedMessage ? 'Copiado' : 'Copiar'}</span>
-                </button>
-              </div>
-              <div className="bg-zinc-950/70 p-3.5 rounded-xl border border-zinc-800/60 text-xs text-zinc-200 leading-relaxed italic whitespace-pre-wrap">
+            <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-2 shadow-xs">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-[#c9a44c]" />
+                Observações / Mensagem do Cliente
+              </h4>
+              <p className="text-xs text-zinc-300 italic bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 leading-relaxed">
                 &quot;{proposal.message}&quot;
-              </div>
+              </p>
             </div>
           )}
         </div>
@@ -703,56 +728,82 @@ export function ProposalDetail({
             <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
               <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                 <WhatsAppIcon className="w-3.5 h-3.5 fill-[#25D366]" />
-                Atendimento WhatsApp
+                {proposal.status === 'CONVERTED' ? 'Contato com o Vendedor' : 'Atendimento WhatsApp'}
               </h4>
-              <span className="text-[10px] text-zinc-500">Respostas rápidas</span>
-            </div>
-
-            {/* Template Selector */}
-            <div className="space-y-1.5">
-              <span className="text-[11px] text-zinc-400 block font-medium">
-                Modelo da mensagem:
+              <span className="text-[10px] text-zinc-500">
+                {proposal.status === 'CONVERTED' ? 'Canal direto' : 'Respostas rápidas'}
               </span>
-              <div className="grid grid-cols-2 gap-1.5">
-                {[
-                  { id: 'offer', label: '💰 Oferta FIPE' },
-                  { id: 'default', label: 'Padrão' },
-                  { id: 'photos', label: 'Pedir fotos/doc' },
-                  { id: 'visit', label: 'Agendar visita' },
-                  { id: 'counter', label: 'Contraproposta' },
-                ].map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => setSelectedPreset(preset.id)}
-                    className={cn(
-                      'px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all text-center cursor-pointer',
-                      selectedPreset === preset.id
-                        ? 'bg-zinc-800 text-white border-[#c9a44c]/60'
-                        : 'bg-zinc-950/60 text-zinc-400 border-zinc-800/60 hover:text-white',
-                    )}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
+            </div>
+
+            {proposal.status === 'CONVERTED' ? (
+              <div className="space-y-3">
+                <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Moto comprada pela loja. O canal com o vendedor continua disponível para dúvidas ou comprovantes:</span>
+                </div>
+
+                <a
+                  href={generateWhatsAppLink(
+                    proposal.phone,
+                    `Olá ${proposal.name}, tudo bem? Aqui é da AF Motos! Entrando em contato sobre a compra da sua moto.`,
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-[#25D366] hover:bg-[#20BD5A] active:scale-98 text-zinc-950 font-extrabold rounded-xl h-11 shadow-[0_0_20px_rgba(37,211,102,0.25)] flex items-center justify-center gap-2 text-sm transition-all cursor-pointer"
+                >
+                  <WhatsAppIcon className="w-5 h-5 fill-current" />
+                  <span>Falar no WhatsApp com o Vendedor</span>
+                </a>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Template Selector */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] text-zinc-400 block font-medium">
+                    Modelo da mensagem:
+                  </span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { id: 'offer', label: '💰 Oferta FIPE' },
+                      { id: 'default', label: 'Padrão' },
+                      { id: 'photos', label: 'Pedir fotos/doc' },
+                      { id: 'visit', label: 'Agendar visita' },
+                      { id: 'counter', label: 'Contraproposta' },
+                    ].map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => setSelectedPreset(preset.id)}
+                        className={cn(
+                          'px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all text-center cursor-pointer',
+                          selectedPreset === preset.id
+                            ? 'bg-zinc-800 text-white border-[#c9a44c]/60'
+                            : 'bg-zinc-950/60 text-zinc-400 border-zinc-800/60 hover:text-white',
+                        )}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Preview of message */}
-            <div className="bg-zinc-950/80 p-3 rounded-xl border border-zinc-800/60 text-[11px] text-zinc-400 line-clamp-3 leading-relaxed">
-              &quot;{getWhatsAppMessageByPreset()}&quot;
-            </div>
+                {/* Preview of message */}
+                <div className="bg-zinc-950/80 p-3 rounded-xl border border-zinc-800/60 text-[11px] text-zinc-400 line-clamp-3 leading-relaxed">
+                  &quot;{getWhatsAppMessageByPreset()}&quot;
+                </div>
 
-            {/* Big WhatsApp CTA */}
-            <a
-              href={activeWhatsAppLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full bg-[#25D366] hover:bg-[#20BD5A] active:scale-98 text-zinc-950 font-extrabold rounded-xl h-11 shadow-[0_0_20px_rgba(37,211,102,0.25)] flex items-center justify-center gap-2 text-sm transition-all cursor-pointer"
-            >
-              <WhatsAppIcon className="w-5 h-5 fill-current" />
-              <span>Abrir WhatsApp com Cliente</span>
-            </a>
+                {/* Big WhatsApp CTA */}
+                <a
+                  href={activeWhatsAppLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-[#25D366] hover:bg-[#20BD5A] active:scale-98 text-zinc-950 font-extrabold rounded-xl h-11 shadow-[0_0_20px_rgba(37,211,102,0.25)] flex items-center justify-center gap-2 text-sm transition-all cursor-pointer"
+                >
+                  <WhatsAppIcon className="w-5 h-5 fill-current" />
+                  <span>Abrir WhatsApp com Cliente</span>
+                </a>
+              </>
+            )}
           </div>
 
           {/* Photo Gallery */}

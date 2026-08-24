@@ -35,7 +35,9 @@ export interface ProposalMotorcycle {
   estimatedOffer?: number | null;
   fipeReferencePeriod?: string | null;
   fipeSnapshot?: Record<string, unknown> | null;
+  licensePlate?: string | null;
 }
+
 
 export interface ProposalRental {
   age: number | null;
@@ -349,3 +351,45 @@ export function mapRentalRequestToProposal(row: Record<string, any>): ProposalVi
     },
   };
 }
+
+/**
+ * Gera a URL para a tela de cadastrar nova moto no estoque (/admin/motos/nova)
+ * com todos os dados da proposta (marca, modelo, anos, cor, km, preço, fotos) já preenchidos.
+ */
+export function getStockRegistrationUrlFromProposal(proposal: ProposalViewModel): string {
+  const params = new URLSearchParams();
+  if (proposal.motorcycle?.brand) params.set('brand', proposal.motorcycle.brand);
+  if (proposal.motorcycle?.model) params.set('model', proposal.motorcycle.model);
+  if (proposal.motorcycle?.version) params.set('version', proposal.motorcycle.version);
+  if (proposal.motorcycle?.yearManufacture) {
+    params.set('year_manufacture', String(proposal.motorcycle.yearManufacture));
+  } else if (proposal.motorcycle?.year) {
+    params.set('year_manufacture', String(proposal.motorcycle.year));
+  }
+  if (proposal.motorcycle?.yearModel) {
+    params.set('year_model', String(proposal.motorcycle.yearModel));
+  } else if (proposal.motorcycle?.year) {
+    params.set('year_model', String(proposal.motorcycle.year));
+  }
+  if (proposal.motorcycle?.color) params.set('color', proposal.motorcycle.color);
+  if (proposal.motorcycle?.mileage != null) params.set('mileage', String(proposal.motorcycle.mileage));
+  if (proposal.motorcycle?.fipePrice != null) params.set('fipe_price', String(proposal.motorcycle.fipePrice));
+  if (proposal.motorcycle?.desiredPrice != null) params.set('price', String(proposal.motorcycle.desiredPrice));
+  if (proposal.motorcycle?.licensePlate) params.set('license_plate', proposal.motorcycle.licensePlate);
+
+  params.set('ownership_type', proposal.type === 'CONSIGNMENT' ? 'CONSIGNMENT' : 'OWNED');
+  params.set('proposal_id', proposal.id);
+  if (proposal.name) params.set('from_client', proposal.name);
+
+  // Anexar URLs de imagens se houver
+  const images = getProposalImages(proposal);
+  if (images.length > 0) {
+    const urls = images.map((img) => img.url).filter(Boolean);
+    if (urls.length > 0) {
+      params.set('images', JSON.stringify(urls));
+    }
+  }
+
+  return `/admin/motos/nova?${params.toString()}`;
+}
+

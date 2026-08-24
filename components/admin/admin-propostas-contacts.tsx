@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Search,
   LayoutGrid,
@@ -21,6 +22,7 @@ import {
   Image as ImageIcon,
   Copy,
   Check,
+  PlusCircle,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,12 +36,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { updateLeadStatus } from '@/lib/actions/leads';
-import { ProposalViewModel } from '@/lib/admin/proposal-view-model';
+import {
+  ProposalViewModel,
+  getStockRegistrationUrlFromProposal,
+} from '@/lib/admin/proposal-view-model';
 import {
   proposalTypeLabels,
   proposalStatusLabels,
   getProposalStatusLabel,
 } from '@/lib/admin/proposal-labels';
+
 
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -747,20 +753,47 @@ export function AdminPropostasContacts({ initialData }: Props) {
                     </div>
                   ) : null}
 
-                  {/* Row 4: Action Footer (WhatsApp Button + Status Dropdown) */}
+                  {/* Row 4: Action Footer (WhatsApp Button / Cadastrar no Estoque + Status Dropdown) */}
                   <div className="pt-2.5 border-t border-zinc-900/90 flex items-center gap-2 mt-auto">
-                    <a
-                      href={generateWhatsAppLink(
-                        proposal.phone,
-                        generateProposalWhatsAppMessage(proposal),
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] active:scale-95 text-zinc-950 font-extrabold rounded-xl h-10 transition-all flex items-center justify-center gap-1.5 text-xs shadow-[0_0_15px_rgba(37,211,102,0.2)] cursor-pointer"
-                    >
-                      <WhatsAppIcon className="w-4 h-4 fill-current" />
-                      <span>Falar no WhatsApp</span>
-                    </a>
+                    {proposal.status === 'CONVERTED' ? (
+                      <>
+                        <Link
+                          href={getStockRegistrationUrlFromProposal(proposal)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-1 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 active:scale-95 text-zinc-950 font-black rounded-xl h-10 transition-all flex items-center justify-center gap-1.5 text-xs shadow-[0_0_15px_rgba(245,158,11,0.25)] cursor-pointer"
+                        >
+                          <PlusCircle className="w-4 h-4 text-zinc-950 shrink-0" />
+                          <span className="truncate">Cadastrar no Estoque</span>
+                        </Link>
+
+                        <a
+                          href={generateWhatsAppLink(
+                            proposal.phone,
+                            generateProposalWhatsAppMessage(proposal),
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Falar no WhatsApp com o cliente"
+                          className="w-10 h-10 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-emerald-400 hover:text-emerald-300 flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                        >
+                          <WhatsAppIcon className="w-4 h-4 fill-current" />
+                        </a>
+                      </>
+                    ) : (
+                      <a
+                        href={generateWhatsAppLink(
+                          proposal.phone,
+                          generateProposalWhatsAppMessage(proposal),
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 bg-[#25D366] hover:bg-[#20BD5A] active:scale-95 text-zinc-950 font-extrabold rounded-xl h-10 transition-all flex items-center justify-center gap-1.5 text-xs shadow-[0_0_15px_rgba(37,211,102,0.2)] cursor-pointer"
+                      >
+                        <WhatsAppIcon className="w-4 h-4 fill-current" />
+                        <span>Falar no WhatsApp</span>
+                      </a>
+                    )}
 
                     <DropdownMenu>
                       <DropdownMenuTrigger
@@ -823,8 +856,8 @@ export function AdminPropostasContacts({ initialData }: Props) {
                   <th className="py-3.5 px-4 min-w-[130px]">Tipo</th>
                   <th className="py-3.5 px-4 min-w-[160px]">Cliente</th>
                   <th className="py-3.5 px-4 min-w-[140px]">Contato</th>
-                  <th className="py-3.5 px-4 min-w-[160px]">Moto Ref.</th>
-                  <th className="py-3.5 px-4 min-w-[120px]">Valor Pedido</th>
+                  <th className="py-3.5 px-4 min-w-[170px]">Veículo</th>
+                  <th className="py-3.5 px-4 min-w-[130px]">Valor</th>
                   <th className="py-3.5 px-4 min-w-[130px]">Status</th>
                   <th className="py-3.5 px-4 text-right min-w-[160px]">Ações</th>
                 </tr>
@@ -923,6 +956,18 @@ export function AdminPropostasContacts({ initialData }: Props) {
                         className="py-3 px-4 text-right space-x-2 whitespace-nowrap"
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {proposal.status === 'CONVERTED' && (
+                          <Link
+                            href={getStockRegistrationUrlFromProposal(proposal)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs h-8 px-2.5 rounded-xl gap-1 shadow-sm transition-colors cursor-pointer"
+                            title="Cadastrar moto no estoque"
+                          >
+                            <PlusCircle className="w-3.5 h-3.5" />
+                            <span>Estoque</span>
+                          </Link>
+                        )}
+
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             className={buttonVariants({
@@ -934,7 +979,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
                           >
                             <span className={cn('w-1.5 h-1.5 rounded-full', statusConfig.dot)} />
                             <span>Status</span>
-                            <ChevronDown className="w-3 h-3 opacity-60" />
+                            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"

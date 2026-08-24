@@ -285,6 +285,8 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialStepParam = searchParams.get('step');
+  const fromClientParam = searchParams.get('from_client');
+  const proposalIdParam = searchParams.get('proposal_id');
 
   const [currentStep, setCurrentStep] = useState<number>(initialStepParam === 'fotos' ? 4 : 1);
   const [loading, setLoading] = useState(false);
@@ -305,28 +307,83 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
   const form = useForm<MotorcycleFormValues>({
     resolver: zodResolver(motorcycleSchema) as any,
     defaultValues: {
-      brand: initialData?.brand || '',
-      model: initialData?.model || '',
-      version: initialData?.version || '',
-      year_manufacture: initialData?.year_manufacture || new Date().getFullYear(),
-      year_model: initialData?.year_model || new Date().getFullYear(),
-      mileage: initialData?.mileage || 0,
+      brand: initialData?.brand || searchParams.get('brand') || '',
+      model: initialData?.model || searchParams.get('model') || '',
+      version: initialData?.version || searchParams.get('version') || '',
+      year_manufacture:
+        initialData?.year_manufacture ||
+        (searchParams.get('year_manufacture')
+          ? Number(searchParams.get('year_manufacture'))
+          : new Date().getFullYear()),
+      year_model:
+        initialData?.year_model ||
+        (searchParams.get('year_model')
+          ? Number(searchParams.get('year_model'))
+          : new Date().getFullYear()),
+      mileage:
+        initialData?.mileage ||
+        (searchParams.get('mileage') ? Number(searchParams.get('mileage')) : 0),
       engine_capacity: initialData?.engine_capacity || 0,
       fuel: normalizeFuel(initialData?.fuel),
       transmission: normalizeTransmission(initialData?.transmission),
-      color: initialData?.color || '',
-      price: initialData?.price || 0,
-      fipe_price: initialData?.fipe_price || null,
+      color: initialData?.color || searchParams.get('color') || '',
+      price:
+        initialData?.price ||
+        (searchParams.get('price') ? Number(searchParams.get('price')) : 0),
+      fipe_price:
+        initialData?.fipe_price ||
+        (searchParams.get('fipe_price') ? Number(searchParams.get('fipe_price')) : null),
       description: initialData?.description || '',
-      ownership_type: normalizeOwnership(initialData?.ownership_type),
+      ownership_type: normalizeOwnership(
+        initialData?.ownership_type || searchParams.get('ownership_type'),
+      ),
       operation_type: normalizeOperation(initialData?.operation_type),
       status: initialData?.status || 'AVAILABLE',
       featured: initialData?.featured || false,
-      license_plate: initialData?.license_plate || '',
+      license_plate: initialData?.license_plate || searchParams.get('license_plate') || '',
       renavam: initialData?.renavam || '',
       chassi: initialData?.chassi || '',
     },
   });
+
+  // Pre-load images from query param if available (from a converted proposal)
+  useEffect(() => {
+    if (isEditing) return;
+    const imagesParam = searchParams.get('images');
+    if (imagesParam && images.length === 0) {
+      try {
+        let parsedUrls: string[] = [];
+        if (imagesParam.startsWith('[')) {
+          parsedUrls = JSON.parse(imagesParam);
+        } else {
+          parsedUrls = imagesParam
+            .split(',')
+            .map((u) => u.trim())
+            .filter(Boolean);
+        }
+        if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
+          const preloadedImages: MotorcycleImage[] = parsedUrls.map((url, idx) => ({
+            id: `proposal-img-${idx}-${Date.now()}`,
+            motorcycle_id: '',
+            storage_path: url,
+            public_url: url,
+            display_url: url,
+            thumbnail_url: url,
+            url: url,
+            is_primary: idx === 0,
+            sort_order: idx,
+            alt_text: `Foto ${idx + 1}`,
+            created_at: new Date().toISOString(),
+          }));
+          setImages(preloadedImages);
+        }
+
+      } catch (err) {
+        console.warn('Falha ao processar imagens pré-carregadas da proposta:', err);
+      }
+    }
+  }, [searchParams, isEditing, images.length]);
+
 
   const applyOcrValues = (result: MotorcycleOcrResult, overwriteAll: boolean) => {
     const current = form.getValues();
@@ -727,6 +784,29 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
           <p className="text-sm font-medium">{successMsg}</p>
         </div>
       )}
+
+      {/* Banner de Dados Importados da Proposta Comercial */}
+      {!isEditing && (fromClientParam || proposalIdParam) && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-zinc-900 to-zinc-950 border border-amber-500/35 rounded-2xl p-4 flex items-center justify-between gap-3 text-xs shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center font-bold shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-extrabold text-amber-400 text-sm block">
+                Dados importados da proposta de {fromClientParam || 'Venda'}
+              </span>
+              <span className="text-zinc-400 text-xs">
+                Marca, modelo, anos, cor, quilometragem e fotos foram preenchidos automaticamente. Revise os campos e complete os dados para salvar no estoque.
+              </span>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 text-[10px] uppercase tracking-wider shrink-0 hidden sm:inline-block">
+            Importado da Proposta
+          </span>
+        </div>
+      )}
+
 
       {/* STEPPER WIZARD SUPERIOR (DESIGN MODERNO & MOBILE FIRST) */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xl">
