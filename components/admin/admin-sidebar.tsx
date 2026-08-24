@@ -45,7 +45,7 @@ export function AdminSidebar() {
       <div className="flex h-20 shrink-0 items-center justify-between px-6 pt-2">
         <Link href="/admin" className="flex items-center gap-3.5 group">
           <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[#c9a44c]/50 shadow-[0_0_15px_rgba(201,164,76,0.15)] bg-black/60 group-hover:border-[#c9a44c] group-hover:shadow-[0_0_20px_rgba(201,164,76,0.3)] transition-all">
-            <Image src="/logo.png" alt="AF Motos Logo" fill className="object-cover" priority />
+            <Image src="/logo.png" alt="AF Motos Logo" fill sizes="40px" className="object-cover" priority />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">

@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
           <div className="relative group">
             <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-[#c9a44c]/40 to-amber-500/20 blur-md group-hover:blur-lg transition-all duration-300 opacity-75" />
             <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-[#c9a44c]/70 bg-black/60 shadow-[0_0_20px_rgba(201,164,76,0.25)] flex items-center justify-center">
-              <Image src="/logo.png" alt="AF Motos Logo" fill priority className="object-cover" />
+              <Image src="/logo.png" alt="AF Motos Logo" fill priority sizes="80px" className="object-cover" />
             </div>
           </div>
 

@@ -12,7 +12,7 @@ export function AdminHeader() {
         {/* Mobile Logo Branding */}
         <Link href="/admin" className="flex items-center gap-2.5 lg:hidden">
           <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border border-[#c9a44c]/50 shadow-xs bg-black/50">
-            <Image src="/logo.png" alt="AF Motos" fill className="object-cover" />
+            <Image src="/logo.png" alt="AF Motos" fill sizes="32px" className="object-cover" />
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-black tracking-tight text-white">
