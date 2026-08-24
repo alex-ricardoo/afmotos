@@ -2,13 +2,14 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Camera, UploadCloud, X, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Camera, UploadCloud, X, ArrowLeft, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { compressImageFiles, formatFileSize } from '@/lib/utils/image-compression';
 
 const MAX_PHOTOS = 5;
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20MB (generous limit for high-res camera originals)
 
 interface Step4PhotosUploadProps {
   selectedFiles: File[];
@@ -26,11 +27,10 @@ export function Step4PhotosUpload({
   onPrev,
 }: Step4PhotosUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
-  const handleFileValidationAndAdd = (newFiles: FileList | File[]) => {
+  const handleFileValidationAndAdd = async (newFiles: FileList | File[]) => {
     const fileArray = Array.from(newFiles);
-    const validFiles: File[] = [];
-    const validPreviews: string[] = [];
 
     const availableSlots = MAX_PHOTOS - selectedFiles.length;
     if (availableSlots <= 0) {
@@ -38,25 +38,56 @@ export function Step4PhotosUpload({
       return;
     }
 
-    const filesToProcess = fileArray.slice(0, availableSlots);
+    const filesToFilter = fileArray.slice(0, availableSlots);
+    const validRawFiles: File[] = [];
 
-    for (const file of filesToProcess) {
+    for (const file of filesToFilter) {
       if (!file.type.startsWith('image/')) {
         toast.error(`O arquivo "${file.name}" não é uma imagem válida.`);
         continue;
       }
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        toast.error(`A foto "${file.name}" ultrapassa o limite de 5MB.`);
+        toast.error(`A foto "${file.name}" ultrapassa o limite de 20MB.`);
         continue;
       }
-
-      validFiles.push(file);
-      validPreviews.push(URL.createObjectURL(file));
+      validRawFiles.push(file);
     }
 
-    if (validFiles.length > 0) {
-      onFilesChange([...selectedFiles, ...validFiles], [...previews, ...validPreviews]);
-      toast.success(`${validFiles.length} foto(s) adicionada(s).`);
+    if (validRawFiles.length === 0) return;
+
+    setIsCompressing(true);
+    const toastId = toast.loading('Processando foto(s)...');
+
+    try {
+      const { files: compressedFiles } = await compressImageFiles(validRawFiles, {
+        maxDimension: 1920,
+        quality: 0.82,
+        outputFormat: 'auto',
+      });
+
+      const validPreviews = compressedFiles.map((file) => URL.createObjectURL(file));
+
+      onFilesChange([...selectedFiles, ...compressedFiles], [...previews, ...validPreviews]);
+
+      toast.success(
+        compressedFiles.length === 1
+          ? '1 foto adicionada com sucesso!'
+          : `${compressedFiles.length} fotos adicionadas com sucesso!`,
+        { id: toastId }
+      );
+    } catch (err) {
+      console.error('Erro no processamento das fotos:', err);
+      // Fallback: use validRawFiles directly
+      const validPreviews = validRawFiles.map((file) => URL.createObjectURL(file));
+      onFilesChange([...selectedFiles, ...validRawFiles], [...previews, ...validPreviews]);
+      toast.success(
+        validRawFiles.length === 1
+          ? '1 foto adicionada com sucesso!'
+          : `${validRawFiles.length} fotos adicionadas com sucesso!`,
+        { id: toastId }
+      );
+    } finally {
+      setIsCompressing(false);
     }
   };
 
@@ -143,18 +174,25 @@ export function Step4PhotosUpload({
           />
 
           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-lg">
-            <UploadCloud className="w-6 h-6" />
+            {isCompressing ? (
+              <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+            ) : (
+              <UploadCloud className="w-6 h-6" />
+            )}
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm font-bold text-white">Clique ou arraste as fotos da moto aqui</p>
+            <p className="text-sm font-bold text-white">
+              {isCompressing ? 'Otimizando imagens...' : 'Clique ou arraste as fotos da moto aqui'}
+            </p>
             <p className="text-xs text-zinc-400">
-              Formatos aceitos: JPG, PNG ou WebP (máx. 5MB por foto)
+              Formatos aceitos: JPG, PNG ou WebP (fotos de até 20MB aceitas - otimização inteligente)
             </p>
           </div>
 
-          <span className="text-[11px] font-semibold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
-            Você pode adicionar até {MAX_PHOTOS - selectedFiles.length} foto(s)
+          <span className="text-[11px] font-semibold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3" />
+            <span>Você pode adicionar até {MAX_PHOTOS - selectedFiles.length} foto(s)</span>
           </span>
         </div>
       )}

@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { uploadSiteBrandingAction } from '@/lib/actions/settings';
+import { compressImage } from '@/lib/utils/image-compression';
 
 interface IdentityTabProps {
   form: UseFormReturn<any>;
@@ -42,8 +43,27 @@ export function IdentityTab({ form }: IdentityTabProps) {
     else setUploadingFavicon(true);
 
     try {
+      let fileToUpload = file;
+      if (type === 'logo') {
+        const { file: compressed } = await compressImage(file, {
+          maxDimension: 800,
+          quality: 0.90,
+          preserveTransparency: true,
+          outputFormat: 'auto',
+        });
+        fileToUpload = compressed;
+      } else if (type === 'favicon') {
+        const { file: compressed } = await compressImage(file, {
+          maxDimension: 128,
+          quality: 0.95,
+          preserveTransparency: true,
+          outputFormat: 'auto',
+        });
+        fileToUpload = compressed;
+      }
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       formData.append('type', type);
 
       const res = await uploadSiteBrandingAction(formData);

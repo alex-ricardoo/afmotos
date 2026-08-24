@@ -1,6 +1,6 @@
 export const UPLOAD_LIMITS = {
-  /** Maximum client-side file size (10 MB) */
-  MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024,
+  /** Maximum uncompressed file size accepted for uploads (20 MB) */
+  MAX_FILE_SIZE_BYTES: 20 * 1024 * 1024,
   /** Maximum server-side ImgBB provider limit (32 MB) */
   MAX_IMGBB_FILE_SIZE_BYTES: 32 * 1024 * 1024,
   /** Request timeout for ImgBB API in milliseconds (15 seconds) */

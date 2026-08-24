@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MotorcycleOcrResult, OcrApiResponse } from '@/lib/ocr/schemas';
+import { compressImage } from '@/lib/utils/image-compression';
 
 interface MotorcycleDocumentOcrProps {
   onOcrSuccess: (result: MotorcycleOcrResult) => void;
@@ -44,9 +45,9 @@ export function MotorcycleDocumentOcr({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validações no cliente
-    if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage('O arquivo selecionado é maior que o limite de 10 MB.');
+    // Validações no cliente (aceita até 20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      setErrorMessage('O arquivo selecionado é maior que o limite de 20 MB.');
       return;
     }
 
@@ -95,8 +96,27 @@ export function MotorcycleDocumentOcr({
     setShowSuccessBanner(false);
 
     try {
+      let fileToSend = selectedFile;
+      const isPdf =
+        selectedFile.type === 'application/pdf' ||
+        selectedFile.name.toLowerCase().endsWith('.pdf');
+
+      // Se for imagem, otimiza para resolução de OCR (2048px) de modo ultra-nítido e leve
+      if (!isPdf) {
+        try {
+          const { file: compressed } = await compressImage(selectedFile, {
+            maxDimension: 2048,
+            quality: 0.88,
+            outputFormat: 'auto',
+          });
+          fileToSend = compressed;
+        } catch (compErr) {
+          console.warn('Erro ao otimizar imagem para OCR, usando original:', compErr);
+        }
+      }
+
       const formData = new FormData();
-      formData.append('file', selectedFile);
+      formData.append('file', fileToSend);
 
       const response = await fetch('/api/admin/motorcycles/ocr', {
         method: 'POST',
@@ -289,7 +309,7 @@ export function MotorcycleDocumentOcr({
               <div className="text-xs font-bold text-slate-100 group-hover:text-amber-300 transition-colors">
                 Anexar documento
               </div>
-              <div className="text-[11px] text-slate-400 truncate">Foto ou PDF (máx. 10 MB)</div>
+              <div className="text-[11px] text-slate-400 truncate">Foto ou PDF (máx. 20 MB)</div>
             </div>
           </button>
         </div>

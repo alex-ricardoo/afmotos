@@ -39,6 +39,7 @@ import {
   uploadPublicSellRequestImageAction,
   SellRequestImageItem,
 } from '@/lib/actions/leads';
+import { compressImageFiles, formatFileSize } from '@/lib/utils/image-compression';
 import { PECityCombobox } from '@/components/forms/pe-city-combobox';
 import { FipeBrandCombobox } from '@/components/forms/fipe-brand-combobox';
 import { FipeModelCombobox } from '@/components/forms/fipe-model-combobox';
@@ -142,8 +143,8 @@ export function AnunciarMotoForm() {
     }
   };
 
-  // Processamento e validação de arquivos para upload
-  const processFiles = (files: File[]) => {
+  // Processamento, compressão e validação de arquivos para upload
+  const processFiles = async (files: File[]) => {
     if (selectedFiles.length >= MAX_PHOTOS) {
       toast.error('Você já adicionou o limite de 5 fotos.');
       return;
@@ -155,26 +156,54 @@ export function AnunciarMotoForm() {
     }
 
     const filesToAdd = files.slice(0, availableSlots);
-    const validFiles: File[] = [];
-    const newPreviews: string[] = [];
+    const validRawFiles: File[] = [];
 
     for (const file of filesToAdd) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`A foto "${file.name}" ultrapassa o limite de 5MB.`);
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`A foto "${file.name}" ultrapassa o limite de 20MB.`);
         continue;
       }
       if (
-        !['image/jpeg', 'image/png', 'image/webp', 'image/jpg'].includes(file.type.toLowerCase())
+        !['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/avif'].includes(
+          file.type.toLowerCase()
+        )
       ) {
         toast.error(`O arquivo "${file.name}" não é um formato suportado (use JPG, PNG ou WebP).`);
         continue;
       }
-      validFiles.push(file);
-      newPreviews.push(URL.createObjectURL(file));
+      validRawFiles.push(file);
     }
 
-    setSelectedFiles((prev) => [...prev, ...validFiles]);
-    setPreviews((prev) => [...prev, ...newPreviews]);
+    if (validRawFiles.length === 0) return;
+
+    try {
+      const { files: compressedFiles, statsList } = await compressImageFiles(validRawFiles, {
+        maxDimension: 1920,
+        quality: 0.82,
+        outputFormat: 'auto',
+      });
+
+      const newPreviews = compressedFiles.map((file) => URL.createObjectURL(file));
+
+      setSelectedFiles((prev) => [...prev, ...compressedFiles]);
+      setPreviews((prev) => [...prev, ...newPreviews]);
+
+      toast.success(
+        compressedFiles.length === 1
+          ? '1 foto adicionada com sucesso!'
+          : `${compressedFiles.length} fotos adicionadas com sucesso!`
+      );
+    } catch (err) {
+      console.error('Erro na compressão:', err);
+      const newPreviews = validRawFiles.map((file) => URL.createObjectURL(file));
+      setSelectedFiles((prev) => [...prev, ...validRawFiles]);
+      setPreviews((prev) => [...prev, ...newPreviews]);
+      toast.success(
+        validRawFiles.length === 1
+          ? '1 foto adicionada com sucesso!'
+          : `${validRawFiles.length} fotos adicionadas com sucesso!`
+      );
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -688,7 +717,7 @@ export function AnunciarMotoForm() {
                     Arraste ou clique para selecionar as fotos
                   </span>
                   <span className="text-xs text-zinc-400 block">
-                    Fotos da lateral, painel e motor valorizam a avaliação (JPG, PNG ou WebP, máx. 5MB cada)
+                    Fotos da lateral, painel e motor valorizam a avaliação (JPG, PNG ou WebP até 20MB - otimização automática)
                   </span>
                 </div>
               </label>

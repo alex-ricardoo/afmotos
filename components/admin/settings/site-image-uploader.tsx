@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { uploadSiteBrandingAction } from '@/lib/actions/settings';
 import { StoreImage } from '@/types/site-settings';
 import { Button } from '@/components/ui/button';
+import { compressImage } from '@/lib/utils/image-compression';
 
 interface SiteImageUploaderProps {
   images?: StoreImage[];
@@ -33,8 +34,20 @@ export function SiteImageUploader({ images = [], onImagesChange, maxImages = 5 }
     const updatedList = [...images];
 
     for (const file of filesArray) {
+      let fileToUpload = file;
+      try {
+        const { file: compressed } = await compressImage(file, {
+          maxDimension: 1920,
+          quality: 0.82,
+          outputFormat: 'auto',
+        });
+        fileToUpload = compressed;
+      } catch (err) {
+        console.warn('Erro ao comprimir imagem da galeria institucional:', err);
+      }
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       formData.append('type', 'about-gallery');
 
       try {

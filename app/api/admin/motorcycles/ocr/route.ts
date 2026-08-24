@@ -4,7 +4,7 @@ import { processMotorcycleDocumentWithGemini } from '@/lib/ocr/gemini';
 
 export const dynamic = 'force-dynamic';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
 export async function POST(request: NextRequest) {
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'O arquivo excede o limite máximo permitido de 10 MB.',
+          error: 'O arquivo excede o limite máximo permitido de 20 MB.',
         },
         { status: 400 },
       );

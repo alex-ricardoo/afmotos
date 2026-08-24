@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { uploadImage } from '@/lib/uploads';
+import { uploadImage, UPLOAD_LIMITS } from '@/lib/uploads';
 import { UploadedImage } from '@/lib/uploads/types';
 import { fipexFetch } from '@/lib/fipex/client';
 import { RawApiResponse, RawExpandedPriceData, RawModelDetail } from '@/lib/fipex/types';
@@ -96,8 +96,9 @@ export async function uploadPublicSellRequestImageAction(
       return { success: false, error: 'Nenhum arquivo de imagem válido enviado.' };
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      return { success: false, error: 'O tamanho da foto não pode ultrapassar 5MB.' };
+    if (file.size > UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
+      const maxMb = Math.round(UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES / (1024 * 1024));
+      return { success: false, error: `O tamanho da foto não pode ultrapassar ${maxMb}MB.` };
     }
 
     const uploaded = await uploadImage({

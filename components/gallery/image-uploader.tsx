@@ -12,6 +12,7 @@ import {
 import { MotorcycleImage } from '@/types/database';
 import { getImageSource } from '@/lib/uploads/image-url';
 import { Button } from '@/components/ui/button';
+import { compressImage, formatFileSize } from '@/lib/utils/image-compression';
 
 interface ImageUploaderProps {
   motorcycleId?: string;
@@ -28,6 +29,7 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const [localImages, setLocalImages] = useState<MotorcycleImage[]>(images);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgressText, setUploadProgressText] = useState<string | null>(null);
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
 
   // Sync internal state if prop updates externally
@@ -55,16 +57,41 @@ export function ImageUploader({
     let successCount = 0;
     let updatedList = [...currentImages];
 
-    for (const file of filesArray) {
+    for (let i = 0; i < filesArray.length; i++) {
+      const originalFile = filesArray[i];
+      setUploadProgressText(
+        filesArray.length > 1
+          ? `Otimizando e enviando foto ${i + 1} de ${filesArray.length}...`
+          : 'Otimizando e enviando foto...'
+      );
+
+      // Smart client-side compression (up to 20MB source -> ~300-600KB WebP)
+      let fileToUpload = originalFile;
+      try {
+        const { file: compressed, stats } = await compressImage(originalFile, {
+          maxDimension: 1920,
+          quality: 0.84,
+          outputFormat: 'auto',
+        });
+        fileToUpload = compressed;
+        if (stats.savedBytes > 0) {
+          console.log(
+            `[ImageUploader] Otimizado ${originalFile.name}: ${formatFileSize(stats.originalSize)} -> ${formatFileSize(stats.compressedSize)} (${stats.compressionRatioPercent}% reduzido)`
+          );
+        }
+      } catch (compErr) {
+        console.warn('Compressão preliminar falhou, usando arquivo original:', compErr);
+      }
+
       const formData = new FormData();
       formData.append('motorcycleId', motorcycleId);
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
 
       try {
         const result = await uploadMotorcycleImageAction(formData);
 
         if (!result.success || !result.image) {
-          toast.error(`Erro ao enviar ${file.name}: ${result.error || 'Falha desconhecida'}`);
+          toast.error(`Erro ao enviar ${originalFile.name}: ${result.error || 'Falha desconhecida'}`);
         } else {
           successCount++;
           // If this is the first image or returned as primary, update other images in local state
@@ -76,7 +103,7 @@ export function ImageUploader({
         }
       } catch (err) {
         console.error('Upload error:', err);
-        toast.error(`Falha no envio de ${file.name}`);
+        toast.error(`Falha no envio de ${originalFile.name}`);
       }
     }
 
@@ -89,6 +116,7 @@ export function ImageUploader({
     }
 
     setUploading(false);
+    setUploadProgressText(null);
     e.target.value = ''; // Reset file input
   };
 
@@ -187,7 +215,9 @@ export function ImageUploader({
           {uploading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin text-[#c9a44c]" />
-              <span className="text-sm font-semibold text-foreground">Enviando...</span>
+              <span className="text-sm font-semibold text-foreground">
+                {uploadProgressText || 'Otimizando e Enviando...'}
+              </span>
             </>
           ) : (
             <>
