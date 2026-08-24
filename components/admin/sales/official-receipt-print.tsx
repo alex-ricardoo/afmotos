@@ -111,13 +111,12 @@ export function OfficialReceiptPrint({
 
           <a
             href={`/api/admin/sales/${sale.id}/receipt`}
-            target="_blank"
-            rel="noopener noreferrer"
+            download={`recibo-${sale.receipt_number || sale.id.slice(0, 8)}.pdf`}
             className={buttonVariants({
               variant: 'outline',
               size: 'sm',
               className:
-                'h-8 sm:h-10 px-2 sm:px-3.5 rounded-xl border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 flex items-center gap-1 sm:gap-1.5 text-xs font-semibold',
+                'h-8 sm:h-10 px-2 sm:px-3.5 rounded-xl border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 flex items-center gap-1 sm:gap-1.5 text-xs font-semibold cursor-pointer',
             })}
             title="Baixar comprovante em PDF"
           >

@@ -207,8 +207,7 @@ export function SalesTable({ sales }: SalesTableProps) {
 
                       <a
                         href={`/api/admin/sales/${sale.id}/receipt`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        download={`recibo-${sale.receipt_number || sale.id.slice(0, 8)}.pdf`}
                         className={buttonVariants({
                           variant: 'ghost',
                           size: 'icon-sm',

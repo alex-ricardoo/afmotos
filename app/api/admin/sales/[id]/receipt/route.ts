@@ -60,12 +60,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const buffer = await renderToBuffer(element as any);
 
+    const searchParams = request.nextUrl.searchParams;
+    const isInline = searchParams.get('inline') === '1';
     const filename = `recibo-${sale.receipt_number || sale.id.substring(0, 8)}.pdf`;
 
     return new NextResponse(buffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${filename}"`,
+        'Content-Disposition': `${isInline ? 'inline' : 'attachment'}; filename="${filename}"`,
+        'Content-Length': buffer.length.toString(),
         'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     });
