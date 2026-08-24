@@ -260,7 +260,8 @@ export default async function HomePage() {
             O que fazemos
           </h2>
           <p className="text-zinc-400 text-sm sm:text-base mt-2">
-            Soluções completas para você comprar, vender ou alugar sua moto com facilidade e segurança.
+            Soluções completas para você comprar, vender ou alugar sua moto com facilidade e
+            segurança.
           </p>
         </div>
 
@@ -273,7 +274,8 @@ export default async function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-white tracking-tight">Compre sua Moto</h3>
               <p className="text-sm text-zinc-400 leading-relaxed">
-                Motos revisadas, com procedência garantida e documentação pronta para rodar sem dor de cabeça.
+                Motos revisadas, com procedência garantida e documentação pronta para rodar sem dor
+                de cabeça.
               </p>
               <ul className="space-y-2 pt-2">
                 <li className="flex items-start gap-2 text-sm text-zinc-300">
@@ -302,9 +304,12 @@ export default async function HomePage() {
               <div className="bg-amber-500/10 text-amber-400 p-3.5 rounded-xl inline-flex w-fit">
                 <Banknote className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-white tracking-tight">Venda sua Moto pra Nós</h3>
+              <h3 className="text-xl font-bold text-white tracking-tight">
+                Venda sua Moto pra Nós
+              </h3>
               <p className="text-sm text-zinc-400 leading-relaxed">
-                Quer vender rápido? Avaliamos sua moto na hora e pagamos à vista no PIX com segurança total.
+                Quer vender rápido? Avaliamos sua moto na hora e pagamos à vista no PIX com
+                segurança total.
               </p>
               <ul className="space-y-2 pt-2">
                 <li className="flex items-start gap-2 text-sm text-zinc-300">
@@ -319,7 +324,7 @@ export default async function HomePage() {
             </div>
             <div className="pt-6 mt-auto">
               <Link
-                href="/anunciar-sua-moto"
+                href="/vender-minha-moto"
                 className="block w-full py-2.5 rounded-xl border border-zinc-700 text-center hover:bg-amber-500 hover:text-zinc-950 font-semibold text-sm transition-colors text-white"
               >
                 Quero Vender Minha Moto
@@ -335,7 +340,8 @@ export default async function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-white tracking-tight">Aluguel de Motos</h3>
               <p className="text-sm text-zinc-400 leading-relaxed">
-                Precisa de moto para trabalhar em entregas ou para o seu dia a dia? Alugue por semana ou mês.
+                Precisa de moto para trabalhar em entregas ou para o seu dia a dia? Alugue por
+                semana ou mês.
               </p>
               <ul className="space-y-2 pt-2">
                 <li className="flex items-start gap-2 text-sm text-zinc-300">
@@ -366,7 +372,8 @@ export default async function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-white tracking-tight">Anunciamos sua Moto</h3>
               <p className="text-sm text-zinc-400 leading-relaxed">
-                Colocamos sua moto no nosso site e redes sociais. Cuidamos das mensagens e da negociação por uma comissão justa.
+                Colocamos sua moto no nosso site e redes sociais. Cuidamos das mensagens e da
+                negociação por uma comissão justa.
               </p>
               <ul className="space-y-2 pt-2">
                 <li className="flex items-start gap-2 text-sm text-zinc-300">

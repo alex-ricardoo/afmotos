@@ -20,7 +20,13 @@ import {
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProposalViewModel } from '@/lib/admin/proposal-view-model';
-import { proposalTypeLabels, proposalStatusLabels } from '@/lib/admin/proposal-labels';
+import {
+  proposalTypeLabels,
+  proposalStatusLabels,
+  getProposalStatusLabel,
+} from '@/lib/admin/proposal-labels';
+
+
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -43,6 +49,7 @@ import {
   TrendingDown,
   TrendingUp,
   CheckCircle2,
+  Sparkles,
   Eye,
   User,
 } from 'lucide-react';
@@ -90,6 +97,8 @@ export function ProposalDetail({
   const [copiedMessage, setCopiedMessage] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>('default');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [adminOfferPercent, setAdminOfferPercent] = useState<number>(85);
+  const [adminCustomOffer, setAdminCustomOffer] = useState<number | null>(null);
 
   if (!proposal) return null;
 
@@ -101,7 +110,7 @@ export function ProposalDetail({
     { label: string; bg: string; text: string; border: string; dot: string; line: string }
   > = {
     NEW: {
-      label: 'Novo Lead',
+      label: getProposalStatusLabel('NEW', proposal.type),
       bg: 'bg-emerald-500/15',
       text: 'text-emerald-400',
       border: 'border-emerald-500/30',
@@ -109,7 +118,7 @@ export function ProposalDetail({
       line: 'from-emerald-500 to-teal-400',
     },
     CONTACTED: {
-      label: 'Em atendimento',
+      label: getProposalStatusLabel('CONTACTED', proposal.type),
       bg: 'bg-blue-500/15',
       text: 'text-blue-400',
       border: 'border-blue-500/30',
@@ -117,7 +126,7 @@ export function ProposalDetail({
       line: 'from-blue-500 to-cyan-400',
     },
     QUALIFIED: {
-      label: 'Qualificado',
+      label: getProposalStatusLabel('QUALIFIED', proposal.type),
       bg: 'bg-purple-500/15',
       text: 'text-purple-400',
       border: 'border-purple-500/30',
@@ -125,7 +134,7 @@ export function ProposalDetail({
       line: 'from-purple-500 to-pink-400',
     },
     CONVERTED: {
-      label: 'Convertido',
+      label: getProposalStatusLabel('CONVERTED', proposal.type),
       bg: 'bg-[#c9a44c]/20',
       text: 'text-[#e3c56c]',
       border: 'border-[#c9a44c]/40',
@@ -133,7 +142,7 @@ export function ProposalDetail({
       line: 'from-[#c9a44c] to-amber-300',
     },
     LOST: {
-      label: 'Perdido',
+      label: getProposalStatusLabel('LOST', proposal.type),
       bg: 'bg-rose-500/15',
       text: 'text-rose-400',
       border: 'border-rose-500/30',
@@ -141,7 +150,7 @@ export function ProposalDetail({
       line: 'from-rose-500 to-red-400',
     },
     CLOSED: {
-      label: 'Encerrado',
+      label: getProposalStatusLabel('CLOSED', proposal.type),
       bg: 'bg-zinc-800/80',
       text: 'text-zinc-400',
       border: 'border-zinc-700',
@@ -192,12 +201,20 @@ export function ProposalDetail({
   const TypeIcon = typeInfo.icon;
 
   // FIPE Calculations
+
   const desiredPrice = proposal.motorcycle?.desiredPrice;
   const fipePrice = proposal.motorcycle?.fipePrice;
   let fipeDiffPercent: number | null = null;
   if (desiredPrice && fipePrice && fipePrice > 0) {
     fipeDiffPercent = Number((((desiredPrice - fipePrice) / fipePrice) * 100).toFixed(1));
   }
+
+  const effectiveAdminOffer =
+    adminCustomOffer != null
+      ? adminCustomOffer
+      : fipePrice && fipePrice > 0
+        ? (fipePrice * adminOfferPercent) / 100
+        : null;
 
   // WhatsApp Message Presets
   const getWhatsAppMessageByPreset = () => {
@@ -207,6 +224,15 @@ export function ProposalDetail({
       : '';
 
     switch (selectedPreset) {
+      case 'offer': {
+        const fipeText = fipePrice
+          ? ` O valor de referência na Tabela FIPE é de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fipePrice)}.`
+          : '';
+        const offerText = effectiveAdminOffer
+          ? ` Temos uma proposta inicial de compra no valor de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(effectiveAdminOffer)} à vista no PIX.`
+          : '';
+        return `Olá ${name}! Aqui é da equipe da AF Motos. Analisamos a proposta para a sua moto${moto ? ` (${moto})` : ''}.${fipeText}${offerText} Gostaria de agendar um horário para você vir à loja para finalizarmos a avaliação e fecharmos negócio?`;
+      }
       case 'photos':
         return `Olá ${name}, tudo bem? Aqui é da equipe da AF Motos! Recebemos sua proposta sobre ${moto ? `a moto ${moto}` : 'sua moto'}. Você teria mais fotos e o documento dela para adiantarmos a avaliação?`;
       case 'visit':
@@ -327,7 +353,10 @@ export function ProposalDetail({
                   <Calendar className="w-3.5 h-3.5 text-blue-400" />
                   Detalhes do Aluguel
                 </h4>
-                <Badge variant="outline" className="text-[10px] font-bold px-2 py-0.5 border-blue-500/40 bg-blue-500/10 text-blue-300">
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-bold px-2 py-0.5 border-blue-500/40 bg-blue-500/10 text-blue-300"
+                >
                   Solicitação de Locação
                 </Badge>
               </div>
@@ -336,7 +365,9 @@ export function ProposalDetail({
                 {proposal.rental?.desiredPlan && (
                   <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
                     <span className="text-zinc-500 text-[10px] block">Plano Desejado</span>
-                    <span className="font-bold text-blue-400 font-heading text-sm block">{proposal.rental.desiredPlan}</span>
+                    <span className="font-bold text-blue-400 font-heading text-sm block">
+                      {proposal.rental.desiredPlan}
+                    </span>
                   </div>
                 )}
 
@@ -359,14 +390,18 @@ export function ProposalDetail({
                 {proposal.rental?.age != null && (
                   <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
                     <span className="text-zinc-500 text-[10px] block">Idade</span>
-                    <span className="font-bold text-zinc-200 block">{proposal.rental.age} anos</span>
+                    <span className="font-bold text-zinc-200 block">
+                      {proposal.rental.age} anos
+                    </span>
                   </div>
                 )}
 
                 {proposal.rental?.purposeOfUse && (
                   <div className="col-span-2 sm:col-span-2 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
                     <span className="text-zinc-500 text-[10px] block">Finalidade de Uso</span>
-                    <span className="font-semibold text-zinc-200 block truncate">{proposal.rental.purposeOfUse}</span>
+                    <span className="font-semibold text-zinc-200 block truncate">
+                      {proposal.rental.purposeOfUse}
+                    </span>
                   </div>
                 )}
               </div>
@@ -443,12 +478,12 @@ export function ProposalDetail({
                 )}
               </div>
 
-              {/* Financial Box: Desired vs FIPE */}
+              {/* Financial Box: Desired vs FIPE vs Simulation */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 {desiredPrice != null && (
                   <div className="bg-[#c9a44c]/10 border border-[#c9a44c]/30 rounded-2xl p-3.5 space-y-1">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-[#e3c56c] block">
-                      Valor Desejado
+                      Expectativa do Cliente
                     </span>
                     <span className="text-xl font-black text-[#e3c56c] font-mono block">
                       {new Intl.NumberFormat('pt-BR', {
@@ -497,6 +532,79 @@ export function ProposalDetail({
                         currency: 'BRL',
                       }).format(fipePrice)}
                     </span>
+                  </div>
+                )}
+
+                {/* Simulador de Oferta da Loja (FIPE) para o Lojista */}
+                {fipePrice != null && fipePrice > 0 && (
+                  <div className="sm:col-span-2 bg-gradient-to-br from-amber-500/15 via-zinc-900 to-zinc-950 p-4 rounded-2xl border border-amber-500/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-amber-400" />
+                        <span>Simulador de Proposta da AF Motos</span>
+                      </span>
+                      <span className="text-xs font-mono font-bold text-zinc-300">
+                        FIPE:{' '}
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(fipePrice)}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] text-zinc-400 block font-semibold">
+                        Selecione a porcentagem para ofertar ao cliente:
+                      </span>
+                      <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+                        {[70, 75, 80, 85, 90, 95, 100].map((pct) => (
+                          <button
+                            key={pct}
+                            type="button"
+                            onClick={() => {
+                              setAdminOfferPercent(pct);
+                              setAdminCustomOffer(null);
+                              setSelectedPreset('offer');
+                            }}
+                            className={cn(
+                              'py-1.5 px-1 rounded-lg text-xs font-bold transition-all border text-center cursor-pointer',
+                              adminOfferPercent === pct && adminCustomOffer === null
+                                ? 'bg-amber-500 text-zinc-950 border-amber-400 font-black shadow-sm scale-105'
+                                : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:border-amber-500/50 hover:text-white',
+                            )}
+                          >
+                            {pct}%
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-zinc-800/80">
+                      <div>
+                        <span className="text-[11px] text-zinc-400 block">
+                          Valor Calculado da Oferta
+                        </span>
+                        <span className="text-2xl font-black text-amber-400 font-mono">
+                          {effectiveAdminOffer != null
+                            ? new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL',
+                              }).format(effectiveAdminOffer)
+                            : '—'}
+                        </span>
+                      </div>
+
+                      <a
+                        href={generateWhatsAppLink(proposal.phone, getWhatsAppMessageByPreset())}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setSelectedPreset('offer')}
+                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all cursor-pointer shrink-0"
+                      >
+                        <WhatsAppIcon className="w-4 h-4 fill-zinc-950" />
+                        <span>Enviar Oferta ({adminOfferPercent}%) no WhatsApp</span>
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>
@@ -583,7 +691,7 @@ export function ProposalDetail({
                         isSelected && 'ring-2 ring-white/40',
                       )}
                     />
-                    <span className="truncate">{statusName}</span>
+                    <span className="truncate">{config.label}</span>
                   </button>
                 );
               })}
@@ -607,6 +715,7 @@ export function ProposalDetail({
               </span>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
+                  { id: 'offer', label: '💰 Oferta FIPE' },
                   { id: 'default', label: 'Padrão' },
                   { id: 'photos', label: 'Pedir fotos/doc' },
                   { id: 'visit', label: 'Agendar visita' },

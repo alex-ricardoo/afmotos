@@ -35,7 +35,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { updateLeadStatus } from '@/lib/actions/leads';
 import { ProposalViewModel } from '@/lib/admin/proposal-view-model';
-import { proposalTypeLabels, proposalStatusLabels } from '@/lib/admin/proposal-labels';
+import {
+  proposalTypeLabels,
+  proposalStatusLabels,
+  getProposalStatusLabel,
+} from '@/lib/admin/proposal-labels';
+
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -115,7 +120,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
 
   const handleStatusChange = async (proposal: ProposalViewModel, newStatus: string) => {
     const typedStatus = newStatus as keyof typeof proposalStatusLabels;
-    const statusLabel = proposalStatusLabels[typedStatus] || newStatus;
+    const statusLabel = getProposalStatusLabel(typedStatus, proposal.type);
     const previousProposals = [...proposals];
     setProposals((prev) =>
       prev.map((p) =>
@@ -198,11 +203,12 @@ export function AdminPropostasContacts({ initialData }: Props) {
     }
   };
 
-  const getStatusConfig = (status: string, isRental: boolean = false) => {
+  const getStatusConfig = (status: string, type?: string) => {
+    const label = getProposalStatusLabel(status, type);
     switch (status) {
       case 'NEW':
         return {
-          label: isRental ? 'Nova proposta' : 'Novo Lead',
+          label,
           badgeClass: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 font-bold',
           cardBorder: 'border-emerald-500/35 hover:border-emerald-400',
           cardGlow: 'hover:shadow-[0_12px_35px_rgba(16,185,129,0.15)]',
@@ -211,7 +217,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         };
       case 'CONTACTED':
         return {
-          label: isRental ? 'Cliente contatado' : 'Em atendimento',
+          label,
           badgeClass: 'bg-blue-500/20 text-blue-400 border-blue-500/40 font-bold',
           cardBorder: 'border-blue-500/30 hover:border-blue-400',
           cardGlow: 'hover:shadow-[0_12px_35px_rgba(59,130,246,0.12)]',
@@ -220,7 +226,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         };
       case 'QUALIFIED':
         return {
-          label: 'Qualificado',
+          label,
           badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/40 font-bold',
           cardBorder: 'border-purple-500/30 hover:border-purple-400',
           cardGlow: 'hover:shadow-[0_12px_35px_rgba(168,85,247,0.12)]',
@@ -229,7 +235,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         };
       case 'CONVERTED':
         return {
-          label: isRental ? 'Aprovada' : 'Convertido',
+          label,
           badgeClass: 'bg-[#c9a44c]/25 text-[#f5d77f] border-[#c9a44c]/50 font-bold',
           cardBorder: 'border-[#c9a44c]/40 hover:border-[#c9a44c]',
           cardGlow: 'hover:shadow-[0_12px_35px_rgba(201,164,76,0.18)]',
@@ -238,7 +244,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
         };
       case 'LOST':
         return {
-          label: isRental ? 'Recusada' : 'Perdido',
+          label,
           badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/30 font-semibold',
           cardBorder: 'border-rose-500/20 hover:border-rose-500/40',
           cardGlow: '',
@@ -248,7 +254,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
       case 'CLOSED':
       default:
         return {
-          label: isRental ? 'Recusada' : 'Encerrado',
+          label,
           badgeClass: 'bg-zinc-800 text-zinc-400 border-zinc-700 font-medium',
           cardBorder: 'border-zinc-800/80 hover:border-zinc-700',
           cardGlow: '',
@@ -541,7 +547,7 @@ export function AdminPropostasContacts({ initialData }: Props) {
             const isRental = proposal.source === 'rental_request' || proposal.type === 'RENTAL';
             const typeInfo = getTypeStyle(proposal.type);
             const TypeIcon = typeInfo.icon;
-            const statusConfig = getStatusConfig(proposal.status, isRental);
+            const statusConfig = getStatusConfig(proposal.status, proposal.type);
             const isCopied = copiedPhoneId === proposal.id;
 
             // FIPE delta
@@ -777,8 +783,9 @@ export function AdminPropostasContacts({ initialData }: Props) {
                           Alterar Status
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-zinc-800" />
-                        {Object.entries(proposalStatusLabels).map(([key, label]) => {
-                          const config = getStatusConfig(key);
+                        {Object.entries(proposalStatusLabels).map(([key]) => {
+                          const label = getProposalStatusLabel(key, proposal.type);
+                          const config = getStatusConfig(key, proposal.type);
                           const isCurrent = proposal.status === key;
 
                           return (
@@ -824,10 +831,9 @@ export function AdminPropostasContacts({ initialData }: Props) {
               </thead>
               <tbody className="divide-y divide-zinc-900">
                 {filteredProposals.map((proposal) => {
-                  const isRental = proposal.source === 'rental_request' || proposal.type === 'RENTAL';
                   const typeInfo = getTypeStyle(proposal.type);
                   const TypeIcon = typeInfo.icon;
-                  const statusConfig = getStatusConfig(proposal.status, isRental);
+                  const statusConfig = getStatusConfig(proposal.status, proposal.type);
 
                   return (
                     <tr
@@ -934,8 +940,9 @@ export function AdminPropostasContacts({ initialData }: Props) {
                             align="end"
                             className="bg-zinc-950 border-zinc-800 text-zinc-200"
                           >
-                            {Object.entries(proposalStatusLabels).map(([key, label]) => {
-                              const config = getStatusConfig(key);
+                            {Object.entries(proposalStatusLabels).map(([key]) => {
+                              const label = getProposalStatusLabel(key, proposal.type);
+                              const config = getStatusConfig(key, proposal.type);
                               return (
                                 <DropdownMenuItem
                                   key={key}

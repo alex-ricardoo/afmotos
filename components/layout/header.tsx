@@ -16,6 +16,7 @@ import { getSiteLogo } from '@/lib/site-settings';
 const navLinks = [
   { href: '/', label: 'Início' },
   { href: '/motos', label: 'Motos disponíveis' },
+  { href: '/vender-minha-moto', label: 'Venda sua moto' },
   { href: '/anunciar-sua-moto', label: 'Anuncie sua moto' },
   { href: '/aluguel', label: 'Aluguel' },
   { href: '/motos-vendidas', label: 'Motos vendidas' },

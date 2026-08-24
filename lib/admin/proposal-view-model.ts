@@ -3,6 +3,7 @@ import {
   ProposalStatus,
   proposalTypeLabels,
   proposalStatusLabels,
+  getProposalStatusLabel,
 } from './proposal-labels';
 
 export type ProposalSource = 'lead' | 'sell_request' | 'consignment_request' | 'rental_request';
@@ -30,6 +31,10 @@ export interface ProposalMotorcycle {
   desiredPrice: number | null;
   fipePrice: number | null;
   fipeCode?: string | null;
+  offerPercentage?: number | null;
+  estimatedOffer?: number | null;
+  fipeReferencePeriod?: string | null;
+  fipeSnapshot?: Record<string, unknown> | null;
 }
 
 export interface ProposalRental {
@@ -222,8 +227,9 @@ export function mapLeadToProposal(
     type,
     typeLabel: proposalTypeLabels[type] || type,
     status,
-    statusLabel: proposalStatusLabels[status] || status,
+    statusLabel: getProposalStatusLabel(status, type),
     name: lead.name || 'Sem nome',
+
     phone: lead.phone || '',
     email: lead.email || null,
     message: lead.message || null,
@@ -247,17 +253,22 @@ export function mapLeadToProposal(
             desiredPrice: metadata.desired_price != null ? Number(metadata.desired_price) : null,
             fipePrice: metadata.fipe_price != null ? Number(metadata.fipe_price) : null,
             fipeCode: (metadata.fipe_code as string | undefined) || null,
+            offerPercentage:
+              metadata.offer_percentage != null ? Number(metadata.offer_percentage) : null,
+            estimatedOffer:
+              metadata.estimated_offer != null ? Number(metadata.estimated_offer) : null,
+            fipeReferencePeriod: (metadata.fipe_reference_period as string | undefined) || null,
+            fipeSnapshot: (metadata.fipe_snapshot as Record<string, unknown> | undefined) || null,
           }
         : null,
+
     rental: null,
     images: extractImages(metadata),
     metadata,
   };
 }
 
-export function mapRentalRequestToProposal(
-  row: Record<string, any>,
-): ProposalViewModel {
+export function mapRentalRequestToProposal(row: Record<string, any>): ProposalViewModel {
   const status = normalizeStatus(row.status);
   const type: ProposalType = 'RENTAL';
 
@@ -280,7 +291,10 @@ export function mapRentalRequestToProposal(
       fipePrice: null,
     };
 
-    if (Array.isArray(motorcycleData.motorcycle_images) && motorcycleData.motorcycle_images.length > 0) {
+    if (
+      Array.isArray(motorcycleData.motorcycle_images) &&
+      motorcycleData.motorcycle_images.length > 0
+    ) {
       images = motorcycleData.motorcycle_images.map((img: any, idx: number) => {
         let publicUrl = img.storage_path || img.public_url || '';
         if (publicUrl && !publicUrl.startsWith('http') && !publicUrl.startsWith('/')) {
@@ -306,8 +320,9 @@ export function mapRentalRequestToProposal(
     type,
     typeLabel: proposalTypeLabels[type] || 'Aluguel de moto',
     status,
-    statusLabel: proposalStatusLabels[status] || status,
+    statusLabel: getProposalStatusLabel(status, type),
     name: row.name || 'Cliente sem nome',
+
     phone: row.phone || '',
     email: null,
     city: null,
@@ -334,4 +349,3 @@ export function mapRentalRequestToProposal(
     },
   };
 }
-

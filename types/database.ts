@@ -52,7 +52,6 @@ export interface RentalRequest {
   updated_at?: string;
 }
 
-
 export interface SellRequest {
   id: string;
   lead_id?: string | null;
@@ -87,6 +86,8 @@ export interface SellRequest {
   fipe_reference_period?: string | null;
   fipe_queried_at?: string | null;
   fipe_snapshot?: Json;
+  offer_percentage?: number | null;
+  estimated_offer?: number | null;
   offered_amount?: number | null;
   accepted_amount?: number | null;
   created_at: string;
@@ -359,6 +360,8 @@ export interface Database {
           fipe_reference_period?: string | null;
           fipe_queried_at?: string | null;
           fipe_snapshot?: Json;
+          offer_percentage?: number | null;
+          estimated_offer?: number | null;
           offered_amount?: number | null;
           accepted_amount?: number | null;
           created_at?: string;
@@ -398,6 +401,8 @@ export interface Database {
           fipe_reference_period?: string | null;
           fipe_queried_at?: string | null;
           fipe_snapshot?: Json;
+          offer_percentage?: number | null;
+          estimated_offer?: number | null;
           offered_amount?: number | null;
           accepted_amount?: number | null;
           created_at?: string;

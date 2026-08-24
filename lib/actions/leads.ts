@@ -57,6 +57,9 @@ export interface SellRequestImageItem {
 export interface SellRequestPayload {
   name: string;
   phone: string;
+  email?: string | null;
+  license_plate?: string | null;
+  color?: string | null;
   brand: string;
   brand_id?: string | null;
   model: string;
@@ -68,6 +71,12 @@ export interface SellRequestPayload {
   fuel_name?: string | null;
   mileage?: number | null;
   desired_price?: number | null;
+  offer_percentage?: number | null;
+  estimated_offer?: number | null;
+  fipe_code?: string | null;
+  fipe_price?: number | null;
+  fipe_reference_period?: string | null;
+  fipe_snapshot?: Record<string, unknown> | null;
   state?: string;
   city: string;
   notes?: string | null;
@@ -199,20 +208,45 @@ export async function createSellRequestAction(data: SellRequestPayload) {
   // Limite rígido de no máximo 5 imagens
   const imagesToSave = (data.images || []).slice(0, 5);
 
-  // Consulta FIPE em segundo plano (se houver dados suficientes)
-  const fipeResult = await queryFipeInBackground(data);
+  // Consulta FIPE se não vier provida diretamente pelo formulário
+  let effectiveFipePrice = data.fipe_price ?? null;
+  let effectiveFipeCode = data.fipe_code ?? null;
+  let effectiveFipeRef = data.fipe_reference_period ?? null;
+  let effectiveFipeSnapshot = data.fipe_snapshot ?? null;
+
+  if (effectiveFipePrice == null && data.model_id) {
+    const fipeResult = await queryFipeInBackground(data);
+    if (fipeResult) {
+      effectiveFipePrice = fipeResult.priceReais;
+      effectiveFipeCode = fipeResult.fipeCode;
+      effectiveFipeRef = fipeResult.referencePeriod;
+      effectiveFipeSnapshot = fipeResult.snapshot;
+    }
+  }
+
+  // Recalcular no servidor de forma segura: estimated_offer = fipe_price * offer_percentage / 100
+  let calculatedEstimatedOffer: number | null = null;
+  if (effectiveFipePrice != null && data.offer_percentage != null) {
+    const clampedPercentage = Math.min(Math.max(Number(data.offer_percentage), 0), 100);
+    calculatedEstimatedOffer = Number(((effectiveFipePrice * clampedPercentage) / 100).toFixed(2));
+  }
 
   // 1. Gravar em public.sell_requests
   const sellRequestInsertPayload = {
     name: data.name.trim(),
     phone: data.phone.replace(/\D/g, ''),
-    license_plate: null,
+    email: data.email ? data.email.trim() : null,
+    license_plate: data.license_plate ? data.license_plate.trim().toUpperCase() : null,
     brand: data.brand.trim(),
     model: data.model.trim(),
     year_manufacture: data.year_manufacture,
     year_model: data.year_model,
+    color: data.color ? data.color.trim() : null,
     mileage: data.mileage != null ? data.mileage : null,
     desired_price: data.desired_price != null ? data.desired_price : null,
+    offer_percentage: data.offer_percentage != null ? data.offer_percentage : null,
+    estimated_offer: calculatedEstimatedOffer,
+    status: 'NEW',
     state: 'PE',
     city: data.city.trim(),
     notes: data.notes ? data.notes.trim() : null,
@@ -226,8 +260,19 @@ export async function createSellRequestAction(data: SellRequestPayload) {
       year_id: data.year_id || null,
       fuel_id: data.fuel_id || null,
       fuel_name: data.fuel_name || null,
+      color: data.color || null,
+      offer_simulation:
+        effectiveFipePrice && data.offer_percentage
+          ? {
+              fipe_price: effectiveFipePrice,
+              percentage: data.offer_percentage,
+              estimated_offer: calculatedEstimatedOffer,
+              currency: 'BRL',
+              calculated_at: new Date().toISOString(),
+            }
+          : null,
     },
-    fipe_provider: fipeResult ? 'fipex' : null,
+    fipe_provider: effectiveFipePrice != null ? 'fipex' : null,
     fipe_vehicle_type_id: 'motocicletas',
     fipe_brand_id: data.brand_id || null,
     fipe_brand_name: data.brand || null,
@@ -237,11 +282,11 @@ export async function createSellRequestAction(data: SellRequestPayload) {
     fipe_year_label: String(data.year_model),
     fipe_fuel_id: data.fuel_id || null,
     fipe_fuel_name: data.fuel_name || null,
-    fipe_code: fipeResult?.fipeCode || null,
-    fipe_price: fipeResult?.priceReais || null,
-    fipe_reference_period: fipeResult?.referencePeriod || null,
-    fipe_queried_at: fipeResult ? new Date().toISOString() : null,
-    fipe_snapshot: fipeResult?.snapshot || null,
+    fipe_code: effectiveFipeCode,
+    fipe_price: effectiveFipePrice,
+    fipe_reference_period: effectiveFipeRef,
+    fipe_queried_at: effectiveFipePrice != null ? new Date().toISOString() : null,
+    fipe_snapshot: effectiveFipeSnapshot,
   };
 
   const { data: sellRecord, error: sellError } = await supabase
@@ -280,21 +325,26 @@ export async function createSellRequestAction(data: SellRequestPayload) {
     source: 'WEBSITE',
     name: data.name.trim(),
     phone: data.phone.replace(/\D/g, ''),
+    email: data.email ? data.email.trim() : null,
     message:
       data.notes?.trim() ||
-      `Proposta de anúncio da moto ${data.brand} ${data.model} (${data.year_manufacture}/${data.year_model}) enviada pelo site.`,
+      `Proposta de venda direta da moto ${data.brand} ${data.model} (${data.year_manufacture}/${data.year_model}) enviada pelo site.`,
     metadata: {
       sell_request_id: sellRequestId || null,
       brand: data.brand,
       model: data.model,
       year_manufacture: data.year_manufacture,
       year_model: data.year_model,
+      color: data.color || null,
       mileage: data.mileage,
       desired_price: data.desired_price,
+      offer_percentage: data.offer_percentage,
+      estimated_offer: calculatedEstimatedOffer,
       state: 'PE',
       city: data.city,
-      fipe_code: fipeResult?.fipeCode || null,
-      fipe_price: fipeResult?.priceReais || null,
+      fipe_code: effectiveFipeCode,
+      fipe_price: effectiveFipePrice,
+      fipe_reference_period: effectiveFipeRef,
       images_count: imagesToSave.length,
       images: imagesToSave.map((i) => i.url),
     },
@@ -311,6 +361,8 @@ export async function createSellRequestAction(data: SellRequestPayload) {
     };
   }
 
+  revalidatePath('/admin/propostas');
+
   return { success: true, id: sellRequestId };
 }
 
@@ -318,13 +370,11 @@ export async function getLeads(): Promise<ProposalViewModel[]> {
   const supabase = await createClient();
 
   const [leadsRes, rentalRes] = await Promise.all([
-    supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false }),
+    supabase.from('leads').select('*').order('created_at', { ascending: false }),
     supabase
       .from('rental_requests')
-      .select(`
+      .select(
+        `
         *,
         motorcycle:motorcycles (
           id,
@@ -344,7 +394,8 @@ export async function getLeads(): Promise<ProposalViewModel[]> {
             is_primary
           )
         )
-      `)
+      `,
+      )
       .order('created_at', { ascending: false }),
   ]);
 

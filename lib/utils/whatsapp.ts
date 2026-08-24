@@ -88,8 +88,36 @@ export function generateProposalWhatsAppMessage(proposal: ProposalViewModel): st
     : '';
 
   switch (proposal.type) {
-    case 'SELL_MOTORCYCLE':
-      return `Olá ${name}! Vi seu interesse em anunciar sua moto${moto ? ` (${moto})` : ''} no site da AF Motos e gostaria de conversar sobre os próximos passos para a avaliação.`;
+    case 'SELL_MOTORCYCLE': {
+      const motoData = proposal.motorcycle;
+      const details: string[] = [];
+      if (motoData?.yearModel || motoData?.yearManufacture || motoData?.year) {
+        details.push(
+          `Ano: ${motoData.yearManufacture ? `${motoData.yearManufacture}/` : ''}${motoData.yearModel || motoData.year}`,
+        );
+      }
+      if (motoData?.mileage) {
+        details.push(`Quilometragem: ${motoData.mileage.toLocaleString('pt-BR')} km`);
+      }
+      if (motoData?.fipePrice) {
+        details.push(
+          `Referência FIPE: R$ ${motoData.fipePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        );
+      }
+      if (motoData?.estimatedOffer) {
+        details.push(
+          `Estimativa simulada: R$ ${motoData.estimatedOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${motoData.offerPercentage || 85}%)`,
+        );
+      }
+      if (motoData?.desiredPrice) {
+        details.push(
+          `Expectativa informada: R$ ${motoData.desiredPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        );
+      }
+
+      const detailsBlock = details.length > 0 ? `\n\n${details.join('\n')}` : '';
+      return `Olá, ${name}! Aqui é da AF Motos. Recebemos sua proposta para vender sua moto${moto ? ` (${moto})` : ''} e gostaríamos de confirmar as informações para darmos sequência à avaliação.${detailsBlock}`;
+    }
 
     case 'CONSIGNMENT':
       return `Olá ${name}! Recebemos sua solicitação para anunciar/consignar sua moto${moto ? ` (${moto})` : ''}. Gostaria de passar os detalhes do nosso modelo de venda.`;
@@ -105,7 +133,6 @@ export function generateProposalWhatsAppMessage(proposal: ProposalViewModel): st
 
       return `Olá, ${name}! Aqui é da AF Motos. Recebemos sua proposta de aluguel de uma moto pelo nosso site e gostaríamos de confirmar alguns detalhes com você.\n\nPlano desejado: ${plano}\nData prevista: ${dataFormatted}\nMoto: ${motoDesc}`;
     }
-
 
     case 'MOTORCYCLE_REQUEST':
       return `Olá ${name}! Recebemos seu pedido de moto pelo site da AF Motos e estamos buscando as melhores opções para você.`;

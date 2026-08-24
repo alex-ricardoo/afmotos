@@ -6,7 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { createMotorcycleAction, updateMotorcycleAction } from '@/lib/actions/motorcycles';
+import { toast } from 'sonner';
+import {
+  createMotorcycleAction,
+  updateMotorcycleAction,
+  generateMotorcycleAiDescriptionAction,
+} from '@/lib/actions/motorcycles';
 import { ImageUploader } from '@/components/gallery/image-uploader';
 import {
   AlertCircle,
@@ -99,46 +104,74 @@ const POPULAR_BRANDS = new Set([
   'DAFRA',
 ]);
 
-const motorcycleSchema = z.object({
-  brand: z.string().min(2, 'Marca é obrigatória'),
-  model: z.string().min(2, 'Modelo é obrigatório'),
-  version: z.string().optional(),
-  year_manufacture: z.coerce
-    .number()
-    .min(1900, 'Ano de fabricação inválido')
-    .max(new Date().getFullYear() + 1, 'Ano inválido'),
-  year_model: z.coerce
-    .number()
-    .min(1900, 'Ano do modelo inválido')
-    .max(new Date().getFullYear() + 1, 'Ano inválido'),
-  mileage: z.coerce.number().optional(),
-  engine_capacity: z.coerce.number().optional(),
-  fuel: z.enum(['gasolina', 'etanol', 'flex', 'eletrico', 'diesel']).optional().or(z.literal('')),
-  transmission: z
-    .enum(['manual', 'automatico', 'semiautomatico', 'cvt'])
-    .optional()
-    .or(z.literal('')),
-  color: z.string().optional(),
-  price: z.coerce.number().optional(),
-  fipe_price: z.coerce.number().optional(),
-  description: z.string().optional(),
-  ownership_type: z.enum(['OWNED', 'CONSIGNMENT']),
-  operation_type: z.enum(['SALE', 'RENTAL', 'SALE_AND_RENTAL']),
-  status: z.enum([
-    'AVAILABLE',
-    'RESERVED',
-    'SOLD',
-    'MAINTENANCE',
-    'RENTED',
-    'UNAVAILABLE',
-    'HIDDEN',
-  ]),
-  featured: z.boolean().default(false),
-  license_plate: z.string().optional(),
-  renavam: z.string().optional().nullable().or(z.literal('')),
-  chassi: z.string().optional().nullable().or(z.literal('')),
-  location: z.string().optional(),
-});
+const MOTORCYCLE_COLORS = [
+  'Amarela',
+  'Azul',
+  'Bege',
+  'Branca',
+  'Cinza',
+  'Dourada',
+  'Laranja',
+  'Marrom',
+  'Prata',
+  'Preta',
+  'Roxa',
+  'Verde',
+  'Vermelha',
+  'Vinho / Bordô',
+  'Outra',
+];
+
+const currentYearVal = new Date().getFullYear();
+const MANUFACTURE_YEAR_OPTIONS = Array.from(
+  { length: currentYearVal + 2 - 1980 },
+  (_, i) => currentYearVal + 1 - i
+);
+
+const motorcycleSchema = z
+  .object({
+    brand: z.string().min(2, 'Marca é obrigatória'),
+    model: z.string().min(2, 'Modelo é obrigatório'),
+    version: z.string().optional(),
+    year_manufacture: z.coerce
+      .number()
+      .min(1900, 'Ano de fabricação inválido')
+      .max(new Date().getFullYear() + 1, 'Ano inválido'),
+    year_model: z.coerce
+      .number()
+      .min(1900, 'Ano do modelo inválido')
+      .max(new Date().getFullYear() + 2, 'Ano inválido'),
+    mileage: z.coerce.number().optional(),
+    engine_capacity: z.coerce.number().optional(),
+    fuel: z.enum(['gasolina', 'etanol', 'flex', 'eletrico', 'diesel']).optional().or(z.literal('')),
+    transmission: z
+      .enum(['manual', 'automatico', 'semiautomatico', 'cvt'])
+      .optional()
+      .or(z.literal('')),
+    color: z.string().optional(),
+    price: z.coerce.number().optional(),
+    fipe_price: z.coerce.number().optional(),
+    description: z.string().optional(),
+    ownership_type: z.enum(['OWNED', 'CONSIGNMENT']),
+    operation_type: z.enum(['SALE', 'RENTAL', 'SALE_AND_RENTAL']),
+    status: z.enum([
+      'AVAILABLE',
+      'RESERVED',
+      'SOLD',
+      'MAINTENANCE',
+      'RENTED',
+      'UNAVAILABLE',
+      'HIDDEN',
+    ]),
+    featured: z.boolean().default(false),
+    license_plate: z.string().optional(),
+    renavam: z.string().optional().nullable().or(z.literal('')),
+    chassi: z.string().optional().nullable().or(z.literal('')),
+  })
+  .refine((data) => data.year_model >= data.year_manufacture, {
+    message: 'O ano do modelo deve ser igual ou maior que o ano de fabricação.',
+    path: ['year_model'],
+  });
 
 type MotorcycleFormValues = z.infer<typeof motorcycleSchema>;
 
@@ -292,7 +325,6 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
       license_plate: initialData?.license_plate || '',
       renavam: initialData?.renavam || '',
       chassi: initialData?.chassi || '',
-      location: initialData?.location || 'São Paulo, SP',
     },
   });
 
@@ -417,21 +449,34 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
     setOcrConflicts([]);
   };
 
-  const generateAiDescription = () => {
+  const [isGeneratingAiDesc, setIsGeneratingAiDesc] = useState(false);
+
+  const generateAiDescription = async () => {
     const values = form.getValues();
-    const kmStr = values.mileage ? formatKM(values.mileage) + ' km' : '0 km';
-    const desc = `🏍️ ${values.brand} ${values.model} ${values.version || ''}
+    if (!values.brand || !values.model) {
+      toast.error('Preencha ao menos a marca e o modelo da moto para gerar a descrição com IA.');
+      return;
+    }
 
-📅 Ano: ${values.year_manufacture}/${values.year_model}
-🛣️ Quilometragem: ${kmStr}
-🎨 Cor: ${values.color || 'Não informada'}
-⚙️ Motor: ${values.engine_capacity ? `${values.engine_capacity}cc` : 'Não informada'}
-${values.fipe_price ? `📊 Preço Tabela FIPE: ${formatCurrency(values.fipe_price)}\n` : ''}
-✅ Moto revisada, documentação 100% em dia e garantia de procedência.
-💳 Aceitamos seu veículo na troca e facilitamos pagamento.
-
-Entre em contato com nossa equipe e agende um test ride!`;
-    form.setValue('description', desc.trim(), { shouldDirty: true });
+    setIsGeneratingAiDesc(true);
+    try {
+      const res = await generateMotorcycleAiDescriptionAction(values);
+      if (res?.success && res.description) {
+        form.setValue('description', res.description, { shouldValidate: true, shouldDirty: true });
+        if (res.isFallback) {
+          toast.info('Descrição comercial gerada com sucesso baseada nos dados da moto.');
+        } else {
+          toast.success('Descrição comercial persuasiva gerada com IA (Gemini)!');
+        }
+      } else {
+        toast.error('Não foi possível gerar a descrição no momento.');
+      }
+    } catch (err) {
+      console.error('Erro ao gerar descrição com IA:', err);
+      toast.error('Ocorreu um erro ao conectar com o serviço de IA.');
+    } finally {
+      setIsGeneratingAiDesc(false);
+    }
   };
 
   // FIPE State & Refs
@@ -1081,11 +1126,31 @@ Entre em contato com nossa equipe e agende um test ride!`;
                           />
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500 font-mono"
-                          />
+                          <Select
+                            value={field.value ? String(field.value) : ''}
+                            onValueChange={(val: string | null) => {
+                              if (!val) return;
+                              const yearNum = parseInt(val, 10);
+                              field.onChange(yearNum);
+
+                              // Regra: O ano do modelo tem que ser igual ou maior que o de fabricação
+                              const currentYearModel = form.getValues('year_model');
+                              if (!currentYearModel || currentYearModel < yearNum) {
+                                form.setValue('year_model', yearNum, { shouldValidate: true });
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500 font-mono">
+                              <SelectValue placeholder="Ano Fab..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-60">
+                              {MANUFACTURE_YEAR_OPTIONS.map((y) => (
+                                <SelectItem key={y} value={String(y)} className="cursor-pointer font-mono">
+                                  {y}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1095,52 +1160,87 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   <FormField
                     control={form.control as any}
                     name="year_model"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm flex items-center gap-2">
-                          <span>
-                            Ano Mod. <span className="text-rose-500">*</span>
-                          </span>
-                          <AiFieldBadge
-                            fieldName="year_model"
-                            isAiFilled={ocrFilledFields['year_model']}
-                            confidence={ocrConfidenceMap['yearModel']}
-                          />
-                        </FormLabel>
-                        <FormControl>
-                          {selectedModelId && fipe.years.length > 0 ? (
-                            <Select
-                              value={String(field.value) || ''}
-                              onValueChange={(val) => {
-                                if (val) handleYearChange(val);
-                              }}
-                            >
-                              <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500 font-mono">
-                                <SelectValue placeholder="Ano FIPE..." />
-                              </SelectTrigger>
-                              <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
-                                {fipe.years.map((y) => (
-                                  <SelectItem
-                                    key={y.value}
-                                    value={y.value}
-                                    className="cursor-pointer"
-                                  >
-                                    {y.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Input
-                              type="number"
-                              {...field}
-                              className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500 font-mono"
+                    render={({ field }) => {
+                      const selectedFab = form.watch('year_manufacture') || currentYearVal;
+
+                      // Se estiver usando FIPE, filtra opções para que ano do modelo >= ano de fabricação
+                      const filteredFipeYears = fipe.years.filter((y) => {
+                        const parsedYear = parseInt(y.label || y.value, 10);
+                        if (isNaN(parsedYear)) return true;
+                        return parsedYear >= selectedFab;
+                      });
+
+                      // Se não estiver usando FIPE, cria lista a partir de selectedFab
+                      const maxModelYear = Math.max(currentYearVal + 2, selectedFab + 2);
+                      const modelYearOptions = Array.from(
+                        { length: maxModelYear - selectedFab + 1 },
+                        (_, i) => selectedFab + i
+                      );
+
+                      return (
+                        <FormItem>
+                          <FormLabel className="text-slate-300 font-medium text-xs sm:text-sm flex items-center gap-2">
+                            <span>
+                              Ano Mod. <span className="text-rose-500">*</span>
+                            </span>
+                            <AiFieldBadge
+                              fieldName="year_model"
+                              isAiFilled={ocrFilledFields['year_model']}
+                              confidence={ocrConfidenceMap['yearModel']}
                             />
-                          )}
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                          </FormLabel>
+                          <FormControl>
+                            {selectedModelId && fipe.years.length > 0 ? (
+                              <Select
+                                value={String(field.value) || ''}
+                                onValueChange={(val) => {
+                                  if (val) handleYearChange(val);
+                                }}
+                              >
+                                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500 font-mono">
+                                  <SelectValue placeholder="Ano FIPE..." />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-60">
+                                  {filteredFipeYears.map((y) => (
+                                    <SelectItem
+                                      key={y.value}
+                                      value={y.value}
+                                      className="cursor-pointer font-mono"
+                                    >
+                                      {y.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Select
+                                value={field.value ? String(field.value) : ''}
+                                onValueChange={(val: string | null) => {
+                                  if (!val) return;
+                                  field.onChange(parseInt(val, 10));
+                                }}
+                              >
+                                <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500 font-mono">
+                                  <SelectValue placeholder="Ano Mod..." />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-60">
+                                  {modelYearOptions.map((y) => (
+                                    <SelectItem
+                                      key={y}
+                                      value={String(y)}
+                                      className="cursor-pointer font-mono"
+                                    >
+                                      {y}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
 
@@ -1279,27 +1379,66 @@ Entre em contato com nossa equipe e agende um test ride!`;
                   <FormField
                     control={form.control as any}
                     name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-300 font-medium flex items-center gap-2">
-                          <span>Cor</span>
-                          <AiFieldBadge
-                            fieldName="color"
-                            isAiFilled={ocrFilledFields['color']}
-                            confidence={ocrConfidenceMap['color']}
-                          />
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ex: Preto, Vermelho Metálico"
-                            {...field}
-                            value={field.value || ''}
-                            className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const isKnownColor =
+                        field.value &&
+                        MOTORCYCLE_COLORS.includes(field.value) &&
+                        field.value !== 'Outra';
+                      const isOtherSelected =
+                        field.value === 'Outra' || (field.value && !isKnownColor);
+
+                      return (
+                        <FormItem>
+                          <FormLabel className="text-slate-300 font-medium flex items-center gap-2">
+                            <span>Cor</span>
+                            <AiFieldBadge
+                              fieldName="color"
+                              isAiFilled={ocrFilledFields['color']}
+                              confidence={ocrConfidenceMap['color']}
+                            />
+                          </FormLabel>
+                          <div className="space-y-2">
+                            <Select
+                              value={
+                                isKnownColor
+                                  ? field.value
+                                  : isOtherSelected
+                                    ? 'Outra'
+                                    : ''
+                              }
+                              onValueChange={(val) => {
+                                if (val === 'Outra') {
+                                  field.onChange('Outra');
+                                } else {
+                                  field.onChange(val);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                                <SelectValue placeholder="Selecione a cor..." />
+                              </SelectTrigger>
+                              <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-60">
+                                {MOTORCYCLE_COLORS.map((c) => (
+                                  <SelectItem key={c} value={c} className="cursor-pointer">
+                                    {c}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            {isOtherSelected && (
+                              <Input
+                                placeholder="Digite a cor personalizada..."
+                                value={field.value === 'Outra' ? '' : field.value || ''}
+                                onChange={(e) => field.onChange(e.target.value || 'Outra')}
+                                className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500 text-sm mt-1.5"
+                              />
+                            )}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   <FormField
@@ -1650,11 +1789,21 @@ Entre em contato com nossa equipe e agende um test ride!`;
                     type="button"
                     variant="outline"
                     size="sm"
+                    disabled={isGeneratingAiDesc}
                     onClick={generateAiDescription}
-                    className="border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 rounded-xl flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                    className="border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 rounded-xl flex items-center gap-1.5 text-xs font-bold cursor-pointer disabled:opacity-50"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Gerar Descrição com IA</span>
+                    {isGeneratingAiDesc ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                        <span>Gerando com IA...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Gerar Descrição com IA</span>
+                      </>
+                    )}
                   </Button>
                 </div>
 
@@ -1671,28 +1820,6 @@ Entre em contato com nossa equipe e agende um test ride!`;
                           value={field.value || ''}
                           rows={8}
                           className="bg-slate-950 border-slate-800 text-slate-200 rounded-xl focus:border-amber-500 text-sm leading-relaxed p-4"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* LOCALIZAÇÃO */}
-                <FormField
-                  control={form.control as any}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-slate-300 font-medium text-xs">
-                        Cidade / Localização da Loja
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Ex: São Paulo, SP"
-                          {...field}
-                          value={field.value || ''}
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500 text-sm"
                         />
                       </FormControl>
                       <FormMessage />

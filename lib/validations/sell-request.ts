@@ -80,6 +80,35 @@ export const sellRequestSchema = z.object({
     })
     .transform((val) => getCanonicalPernambucoCity(val) || val),
 
+  color: z.string().trim().max(50).optional().nullable(),
+  license_plate: z.string().trim().max(10).optional().nullable(),
+  email: z
+    .string()
+    .trim()
+    .email('Informe um e-mail válido.')
+    .max(100, 'O e-mail deve ter no máximo 100 caracteres.')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
+
+  offer_percentage: z.coerce
+    .number()
+    .min(0, 'O percentual não pode ser negativo.')
+    .max(100, 'O percentual não pode ser superior a 100%.')
+    .optional()
+    .nullable(),
+
+  estimated_offer: z.coerce
+    .number()
+    .min(0, 'A estimativa não pode ser negativa.')
+    .optional()
+    .nullable(),
+
+  fipe_code: z.string().optional().nullable(),
+  fipe_price: z.coerce.number().min(0).optional().nullable(),
+  fipe_reference_period: z.string().optional().nullable(),
+  fipe_snapshot: z.record(z.string(), z.unknown()).optional().nullable(),
+
   notes: z
     .string()
     .max(1000, 'As observações não podem ultrapassar 1000 caracteres.')

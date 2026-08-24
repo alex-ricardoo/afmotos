@@ -1,7 +1,7 @@
 export const proposalTypeLabels = {
   MOTORCYCLE_INTEREST: 'Interesse em moto',
-  SELL_MOTORCYCLE: 'Venda de moto',
-  CONSIGNMENT: 'Anunciar moto',
+  SELL_MOTORCYCLE: 'Venda para a loja',
+  CONSIGNMENT: 'Anunciar com a loja',
   RENTAL: 'Aluguel de moto',
   MOTORCYCLE_REQUEST: 'Pedido de moto',
   GENERAL_CONTACT: 'Contato geral',
@@ -19,6 +19,74 @@ export const proposalStatusLabels = {
 } as const;
 
 export type ProposalStatus = keyof typeof proposalStatusLabels;
+
+/**
+ * Rótulos de status contextualizados pelo tipo de proposta / intenção do cliente:
+ * - SELL_MOTORCYCLE: Cliente quer vender a moto para a loja (compra direta / estoque).
+ * - CONSIGNMENT: Cliente quer anunciar a moto com a loja (intermediação / comissão).
+ * - MOTORCYCLE_INTEREST: Cliente interessado em comprar uma moto do estoque.
+ * - RENTAL: Cliente interessado no aluguel semanal/mensal de moto.
+ */
+export const contextualStatusLabels: Record<ProposalType, Record<ProposalStatus, string>> = {
+  SELL_MOTORCYCLE: {
+    NEW: 'Nova proposta de venda',
+    CONTACTED: 'Em negociação',
+    QUALIFIED: 'Oferta enviada / Avaliação',
+    CONVERTED: 'Moto comprada pela loja',
+    LOST: 'Oferta recusada',
+    CLOSED: 'Encerrado',
+  },
+  CONSIGNMENT: {
+    NEW: 'Solicitação de anúncio',
+    CONTACTED: 'Em triagem / Análise',
+    QUALIFIED: 'Anúncio aprovado e ativo',
+    CONVERTED: 'Moto vendida (Consignada)',
+    LOST: 'Anúncio cancelado',
+    CLOSED: 'Encerrado',
+  },
+  MOTORCYCLE_INTEREST: {
+    NEW: 'Novo lead de compra',
+    CONTACTED: 'Em atendimento',
+    QUALIFIED: 'Financiamento / Proposta',
+    CONVERTED: 'Venda concluída',
+    LOST: 'Desistiu da compra',
+    CLOSED: 'Encerrado',
+  },
+  RENTAL: {
+    NEW: 'Nova solicitação',
+    CONTACTED: 'Em atendimento',
+    QUALIFIED: 'Perfil aprovado',
+    CONVERTED: 'Contrato ativo',
+    LOST: 'Cancelado / Reprovado',
+    CLOSED: 'Encerrado',
+  },
+  MOTORCYCLE_REQUEST: {
+    NEW: 'Novo pedido de moto',
+    CONTACTED: 'Buscando modelo',
+    QUALIFIED: 'Opções apresentadas',
+    CONVERTED: 'Moto encontrada e vendida',
+    LOST: 'Pedido cancelado',
+    CLOSED: 'Encerrado',
+  },
+  GENERAL_CONTACT: {
+    NEW: 'Novo contato',
+    CONTACTED: 'Em atendimento',
+    QUALIFIED: 'Qualificado',
+    CONVERTED: 'Convertido',
+    LOST: 'Perdido',
+    CLOSED: 'Encerrado',
+  },
+};
+
+export function getProposalStatusLabel(status: string, type?: string): string {
+  const normalizedStatus = (status || 'NEW').toUpperCase() as ProposalStatus;
+  const normalizedType = (type || 'GENERAL_CONTACT').toUpperCase() as ProposalType;
+
+  if (contextualStatusLabels[normalizedType]?.[normalizedStatus]) {
+    return contextualStatusLabels[normalizedType][normalizedStatus];
+  }
+  return proposalStatusLabels[normalizedStatus] || status;
+}
 
 export const proposalStatusStyles = {
   NEW: {

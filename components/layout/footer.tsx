@@ -20,12 +20,7 @@ import {
 } from '@/components/icons/social-icons';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink, formatPhoneForDisplay } from '@/lib/utils/whatsapp';
-import {
-  getSiteLogo,
-  getSocialLinks,
-  getBusinessHours,
-  getMapsUrl,
-} from '@/lib/site-settings';
+import { getSiteLogo, getSocialLinks, getBusinessHours, getMapsUrl } from '@/lib/site-settings';
 
 export function Footer({ settings }: { settings?: any }) {
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
@@ -192,7 +187,10 @@ export function Footer({ settings }: { settings?: any }) {
                 </Link>
               </li>
               <li>
-                <Link href="/motos-vendidas" className="hover:text-amber-500 transition-colors duration-200">
+                <Link
+                  href="/motos-vendidas"
+                  className="hover:text-amber-500 transition-colors duration-200"
+                >
                   Motos Vendidas
                 </Link>
               </li>
@@ -206,15 +204,30 @@ export function Footer({ settings }: { settings?: any }) {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link href="/anunciar-sua-moto" className="hover:text-amber-500 transition-colors duration-200">
+                <Link
+                  href="/vender-minha-moto"
+                  className="hover:text-amber-500 transition-colors duration-200"
+                >
+                  Venda sua Moto
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/anunciar-sua-moto"
+                  className="hover:text-amber-500 transition-colors duration-200"
+                >
                   Anuncie sua Moto
                 </Link>
               </li>
               <li>
-                <Link href="/aluguel" className="hover:text-amber-500 transition-colors duration-200">
+                <Link
+                  href="/aluguel"
+                  className="hover:text-amber-500 transition-colors duration-200"
+                >
                   Aluguel de Motos
                 </Link>
               </li>
+
               <li>
                 <Link
                   href="/politica-de-privacidade"
@@ -307,7 +320,10 @@ export function Footer({ settings }: { settings?: any }) {
             >
               Política de Privacidade
             </Link>
-            <Link href="/admin/login" className="hover:text-amber-500 transition-colors duration-200">
+            <Link
+              href="/admin/login"
+              className="hover:text-amber-500 transition-colors duration-200"
+            >
               Área Restrita
             </Link>
           </div>
