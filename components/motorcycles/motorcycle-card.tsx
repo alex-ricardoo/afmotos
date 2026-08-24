@@ -50,7 +50,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
     >
       {/* Top Image Container */}
       {isSold ? (
-        <div className="block relative w-full aspect-[4/3] sm:aspect-[16/10] bg-[#0a0a0a] overflow-hidden">
+        <div className="block relative w-full aspect-[16/10] sm:aspect-[16/9] bg-[#0a0a0a] overflow-hidden">
           {motorcycle.image_url ? (
             <>
               <div className="absolute inset-0 animate-pulse bg-zinc-800/50" />
@@ -83,7 +83,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
       ) : (
         <Link
           href={`/motos/${motorcycle.slug}`}
-          className="block relative w-full aspect-[4/3] sm:aspect-[16/10] bg-[#0a0a0a] overflow-hidden focus-visible:outline-none cursor-pointer"
+          className="block relative w-full aspect-[16/10] sm:aspect-[16/9] bg-[#0a0a0a] overflow-hidden focus-visible:outline-none cursor-pointer"
           aria-label={`Ver detalhes de ${motorcycle.brand} ${motorcycle.model}`}
         >
           {motorcycle.image_url ? (
@@ -119,14 +119,14 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
       )}
 
       {/* Card Body */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+      <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between space-y-3">
         {/* Cabeçalho */}
         <div>
           <span className="block text-[11px] text-zinc-400 font-semibold tracking-wider uppercase mb-0.5">
             {motorcycle.brand}
           </span>
           {isSold ? (
-            <h3 className="text-base md:text-lg font-bold text-white line-clamp-1 leading-tight flex items-center gap-1.5 flex-wrap">
+            <h3 className="text-base font-bold text-white line-clamp-1 leading-tight flex items-center gap-1.5 flex-wrap">
               {motorcycle.model}
               {motorcycle.version ? (
                 <span className="font-normal text-zinc-400 text-sm whitespace-nowrap">
@@ -140,7 +140,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
               className="block focus-visible:outline-none group/title cursor-pointer"
               aria-label={`Ver detalhes de ${motorcycle.brand} ${motorcycle.model}`}
             >
-              <h3 className="text-base md:text-lg font-bold text-white group-hover/title:text-[#e3c56c] group-hover:text-[#e3c56c] transition-colors line-clamp-1 leading-tight flex items-center gap-1.5 flex-wrap">
+              <h3 className="text-base font-bold text-white group-hover/title:text-[#e3c56c] group-hover:text-[#e3c56c] transition-colors line-clamp-1 leading-tight flex items-center gap-1.5 flex-wrap">
                 {motorcycle.model}
                 {motorcycle.version ? (
                   <span className="font-normal text-zinc-300 text-sm whitespace-nowrap">
@@ -209,14 +209,14 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
           {/* Preço */}
           {isSold ? (
             <div className="flex items-end gap-1.5">
-              <span className="text-lg md:text-xl font-extrabold text-zinc-300 tracking-tight leading-none">
+              <span className="text-lg font-extrabold text-zinc-300 tracking-tight leading-none">
                 {motorcycle.price ? formatCurrency(motorcycle.price) : 'Vendido'}
               </span>
             </div>
           ) : (
             <Link href={`/motos/${motorcycle.slug}`} className="block cursor-pointer">
               <div className="flex items-end gap-1.5">
-                <span className="text-lg md:text-xl font-extrabold text-amber-400 tracking-tight leading-none">
+                <span className="text-lg font-extrabold text-amber-400 tracking-tight leading-none">
                   {motorcycle.price ? formatCurrency(motorcycle.price) : 'Consulte'}
                 </span>
                 {motorcycle.price && motorcycle.price < 500 && motorcycle.status === 'RENTED' && (
@@ -238,7 +238,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
                 href={`/motos/${motorcycle.slug}`}
                 title="Ver detalhes da moto"
                 aria-label={`Ver detalhes de ${motorcycle.brand} ${motorcycle.model}`}
-                className="flex items-center justify-center w-12 h-12 flex-shrink-0 rounded-xl bg-[#202020] border border-[#c9a44c]/20 hover:bg-[#c9a44c] hover:text-black active:scale-[0.98] text-[#e3c56c] transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e3c56c] cursor-pointer"
+                className="flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-xl bg-[#202020] border border-[#c9a44c]/20 hover:bg-[#c9a44c] hover:text-black active:scale-[0.98] text-[#e3c56c] transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e3c56c] cursor-pointer"
               >
                 <ArrowUpRight className="w-5 h-5" />
               </Link>
@@ -248,7 +248,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone }: MotorcycleCardProp
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm sm:text-base transition-all duration-100 sm:duration-200 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515] cursor-pointer"
+                className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm transition-all duration-100 sm:duration-200 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515] cursor-pointer"
               >
                 <WhatsAppIcon className="w-5 h-5 fill-current" />
                 <span className="truncate">WhatsApp</span>

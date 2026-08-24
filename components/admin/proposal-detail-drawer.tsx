@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useSyncExternalStore, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,198 +20,607 @@ import {
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProposalViewModel } from '@/lib/admin/proposal-view-model';
+import { proposalTypeLabels, proposalStatusLabels } from '@/lib/admin/proposal-labels';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { generateProposalWhatsAppMessage, generateWhatsAppLink } from '@/lib/utils/whatsapp';
+import {
+  generateProposalWhatsAppMessage,
+  generateWhatsAppLink,
+  formatPhoneForDisplay,
+} from '@/lib/utils/whatsapp';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
-import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
+import { ImageFullscreen } from '@/components/gallery/image-fullscreen';
+import {
+  MapPin,
+  Calendar,
+  Bike,
+  Tag,
+  KeyRound,
+  MessageSquare,
+  Copy,
+  Check,
+  TrendingDown,
+  TrendingUp,
+  CheckCircle2,
+  Eye,
+  User,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 export function useMediaQuery(query: string) {
-  const [value, setValue] = useState(false);
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (typeof window === 'undefined') return () => {};
+      const media = window.matchMedia(query);
+      media.addEventListener('change', callback);
+      return () => media.removeEventListener('change', callback);
+    },
+    [query],
+  );
 
-  useEffect(() => {
-    function onChange(event: MediaQueryListEvent) {
-      setValue(event.matches);
-    }
+  const getSnapshot = () => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia(query).matches;
+  };
 
-    const result = matchMedia(query);
-    result.addEventListener('change', onChange);
-    setValue(result.matches);
+  const getServerSnapshot = () => false;
 
-    return () => result.removeEventListener('change', onChange);
-  }, [query]);
-
-  return value;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
-import { cn } from '@/lib/utils';
-import { proposalTypeLabels } from '@/lib/admin/proposal-labels';
-import { ImageFullscreen } from '@/components/gallery/image-fullscreen';
 
 interface ProposalDetailProps {
   proposal: ProposalViewModel | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  typeBadgeClass: string;
+  typeBadgeClass?: string;
+  onStatusChange?: (proposal: ProposalViewModel, newStatus: string) => Promise<void> | void;
 }
 
 export function ProposalDetail({
   proposal,
   open,
   onOpenChange,
-  typeBadgeClass,
+  onStatusChange,
 }: ProposalDetailProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [copiedPhone, setCopiedPhone] = useState(false);
+  const [copiedMessage, setCopiedMessage] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<string>('default');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   if (!proposal) return null;
 
   const typeLabel = proposalTypeLabels[proposal.type] || proposal.typeLabel;
-  const whatsappLink = generateWhatsAppLink(
-    proposal.phone,
-    generateProposalWhatsAppMessage(proposal),
-  );
 
-  const Content = (
-    <>
-      <div className="space-y-6 py-4">
-        {/* Contact Info Section */}
-        <section className="space-y-2">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Dados do Contato
-          </h4>
-          <div className="bg-secondary/20 p-4 rounded-xl border border-border/40 text-sm space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Nome:</span>
-              <span className="font-bold text-foreground">{proposal.name}</span>
+  // Status Styling Configuration
+  const statusConfig: Record<
+    string,
+    { label: string; bg: string; text: string; border: string; dot: string; line: string }
+  > = {
+    NEW: {
+      label: 'Novo Lead',
+      bg: 'bg-emerald-500/15',
+      text: 'text-emerald-400',
+      border: 'border-emerald-500/30',
+      dot: 'bg-emerald-400',
+      line: 'from-emerald-500 to-teal-400',
+    },
+    CONTACTED: {
+      label: 'Em atendimento',
+      bg: 'bg-blue-500/15',
+      text: 'text-blue-400',
+      border: 'border-blue-500/30',
+      dot: 'bg-blue-400',
+      line: 'from-blue-500 to-cyan-400',
+    },
+    QUALIFIED: {
+      label: 'Qualificado',
+      bg: 'bg-purple-500/15',
+      text: 'text-purple-400',
+      border: 'border-purple-500/30',
+      dot: 'bg-purple-400',
+      line: 'from-purple-500 to-pink-400',
+    },
+    CONVERTED: {
+      label: 'Convertido',
+      bg: 'bg-[#c9a44c]/20',
+      text: 'text-[#e3c56c]',
+      border: 'border-[#c9a44c]/40',
+      dot: 'bg-[#e3c56c]',
+      line: 'from-[#c9a44c] to-amber-300',
+    },
+    LOST: {
+      label: 'Perdido',
+      bg: 'bg-rose-500/15',
+      text: 'text-rose-400',
+      border: 'border-rose-500/30',
+      dot: 'bg-rose-400',
+      line: 'from-rose-500 to-red-400',
+    },
+    CLOSED: {
+      label: 'Encerrado',
+      bg: 'bg-zinc-800/80',
+      text: 'text-zinc-400',
+      border: 'border-zinc-700',
+      dot: 'bg-zinc-500',
+      line: 'from-zinc-600 to-zinc-700',
+    },
+  };
+
+  const currentStatusInfo = statusConfig[proposal.status] || statusConfig.CLOSED;
+
+  // Type styling
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case 'MOTORCYCLE_INTEREST':
+        return {
+          icon: Bike,
+          label: 'Interesse em Moto',
+          className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+        };
+      case 'SELL_MOTORCYCLE':
+        return {
+          icon: Tag,
+          label: 'Venda de Moto',
+          className: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+        };
+      case 'CONSIGNMENT':
+        return {
+          icon: KeyRound,
+          label: 'Anunciar / Consignar',
+          className: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+        };
+      case 'RENTAL':
+        return {
+          icon: Calendar,
+          label: 'Aluguel de Moto',
+          className: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+        };
+      default:
+        return {
+          icon: MessageSquare,
+          label: 'Contato Geral',
+          className: 'bg-zinc-800 text-zinc-300 border-zinc-700',
+        };
+    }
+  };
+
+  const typeInfo = getTypeBadge(proposal.type);
+  const TypeIcon = typeInfo.icon;
+
+  // FIPE Calculations
+  const desiredPrice = proposal.motorcycle?.desiredPrice;
+  const fipePrice = proposal.motorcycle?.fipePrice;
+  let fipeDiffPercent: number | null = null;
+  if (desiredPrice && fipePrice && fipePrice > 0) {
+    fipeDiffPercent = Number((((desiredPrice - fipePrice) / fipePrice) * 100).toFixed(1));
+  }
+
+  // WhatsApp Message Presets
+  const getWhatsAppMessageByPreset = () => {
+    const name = proposal.name.trim();
+    const moto = proposal.motorcycle?.brand
+      ? `${proposal.motorcycle.brand} ${proposal.motorcycle.model || ''}`.trim()
+      : '';
+
+    switch (selectedPreset) {
+      case 'photos':
+        return `Olá ${name}, tudo bem? Aqui é da equipe da AF Motos! Recebemos sua proposta sobre ${moto ? `a moto ${moto}` : 'sua moto'}. Você teria mais fotos e o documento dela para adiantarmos a avaliação?`;
+      case 'visit':
+        return `Olá ${name}! Tudo bem? Gostamos muito da proposta${moto ? ` para a moto ${moto}` : ''}. Gostaria de agendar um horário para você vir à nossa loja para finalizarmos a negociação?`;
+      case 'counter':
+        return `Olá ${name}! Tudo bem? Analisamos sua proposta${moto ? ` para ${moto}` : ''} com nossa equipe comercial e gostaríamos de apresentar uma proposta especial para você fechar negócio hoje.`;
+      case 'default':
+      default:
+        return generateProposalWhatsAppMessage(proposal);
+    }
+  };
+
+  const activeWhatsAppLink = generateWhatsAppLink(proposal.phone, getWhatsAppMessageByPreset());
+
+  const handleCopyPhone = () => {
+    navigator.clipboard.writeText(proposal.phone.replace(/\D/g, ''));
+    setCopiedPhone(true);
+    toast.success('Telefone copiado!');
+    setTimeout(() => setCopiedPhone(false), 2000);
+  };
+
+  const handleCopyMessage = () => {
+    if (proposal.message) {
+      navigator.clipboard.writeText(proposal.message);
+      setCopiedMessage(true);
+      toast.success('Mensagem copiada!');
+      setTimeout(() => setCopiedMessage(false), 2000);
+    }
+  };
+
+  const handleQuickStatusUpdate = async (newStatus: string) => {
+    if (newStatus === proposal.status || isUpdatingStatus) return;
+    setIsUpdatingStatus(true);
+    try {
+      if (onStatusChange) {
+        await onStatusChange(proposal, newStatus);
+      }
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  // Main Rich Content Body
+  const MainContent = (
+    <div className="space-y-6">
+      {/* 2-Column Responsive Grid on Desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column (Customer & Motorcycle Data) - 7 cols on lg */}
+        <div className="lg:col-span-7 space-y-5">
+          {/* Card 1: Cliente & Contato */}
+          <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3.5 shadow-xs">
+            <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800/60">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-[#c9a44c]" />
+                Dados do Cliente
+              </h4>
+              <span className="text-[11px] text-zinc-500 font-mono">
+                {format(new Date(proposal.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+              </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Telefone:</span>
-              <span className="font-mono font-bold text-foreground">{proposal.phone}</span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 space-y-1">
+                <span className="text-zinc-500 text-[11px] block">Nome do Cliente</span>
+                <span className="font-bold text-white text-sm block truncate">{proposal.name}</span>
+              </div>
+
+              <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 space-y-1">
+                <span className="text-zinc-500 text-[11px] block">Telefone / WhatsApp</span>
+                <div className="flex items-center justify-between gap-1">
+                  <span className="font-bold font-mono text-zinc-100 text-sm">
+                    {formatPhoneForDisplay(proposal.phone) || proposal.phone}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyPhone}
+                    className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                    title="Copiar telefone"
+                  >
+                    {copiedPhone ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {proposal.email && (
+                <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 space-y-1">
+                  <span className="text-zinc-500 text-[11px] block">E-mail</span>
+                  <span className="font-semibold text-zinc-300 block truncate">
+                    {proposal.email}
+                  </span>
+                </div>
+              )}
+
+              {(proposal.city || proposal.state) && (
+                <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 space-y-1">
+                  <span className="text-zinc-500 text-[11px] block">Localização</span>
+                  <span className="font-semibold text-zinc-300 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                    <span className="truncate">
+                      {proposal.city}
+                      {proposal.state ? ` - ${proposal.state}` : ''}
+                    </span>
+                  </span>
+                </div>
+              )}
             </div>
-            {proposal.email && (
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">E-mail:</span>
-                <span className="font-bold text-foreground">{proposal.email}</span>
-              </div>
-            )}
-            {proposal.city && (
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Localização:</span>
-                <span className="font-bold text-foreground">
-                  {proposal.city}
-                  {proposal.state ? ` - ${proposal.state}` : ''}
-                </span>
-              </div>
-            )}
           </div>
-        </section>
 
-        {/* Motorcycle Info Section */}
-        {proposal.motorcycle && (proposal.motorcycle.brand || proposal.motorcycle.model) && (
-          <section className="space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Dados da Moto
-            </h4>
-            <div className="bg-secondary/20 p-4 rounded-xl border border-border/40 text-sm space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Moto:</span>
-                <span className="font-bold text-foreground">
-                  {proposal.motorcycle.brand} {proposal.motorcycle.model}
-                </span>
-              </div>
-              {proposal.motorcycle.year && (
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Ano:</span>
-                  <span className="font-bold text-foreground">{proposal.motorcycle.year}</span>
-                </div>
-              )}
-              {proposal.motorcycle.mileage != null && (
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Quilometragem:</span>
-                  <span className="font-bold text-foreground">
-                    {proposal.motorcycle.mileage} km
-                  </span>
-                </div>
-              )}
-              {proposal.motorcycle.desiredPrice != null && (
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Valor Desejado:</span>
-                  <span className="font-bold text-[#c9a44c]">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                      proposal.motorcycle.desiredPrice,
-                    )}
-                  </span>
-                </div>
-              )}
-              {proposal.motorcycle.fipePrice != null && (
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Valor FIPE:</span>
-                  <span className="font-bold text-blue-400">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                      proposal.motorcycle.fipePrice,
-                    )}
-                  </span>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* Message Section */}
-        {proposal.message && (
-          <section className="space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Mensagem
-            </h4>
-            <div className="bg-secondary/20 p-4 rounded-xl border border-border/40 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-              {proposal.message}
-            </div>
-          </section>
-        )}
-
-        {/* Images Gallery */}
-        {proposal.images && proposal.images.length > 0 && (
-          <section className="space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex justify-between">
-              Fotos <span>({proposal.images.length})</span>
-            </h4>
-            <div className="flex flex-wrap gap-3 pb-4">
-              {proposal.images.map((img, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    setSelectedImageIndex(idx);
-                    setIsFullscreenOpen(true);
-                  }}
-                  className="relative rounded-xl overflow-hidden border border-border/40 h-28 w-28 sm:h-40 sm:w-40 bg-secondary/20 block hover:opacity-90 transition-opacity text-left cursor-zoom-in"
+          {/* Card 2: Dados da Moto & Análise Financeira */}
+          {proposal.motorcycle && (proposal.motorcycle.brand || proposal.motorcycle.model) && (
+            <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3.5 shadow-xs">
+              <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800/60">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                  <Bike className="w-3.5 h-3.5 text-[#c9a44c]" />
+                  Veículo Negociado
+                </h4>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-bold px-2 py-0.5 border-zinc-700 bg-zinc-800 text-zinc-300"
                 >
-                  <img
-                    src={img.url}
-                    alt={`Foto ${idx + 1}`}
-                    className="object-cover w-full h-full"
-                  />
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
-    </>
-  );
+                  {proposal.motorcycle.brand}
+                </Badge>
+              </div>
 
-  const ActionButtons = (
-    <div className="flex flex-col gap-2 w-full">
-      <a
-        href={whatsappLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="w-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold rounded-xl h-12 shadow-[0_0_15px_rgba(37,211,102,0.2)] flex items-center justify-center transition-colors"
-      >
-        <WhatsAppIcon className="w-5 h-5 mr-2 fill-current" />
-        Responder pelo WhatsApp
-      </a>
+              {/* Motorcycle Title */}
+              <div className="bg-zinc-950/60 p-3.5 rounded-xl border border-zinc-800/60 flex items-center justify-between">
+                <div>
+                  <span className="text-zinc-400 text-xs font-medium block">Modelo da Moto</span>
+                  <span className="text-base font-extrabold text-white block mt-0.5">
+                    {proposal.motorcycle.brand} {proposal.motorcycle.model}
+                  </span>
+                </div>
+                {proposal.motorcycle.year && (
+                  <div className="text-right">
+                    <span className="text-zinc-500 text-[11px] block">Ano</span>
+                    <span className="font-mono font-bold text-zinc-200 text-sm">
+                      {proposal.motorcycle.year}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Specs Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                {proposal.motorcycle.mileage != null && (
+                  <div className="bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-800/50">
+                    <span className="text-zinc-500 text-[10px] block">KM Rodados</span>
+                    <span className="font-mono font-bold text-zinc-200">
+                      {new Intl.NumberFormat('pt-BR').format(proposal.motorcycle.mileage)} km
+                    </span>
+                  </div>
+                )}
+
+                {proposal.motorcycle.color && (
+                  <div className="bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-800/50">
+                    <span className="text-zinc-500 text-[10px] block">Cor</span>
+                    <span className="font-semibold text-zinc-200">{proposal.motorcycle.color}</span>
+                  </div>
+                )}
+
+                {proposal.motorcycle.version && (
+                  <div className="bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-800/50">
+                    <span className="text-zinc-500 text-[10px] block">Versão</span>
+                    <span className="font-semibold text-zinc-200 truncate block">
+                      {proposal.motorcycle.version}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Financial Box: Desired vs FIPE */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                {desiredPrice != null && (
+                  <div className="bg-[#c9a44c]/10 border border-[#c9a44c]/30 rounded-2xl p-3.5 space-y-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#e3c56c] block">
+                      Valor Desejado
+                    </span>
+                    <span className="text-xl font-black text-[#e3c56c] font-mono block">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }).format(desiredPrice)}
+                    </span>
+                  </div>
+                )}
+
+                {fipePrice != null && (
+                  <div className="bg-blue-500/10 border border-blue-500/25 rounded-2xl p-3.5 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400 block">
+                        Tabela FIPE
+                      </span>
+                      {fipeDiffPercent !== null && (
+                        <span
+                          className={cn(
+                            'text-[10px] font-extrabold px-1.5 py-0.5 rounded-md flex items-center gap-0.5',
+                            fipeDiffPercent < 0
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              : fipeDiffPercent > 0
+                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                : 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+                          )}
+                        >
+                          {fipeDiffPercent < 0 ? (
+                            <>
+                              <TrendingDown className="w-3 h-3" />
+                              {Math.abs(fipeDiffPercent)}% abaixo
+                            </>
+                          ) : fipeDiffPercent > 0 ? (
+                            <>
+                              <TrendingUp className="w-3 h-3" />+{fipeDiffPercent}% acima
+                            </>
+                          ) : (
+                            'Na FIPE'
+                          )}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xl font-black text-blue-300 font-mono block">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }).format(fipePrice)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Card 3: Mensagem do Cliente */}
+          {proposal.message && (
+            <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-2.5 shadow-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-[#c9a44c]" />
+                  Mensagem / Observações
+                </h4>
+                <button
+                  type="button"
+                  onClick={handleCopyMessage}
+                  className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  {copiedMessage ? (
+                    <Check className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                  <span>{copiedMessage ? 'Copiado' : 'Copiar'}</span>
+                </button>
+              </div>
+              <div className="bg-zinc-950/70 p-3.5 rounded-xl border border-zinc-800/60 text-xs text-zinc-200 leading-relaxed italic whitespace-pre-wrap">
+                &quot;{proposal.message}&quot;
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column (Status Switcher, WhatsApp Presets & Photos) - 5 cols on lg */}
+        <div className="lg:col-span-5 space-y-5">
+          {/* Status Control Card */}
+          <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3 shadow-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#c9a44c]" />
+                Status do Lead
+              </h4>
+              <Badge
+                variant="outline"
+                className={cn(
+                  'text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1',
+                  currentStatusInfo.bg,
+                  currentStatusInfo.text,
+                  currentStatusInfo.border,
+                )}
+              >
+                <span className={cn('w-1.5 h-1.5 rounded-full', currentStatusInfo.dot)} />
+                {currentStatusInfo.label}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(proposalStatusLabels).map(([statusKey, statusName]) => {
+                const isSelected = proposal.status === statusKey;
+                const config = statusConfig[statusKey] || statusConfig.CLOSED;
+
+                return (
+                  <button
+                    key={statusKey}
+                    type="button"
+                    disabled={isUpdatingStatus}
+                    onClick={() => handleQuickStatusUpdate(statusKey)}
+                    className={cn(
+                      'p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 text-left cursor-pointer disabled:opacity-50',
+                      isSelected
+                        ? cn(
+                            'bg-zinc-800/90 text-white shadow-xs',
+                            config.border,
+                            'ring-1 ring-white/20',
+                          )
+                        : 'bg-zinc-950/50 text-zinc-400 border-zinc-800/80 hover:bg-zinc-900 hover:text-white',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'w-2.5 h-2.5 rounded-full shrink-0',
+                        config.dot,
+                        isSelected && 'ring-2 ring-white/40',
+                      )}
+                    />
+                    <span className="truncate">{statusName}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* WhatsApp Direct Action & Message Templates */}
+          <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3.5 shadow-xs">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <WhatsAppIcon className="w-3.5 h-3.5 fill-[#25D366]" />
+                Atendimento WhatsApp
+              </h4>
+              <span className="text-[10px] text-zinc-500">Respostas rápidas</span>
+            </div>
+
+            {/* Template Selector */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] text-zinc-400 block font-medium">
+                Modelo da mensagem:
+              </span>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { id: 'default', label: 'Padrão' },
+                  { id: 'photos', label: 'Pedir fotos/doc' },
+                  { id: 'visit', label: 'Agendar visita' },
+                  { id: 'counter', label: 'Contraproposta' },
+                ].map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => setSelectedPreset(preset.id)}
+                    className={cn(
+                      'px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all text-center cursor-pointer',
+                      selectedPreset === preset.id
+                        ? 'bg-zinc-800 text-white border-[#c9a44c]/60'
+                        : 'bg-zinc-950/60 text-zinc-400 border-zinc-800/60 hover:text-white',
+                    )}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Preview of message */}
+            <div className="bg-zinc-950/80 p-3 rounded-xl border border-zinc-800/60 text-[11px] text-zinc-400 line-clamp-3 leading-relaxed">
+              &quot;{getWhatsAppMessageByPreset()}&quot;
+            </div>
+
+            {/* Big WhatsApp CTA */}
+            <a
+              href={activeWhatsAppLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full bg-[#25D366] hover:bg-[#20BD5A] active:scale-98 text-zinc-950 font-extrabold rounded-xl h-11 shadow-[0_0_20px_rgba(37,211,102,0.25)] flex items-center justify-center gap-2 text-sm transition-all cursor-pointer"
+            >
+              <WhatsAppIcon className="w-5 h-5 fill-current" />
+              <span>Abrir WhatsApp com Cliente</span>
+            </a>
+          </div>
+
+          {/* Photo Gallery */}
+          {proposal.images && proposal.images.length > 0 && (
+            <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-[#c9a44c]" />
+                  Fotos do Veículo ({proposal.images.length})
+                </h4>
+                <span className="text-[10px] text-zinc-500">Clique para ampliar</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {proposal.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedImageIndex(idx);
+                      setIsFullscreenOpen(true);
+                    }}
+                    className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-800/80 bg-zinc-950 cursor-zoom-in hover:border-[#c9a44c]/60 transition-all"
+                  >
+                    <img
+                      src={img.url}
+                      alt={`Foto ${idx + 1}`}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Eye className="w-5 h-5 text-white" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 
@@ -219,31 +628,94 @@ export function ProposalDetail({
     return (
       <>
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 bg-[#151515] border-[#c9a44c]/30 text-[#f4f4f2]">
-            <DialogHeader className="px-6 py-5 border-b border-border/40 bg-card">
-              <div className="flex items-center justify-between gap-4 pr-10">
-                <DialogTitle className="text-2xl font-bold truncate text-white min-w-0 flex-1">
-                  {proposal.name}
-                </DialogTitle>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    'uppercase text-[10px] font-bold px-2 py-0.5 whitespace-nowrap shrink-0',
-                    typeBadgeClass,
-                  )}
-                >
-                  {typeLabel}
-                </Badge>
+          <DialogContent className="max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 bg-[#0d0d10] border border-zinc-800 text-zinc-100 shadow-[0_25px_60px_rgba(0,0,0,0.9)] rounded-3xl">
+            {/* Top Accent Line */}
+            <div className={cn('h-1.5 w-full bg-gradient-to-r', currentStatusInfo.line)} />
+
+            {/* Modal Header */}
+            <DialogHeader className="px-6 py-4.5 border-b border-zinc-800/80 bg-zinc-950/80 shrink-0">
+              <div className="flex items-center justify-between gap-4 pr-8">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[#c9a44c] shrink-0 shadow-xs">
+                    <TypeIcon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 space-y-0.5">
+                    <DialogTitle className="text-xl lg:text-2xl font-black text-white truncate">
+                      {proposal.name}
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-zinc-400 flex items-center gap-2">
+                      <span>Proposta #{proposal.id.slice(0, 8)}</span>
+                      <span>•</span>
+                      <span>
+                        Recebido em{' '}
+                        {format(new Date(proposal.createdAt), "dd 'de' MMMM 'às' HH:mm", {
+                          locale: ptBR,
+                        })}
+                      </span>
+                    </DialogDescription>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-xl flex items-center gap-1.5',
+                      typeInfo.className,
+                    )}
+                  >
+                    <TypeIcon className="w-3.5 h-3.5" />
+                    <span>{typeLabel}</span>
+                  </Badge>
+
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'text-xs font-bold px-3 py-1 rounded-xl flex items-center gap-1.5',
+                      currentStatusInfo.bg,
+                      currentStatusInfo.text,
+                      currentStatusInfo.border,
+                    )}
+                  >
+                    <span className={cn('w-2 h-2 rounded-full', currentStatusInfo.dot)} />
+                    <span>{currentStatusInfo.label}</span>
+                  </Badge>
+                </div>
               </div>
-              <DialogDescription className="text-[#a6a6a1]">
-                Recebido em{' '}
-                {format(new Date(proposal.createdAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
-              </DialogDescription>
             </DialogHeader>
-            <div className="px-6 overflow-y-auto flex-1">{Content}</div>
-            <div className="px-6 py-4 border-t border-border/40 bg-card">{ActionButtons}</div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-5 overflow-y-auto flex-1 scrollbar-thin">{MainContent}</div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 border-t border-zinc-800/80 bg-zinc-950/80 flex items-center justify-between shrink-0">
+              <div className="text-xs text-zinc-500 font-mono">
+                AF Motos CRM • Atendimento ao Cliente
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onOpenChange(false)}
+                  className="rounded-xl border-zinc-800 text-zinc-300 hover:text-white cursor-pointer px-4"
+                >
+                  Fechar
+                </Button>
+                <a
+                  href={activeWhatsAppLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20BD5A] text-zinc-950 font-bold text-xs h-9 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(37,211,102,0.2)] cursor-pointer"
+                >
+                  <WhatsAppIcon className="w-4 h-4 fill-current" />
+                  <span>Falar no WhatsApp</span>
+                </a>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
+
         {proposal.images && proposal.images.length > 0 && (
           <ImageFullscreen
             images={proposal.images.map((img, i) => ({ id: i.toString(), url: img.url }))}
@@ -256,44 +728,70 @@ export function ProposalDetail({
     );
   }
 
+  // Mobile Bottom Sheet
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[90vh] sm:max-w-md rounded-t-[20px] bg-[#151515] border-[#c9a44c]/30 p-0 text-[#f4f4f2]"
+        className="max-h-[92vh] rounded-t-3xl bg-[#0d0d10] border-t border-zinc-800 p-0 text-zinc-100 flex flex-col overflow-hidden"
       >
-        <SheetHeader className="text-left border-b border-border/40 pb-4 p-4 pt-6">
-          <div className="flex items-center justify-between gap-4 mb-1 pr-10">
-            <SheetTitle className="text-xl font-bold truncate text-white min-w-0 flex-1">
-              {proposal.name}
-            </SheetTitle>
+        {/* Top Accent Line */}
+        <div className={cn('h-1.5 w-full bg-gradient-to-r', currentStatusInfo.line)} />
+
+        {/* Mobile Header */}
+        <SheetHeader className="text-left border-b border-zinc-800/80 pb-3 p-4 pt-5 bg-zinc-950/80 shrink-0">
+          <div className="flex items-center justify-between gap-3 pr-8">
+            <div className="min-w-0">
+              <SheetTitle className="text-lg font-bold truncate text-white">
+                {proposal.name}
+              </SheetTitle>
+              <SheetDescription className="text-xs text-zinc-400">
+                Recebido em{' '}
+                {format(new Date(proposal.createdAt), "dd/MM 'às' HH:mm", { locale: ptBR })}
+              </SheetDescription>
+            </div>
+
             <Badge
               variant="outline"
               className={cn(
-                'uppercase text-[10px] font-bold px-2 py-0.5 whitespace-nowrap shrink-0',
-                typeBadgeClass,
+                'text-[10px] font-bold px-2 py-0.5 rounded-lg whitespace-nowrap shrink-0',
+                currentStatusInfo.bg,
+                currentStatusInfo.text,
+                currentStatusInfo.border,
               )}
             >
-              {typeLabel}
+              {currentStatusInfo.label}
             </Badge>
           </div>
-          <SheetDescription className="text-[#a6a6a1]">
-            Recebido em{' '}
-            {format(new Date(proposal.createdAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
-          </SheetDescription>
         </SheetHeader>
-        <div className="px-4 overflow-y-auto max-h-[calc(90vh-140px)]">{Content}</div>
-        <SheetFooter className="border-t border-border/40 pt-4 pb-6 px-4">
+
+        {/* Mobile Body */}
+        <div className="px-4 py-4 overflow-y-auto flex-1 space-y-4">{MainContent}</div>
+
+        {/* Mobile Sticky Footer */}
+        <SheetFooter className="border-t border-zinc-800/80 p-4 bg-zinc-950 shrink-0 flex flex-col gap-2">
+          <a
+            href={activeWhatsAppLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full bg-[#25D366] hover:bg-[#20BD5A] text-zinc-950 font-bold rounded-xl h-12 shadow-[0_0_15px_rgba(37,211,102,0.2)] flex items-center justify-center gap-2 text-sm transition-colors cursor-pointer"
+          >
+            <WhatsAppIcon className="w-5 h-5 fill-current" />
+            <span>Falar no WhatsApp</span>
+          </a>
+
           <SheetClose
             className={buttonVariants({
               variant: 'outline',
-              className: 'w-full h-12 rounded-xl font-semibold mt-2 cursor-pointer',
+              className:
+                'w-full h-10 rounded-xl font-semibold border-zinc-800 text-zinc-400 cursor-pointer',
             })}
           >
             Fechar
           </SheetClose>
         </SheetFooter>
       </SheetContent>
+
       {proposal.images && proposal.images.length > 0 && (
         <ImageFullscreen
           images={proposal.images.map((img, i) => ({ id: i.toString(), url: img.url }))}

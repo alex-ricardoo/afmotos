@@ -83,13 +83,13 @@ export function MotorcycleGrid({
       ))}
       
       {needsLeadMagnet && (
-        <div className="rounded-2xl border-2 border-dashed border-amber-500/40 bg-zinc-900/40 p-6 flex flex-col justify-center items-center text-center space-y-4 min-h-[300px] hover:border-amber-500/60 transition-colors">
-          <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-            <SearchX className="w-6 h-6 text-amber-500" />
+        <div className="rounded-2xl border-2 border-dashed border-amber-500/40 bg-zinc-900/40 p-5 flex flex-col justify-center items-center text-center space-y-3 min-h-[240px] hover:border-amber-500/60 transition-colors">
+          <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+            <SearchX className="w-5 h-5 text-amber-500" />
           </div>
           <div>
-            <h3 className="text-lg font-extrabold text-white">Procurando outro modelo?</h3>
-            <p className="text-sm text-zinc-400 mt-2">
+            <h3 className="text-base font-extrabold text-white">Procurando outro modelo?</h3>
+            <p className="text-xs text-zinc-400 mt-1.5">
               Não encontrou o ano ou a versão exata que você quer? Encomende com a gente.
             </p>
           </div>
@@ -97,7 +97,7 @@ export function MotorcycleGrid({
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-bold transition-all shadow-[0_0_15px_rgba(37,211,102,0.2)] mt-2"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] text-white text-sm font-bold transition-all shadow-[0_0_15px_rgba(37,211,102,0.2)] mt-2"
           >
             <WhatsAppIcon className="w-4 h-4 fill-current" />
             <span>Encomendar no WhatsApp</span>

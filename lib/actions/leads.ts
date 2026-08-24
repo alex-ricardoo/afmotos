@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { uploadImage } from '@/lib/uploads';
 import { UploadedImage } from '@/lib/uploads/types';
@@ -325,7 +326,12 @@ export async function getLeads(): Promise<ProposalViewModel[]> {
   return (data || []).map(mapLeadToProposal);
 }
 
-export async function updateLeadStatus(id: string, status: string, source: string = 'lead', sourceId: string = '') {
+export async function updateLeadStatus(
+  id: string,
+  status: string,
+  source: string = 'lead',
+  sourceId: string = '',
+) {
   const supabase = await createClient();
 
   // Atualiza sempre a tabela leads como hub central
@@ -339,10 +345,16 @@ export async function updateLeadStatus(id: string, status: string, source: strin
   // Se houver tabelas relacionadas, atualiza o status também
   if (sourceId) {
     if (source === 'sell_request') {
-       await supabase.from('sell_requests').update({ status }).eq('id', sourceId);
+      await supabase.from('sell_requests').update({ status }).eq('id', sourceId);
     } else if (source === 'consignment_request') {
-       await supabase.from('consignment_requests').update({ status }).eq('id', sourceId);
+      await supabase.from('consignment_requests').update({ status }).eq('id', sourceId);
     }
+  }
+
+  try {
+    revalidatePath('/admin/propostas');
+  } catch {
+    // Ignore in non-rendering contexts
   }
 
   return { success: true };

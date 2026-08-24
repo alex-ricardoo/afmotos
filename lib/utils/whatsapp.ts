@@ -1,4 +1,5 @@
 import { CONSTANTS } from './constants';
+import { ProposalViewModel } from '../admin/proposal-view-model';
 
 /**
  * Normaliza o número de telefone para o padrão internacional do WhatsApp (wa.me)
@@ -13,7 +14,7 @@ export function cleanWhatsAppNumber(phone?: string | null): string {
   // Remove tudo que não for dígito
   let digits = phone.replace(/\D/g, '');
 
-  // Remove zero(s) à esquerda se houver (ex: 011999999999 -> 11999999999)
+  // Remove zero(s) à esquerda se houver (ex: 081999999999 -> 81999999999)
   if (digits.startsWith('0')) {
     digits = digits.replace(/^0+/, '');
   }
@@ -33,20 +34,20 @@ export function cleanWhatsAppNumber(phone?: string | null): string {
 }
 
 /**
- * Formata um número de telefone para exibição amigável ao usuário (ex: (11) 99999-9999)
+ * Formata um número de telefone para exibição amigável ao usuário (ex: (81) 9 8590-1175)
  */
 export function formatPhoneForDisplay(phone?: string | null): string {
   if (!phone) return '';
-  
+
   let digits = phone.replace(/\D/g, '');
-  
+
   // Se vier com o 55 e tiver 12 ou 13 dígitos, remove o 55 para exibição nacional
   if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
     digits = digits.slice(2);
   }
 
   if (digits.length === 11) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)} ${digits.slice(3, 7)}-${digits.slice(7)}`;
   }
 
   if (digits.length === 10) {
@@ -80,25 +81,30 @@ export function generateRentalMessage(): string {
   return 'Olá! Tenho interesse em alugar uma moto. Gostaria de saber as opções disponíveis.';
 }
 
-import { ProposalViewModel } from '../admin/proposal-view-model';
-
 export function generateProposalWhatsAppMessage(proposal: ProposalViewModel): string {
-  let greeting = `Olá ${proposal.name}! `;
-  
+  const name = proposal.name ? proposal.name.trim() : 'Cliente';
+  const moto = proposal.motorcycle?.brand
+    ? `${proposal.motorcycle.brand} ${proposal.motorcycle.model || ''}`.trim()
+    : '';
+
   switch (proposal.type) {
     case 'SELL_MOTORCYCLE':
-      return greeting + `Vi seu interesse em anunciar sua moto${proposal.motorcycle?.brand ? ` (${proposal.motorcycle.brand} ${proposal.motorcycle.model})` : ''} no site da AF Motos e gostaria de conversar sobre os próximos passos.`;
-      
+      return `Olá ${name}! Vi seu interesse em anunciar sua moto${moto ? ` (${moto})` : ''} no site da AF Motos e gostaria de conversar sobre os próximos passos para a avaliação.`;
+
     case 'CONSIGNMENT':
-      return greeting + `Recebemos sua solicitação para consignar sua moto${proposal.motorcycle?.brand ? ` (${proposal.motorcycle.brand} ${proposal.motorcycle.model})` : ''}. Gostaria de passar mais detalhes sobre o nosso formato de trabalho.`;
-      
+      return `Olá ${name}! Recebemos sua solicitação para anunciar/consignar sua moto${moto ? ` (${moto})` : ''}. Gostaria de passar os detalhes do nosso modelo de venda.`;
+
     case 'MOTORCYCLE_INTEREST':
-      return greeting + `Vi seu interesse na moto informada pelo site da AF Motos e gostaria de passar mais detalhes.`;
-      
+      return `Olá ${name}! Vi seu interesse${moto ? ` na moto ${moto}` : ' em uma moto'} pelo site da AF Motos e gostaria de passar mais informações e condições especiais.`;
+
     case 'RENTAL':
-      return greeting + `Recebemos seu contato pelo site referente ao aluguel de motos. Como podemos ajudar?`;
-      
+      return `Olá ${name}! Recebemos sua solicitação de aluguel de moto enviada pelo site da AF Motos. Como podemos te ajudar com as opções disponíveis?`;
+
+    case 'MOTORCYCLE_REQUEST':
+      return `Olá ${name}! Recebemos seu pedido de moto pelo site da AF Motos e estamos buscando as melhores opções para você.`;
+
+    case 'GENERAL_CONTACT':
     default:
-      return greeting + `Vim falar sobre o contato enviado pelo site da AF Motos. Como podemos ajudar?`;
+      return `Olá ${name}! Vi seu contato enviado pelo site da AF Motos. Como posso te ajudar hoje?`;
   }
 }
