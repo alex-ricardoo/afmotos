@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { getSettings } from '@/lib/actions/settings';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
+import { PaymentMethods } from '@/components/ui/payment-methods';
 
 export default async function HomePage() {
   const [featuredMotos, facets, settings] = await Promise.all([
@@ -132,7 +133,19 @@ export default async function HomePage() {
           siteName={siteName}
         />
 
-        <div className="mt-8 flex justify-center sm:hidden">
+        {/* Payment Methods Strip */}
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 py-4 px-5 rounded-2xl bg-zinc-900/60 border border-zinc-800/80">
+          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider shrink-0">
+            💳 Aceitamos:
+          </span>
+          <PaymentMethods variant="compact" />
+          <span className="hidden sm:block text-zinc-700 text-xs">•</span>
+          <span className="text-[10px] text-zinc-500">
+            Cartão em até <span className="font-bold text-amber-400">18x</span> com acréscimo da maquineta
+          </span>
+        </div>
+
+        <div className="mt-6 flex justify-center sm:hidden">
           <Link
             href="/motos"
             className={cn(

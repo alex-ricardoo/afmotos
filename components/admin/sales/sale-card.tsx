@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bike, Download, MessageSquare, Phone, Printer, Pencil } from 'lucide-react';
+import { DeleteSaleButton } from '@/components/admin/sales/delete-sale-button';
 import { buttonVariants } from '@/components/ui/button';
 import { SaleWithDetails } from '@/lib/queries/sales';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
@@ -170,11 +171,11 @@ export function SaleCard({ sale }: SaleCardProps) {
               variant: 'outline',
               size: 'sm',
               className:
-                'col-span-2 h-9 rounded-xl text-xs font-bold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-center gap-1.5 cursor-pointer',
+                'h-9 rounded-xl text-xs font-bold border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 flex items-center justify-center gap-1.5 cursor-pointer',
             })}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Falar no WhatsApp</span>
+            <span>WhatsApp</span>
           </a>
         ) : (
           <a
@@ -185,13 +186,20 @@ export function SaleCard({ sale }: SaleCardProps) {
               variant: 'outline',
               size: 'sm',
               className:
-                'col-span-2 h-9 rounded-xl text-xs text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 border border-zinc-800/80',
+                'h-9 rounded-xl text-xs text-zinc-400 hover:text-white flex items-center justify-center gap-1.5 border border-zinc-800/80',
             })}
           >
             <Download className="w-3.5 h-3.5" />
             <span>Baixar PDF</span>
           </a>
         )}
+
+        <DeleteSaleButton
+          saleId={sale.id}
+          motorcycleId={sale.motorcycle_id}
+          receiptNumber={sale.receipt_number}
+          showLabel
+        />
       </div>
     </div>
   );

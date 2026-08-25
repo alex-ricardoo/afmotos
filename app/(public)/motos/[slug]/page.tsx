@@ -27,6 +27,7 @@ import { generateWhatsAppLink, generateMotorcycleInterestMessage } from '@/lib/u
 import { getBusinessHours, getMapsUrl } from '@/lib/site-settings';
 import { MotorcycleShareSection } from '@/components/motorcycles/motorcycle-share-section';
 import { getPublicMotorcycleUrl } from '@/lib/utils/share';
+import { PaymentMethods } from '@/components/ui/payment-methods';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -200,6 +201,9 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                   Negociação direta com o vendedor. Fale pelo WhatsApp para mais informações.
                 </p>
               </div>
+
+              {/* Formas de Pagamento */}
+              <PaymentMethods variant="full" />
 
               {/* Selos de Garantia e Revisão */}
               <div className="flex flex-col gap-2">

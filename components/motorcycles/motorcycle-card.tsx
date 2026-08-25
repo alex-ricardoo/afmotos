@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { MotorcycleShareDialog } from './motorcycle-share-dialog';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { getSiteInitials } from '@/lib/site-settings';
+import { PaymentMethods } from '@/components/ui/payment-methods';
 
 export interface MotorcycleCardData {
   id: string;
@@ -281,7 +282,9 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
                 <span>Venda Concluída</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 w-full">
+              <>
+                <PaymentMethods variant="compact" className="mb-1" />
+                <div className="flex items-center gap-2 w-full">
                 {/* Botão Secundário: Compartilhar */}
                 <button
                   type="button"
@@ -314,6 +317,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
                   <span className="truncate">WhatsApp</span>
                 </a>
               </div>
+              </>
             )}
           </div>
         </div>

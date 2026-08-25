@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bike, Download, MessageSquare, Printer, FileText, Pencil } from 'lucide-react';
+import { DeleteSaleButton } from '@/components/admin/sales/delete-sale-button';
 import { buttonVariants } from '@/components/ui/button';
 import {
   Table,
@@ -178,6 +179,12 @@ export function SalesTable({ sales }: SalesTableProps) {
                   {/* Ações */}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <DeleteSaleButton
+                        saleId={sale.id}
+                        motorcycleId={sale.motorcycle_id}
+                        receiptNumber={sale.receipt_number}
+                      />
+
                       <Link
                         href={`/admin/vendas/${sale.id}/editar`}
                         className={buttonVariants({

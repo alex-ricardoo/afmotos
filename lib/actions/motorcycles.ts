@@ -2,6 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '@/types/database';
+import { generateUniqueMotorcycleSlug, isSlugConflictError } from '@/lib/utils/slug';
 
 export async function getMotorcycles() {
   const supabase = await createClient();
@@ -33,6 +36,32 @@ export async function getMotorcycleBySlug(slug: string) {
   return data;
 }
 
+export interface MotorcycleInputData {
+  brand: string;
+  model: string;
+  version?: string | null;
+  year_manufacture: number | string;
+  year_model: number | string;
+  mileage?: number | string | null;
+  engine_capacity?: number | string | null;
+  fuel?: string | null;
+  transmission?: string | null;
+  color?: string | null;
+  price?: number | string | null;
+  fipe_price?: number | string | null;
+  description?: string | null;
+  ownership_type: string;
+  operation_type: string;
+  status: string;
+  featured?: boolean | null;
+  license_plate?: string | null;
+  renavam?: string | null;
+  chassi?: string | null;
+  category_id?: string | null;
+  internal_code?: string | null;
+  [key: string]: unknown;
+}
+
 type MotorcyclePayload = {
   brand: string;
   model: string;
@@ -56,31 +85,31 @@ type MotorcyclePayload = {
   category_id?: string | null;
 };
 
-function toMotorcyclePayload(values: any): MotorcyclePayload {
-  const licensePlate = values.license_plate?.trim();
-  const version = values.version?.trim();
-  const color = values.color?.trim();
-  const description = values.description?.trim();
-  const renavam = values.renavam?.trim();
-  const chassi = values.chassi?.trim();
-  const categoryId = values.category_id?.trim();
+function toMotorcyclePayload(values: MotorcycleInputData): MotorcyclePayload {
+  const licensePlate = typeof values.license_plate === 'string' ? values.license_plate.trim() : undefined;
+  const version = typeof values.version === 'string' ? values.version.trim() : undefined;
+  const color = typeof values.color === 'string' ? values.color.trim() : undefined;
+  const description = typeof values.description === 'string' ? values.description.trim() : undefined;
+  const renavam = typeof values.renavam === 'string' ? values.renavam.trim() : undefined;
+  const chassi = typeof values.chassi === 'string' ? values.chassi.trim() : undefined;
+  const categoryId = typeof values.category_id === 'string' ? values.category_id.trim() : undefined;
 
   return {
-    brand: values.brand,
-    model: values.model,
+    brand: String(values.brand || '').trim(),
+    model: String(values.model || '').trim(),
     version: version || null,
-    year_manufacture: Number(values.year_manufacture),
-    year_model: Number(values.year_model),
+    year_manufacture: Number(values.year_manufacture) || new Date().getFullYear(),
+    year_model: Number(values.year_model) || new Date().getFullYear(),
     mileage: values.mileage ? Number(values.mileage) : 0,
     engine_capacity: values.engine_capacity ? Number(values.engine_capacity) : null,
-    fuel: values.fuel || null,
-    transmission: values.transmission || null,
+    fuel: typeof values.fuel === 'string' && values.fuel ? values.fuel : null,
+    transmission: typeof values.transmission === 'string' && values.transmission ? values.transmission : null,
     color: color || null,
     price: values.price ? Number(values.price) : 0,
     description: description || null,
-    ownership_type: values.ownership_type,
-    operation_type: values.operation_type,
-    status: values.status,
+    ownership_type: typeof values.ownership_type === 'string' ? values.ownership_type : 'OWNED',
+    operation_type: typeof values.operation_type === 'string' ? values.operation_type : 'SALE',
+    status: typeof values.status === 'string' ? values.status : 'AVAILABLE',
     license_plate: licensePlate || null,
     renavam: renavam || null,
     chassi: chassi ? chassi.toUpperCase() : null,
@@ -90,7 +119,7 @@ function toMotorcyclePayload(values: any): MotorcyclePayload {
 }
 
 async function resolveCategoryId(
-  supabase: any,
+  supabase: SupabaseClient<Database>,
   providedCategoryId?: string | null,
 ): Promise<string | null> {
   if (providedCategoryId && providedCategoryId.trim()) {
@@ -131,80 +160,134 @@ async function resolveCategoryId(
   return null;
 }
 
-export async function createMotorcycleAction(data: any) {
+export async function createMotorcycleAction(data: MotorcycleInputData) {
   const supabase = await createClient();
 
   const { images: _ignoredImages, location: _ignoredLocation, ...motoData } = data;
-  const payload = toMotorcyclePayload(motoData);
+  const payload = toMotorcyclePayload(motoData as MotorcycleInputData);
 
   // Garante category_id preenchido para satisfazer a restrição NOT NULL da tabela no Supabase
-  const categoryId = await resolveCategoryId(supabase, motoData.category_id);
+  const categoryId = await resolveCategoryId(
+    supabase,
+    typeof motoData.category_id === 'string' ? motoData.category_id : null,
+  );
   if (categoryId) {
     payload.category_id = categoryId;
   }
 
-  const slug = `${payload.brand}-${payload.model}-${payload.year_model}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-');
-
   const internalCode =
-    motoData.internal_code ||
+    (typeof motoData.internal_code === 'string' && motoData.internal_code.trim()) ||
     `MOTO-${Math.floor(Math.random() * 10000)
       .toString()
       .padStart(4, '0')}`;
 
-  const { data: insertedMoto, error } = await supabase
-    .from('motorcycles')
-    .insert({
-      ...payload,
-      slug,
-      internal_code: internalCode,
-    })
-    .select('id, slug')
-    .single();
+  const MAX_ATTEMPTS = 5;
+  let lastError: unknown = null;
 
-  if (error || !insertedMoto) {
-    console.error('Error creating motorcycle:', error);
-    return {
-      error:
-        'Não foi possível salvar os dados da motocicleta. Verifique os campos e tente novamente.',
-    };
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const slug = await generateUniqueMotorcycleSlug(supabase, {
+      brand: payload.brand,
+      model: payload.model,
+      version: payload.version,
+      year_model: payload.year_model,
+    });
+
+    const { data: insertedMoto, error } = await supabase
+      .from('motorcycles')
+      .insert({
+        ...payload,
+        slug,
+        internal_code: internalCode,
+      })
+      .select('id, slug')
+      .single();
+
+    if (!error && insertedMoto) {
+      revalidatePath('/admin/motos');
+      revalidatePath('/motos');
+      return { success: true, id: insertedMoto.id, slug: insertedMoto.slug };
+    }
+
+    if (isSlugConflictError(error) && attempt < MAX_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, 50 * attempt));
+      continue;
+    }
+
+    console.error(`Error creating motorcycle (attempt ${attempt}):`, error);
+    lastError = error;
+    break;
   }
 
-  revalidatePath('/admin/motos');
-  revalidatePath('/motos');
-  return { success: true, id: insertedMoto.id, slug: insertedMoto.slug };
+  const errorMessage =
+    lastError && typeof lastError === 'object' && 'message' in lastError
+      ? String((lastError as { message?: string }).message)
+      : 'Não foi possível salvar os dados da motocicleta. Verifique os campos e tente novamente.';
+
+  return {
+    error: isSlugConflictError(lastError)
+      ? 'Conflito de identificador único (slug). Por favor, tente salvar novamente.'
+      : errorMessage,
+  };
 }
 
-export async function updateMotorcycleAction(id: string, data: any) {
+export async function updateMotorcycleAction(id: string, data: MotorcycleInputData) {
   const supabase = await createClient();
 
   const { images: _ignoredImages, location: _ignoredLocation, ...motoData } = data;
-  const payload = toMotorcyclePayload(motoData);
+  const payload = toMotorcyclePayload(motoData as MotorcycleInputData);
 
   if (!payload.category_id) {
-    const categoryId = await resolveCategoryId(supabase, motoData.category_id);
+    const categoryId = await resolveCategoryId(
+      supabase,
+      typeof motoData.category_id === 'string' ? motoData.category_id : null,
+    );
     if (categoryId) {
       payload.category_id = categoryId;
     }
   }
 
-  const slug = `${payload.brand}-${payload.model}-${payload.year_model}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-');
+  const MAX_ATTEMPTS = 5;
+  let lastError: unknown = null;
+  let updatedSlug: string | null = null;
 
-  const { data: updatedMoto, error } = await supabase
-    .from('motorcycles')
-    .update({
-      ...payload,
-      slug,
-    })
-    .eq('id', id)
-    .select('id, slug')
-    .single();
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const slug = await generateUniqueMotorcycleSlug(
+      supabase,
+      {
+        brand: payload.brand,
+        model: payload.model,
+        version: payload.version,
+        year_model: payload.year_model,
+      },
+      id,
+    );
 
-  if (error) {
-    console.error('Error updating motorcycle:', error);
+    const { data: updatedMoto, error } = await supabase
+      .from('motorcycles')
+      .update({
+        ...payload,
+        slug,
+      })
+      .eq('id', id)
+      .select('id, slug')
+      .single();
+
+    if (!error && updatedMoto) {
+      updatedSlug = updatedMoto.slug;
+      break;
+    }
+
+    if (isSlugConflictError(error) && attempt < MAX_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, 50 * attempt));
+      continue;
+    }
+
+    console.error(`Error updating motorcycle (attempt ${attempt}):`, error);
+    lastError = error;
+    break;
+  }
+
+  if (lastError || !updatedSlug) {
     return {
       error:
         'Não foi possível salvar os dados da motocicleta. Verifique os campos e tente novamente.',
@@ -214,11 +297,11 @@ export async function updateMotorcycleAction(id: string, data: any) {
   revalidatePath('/admin/motos');
   revalidatePath(`/admin/motos/${id}/editar`);
   revalidatePath('/motos');
-  if (updatedMoto?.slug) {
-    revalidatePath(`/motos/${updatedMoto.slug}`);
+  if (updatedSlug) {
+    revalidatePath(`/motos/${updatedSlug}`);
   }
 
-  return { success: true, id };
+  return { success: true, id, slug: updatedSlug };
 }
 
 export async function deleteMotorcycleAction(id: string) {
