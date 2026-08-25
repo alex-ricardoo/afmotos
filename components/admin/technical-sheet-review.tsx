@@ -14,6 +14,9 @@ import {
   type MotorcycleTechnicalSheet,
 } from '@/lib/technical-sheet/schema';
 
+const TECHNICAL_SHEET_UI_TIMEOUT_MS = 150000;
+const TECHNICAL_SHEET_PDF_TIMEOUT_MS = 90000;
+
 type TechnicalSheetRecord = {
   id: string;
   motorcycle_id: string;
@@ -25,33 +28,119 @@ type TechnicalSheetRecord = {
 
 type Props = { motorcycleId: string; initialSheet: TechnicalSheetRecord | null };
 
+type PendingAction = 'generate' | 'approve' | null;
+
 export function TechnicalSheetReview({ motorcycleId, initialSheet }: Props) {
   const [sheet] = useState(initialSheet);
   const [isPending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const status = sheet?.status as keyof typeof technicalSheetStatusLabels | undefined;
-  const run = (action: () => Promise<{ error?: string }>, success: string) =>
+  const isWorking = isPending || pendingAction !== null;
+  const isGenerating = pendingAction === 'generate';
+
+  const run = (
+    action: () => Promise<{ error?: string }>,
+    success: string,
+    actionType: Exclude<PendingAction, null>,
+  ) => {
+    if (isWorking) return;
+
+    setElapsedSeconds(0);
+    setPendingAction(actionType);
     startTransition(async () => {
-      const result = await action();
-      if (result?.error) toast.error(result.error);
+      let timeoutId: number | undefined;
+      const timeoutPromise = new Promise<{ timedOut: true }>((resolve) => {
+        timeoutId = window.setTimeout(
+          () => resolve({ timedOut: true }),
+          TECHNICAL_SHEET_UI_TIMEOUT_MS,
+        );
+      });
+
+      const actionPromise = action()
+        .then((result) => ({ result }))
+        .catch((error: unknown) => ({
+          result: {
+            error:
+              error instanceof Error && error.message
+                ? error.message
+                : 'Não foi possível concluir a operação. Tente novamente.',
+          },
+        }));
+
+      const outcome = await Promise.race([actionPromise, timeoutPromise]);
+      if (timeoutId) window.clearTimeout(timeoutId);
+
+      if ('timedOut' in outcome) {
+        toast.error(
+          'A consulta demorou mais que o esperado. Atualize a página em alguns instantes ou tente novamente.',
+        );
+        setElapsedSeconds(0);
+        setPendingAction(null);
+        return;
+      }
+
+      if (outcome.result?.error) toast.error(outcome.result.error);
       else {
         toast.success(success);
         window.location.reload();
       }
+      setElapsedSeconds(0);
+      setPendingAction(null);
     });
+  };
+
+  const downloadPdf = async () => {
+    if (isDownloadingPdf) return;
+
+    setIsDownloadingPdf(true);
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), TECHNICAL_SHEET_PDF_TIMEOUT_MS);
+    try {
+      const response = await fetch(`/api/admin/motorcycles/${motorcycleId}/technical-sheet`, {
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'Não foi possível baixar o PDF agora.');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = resolvePdfFileName(response.headers.get('Content-Disposition'));
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Download do PDF iniciado.');
+    } catch (error) {
+      toast.error(
+        error instanceof Error && error.name === 'AbortError'
+          ? 'O PDF demorou mais que o esperado para gerar. Tente novamente.'
+          : error instanceof Error && error.message
+            ? error.message
+            : 'Não foi possível baixar o PDF agora.',
+      );
+    } finally {
+      window.clearTimeout(timeoutId);
+      setIsDownloadingPdf(false);
+    }
+  };
 
   useEffect(() => {
-    if (!isPending) {
-      setElapsedSeconds(0);
-      return;
-    }
+    if (!isGenerating) return;
+
     const startedAt = Date.now();
     const interval = window.setInterval(
       () => setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000)),
       1000,
     );
     return () => window.clearInterval(interval);
-  }, [isPending]);
+  }, [isGenerating]);
 
   const progressStep = elapsedSeconds < 8 ? 1 : elapsedSeconds < 30 ? 2 : 3;
 
@@ -65,14 +154,18 @@ export function TechnicalSheetReview({ motorcycleId, initialSheet }: Props) {
         <p className="mt-2 text-sm text-muted-foreground">
           A IA pesquisará automaticamente fontes técnicas oficiais para esta versão e ano.
         </p>
-        {isPending ? (
+        {isGenerating ? (
           <GenerationProgress elapsedSeconds={elapsedSeconds} step={progressStep} />
         ) : (
           <Button
             className="mt-5"
-            disabled={isPending}
+            disabled={isWorking}
             onClick={() =>
-              run(() => createTechnicalSheetAction(motorcycleId), 'Ficha criada para revisão.')
+              run(
+                () => createTechnicalSheetAction(motorcycleId),
+                'Ficha criada para revisão.',
+                'generate',
+              )
             }
           >
             <Sparkles className="mr-2 h-4 w-4" />
@@ -105,22 +198,29 @@ export function TechnicalSheetReview({ motorcycleId, initialSheet }: Props) {
                 <FileText className="mr-2 h-4 w-4" />
                 Visualizar ficha
               </Link>
-              <Link
-                className={buttonVariants()}
-                href={`/api/admin/motorcycles/${motorcycleId}/technical-sheet`}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Baixar PDF
-              </Link>
+              <Button disabled={isDownloadingPdf} onClick={downloadPdf}>
+                {isDownloadingPdf ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
+                {isDownloadingPdf ? 'Baixando PDF...' : 'Baixar PDF'}
+              </Button>
             </>
           ) : (
             <div className="flex flex-col items-end gap-2">
               <Button
-                disabled={isPending}
-                onClick={() => run(() => approveTechnicalSheetAction(sheet.id), 'Ficha aprovada.')}
+                disabled={isWorking}
+                onClick={() =>
+                  run(() => approveTechnicalSheetAction(sheet.id), 'Ficha aprovada.', 'approve')
+                }
               >
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Aprovar ficha
+                {pendingAction === 'approve' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                )}
+                {pendingAction === 'approve' ? 'Aprovando...' : 'Aprovar ficha'}
               </Button>
               <span className="text-[11px] text-muted-foreground">
                 O PDF aparece após a aprovação.
@@ -138,14 +238,18 @@ export function TechnicalSheetReview({ motorcycleId, initialSheet }: Props) {
           A IA pesquisará automaticamente fontes técnicas oficiais para esta versão e ano. Cada
           informação encontrada será acompanhada da fonte e ficará pendente de revisão.
         </p>
-        {isPending ? (
+        {isGenerating ? (
           <GenerationProgress elapsedSeconds={elapsedSeconds} step={progressStep} />
         ) : (
           <Button
             className="mt-4"
-            disabled={isPending}
+            disabled={isWorking}
             onClick={() =>
-              run(() => createTechnicalSheetAction(motorcycleId), 'Nova ficha criada para revisão.')
+              run(
+                () => createTechnicalSheetAction(motorcycleId),
+                'Nova ficha criada para revisão.',
+                'generate',
+              )
             }
           >
             <Sparkles className="mr-2 h-4 w-4" />
@@ -207,6 +311,11 @@ export function TechnicalSheetReview({ motorcycleId, initialSheet }: Props) {
       </div>
     </div>
   );
+}
+
+function resolvePdfFileName(contentDisposition: string | null) {
+  const match = contentDisposition?.match(/filename="?([^";]+)"?/i);
+  return match?.[1] || 'ficha-tecnica.pdf';
 }
 
 function ReviewSection({ title, children }: { title: string; children: React.ReactNode }) {
