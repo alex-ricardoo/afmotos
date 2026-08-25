@@ -65,7 +65,7 @@ export function WhatsAppButton({
           )}
         >
           {/* Subtle pulse ring */}
-          <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-75 animate-ping -z-10 group-hover:animate-none" />
+          <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-75 animate-[ping_2.8s_cubic-bezier(0,0,0.2,1)_infinite] -z-10 group-hover:animate-none" />
 
           <WhatsAppIcon className="w-7 h-7 fill-current" />
 

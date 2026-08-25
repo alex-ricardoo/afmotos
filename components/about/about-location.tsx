@@ -5,29 +5,42 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { LocationSettings } from '@/types/site-settings';
 
-import dynamic from 'next/dynamic';
+function GoogleMapsEmbed({
+  address,
+  latitude,
+  longitude,
+  siteName,
+}: {
+  address: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  siteName?: string;
+}) {
+  const query = latitude != null && longitude != null
+    ? `${latitude},${longitude}`
+    : address;
+  const embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed`;
 
-const LeafletMap = dynamic(() => import('./leaflet-map'), { 
-  ssr: false, 
-  loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-zinc-100 dark:bg-zinc-900">
-      <div className="flex flex-col items-center text-zinc-500">
-        <MapPin className="w-8 h-8 animate-pulse mb-2" />
-        <span className="text-sm font-medium">Carregando mapa...</span>
-      </div>
-    </div>
-  ) 
-});
+  return (
+    <iframe
+      title={`Localização de ${siteName || 'estabelecimento'}`}
+      src={embedUrl}
+      className="h-full w-full border-0"
+      loading="lazy"
+      referrerPolicy="no-referrer-when-downgrade"
+      allowFullScreen
+    />
+  );
+}
 
 interface AboutLocationProps {
   address: string;
   mapsUrl: string | null;
   locationSettings?: LocationSettings;
   siteName?: string;
-  logoUrl?: string;
 }
 
-export function AboutLocation({ address, mapsUrl, locationSettings, siteName, logoUrl }: AboutLocationProps) {
+export function AboutLocation({ address, mapsUrl, locationSettings, siteName }: AboutLocationProps) {
   if (!address && !mapsUrl) return null;
 
   const resolvedMapsUrl = mapsUrl;
@@ -75,12 +88,11 @@ export function AboutLocation({ address, mapsUrl, locationSettings, siteName, lo
           <div className="flex-1 w-full relative">
             <div className="aspect-square md:aspect-[4/3] w-full rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center relative">
               {address || (locationSettings?.latitude && locationSettings?.longitude) ? (
-                <LeafletMap 
+                <GoogleMapsEmbed
                   latitude={locationSettings?.latitude} 
                   longitude={locationSettings?.longitude}
                   address={address}
-                  storeName={siteName}
-                  logoUrl={logoUrl}
+                  siteName={siteName}
                 />
               ) : (
                 /* Fallback de mapa estático quando não houver lat/lng */

@@ -50,7 +50,7 @@ export default async function VenderMinhaMotoPage() {
           <div className="pt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs font-semibold text-zinc-300">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
               <Scale className="w-3.5 h-3.5 text-amber-400" />
-              <span>Avaliação de mercado FIPE</span>
+              <span>Avaliação de mercado baseada na FIPE</span>
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
               <Zap className="w-3.5 h-3.5 text-amber-400" />

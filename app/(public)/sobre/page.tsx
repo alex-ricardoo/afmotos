@@ -66,7 +66,6 @@ export default async function SobrePage() {
         mapsUrl={settings.mapsUrl}
         locationSettings={about.location}
         siteName={settings.siteName}
-        logoUrl={settings.logo?.src}
       />
       
       <AboutContact
