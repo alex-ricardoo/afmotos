@@ -129,7 +129,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
               <Wrench className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <h4 className="text-white font-bold text-base mb-1.5">Revisão quando Necessária</h4>
+              <h4 className="text-white font-bold text-base mb-1.5">Revisão</h4>
               <p className="text-sm text-zinc-400 leading-relaxed">
                 As motos passam por verificação prévia antes do anúncio, conforme a necessidade de cada veículo.
               </p>

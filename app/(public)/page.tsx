@@ -13,6 +13,8 @@ import {
   Tag,
   Banknote,
   Megaphone,
+  BadgeCheck,
+  ClipboardCheck,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { buttonVariants } from '@/components/ui/button';
@@ -69,8 +71,8 @@ export default async function HomePage() {
 
             {/* Direct Transparent Subtitle */}
             <p className="text-base sm:text-lg text-zinc-300 max-w-2xl mx-auto font-normal leading-relaxed">
-              Veja as motos disponíveis ou anuncie a sua com a {siteName}. Atendimento direto e
-              transparente pelo WhatsApp.
+              Veja as motos disponíveis ou anuncie a sua com a {siteName}. Todas revisadas,{' '}
+              <span className="text-amber-400 font-semibold">com garantia de 90 dias</span> e atendimento direto pelo WhatsApp.
             </p>
 
             {/* Dual CTAs */}
@@ -263,9 +265,46 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 5. Trust Pillars & Differentials Section (Honest & Transparent) */}
+      {/* 5. Trust Pillars & Differentials Section */}
       <section className="bg-[#0d0d0d] py-16 md:py-20 border-y border-[#c9a44c]/20">
         <div className="container mx-auto px-4 md:px-6">
+
+          {/* Guarantee Banner — destaque de 90 dias */}
+          <div className="relative mb-12 overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 p-6 sm:p-8">
+            <div className="absolute -right-10 -top-10 w-52 h-52 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10 flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
+              {/* Ícone grande */}
+              <div className="shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+                <BadgeCheck className="w-9 h-9 sm:w-11 sm:h-11 text-amber-400" />
+              </div>
+              {/* Texto */}
+              <div className="text-center sm:text-left space-y-1">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-amber-400">
+                  Compre com tranquilidade
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-white">
+                  Garantia de 90 dias em todas as motos
+                </h3>
+                <p className="text-sm text-zinc-400 max-w-xl">
+                  Toda moto vendida pela {siteName} passa por revisão antes de ir para o comprador
+                  e sai com <span className="text-amber-400 font-semibold">3 meses de garantia</span>{' '}
+                  no motor e câmbio.
+                </p>
+              </div>
+              {/* Badges */}
+              <div className="shrink-0 flex sm:flex-col gap-3">
+                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2">
+                  <ClipboardCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="text-xs font-bold text-amber-300 whitespace-nowrap">Revisada</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2">
+                  <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="text-xs font-bold text-amber-300 whitespace-nowrap">90 dias garantia</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-xs font-bold uppercase tracking-wider text-[#e3c56c]">
               Transparência
@@ -291,15 +330,16 @@ export default async function HomePage() {
               </p>
             </div>
 
-            {/* Pillar 2 */}
-            <div className="bg-[#151515] p-6 rounded-2xl border border-[#c9a44c]/20 shadow-xs space-y-3 hover:border-[#e3c56c]/50 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-[#c9a44c]/15 text-[#e3c56c] flex items-center justify-center font-bold">
-                <Wrench className="w-6 h-6" />
+            {/* Pillar 2 — Revisão + Garantia */}
+            <div className="bg-gradient-to-b from-amber-500/10 to-[#151515] p-6 rounded-2xl border border-amber-500/30 shadow-xs space-y-3 hover:border-amber-400/60 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold">
+                <ClipboardCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Revisão quando Necessária</h3>
+              <h3 className="text-lg font-bold text-white">Revisada e com Garantia</h3>
               <p className="text-sm text-[#a6a6a1] leading-relaxed">
-                As motos passam por verificação prévia antes do anúncio, conforme a necessidade de
-                cada veículo.
+                Toda moto é revisada antes da venda e sai com{' '}
+                <span className="text-amber-400 font-semibold">90 dias de garantia</span>.
+                Você compra sabendo o que está levando.
               </p>
             </div>
 
@@ -357,10 +397,15 @@ export default async function HomePage() {
                 Motos revisadas, com procedência garantida e documentação pronta para rodar sem dor
                 de cabeça.
               </p>
-              <ul className="space-y-2 pt-2">
+              {/* Selo de garantia */}
+              <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2.5">
+                <BadgeCheck className="w-5 h-5 text-amber-400 shrink-0" />
+                <span className="text-xs font-bold text-amber-300">Garantia de 90 dias em toda moto</span>
+              </div>
+              <ul className="space-y-2 pt-1">
                 <li className="flex items-start gap-2 text-sm text-zinc-300">
                   <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span>Motos inspecionadas e com garantia</span>
+                  <span>Toda moto é revisada antes da venda</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm text-zinc-300">
                   <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />

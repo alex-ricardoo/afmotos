@@ -6,6 +6,8 @@ import {
   ArrowLeft,
   MapPin,
   Clock,
+  BadgeCheck,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Metadata } from 'next';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
@@ -197,6 +199,24 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                 <p className="text-xs text-[#a6a6a1]">
                   Negociação direta com o vendedor. Fale pelo WhatsApp para mais informações.
                 </p>
+              </div>
+
+              {/* Selos de Garantia e Revisão */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5">
+                  <BadgeCheck className="w-5 h-5 text-amber-400 shrink-0" />
+                  <div>
+                    <span className="block text-xs font-black text-amber-300">Garantia de 90 dias</span>
+                    <span className="block text-[10px] text-zinc-400">Cobre motor e câmbio por 90 dias.</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5">
+                  <ClipboardCheck className="w-5 h-5 text-amber-400 shrink-0" />
+                  <div>
+                    <span className="block text-xs font-black text-amber-300">Moto revisada</span>
+                    <span className="block text-[10px] text-zinc-400">Verificada antes de chegar até você.</span>
+                  </div>
+                </div>
               </div>
 
               {/* Key Quick Stats */}

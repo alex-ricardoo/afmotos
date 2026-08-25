@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bike, Calendar, Gauge, Zap, ArrowUpRight, Share2, Sparkles } from 'lucide-react';
+import { Bike, Calendar, Gauge, Zap, ArrowUpRight, Share2, Sparkles, ShieldCheck } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { MotorcycleStatusBadge } from './motorcycle-status-badge';
 import { formatCurrency } from '@/lib/utils/format';
@@ -248,6 +248,13 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
 
           {/* Preço e Call To Action */}
           <div className="pt-2 mt-auto flex flex-col gap-3">
+            {/* Mini badge de garantia (apenas para motos disponíveis) */}
+            {!isSold && (
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400">
+                <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                <span>Revisada • Garantia 90 dias</span>
+              </div>
+            )}
             {/* Preço */}
             {isSold ? (
               <div className="flex items-end gap-1.5">
