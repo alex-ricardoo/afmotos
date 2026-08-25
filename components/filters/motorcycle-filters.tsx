@@ -98,6 +98,17 @@ function FilterControls({ facets, onApply }: FilterFormProps) {
   const selectedYearLabel =
     currentYear && currentYear !== 'all' ? `A partir de ${currentYear}` : 'Todos os anos';
 
+  const selectedSortLabel =
+    searchParams.get('sort') === 'price_asc'
+      ? 'Menor Preço'
+      : searchParams.get('sort') === 'price_desc'
+        ? 'Maior Preço'
+        : searchParams.get('sort') === 'year_desc'
+          ? 'Ano Mais Recente'
+          : searchParams.get('sort') === 'km_asc'
+            ? 'Menor KM'
+            : 'Mais recentes';
+
   return (
     <div className="space-y-6">
       {/* Header and Search */}
@@ -115,6 +126,52 @@ function FilterControls({ facets, onApply }: FilterFormProps) {
             Limpar tudo
           </button>
         )}
+      </div>
+
+      <div className="space-y-2 md:hidden">
+        <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+          Ordenar por
+        </Label>
+        <Select
+          value={searchParams.get('sort') || 'recent'}
+          onValueChange={(value) => updateParam('sort', value ?? '')}
+        >
+          <SelectTrigger className="w-full h-11 rounded-xl bg-zinc-900 border-zinc-800 text-sm text-white focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500/20">
+            <SelectValue>{selectedSortLabel}</SelectValue>
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-zinc-800 text-white rounded-xl shadow-xl">
+            <SelectItem
+              value="recent"
+              className="focus:bg-zinc-800 focus:text-white cursor-pointer"
+            >
+              Mais recentes
+            </SelectItem>
+            <SelectItem
+              value="price_asc"
+              className="focus:bg-zinc-800 focus:text-white cursor-pointer"
+            >
+              Menor Preço
+            </SelectItem>
+            <SelectItem
+              value="price_desc"
+              className="focus:bg-zinc-800 focus:text-white cursor-pointer"
+            >
+              Maior Preço
+            </SelectItem>
+            <SelectItem
+              value="year_desc"
+              className="focus:bg-zinc-800 focus:text-white cursor-pointer"
+            >
+              Ano Mais Recente
+            </SelectItem>
+            <SelectItem
+              value="km_asc"
+              className="focus:bg-zinc-800 focus:text-white cursor-pointer"
+            >
+              Menor KM
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <form onSubmit={handleSearchSubmit} className="space-y-2">
@@ -311,7 +368,7 @@ export function CatalogControls() {
 
   return (
     <div className="flex flex-col sm:flex-row items-center gap-3">
-      <div className="flex items-center gap-2">
+      <div className="hidden md:flex items-center gap-2">
         <span className="text-sm font-bold text-zinc-400 whitespace-nowrap">Ordenar por:</span>
         <Select value={currentSort} onValueChange={(val) => updateParam('sort', val)}>
           <SelectTrigger className="w-[180px] h-11 bg-zinc-900 border-zinc-800 text-white font-semibold focus-visible:ring-amber-500">

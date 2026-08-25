@@ -413,7 +413,7 @@ export default async function HomePage() {
               {/* Selo de garantia */}
               <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2.5">
                 <BadgeCheck className="w-5 h-5 text-amber-400 shrink-0" />
-                <span className="text-xs font-bold text-amber-300">Garantia de 90 dias em toda moto</span>
+                <span className="text-xs font-bold text-amber-300">Garantia de 90 dias</span>
               </div>
               <ul className="space-y-2 pt-1">
                 <li className="flex items-start gap-2 text-sm text-zinc-300">
@@ -423,6 +423,10 @@ export default async function HomePage() {
                 <li className="flex items-start gap-2 text-sm text-zinc-300">
                   <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                   <span>Facilidade no pagamento e financiamento</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-zinc-300">
+                  <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span>Documentação em dia, IPVA pago e pronta para transferir</span>
                 </li>
               </ul>
             </div>

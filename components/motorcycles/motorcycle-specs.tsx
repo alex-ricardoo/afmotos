@@ -41,9 +41,13 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
   const transmissionValue = motorcycle.transmission || 'Manual 6 velocidades';
 
   const defaultDifferentials = [
-    'Documentação 100% Regularizada',
-    'Revisão Preventiva em Dia',
-    'Pronta para Transferência',
+  "Documentação 100% regularizada",
+  "IPVA pago",
+  "Totalmente revisada",
+  "Óleo e filtros revisados",
+  "Pneus em ótimo estado",
+  "Motor e câmbio com garantia de 90 dias",
+  "Moto pronta para rodar",
   ];
 
   const highlights = defaultDifferentials; // Override para padronizar os 4 selos de valor
