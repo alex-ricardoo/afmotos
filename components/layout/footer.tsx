@@ -313,7 +313,7 @@ export function Footer({ settings }: { settings?: any }) {
           <p>
             © {new Date().getFullYear()} {siteName}. Todos os direitos reservados.
           </p>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 sm:gap-6 flex-wrap justify-center sm:justify-end">
             <Link
               href="/politica-de-privacidade"
               className="hover:text-amber-500 cursor-pointer transition-colors duration-200"
@@ -326,6 +326,14 @@ export function Footer({ settings }: { settings?: any }) {
             >
               Área Restrita
             </Link>
+            <a
+              href="https://instagram.com/alex._ricardo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-amber-500 cursor-pointer transition-colors duration-200"
+            >
+              Desenvolvido por alex._ricardo
+            </a>
           </div>
         </div>
       </div>
