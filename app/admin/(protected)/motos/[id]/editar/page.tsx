@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { MotorcycleForm } from '@/components/admin/motorcycle-form';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
@@ -78,6 +78,13 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
             </h1>
             <p className="text-muted-foreground mt-1">Modifique os dados do anúncio existente.</p>
           </div>
+          <Link
+            href={`/admin/motos/${id}/ficha-tecnica`}
+            className={buttonVariants({ variant: 'outline', size: 'sm' })}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Ficha técnica
+          </Link>
         </div>
       </div>
 

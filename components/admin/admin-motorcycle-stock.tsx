@@ -23,6 +23,7 @@ import {
   Receipt,
   ExternalLink,
   Sparkles,
+  FileText,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -494,6 +495,17 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                     <span>Editar</span>
                   </Link>
 
+                  <Link
+                    href={`/admin/motos/${moto.id}/ficha-tecnica`}
+                    className={cn(
+                      buttonVariants({ size: 'sm', variant: 'ghost' }),
+                      'h-10 w-10 p-0 rounded-xl border border-zinc-800 hover:bg-zinc-900 hover:text-[#e3c56c] text-zinc-400 shrink-0 cursor-pointer',
+                    )}
+                    title="Ficha técnica"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </Link>
+
                   {/* Quick Sell Action for AVAILABLE motorcycles */}
                   {moto.status === 'AVAILABLE' && (
                     <Link
@@ -564,6 +576,14 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                       >
                         <Edit className="mr-2 h-4 w-4 text-zinc-400" />
                         <span>Editar Detalhes</span>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={() => (window.location.href = `/admin/motos/${moto.id}/ficha-tecnica`)}
+                        className="cursor-pointer text-xs"
+                      >
+                        <FileText className="mr-2 h-4 w-4 text-[#e3c56c]" />
+                        <span>Ficha técnica</span>
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator className="bg-zinc-800" />
@@ -680,6 +700,16 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                         >
                           <Edit className="w-3.5 h-3.5 mr-1" />
                           Editar
+                        </Link>
+                        <Link
+                          href={`/admin/motos/${moto.id}/ficha-tecnica`}
+                          className={cn(
+                            buttonVariants({ size: 'sm', variant: 'ghost' }),
+                            'h-8 w-8 p-0 rounded-xl text-zinc-400 hover:text-[#e3c56c] border border-zinc-800 cursor-pointer',
+                          )}
+                          title="Ficha técnica"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
                         </Link>
                         <a
                           href={`/motos/${moto.slug}`}

@@ -14,12 +14,7 @@ import {
   RawPreludeData,
 } from '@/lib/fipex/types';
 import { fipexFetch } from '@/lib/fipex/client';
-import {
-  mapPrelude,
-  mapBrand,
-  mapModel,
-  mapModelDetail,
-} from '@/lib/fipex/mappers';
+import { mapPrelude, mapBrand, mapModel, mapModelDetail } from '@/lib/fipex/mappers';
 import { fipexCache, FIPEX_CACHE_TTL } from '@/lib/fipex/cache';
 
 export function useFipex() {
@@ -50,22 +45,35 @@ export function useFipex() {
     }
 
     try {
-      const rawPage1 = await fipexFetch<RawApiResponse<RawMake[]>>('/v1/makes', { type_id: typeId, limit: 50, page: 1, order_by: 'name' });
+      const rawPage1 = await fipexFetch<RawApiResponse<RawMake[]>>('/v1/makes', {
+        type_id: typeId,
+        limit: 50,
+        page: 1,
+        order_by: 'name',
+      });
       let combined = (rawPage1.data || []).map(mapBrand);
       const totalPages = rawPage1.pagination?.pages || 1;
-      
+
       if (totalPages > 1) {
         const remaining = [];
         for (let p = 2; p <= Math.min(totalPages, 5); p++) {
-          remaining.push(fipexFetch<RawApiResponse<RawMake[]>>('/v1/makes', { type_id: typeId, limit: 50, page: p, order_by: 'name' }));
+          remaining.push(
+            fipexFetch<RawApiResponse<RawMake[]>>('/v1/makes', {
+              type_id: typeId,
+              limit: 50,
+              page: p,
+              order_by: 'name',
+            }),
+          );
         }
         const results = await Promise.allSettled(remaining);
         results.forEach((r) => {
-          if (r.status === 'fulfilled' && r.value.data) combined = combined.concat(r.value.data.map(mapBrand));
+          if (r.status === 'fulfilled' && r.value.data)
+            combined = combined.concat(r.value.data.map(mapBrand));
         });
       }
-      
-      const unique = Array.from(new Map(combined.map(m => [m.id, m])).values());
+
+      const unique = Array.from(new Map(combined.map((m) => [m.id, m])).values());
       fipexCache.set(cacheKey, unique, FIPEX_CACHE_TTL.BRANDS);
       setAllBrands(unique);
     } catch (e) {
@@ -90,23 +98,45 @@ export function useFipex() {
     }
 
     try {
-      const rawPage1 = await fipexFetch<RawApiResponse<RawModel[]>>('/v1/models', { make_id: brandId, type_id: typeId, limit: 50, page: 1, order_by: 'name' });
+      console.info('[FipeUI] Buscando modelos', { brandId, typeId, limit: 50, page: 1 });
+      const rawPage1 = await fipexFetch<RawApiResponse<RawModel[]>>('/v1/models', {
+        make_id: brandId,
+        type_id: typeId,
+        limit: 50,
+        page: 1,
+        order_by: 'name',
+      });
       let combined = (rawPage1.data || []).map(mapModel);
       const totalPages = rawPage1.pagination?.pages || 1;
-      
+
       if (totalPages > 1) {
         const remaining = [];
         for (let p = 2; p <= Math.min(totalPages, 8); p++) {
-          remaining.push(fipexFetch<RawApiResponse<RawModel[]>>('/v1/models', { make_id: brandId, type_id: typeId, limit: 50, page: p, order_by: 'name' }));
+          remaining.push(
+            fipexFetch<RawApiResponse<RawModel[]>>('/v1/models', {
+              make_id: brandId,
+              type_id: typeId,
+              limit: 50,
+              page: p,
+              order_by: 'name',
+            }),
+          );
         }
         const results = await Promise.allSettled(remaining);
         results.forEach((r) => {
-          if (r.status === 'fulfilled' && r.value.data) combined = combined.concat(r.value.data.map(mapModel));
+          if (r.status === 'fulfilled' && r.value.data)
+            combined = combined.concat(r.value.data.map(mapModel));
         });
       }
-      
-      const unique = Array.from(new Map(combined.map(m => [m.id, m])).values());
+
+      const unique = Array.from(new Map(combined.map((m) => [m.id, m])).values());
       fipexCache.set(cacheKey, unique, FIPEX_CACHE_TTL.MODELS);
+      console.info('[FipeUI] Modelos recebidos', {
+        brandId,
+        typeId,
+        count: unique.length,
+        sample: unique.slice(0, 10).map((model) => model.name),
+      });
       setAllModels(unique);
     } catch (e) {
       console.error('Error fetching models', e);
@@ -124,9 +154,9 @@ export function useFipex() {
     setLoadingDetail(true);
     const cacheKey = `model:${modelId}`;
     const cached = fipexCache.get<FipeModelDetail>(cacheKey);
-    
+
     function applyYears(detail: FipeModelDetail) {
-      const opts = detail.yearFuels.map(yf => {
+      const opts = detail.yearFuels.map((yf) => {
         const isZero = yf.isZeroKm || yf.year === 0 || yf.year === null;
         return {
           value: isZero ? 'zero' : String(yf.year),
@@ -151,6 +181,7 @@ export function useFipex() {
     }
 
     try {
+      console.info('[FipeUI] Buscando detalhes do modelo', { modelId });
       const raw = await fipexFetch<RawApiResponse<RawModelDetail>>(`/v1/models/${modelId}`);
       const mapped = mapModelDetail(raw.data);
       fipexCache.set(cacheKey, mapped, FIPEX_CACHE_TTL.MODEL_DETAIL);
@@ -167,10 +198,17 @@ export function useFipex() {
     if (!modelId || !yearParam || !fuelId) return null;
     setLoadingPrice(true);
     try {
+      console.info('[FipeUI] Buscando preço expandido', { modelId, year: yearParam, fuelId });
       const raw = await fipexFetch<RawApiResponse<RawExpandedPriceData>>('/v1/prices/expanded', {
         model_id: modelId,
         year: yearParam,
         fuel_id: fuelId,
+      });
+      console.info('[FipeUI] Preço recebido', {
+        modelId,
+        year: yearParam,
+        fuelId,
+        fipeCode: raw.data.price?.fipe_code || null,
       });
       return raw.data.price;
     } catch (e) {
@@ -202,7 +240,9 @@ export function useFipex() {
       }
     }
     loadPrelude();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return {
