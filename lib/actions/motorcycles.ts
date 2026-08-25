@@ -130,8 +130,12 @@ async function resolveCategoryId(
   }
 
   try {
+    // `motorcycle_categories` ainda não está refletida no tipo gerado de Database.
+    // Usa cliente não tipado localmente para evitar `never` até atualizar os tipos.
+    const supabaseUntyped = supabase as SupabaseClient;
+
     // 1. Tenta buscar uma categoria já existente no banco de dados
-    const { data: firstCategory } = await supabase
+    const { data: firstCategory } = await supabaseUntyped
       .from('motorcycle_categories')
       .select('id')
       .limit(1)
@@ -142,7 +146,7 @@ async function resolveCategoryId(
     }
 
     // 2. Se a tabela motorcycle_categories estiver sem registros, cria uma categoria padrão "Geral"
-    const { data: newCategory, error: createCatError } = await supabase
+    const { data: newCategory, error: createCatError } = await supabaseUntyped
       .from('motorcycle_categories')
       .insert({
         name: 'Geral',
