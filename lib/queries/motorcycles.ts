@@ -283,7 +283,8 @@ export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: s
 
   let query = supabase.from('motorcycles').select(`
     *,
-    motorcycle_images (*)
+    motorcycle_images (*),
+    expenses:expenses(amount, status)
   `);
 
   if (statusFilter && statusFilter !== 'ALL') {
@@ -311,9 +312,15 @@ export async function getAdminMotorcycles(statusFilter?: string, searchQuery?: s
     const primaryImg = sortedImages.find((img) => img.is_primary) || sortedImages[0];
     const imageUrl = primaryImg ? getPublicImageUrl(supabase, primaryImg) : undefined;
 
+    const rawExpenses = (moto.expenses as any[]) || [];
+    const totalExpensesAmount = rawExpenses
+      .filter((e) => e.status !== 'CANCELLED')
+      .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
     return {
       ...moto,
       image_url: imageUrl,
+      total_expenses_amount: totalExpensesAmount,
       images: sortedImages.map((img) => ({
         id: img.id,
         url: getPublicImageUrl(supabase, img) || '',
