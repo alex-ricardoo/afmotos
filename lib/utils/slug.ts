@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+﻿import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
 /**
@@ -92,13 +92,45 @@ export function findNextAvailableSlug(baseSlug: string, existingSlugs: string[])
 }
 
 /**
+ * Tipo mínimo que descreve a resposta da query de slugs existentes.
+ * Necessário porque createServerClient do @supabase/ssr nao propaga o generic Database,
+ * fazendo com que .select('slug') retorne `never` sem um cast explícito.
+ */
+type SlugQueryResult = {
+  data: Array<{ slug: string | null }> | null;
+  error: { message: string } | null;
+};
+
+/**
+ * Executa a query que busca slugs existentes com ilike "baseSlug%".
+ * Usa `as unknown as SlugQueryResult` para contornar a inferência `never` do Supabase TS client
+ * quando o cliente nao carrega o generic Database (situação típica com @supabase/ssr).
+ */
+async function fetchExistingSlugs(
+  supabase: SupabaseClient<Database>,
+  baseSlug: string,
+  excludeId?: string,
+): Promise<SlugQueryResult> {
+  if (excludeId) {
+    return supabase
+      .from('motorcycles')
+      .select('slug')
+      .ilike('slug', `${baseSlug}%`)
+      .neq('id', excludeId) as unknown as SlugQueryResult;
+  }
+
+  return supabase
+    .from('motorcycles')
+    .select('slug')
+    .ilike('slug', `${baseSlug}%`) as unknown as SlugQueryResult;
+}
+
+/**
  * Consulta o banco de dados e gera um slug garantidamente único para uma motocicleta.
  *
- * Estratégia da query:
- * - Busca slugs exatamente iguais ao base (ex: "honda-pop-110i-2025")
- * - Busca slugs com sufixos numéricos (ex: "honda-pop-110i-2025-2", "honda-pop-110i-2025-10")
- * - Usa ilike com padrão "base-%" para cobrir todos de uma vez (PostgREST suporta % no ilike)
- * - A filtragem precisa de sufixos numéricos ocorre em memória via findNextAvailableSlug
+ * Estratégia:
+ * - ilike "baseSlug%" captura o slug exato e todos os sufixos de uma vez
+ * - Falsos positivos (sufixos nao numéricos) sao descartados em memória por findNextAvailableSlug
  */
 export async function generateUniqueMotorcycleSlug(
   supabase: SupabaseClient<Database>,
@@ -112,20 +144,7 @@ export async function generateUniqueMotorcycleSlug(
   }
 
   try {
-    // Busca slugs que comecem com "baseSlug" (captura o slug exato e todos os sufixos sequenciais).
-    // Usando .ilike() diretamente para garantir tipagem correta do Supabase TS client.
-    // Falsos positivos (ex: "honda-pop-110i-2025-especial") são descartados em memória
-    // pelo findNextAvailableSlug, que aceita apenas sufixos numéricos via regex.
-    let query = supabase
-      .from('motorcycles')
-      .select('slug')
-      .ilike('slug', `${baseSlug}%`);
-
-    if (excludeId) {
-      query = query.neq('id', excludeId);
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await fetchExistingSlugs(supabase, baseSlug, excludeId);
 
     if (error) {
       console.warn('Aviso ao consultar slugs existentes para motocicleta:', error.message);

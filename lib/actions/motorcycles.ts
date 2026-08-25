@@ -86,10 +86,12 @@ type MotorcyclePayload = {
 };
 
 function toMotorcyclePayload(values: MotorcycleInputData): MotorcyclePayload {
-  const licensePlate = typeof values.license_plate === 'string' ? values.license_plate.trim() : undefined;
+  const licensePlate =
+    typeof values.license_plate === 'string' ? values.license_plate.trim() : undefined;
   const version = typeof values.version === 'string' ? values.version.trim() : undefined;
   const color = typeof values.color === 'string' ? values.color.trim() : undefined;
-  const description = typeof values.description === 'string' ? values.description.trim() : undefined;
+  const description =
+    typeof values.description === 'string' ? values.description.trim() : undefined;
   const renavam = typeof values.renavam === 'string' ? values.renavam.trim() : undefined;
   const chassi = typeof values.chassi === 'string' ? values.chassi.trim() : undefined;
   const categoryId = typeof values.category_id === 'string' ? values.category_id.trim() : undefined;
@@ -103,7 +105,8 @@ function toMotorcyclePayload(values: MotorcycleInputData): MotorcyclePayload {
     mileage: values.mileage ? Number(values.mileage) : 0,
     engine_capacity: values.engine_capacity ? Number(values.engine_capacity) : null,
     fuel: typeof values.fuel === 'string' && values.fuel ? values.fuel : null,
-    transmission: typeof values.transmission === 'string' && values.transmission ? values.transmission : null,
+    transmission:
+      typeof values.transmission === 'string' && values.transmission ? values.transmission : null,
     color: color || null,
     price: values.price ? Number(values.price) : 0,
     description: description || null,
@@ -391,7 +394,11 @@ Cansado de andar de ônibus, pegar trânsito todo santo dia e gastar com transpo
   }
 
   const supabase = await createClient();
-  const settingsRes = await supabase.from('site_settings').select('site_name').limit(1).maybeSingle();
+  const settingsRes = await supabase
+    .from('site_settings')
+    .select('site_name')
+    .limit(1)
+    .maybeSingle();
   const siteName = settingsRes?.data?.site_name || 'nossa loja';
 
   const prompt = `Você é um vendedor amigável e direto de moto usada da loja ${siteName}.
@@ -412,7 +419,13 @@ REGRAS RÍGIDAS DE CONTEÚDO (SIGA RIGOROSAMENTE):
    - REGRA ABSOLUTA DE PROIBIÇÃO: NUNCA use a expressão "link da bio", pois o cliente já está navegando diretamente no site.
 5. FORMATO DE SAÍDA: Texto curto, em torno de 2 a 3 parágrafos bem espaçados, com emojis discretos. Retorne APENAS o texto pronto do anúncio.`;
 
-  const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+  const configuredFallbackModels = (process.env.GEMINI_FALLBACK_MODELS || '')
+    .split(',')
+    .map((model) => model.trim())
+    .filter(Boolean)
+    .filter((model) => model !== 'gemini-3.6-flash');
+
+  const models = ['gemini-3.6-flash', ...configuredFallbackModels];
   let aiDescription: string | null = null;
 
   for (const modelName of models) {
