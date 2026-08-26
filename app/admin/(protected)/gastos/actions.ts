@@ -14,6 +14,7 @@ import {
   getExpenseSummaryQuery,
   getExpenseCategoriesQuery,
   getMotorcyclesForExpenseSelectQuery,
+  getMotorcycleExpenseStatsQuery,
 } from '@/lib/expenses';
 
 interface ActionResult<T = any> {
@@ -39,6 +40,13 @@ export async function getExpenseCategoriesAction() {
 
 export async function getMotorcyclesForExpenseSelectAction() {
   return await getMotorcyclesForExpenseSelectQuery();
+}
+
+/**
+ * Action para buscar o histórico e o custo acumulado de gastos de uma moto específica
+ */
+export async function getMotorcycleExpenseStatsAction(motorcycleId: string) {
+  return await getMotorcycleExpenseStatsQuery(motorcycleId);
 }
 
 /**

@@ -24,6 +24,7 @@ import {
   ExternalLink,
   Sparkles,
   FileText,
+  Wallet,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +53,7 @@ import {
 } from '@/lib/utils/translations';
 import { formatCurrency } from '@/lib/utils/format';
 import { deleteMotorcycleAction, toggleMotorcycleStatus } from '@/lib/actions/motorcycles';
+import { MotorcycleExpensesModal } from '@/components/admin/motorcycle-expenses-modal';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -73,6 +75,7 @@ interface MotorcycleItem {
   featured?: boolean | null;
   image_url?: string;
   internal_code?: string | null;
+  total_expenses_amount?: number;
 }
 
 import { CONSTANTS } from '@/lib/utils/constants';
@@ -94,6 +97,9 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
   // Delete modal state
   const [motoToDelete, setMotoToDelete] = useState<MotorcycleItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Expenses detail modal state
+  const [motoForExpenses, setMotoForExpenses] = useState<MotorcycleItem | null>(null);
 
   // Filter local data based on status and search query
   const filteredMotos = initialData.filter((moto) => {
@@ -482,6 +488,41 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                   </div>
                 </div>
 
+                {/* Gastos Vinculados */}
+                <button
+                  type="button"
+                  onClick={() => setMotoForExpenses(moto)}
+                  className={cn(
+                    'w-full flex items-center justify-between gap-2 py-2.5 px-3.5 rounded-2xl border transition-all cursor-pointer group/expenses',
+                    moto.total_expenses_amount && moto.total_expenses_amount > 0
+                      ? 'bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/15 hover:border-amber-500/50'
+                      : 'bg-zinc-900/60 border-zinc-800/80 hover:bg-zinc-900 hover:border-[#c9a44c]/40',
+                  )}
+                  title="Ver detalhes dos gastos vinculados"
+                >
+                  <span
+                    className={cn(
+                      'flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider',
+                      moto.total_expenses_amount && moto.total_expenses_amount > 0
+                        ? 'text-amber-400'
+                        : 'text-zinc-400',
+                    )}
+                  >
+                    <Wallet className="w-3.5 h-3.5 text-[#c9a44c]" />
+                    Gastos Vinculados
+                  </span>
+                  <span
+                    className={cn(
+                      'flex items-center gap-1.5 text-sm font-black tabular-nums font-mono transition-colors',
+                      moto.total_expenses_amount && moto.total_expenses_amount > 0
+                        ? 'text-[#e3c56c]'
+                        : 'text-zinc-100 group-hover/expenses:text-[#e3c56c]',
+                    )}
+                  >
+                    {formatCurrency(moto.total_expenses_amount || 0)}
+                  </span>
+                </button>
+
                 {/* Footer Action Buttons */}
                 <div className="pt-3 border-t border-zinc-900 flex items-center gap-2">
                   <Link
@@ -613,6 +654,7 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                   <th className="py-3.5 px-4">Ano</th>
                   <th className="py-3.5 px-4">Placa</th>
                   <th className="py-3.5 px-4">Preço</th>
+                  <th className="py-3.5 px-4">Gastos</th>
                   <th className="py-3.5 px-4">Propriedade</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4 text-right">Ações</th>
@@ -664,6 +706,26 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                     {/* Price */}
                     <td className="py-3 px-4 font-black text-[#e3c56c] tabular-nums text-sm font-mono">
                       {moto.price ? formatCurrency(moto.price) : 'Sob Consulta'}
+                    </td>
+
+                    {/* Gastos Vinculados */}
+                    <td className="py-3 px-4">
+                      <button
+                        type="button"
+                        onClick={() => setMotoForExpenses(moto)}
+                        className={cn(
+                          'flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer px-2 py-1 rounded-lg border',
+                          moto.total_expenses_amount && moto.total_expenses_amount > 0
+                            ? 'bg-amber-500/10 border-amber-500/30 text-[#e3c56c] hover:bg-amber-500/15'
+                            : 'border-transparent text-zinc-300 hover:text-[#e3c56c]',
+                        )}
+                        title="Ver detalhes dos gastos vinculados"
+                      >
+                        <Wallet className="w-3.5 h-3.5 text-[#c9a44c]" />
+                        <span className="tabular-nums font-mono">
+                          {formatCurrency(moto.total_expenses_amount || 0)}
+                        </span>
+                      </button>
                     </td>
 
                     {/* Ownership */}
@@ -772,6 +834,16 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Motorcycle Expenses Detail Modal */}
+      <MotorcycleExpensesModal
+        isOpen={!!motoForExpenses}
+        onClose={() => setMotoForExpenses(null)}
+        motorcycleId={motoForExpenses?.id || null}
+        motorcycleLabel={
+          motoForExpenses ? `${motoForExpenses.brand} ${motoForExpenses.model}` : ''
+        }
+      />
     </div>
   );
 }
