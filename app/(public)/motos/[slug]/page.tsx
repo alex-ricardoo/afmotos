@@ -309,7 +309,7 @@ export default async function MotorcycleDetailPage({ params }: Props) {
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 p-4 pb-safe flex items-center justify-between gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
         <div className="flex flex-col">
           <span className="text-[10px] uppercase font-bold text-[#a6a6a1] block leading-none">
-            Valor a partir de
+            Valor de
           </span>
           <span className="text-xl font-black text-[#e3c56c] tabular-nums mt-0.5">
             {moto.price ? formatCurrency(moto.price) : 'Consulte'}

@@ -391,6 +391,7 @@ Cansado de andar de ônibus, pegar trânsito todo santo dia e gastar com transpo
 💳 FACILIDADES DE PAGAMENTO:
 • Aceitamos sua moto usada na troca com avaliação justa!
 • Aceitamos cartão de crédito, dinheiro e PIX.
+• Trabalhamos com financiamento sujeito à análise e aprovação.
 
 ⚡ Essa joia não vai durar muito em nosso estoque! Mande uma mensagem agora mesmo no nosso WhatsApp e venha conferir de perto!`;
 
@@ -416,7 +417,8 @@ REGRAS RÍGIDAS DE CONTEÚDO (SIGA RIGOROSAMENTE):
 3. FORMAS DE PAGAMENTO REAIS DA LOJA:
    - Aceitamos moto na troca.
    - Aceitamos cartão de crédito, dinheiro e PIX.
-   - REGRA ABSOLUTA DE PROIBIÇÃO: NUNCA mencione "financiamento" e NUNCA mencione "consórcio" ou "carta contemplada" (a loja não trabalha com financiamento/consórcio).
+  - Trabalhamos com financiamento sujeito à análise e aprovação.
+  - NUNCA mencione "consórcio" ou "carta contemplada".
 4. ENCERRAMENTO E URGÊNCIA:
    - Inclua obrigatoriamente a frase de gatilho: "Essa joia não vai durar muito em nosso estoque!"
    - Convide o cliente de forma simples a enviar mensagem no WhatsApp da ${siteName} ou vir na loja conferir.
@@ -475,6 +477,7 @@ Cansado de andar de ônibus, pegar trânsito todo santo dia e gastar com transpo
 💳 FACILIDADES DE PAGAMENTO:
 • Aceitamos sua moto usada na troca com avaliação justa!
 • Aceitamos cartão de crédito, dinheiro e PIX.
+• Trabalhamos com financiamento sujeito à análise e aprovação.
 
 ⚡ Essa joia não vai durar muito em nosso estoque! Mande uma mensagem agora mesmo no nosso WhatsApp e venha conferir de perto!`;
 

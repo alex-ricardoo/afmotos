@@ -134,15 +134,37 @@ export default async function HomePage() {
         />
 
         {/* Payment Methods Strip */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 py-4 px-5 rounded-2xl bg-zinc-900/60 border border-zinc-800/80">
-          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider shrink-0">
-            💳 Aceitamos:
-          </span>
-          <PaymentMethods variant="compact" />
-          <span className="hidden sm:block text-zinc-700 text-xs">•</span>
-          <span className="text-[10px] text-zinc-500">
-            Cartão em até <span className="font-bold text-amber-400">18x</span> com acréscimo da maquineta
-          </span>
+        <div className="mt-8 rounded-2xl border border-amber-500/20 bg-gradient-to-br from-zinc-900/90 via-zinc-900/70 to-amber-950/20 px-5 py-5 sm:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-400/25 bg-amber-400/10 text-lg">
+                💳
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-300">
+                  Facilidades para comprar
+                </p>
+                <p className="mt-0.5 text-xs text-zinc-500">Escolha a melhor forma para você</p>
+              </div>
+            </div>
+            <PaymentMethods variant="compact" className="justify-center lg:justify-end" />
+          </div>
+          <div className="mt-4 flex flex-col gap-2 border-t border-white/5 pt-4 text-[10px] text-zinc-400 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center lg:justify-end">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+              Cartão em até <span className="font-bold text-amber-300">18x</span> com acréscimo da maquineta
+            </span>
+            <span className="hidden text-zinc-700 sm:inline">•</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+              Financiamento sujeito à análise e aprovação
+            </span>
+            <span className="hidden text-zinc-700 sm:inline">•</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Aceitamos sua moto como entrada mediante avaliação
+            </span>
+          </div>
         </div>
 
         <div className="mt-6 flex justify-center sm:hidden">
@@ -422,7 +444,13 @@ export default async function HomePage() {
                 </li>
                 <li className="flex items-start gap-2 text-sm text-zinc-300">
                   <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span>Facilidade no pagamento e financiamento</span>
+                  <span>
+                    Financiamento para facilitar sua compra, sujeito à análise e aprovação
+                  </span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-zinc-300">
+                  <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <span>Aceitamos sua moto como entrada mediante avaliação</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm text-zinc-300">
                   <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
