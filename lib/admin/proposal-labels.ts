@@ -32,7 +32,7 @@ export const contextualStatusLabels: Record<ProposalType, Record<ProposalStatus,
     NEW: 'Nova proposta de venda',
     CONTACTED: 'Em negociação',
     QUALIFIED: 'Oferta enviada / Avaliação',
-    CONVERTED: 'Moto comprada pela loja',
+    CONVERTED: 'Concluído',
     LOST: 'Oferta recusada',
     CLOSED: 'Encerrado',
   },
@@ -40,7 +40,7 @@ export const contextualStatusLabels: Record<ProposalType, Record<ProposalStatus,
     NEW: 'Solicitação de anúncio',
     CONTACTED: 'Em triagem / Análise',
     QUALIFIED: 'Anúncio aprovado e ativo',
-    CONVERTED: 'Moto vendida (Consignada)',
+    CONVERTED: 'Venda concluída pelo anúncio',
     LOST: 'Anúncio cancelado',
     CLOSED: 'Encerrado',
   },
@@ -81,6 +81,10 @@ export const contextualStatusLabels: Record<ProposalType, Record<ProposalStatus,
 export function getProposalStatusLabel(status: string, type?: string): string {
   const normalizedStatus = (status || 'NEW').toUpperCase() as ProposalStatus;
   const normalizedType = (type || 'GENERAL_CONTACT').toUpperCase() as ProposalType;
+
+  if (normalizedStatus === 'CONVERTED' && normalizedType === 'SELL_MOTORCYCLE') {
+    return 'Concluído';
+  }
 
   if (contextualStatusLabels[normalizedType]?.[normalizedStatus]) {
     return contextualStatusLabels[normalizedType][normalizedStatus];

@@ -71,6 +71,12 @@ export const sellRequestSchema = z.object({
 
   state: z.literal('PE').default('PE'),
 
+  postal_code: z.string().regex(/^\d{8}$/, 'Informe um CEP válido.').optional().nullable(),
+  address_street: z.string().trim().max(150).optional().nullable(),
+  address_number: z.string().trim().max(20).optional().nullable(),
+  address_neighborhood: z.string().trim().max(100).optional().nullable(),
+  address_complement: z.string().trim().max(100).optional().nullable(),
+
   city: z
     .string()
     .trim()

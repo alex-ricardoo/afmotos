@@ -54,6 +54,7 @@ export interface RentalRequest {
 
 export interface SellRequest {
   id: string;
+  request_kind?: 'ANNOUNCEMENT' | 'DIRECT_SALE' | string;
   lead_id?: string | null;
   name: string;
   phone: string;
@@ -68,6 +69,11 @@ export interface SellRequest {
   mileage?: number | null;
   desired_price?: number | null;
   state?: string | null;
+  postal_code?: string | null;
+  address_street?: string | null;
+  address_number?: string | null;
+  address_neighborhood?: string | null;
+  address_complement?: string | null;
   city?: string | null;
   notes?: string | null;
   status: string;

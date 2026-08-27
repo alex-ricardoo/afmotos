@@ -122,6 +122,7 @@ export function VendaMotoForm({ siteName }: { siteName?: string }) {
       const values = form.getValues();
       const payload: SellRequestPayload = {
         ...values,
+        request_kind: 'DIRECT_SALE',
         images: uploadedImages,
       };
 

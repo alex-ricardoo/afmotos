@@ -194,7 +194,7 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
       case 'CONSIGNMENT':
         return {
           icon: KeyRound,
-          label: 'Anunciar / Consignar',
+          label: 'Anunciar',
           className: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
         };
       case 'RENTAL':

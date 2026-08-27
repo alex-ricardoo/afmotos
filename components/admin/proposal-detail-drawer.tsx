@@ -20,6 +20,10 @@ import {
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   ProposalViewModel,
   getStockRegistrationUrlFromProposal,
@@ -57,7 +61,14 @@ import {
   Sparkles,
   Eye,
   User,
+  Phone,
   PlusCircle,
+  Calculator,
+  Percent,
+  CircleDollarSign,
+  FileSignature,
+  ExternalLink,
+  Download,
 } from 'lucide-react';
 
 import { toast } from 'sonner';
@@ -92,6 +103,223 @@ interface ProposalDetailProps {
   typeBadgeClass?: string;
   onStatusChange?: (proposal: ProposalViewModel, newStatus: string) => Promise<void> | void;
   siteName?: string;
+}
+
+function AgreementCommissionForm({ proposal }: { proposal: ProposalViewModel }) {
+  const defaultValue = proposal.motorcycle?.desiredPrice ?? proposal.motorcycle?.fipePrice ?? 0;
+  const [commissionPercentage, setCommissionPercentage] = useState(5);
+  const [expectedSaleValue, setExpectedSaleValue] = useState(defaultValue);
+  const [cpf, setCpf] = useState('');
+  const [rg, setRg] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [agreementUrl, setAgreementUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const commissionValue = expectedSaleValue * (commissionPercentage / 100);
+  const formattedCpf = cpf.replace(/\D/g, '');
+  const isValid = Number.isFinite(expectedSaleValue) && expectedSaleValue > 0 && commissionPercentage >= 0 && commissionPercentage <= 100 && formattedCpf.length === 11 && rg.trim().length >= 2;
+
+  const handleCpfChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    setCpf(
+      digits
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2'),
+    );
+  };
+
+  const handleRgChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 10);
+    const masked = digits
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d{1,2})$/, '$1.$2.$3-$4');
+    setRg(masked);
+  };
+
+  const handleGenerate = async () => {
+    if (!isValid) {
+      setError('Informe CPF, RG e valores válidos para gerar o contrato.');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const response = await fetch('/api/agreements/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sell_request_id: proposal.sourceId,
+          owner_cpf: formattedCpf,
+          owner_rg: rg.trim(),
+          commission_percentage: Number(commissionPercentage),
+          expected_sale_value: Number(expectedSaleValue),
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.error || 'Não foi possível gerar o acordo.');
+      }
+
+      setAgreementUrl(payload.pdf_url || null);
+      setSuccessMessage('Acordo gerado com sucesso.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Não foi possível gerar o acordo.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <Card className="overflow-hidden border-emerald-500/20 bg-zinc-950/60 shadow-none">
+      <CardHeader className="border-b border-emerald-500/10 bg-emerald-500/[0.03] pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm text-emerald-300">
+          <Calculator className="size-4" />
+          Calculadora de comissão
+        </CardTitle>
+        <CardDescription className="text-xs text-zinc-400">
+          Defina os valores do anúncio antes de gerar o contrato.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 pt-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="owner-cpf" className="flex items-center gap-1.5 text-xs">
+              <User className="size-3.5 text-emerald-400" />
+              CPF do proprietário da moto
+            </Label>
+            <Input
+              id="owner-cpf"
+              inputMode="numeric"
+              placeholder="000.000.000-00"
+              value={cpf}
+              onChange={(event) => handleCpfChange(event.target.value)}
+              className="h-9"
+              aria-describedby="owner-cpf-help"
+            />
+            <p id="owner-cpf-help" className="text-[11px] text-zinc-500">
+              Necessário para identificar o responsável no contrato.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="owner-rg" className="flex items-center gap-1.5 text-xs">
+              <FileSignature className="size-3.5 text-emerald-400" />
+              RG do proprietário
+            </Label>
+            <Input id="owner-rg" placeholder="00.000.000-0" inputMode="numeric" maxLength={13} value={rg} onChange={(event) => handleRgChange(event.target.value)} className="h-9" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="commission-percentage" className="flex items-center gap-1.5 text-xs">
+              <Percent className="size-3.5 text-amber-400" />
+              Comissão combinada
+            </Label>
+            <div className="relative">
+              <Input
+                id="commission-percentage"
+                type="number"
+                min={0}
+                max={100}
+                step={0.1}
+                value={commissionPercentage}
+                onChange={(event) => {
+                  const normalized = event.target.value.replace(/^0+(?=\d)/, '');
+                  setCommissionPercentage(Number(normalized || 0));
+                }}
+                className="pr-9"
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-zinc-500">%</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="expected-sale-value" className="flex items-center gap-1.5 text-xs">
+              <CircleDollarSign className="size-3.5 text-emerald-400" />
+              Valor esperado de venda
+            </Label>
+            <div className="relative">
+              <Input
+                id="expected-sale-value"
+                type="number"
+                min={0}
+                step={0.01}
+                value={expectedSaleValue}
+                onChange={(event) => setExpectedSaleValue(Number(event.target.value || 0))}
+                className="pr-10"
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-zinc-500">R$</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
+          <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <Calculator className="size-3" />
+            Resumo automático
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-lg bg-zinc-950/60 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500">Percentual</div>
+              <div className="mt-1 text-lg font-black text-white">{commissionPercentage.toFixed(1)}%</div>
+            </div>
+            <div className="rounded-lg bg-amber-500/10 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-amber-400/70">Comissão em reais</div>
+              <div className="mt-1 text-lg font-black text-amber-300">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(commissionValue)}
+              </div>
+            </div>
+            <div className="rounded-lg bg-emerald-500/10 p-3">
+              <div className="text-[10px] uppercase tracking-wider text-emerald-400/70">Valor do anúncio</div>
+              <div className="mt-1 text-lg font-black text-emerald-300">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(expectedSaleValue)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            type="button"
+            onClick={handleGenerate}
+            disabled={!isValid || isGenerating}
+            className="h-9 flex-1 gap-2 bg-amber-500 font-bold text-zinc-950 hover:bg-amber-400"
+          >
+            <FileSignature className="size-4" />
+            {isGenerating ? 'Gerando contrato...' : 'Gerar contrato'}
+          </Button>
+          {agreementUrl && (
+            <>
+              <a href={agreementUrl} target="_blank" rel="noreferrer" aria-label="Visualizar contrato" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+                <ExternalLink className="size-3.5" />
+                Visualizar
+              </a>
+              <a href={agreementUrl} download aria-label="Baixar contrato" className={buttonVariants({ variant: 'default', size: 'sm' })}>
+                <Download className="size-3.5" />
+                Baixar PDF
+              </a>
+            </>
+          )}
+        </div>
+
+        {error && (
+          <Alert className="border-red-500/30 bg-red-500/5 text-red-200">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {successMessage && (
+          <Alert className="border-emerald-500/30 bg-emerald-500/5 text-emerald-200">
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export function ProposalDetail({
@@ -189,7 +417,7 @@ export function ProposalDetail({
       case 'CONSIGNMENT':
         return {
           icon: KeyRound,
-          label: 'Anunciar / Consignar',
+          label: 'Anunciar',
           className: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
         };
       case 'RENTAL':
@@ -209,6 +437,10 @@ export function ProposalDetail({
 
   const typeInfo = getTypeBadge(proposal.type);
   const TypeIcon = typeInfo.icon;
+  const isConsignmentApproved =
+    proposal.source === 'sell_request' &&
+    proposal.type === 'CONSIGNMENT' &&
+    proposal.status === 'QUALIFIED';
 
   const currentStatusInfo = statusConfig[proposal.status] || statusConfig.NEW;
 
@@ -578,7 +810,10 @@ export function ProposalDetail({
                 )}
 
                 {/* Simulador de Oferta da Loja (FIPE) para o Lojista */}
-                {proposal.status !== 'CONVERTED' && fipePrice != null && fipePrice > 0 && (
+                {proposal.type === 'SELL_MOTORCYCLE' &&
+                  proposal.status !== 'CONVERTED' &&
+                  fipePrice != null &&
+                  fipePrice > 0 && (
                   <div className="sm:col-span-2 bg-gradient-to-br from-amber-500/15 via-zinc-900 to-zinc-950 p-4 rounded-2xl border border-amber-500/40 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -650,6 +885,22 @@ export function ProposalDetail({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {isConsignmentApproved && (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4.5 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between pb-2.5 border-b border-emerald-500/30">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Contrato de anúncio
+                </h4>
+                <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5">
+                  Anúncio aprovado
+                </Badge>
+              </div>
+
+              <AgreementCommissionForm proposal={proposal} />
             </div>
           )}
 

@@ -55,6 +55,7 @@ export interface SellRequestImageItem {
 }
 
 export interface SellRequestPayload {
+  request_kind?: 'ANNOUNCEMENT' | 'DIRECT_SALE';
   name: string;
   phone: string;
   email?: string | null;
@@ -78,6 +79,11 @@ export interface SellRequestPayload {
   fipe_reference_period?: string | null;
   fipe_snapshot?: Record<string, unknown> | null;
   state?: string;
+  postal_code?: string | null;
+  address_street?: string | null;
+  address_number?: string | null;
+  address_neighborhood?: string | null;
+  address_complement?: string | null;
   city: string;
   notes?: string | null;
   images?: SellRequestImageItem[];
@@ -205,6 +211,8 @@ async function queryFipeInBackground(payload: SellRequestPayload) {
 
 export async function createSellRequestAction(data: SellRequestPayload) {
   const supabase = await createClient();
+  const requestKind = data.request_kind || 'DIRECT_SALE';
+  const isAnnouncement = requestKind === 'ANNOUNCEMENT';
 
   // Limite rígido de no máximo 5 imagens
   const imagesToSave = (data.images || []).slice(0, 5);
@@ -234,6 +242,7 @@ export async function createSellRequestAction(data: SellRequestPayload) {
 
   // 1. Gravar em public.sell_requests
   const sellRequestInsertPayload = {
+    request_kind: requestKind,
     name: data.name.trim(),
     phone: data.phone.replace(/\D/g, ''),
     email: data.email ? data.email.trim() : null,
@@ -249,6 +258,11 @@ export async function createSellRequestAction(data: SellRequestPayload) {
     estimated_offer: calculatedEstimatedOffer,
     status: 'NEW',
     state: 'PE',
+    postal_code: data.postal_code?.replace(/\D/g, '') || null,
+    address_street: data.address_street?.trim() || null,
+    address_number: data.address_number?.trim() || null,
+    address_neighborhood: data.address_neighborhood?.trim() || null,
+    address_complement: data.address_complement?.trim() || null,
     city: data.city.trim(),
     notes: data.notes ? data.notes.trim() : null,
     motorcycle_data: {
@@ -322,16 +336,17 @@ export async function createSellRequestAction(data: SellRequestPayload) {
 
   // 3. Gravar em leads para visibilidade comercial centralizada
   const leadPayload = {
-    type: 'SELL_MOTORCYCLE',
+    type: isAnnouncement ? 'CONSIGNMENT' : 'SELL_MOTORCYCLE',
     source: 'WEBSITE',
     name: data.name.trim(),
     phone: data.phone.replace(/\D/g, ''),
     email: data.email ? data.email.trim() : null,
     message:
       data.notes?.trim() ||
-      `Proposta de venda direta da moto ${data.brand} ${data.model} (${data.year_manufacture}/${data.year_model}) enviada pelo site.`,
+      `${isAnnouncement ? 'Solicitação de anúncio' : 'Proposta de venda direta'} da moto ${data.brand} ${data.model} (${data.year_manufacture}/${data.year_model}) enviada pelo site.`,
     metadata: {
       sell_request_id: sellRequestId || null,
+      request_kind: requestKind,
       brand: data.brand,
       model: data.model,
       year_manufacture: data.year_manufacture,
