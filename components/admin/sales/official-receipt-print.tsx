@@ -18,6 +18,7 @@ import {
 import { Printer, ArrowLeft, Download, CheckCircle2, Clock, Pencil } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { getSiteLogo } from '@/lib/site-settings';
+import { formatCnpj } from '@/lib/utils/cnpj';
 
 interface OfficialReceiptPrintProps {
   sale: SaleWithDetails;
@@ -35,7 +36,7 @@ export function OfficialReceiptPrint({
   const moto = sale.motorcycle;
   const storeName = siteSettings?.site_name || CONSTANTS.STORE_NAME;
   const logoInfo = getSiteLogo(siteSettings as any);
-  /* CNPJ da loja (em breve): const cnpj = '58.490.871/0001-30'; */
+  const cnpj = formatCnpj(siteSettings?.cnpj);
   const address = siteSettings?.address || CONSTANTS.STORE_ADDRESS;
   const rawPhone = siteSettings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
   const phone = formatPhone(rawPhone);
@@ -164,7 +165,7 @@ export function OfficialReceiptPrint({
                   {storeName}
                 </h1>
                 <div className="text-[11px] sm:text-xs text-slate-600 flex flex-col sm:flex-row sm:flex-wrap sm:gap-x-3 gap-y-0.5">
-                  {/* CNPJ em breve: <span><strong>CNPJ:</strong> {cnpj}</span> */}
+                  {cnpj && <span><strong>CNPJ:</strong> {cnpj}</span>}
                   <span><strong>Endereço:</strong> {address}</span>
                   <span><strong>WhatsApp:</strong> {phone}</span>
                   {email && <span><strong>E-mail:</strong> {email}</span>}
@@ -267,9 +268,10 @@ export function OfficialReceiptPrint({
                   Vendedora (Loja)
                 </span>
                 <p><strong>Loja:</strong> {storeName}</p>
-                {/* <p><strong>CNPJ:</strong> {cnpj}</p> */}
+                {cnpj && <p><strong>CNPJ:</strong> {cnpj}</p>}
+                <p><strong>Telefone / WhatsApp:</strong> {phone}</p>
+                {email && <p><strong>E-mail:</strong> {email}</p>}
                 <p><strong>Endereço:</strong> {address}</p>
-                <p><strong>Contato:</strong> {phone} • {email}</p>
               </div>
 
               {/* Comprador */}
@@ -446,6 +448,7 @@ export function OfficialReceiptPrint({
               <div className="border-b border-slate-400 pb-1 mb-1 h-7 sm:h-9 flex items-end justify-center" />
               <p className="text-xs font-bold text-slate-900">{storeName}</p>
               <p className="text-[10px] text-slate-500">Representante Legal</p>
+              {cnpj && <p className="text-[10px] text-slate-500">CNPJ: {cnpj}</p>}
             </div>
 
             <div>

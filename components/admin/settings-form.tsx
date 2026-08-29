@@ -35,11 +35,13 @@ import { ContentTab } from './settings/content-tab';
 import { SeoTab } from './settings/seo-tab';
 import { AboutTab } from './settings/about-tab';
 import { aboutSettingsSchema } from '@/lib/settings/schema';
+import { isValidCnpj, normalizeCnpj, formatCnpj } from '@/lib/utils/cnpj';
 
 const settingsSchema = z.object({
   id: z.string().optional(),
   site_name: z.string().min(2, 'Nome da loja é obrigatório'),
   whatsapp_phone: z.string().min(10, 'WhatsApp é obrigatório'),
+  cnpj: z.string().refine((value) => !value || isValidCnpj(value), 'Informe um CNPJ válido ou deixe o campo em branco.'),
   contact_email: z.string().email('E-mail inválido').optional().or(z.literal('')),
   address: z.string().optional().nullable(),
   settings: z.object({
@@ -138,6 +140,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
     id: initialData?.id || undefined,
     site_name: initialData?.site_name || CONSTANTS.STORE_NAME,
     whatsapp_phone: initialData?.whatsapp_phone || '',
+    cnpj: formatCnpj(initialData?.cnpj),
     contact_email: initialData?.contact_email || '',
     address: initialData?.address || '',
     settings: {
@@ -259,6 +262,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
         id: data.id,
         site_name: data.site_name,
         whatsapp_phone: data.whatsapp_phone,
+        cnpj: normalizeCnpj(data.cnpj),
         contact_email: data.contact_email || null,
         address: computedAddress || null,
         settings: {

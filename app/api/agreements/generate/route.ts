@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getSiteLogo } from '@/lib/site-settings';
 import { SiteSettingsRecord } from '@/types/site-settings';
+import { formatCnpj } from '@/lib/utils/cnpj';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,6 +145,7 @@ export async function POST(request: NextRequest) {
     const address = settings?.address || 'Endereço a confirmar';
     const phone = settings?.whatsapp_phone || '(81) 0000-0000';
     const email = settings?.contact_email || null;
+    const cnpj = formatCnpj(settings?.cnpj);
     const logoDataUri = await getCurrentLogoDataUri(settings, requestId);
     const sellerName = sellRequest.name || 'Proprietário';
     const sellerAddress = [
@@ -165,6 +167,7 @@ export async function POST(request: NextRequest) {
         address,
         phone,
         email,
+        cnpj,
         sellerName,
         sellerDocument: owner_cpf,
         sellerRg: owner_rg,

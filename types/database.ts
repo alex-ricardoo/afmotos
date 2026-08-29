@@ -182,6 +182,7 @@ export interface SiteSettings {
   id: string;
   site_name: string;
   whatsapp_phone: string;
+  cnpj?: string | null;
   contact_email?: string | null;
   address?: string | null;
   settings?: Json;
@@ -551,6 +552,7 @@ export interface Database {
           id?: string;
           site_name?: string;
           whatsapp_phone?: string;
+          cnpj?: string | null;
           contact_email?: string | null;
           address?: string | null;
           settings?: Json;
@@ -561,6 +563,7 @@ export interface Database {
           id?: string;
           site_name?: string;
           whatsapp_phone?: string;
+          cnpj?: string | null;
           contact_email?: string | null;
           address?: string | null;
           settings?: Json;

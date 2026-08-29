@@ -2,6 +2,7 @@ import React from 'react';
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import type { MotorcycleTechnicalSheet } from '@/lib/technical-sheet/schema';
 import type { SiteSettings } from '@/types/database';
+import { formatCnpj } from '@/lib/utils/cnpj';
 
 const styles = StyleSheet.create({
   page: {
@@ -167,7 +168,10 @@ export function TechnicalSheetPDF({ sheet, settings, logoSrc }: Props) {
   } = sheet;
   const storeName = settings?.site_name || 'AF Motos';
   const phone = settings?.whatsapp_phone || '';
-  const contact = [phone, settings?.address].filter(Boolean).join(' | ');
+  const cnpj = formatCnpj(settings?.cnpj);
+  const contact = [phone, cnpj ? `CNPJ: ${cnpj}` : null, settings?.address]
+    .filter(Boolean)
+    .join(' | ');
   const boolValue = (value: boolean | null) => (value === null ? null : value ? 'Sim' : 'Não');
   const technicalVersionAvailable = Boolean(
     identity.version && identity.yearManufacture && identity.yearModel,

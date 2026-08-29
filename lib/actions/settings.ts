@@ -23,6 +23,7 @@ export interface SaveSettingsPayload {
   id?: string;
   site_name: string;
   whatsapp_phone: string;
+  cnpj?: string | null;
   contact_email?: string | null;
   address?: string | null;
   settings: SiteSettingsData;
@@ -31,7 +32,7 @@ export interface SaveSettingsPayload {
 export async function saveSettingsAction(payload: SaveSettingsPayload) {
   const supabase = await createClient();
 
-  const { id, site_name, whatsapp_phone, contact_email, address, settings } = payload;
+  const { id, site_name, whatsapp_phone, cnpj, contact_email, address, settings } = payload;
 
   if (settings.about) {
     // Auto-generate SEO
@@ -53,6 +54,7 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
   const dbPayload = {
     site_name,
     whatsapp_phone,
+    cnpj: cnpj || null,
     contact_email: contact_email || null,
     address: address || null,
     settings: settings || {},

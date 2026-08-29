@@ -8,6 +8,7 @@ export interface AgreementPdfInput {
   address: string;
   phone: string;
   email?: string | null;
+  cnpj?: string;
   sellerName: string;
   sellerDocument?: string | null;
   sellerRg: string;
@@ -89,6 +90,7 @@ export function AgreementSalePDF({
   address,
   phone,
   email,
+  cnpj,
   sellerName,
   sellerDocument,
   sellerRg,
@@ -129,6 +131,7 @@ export function AgreementSalePDF({
               <Text style={styles.storeName}>{storeName}</Text>
               <Text style={styles.smallText}>Endereço: {address}</Text>
               <Text style={styles.smallText}>WhatsApp: {phone}{email ? ` • E-mail: ${email}` : ''}</Text>
+              {cnpj ? <Text style={styles.smallText}>CNPJ: {cnpj}</Text> : null}
             </View>
           </View>
 
@@ -142,9 +145,14 @@ export function AgreementSalePDF({
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>1. Dados do proprietário e do veículo</Text>
+            <Text style={styles.sectionTitle}>1. Identificação das partes e do veículo</Text>
           </View>
           <View style={styles.summaryGrid}>
+            <View style={{ ...styles.infoCard, width: '66%' }}>
+              <Text style={styles.label}>Loja / Representante Legal</Text>
+              <Text style={styles.value}>{storeName}</Text>
+              {cnpj ? <Text style={styles.smallText}>CNPJ: {cnpj}</Text> : null}
+            </View>
             <View style={styles.infoCard}>
               <Text style={styles.label}>Proprietário da moto</Text>
               <Text style={styles.value}>{sellerName}</Text>
@@ -234,6 +242,7 @@ export function AgreementSalePDF({
             <View style={styles.signatureLine} />
             <Text style={styles.signatureName}>{storeName.toUpperCase()}</Text>
             <Text style={styles.signatureRole}>AF Motos • Representante Legal</Text>
+            {cnpj ? <Text style={styles.signatureRole}>CNPJ: {cnpj}</Text> : null}
           </View>
 
           <View style={styles.signatureBox}>

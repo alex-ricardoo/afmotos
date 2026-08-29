@@ -3,6 +3,7 @@ import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/render
 import { SaleWithDetails } from '@/lib/queries/sales';
 import { SiteSettings } from '@/types/database';
 import { formatPhone, formatCpf, formatRenavam, formatChassi } from '@/lib/utils/formatters';
+import { formatCnpj } from '@/lib/utils/cnpj';
 
 const styles = StyleSheet.create({
   page: {
@@ -270,7 +271,7 @@ import { CONSTANTS } from '@/lib/utils/constants';
 
 export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps) {
   const storeName = settings?.site_name || CONSTANTS.STORE_NAME;
-  /* const cnpj = '58.490.871/0001-30'; */
+  const cnpj = formatCnpj(settings?.cnpj);
   const phone = formatPhone(settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE);
   const email = settings?.contact_email || CONSTANTS.CONTACT_EMAIL;
   const address = settings?.address || CONSTANTS.STORE_ADDRESS;
@@ -310,6 +311,7 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
               <Text style={styles.storeContact}>
                 WhatsApp: {phone} {email ? `• E-mail: ${email}` : ''}
               </Text>
+              {cnpj ? <Text style={styles.storeContact}>CNPJ: {cnpj}</Text> : null}
               <Text style={styles.storeContact}>{address}</Text>
             </View>
           </View>
@@ -386,9 +388,10 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
             <View style={[styles.col6, styles.card]}>
               <Text style={[styles.fieldLabel, { color: '#b45309' }]}>Vendedora (Loja)</Text>
               <Text style={styles.fieldValueBold}>{storeName}</Text>
-              {/* <Text style={{ fontSize: 6.5, color: '#475569' }}>CNPJ: {cnpj}</Text> */}
-              <Text style={{ fontSize: 6.5, color: '#475569' }}>Endereço: {address}</Text>
+              {cnpj ? <Text style={{ fontSize: 6.5, color: '#475569' }}>CNPJ: {cnpj}</Text> : null}
               <Text style={{ fontSize: 6.5, color: '#475569' }}>Tel/WhatsApp: {phone}</Text>
+              {email ? <Text style={{ fontSize: 6.5, color: '#475569' }}>E-mail: {email}</Text> : null}
+              <Text style={{ fontSize: 6.5, color: '#475569' }}>Endereço: {address}</Text>
             </View>
 
             {/* Comprador */}
@@ -493,6 +496,7 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
             <View style={styles.signatureLine} />
             <Text style={styles.signatureName}>{storeName.toUpperCase()}</Text>
             <Text style={styles.signatureRole}>Representante Legal</Text>
+            {cnpj ? <Text style={styles.signatureRole}>CNPJ: {cnpj}</Text> : null}
           </View>
 
           <View style={styles.signatureBox}>

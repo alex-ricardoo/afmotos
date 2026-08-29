@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { uploadSiteBrandingAction } from '@/lib/actions/settings';
 import { compressImage } from '@/lib/utils/image-compression';
+import { maskCnpj } from '@/lib/utils/cnpj';
 
 interface IdentityTabProps {
   form: UseFormReturn<any>;
@@ -316,6 +317,30 @@ export function IdentityTab({ form }: IdentityTabProps) {
                   className="bg-zinc-950 border-zinc-800 text-zinc-100 h-11 rounded-xl focus:border-amber-500"
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="cnpj"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-zinc-300 font-medium text-xs sm:text-sm">CNPJ (opcional)</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  onChange={(event) => field.onChange(maskCnpj(event.target.value))}
+                  placeholder="00.000.000/0000-00"
+                  inputMode="numeric"
+                  className="bg-zinc-950 border-zinc-800 text-zinc-100 h-11 rounded-xl focus:border-amber-500"
+                />
+              </FormControl>
+              <FormDescription className="text-[11px] text-zinc-500">
+                Se informado, será usado automaticamente em rodapés, contratos, recibos e demais documentos institucionais da AF Motos.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

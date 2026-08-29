@@ -21,6 +21,7 @@ import {
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink, formatPhoneForDisplay } from '@/lib/utils/whatsapp';
 import { getSiteLogo, getSocialLinks, getBusinessHours, getMapsUrl } from '@/lib/site-settings';
+import { formatCnpj } from '@/lib/utils/cnpj';
 
 export function Footer({ settings }: { settings?: any }) {
   const contactPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
@@ -32,6 +33,7 @@ export function Footer({ settings }: { settings?: any }) {
     'Compra e venda de motos com atendimento direto e transparente pelo WhatsApp.';
   const contactEmail = settings?.contact_email || CONSTANTS.CONTACT_EMAIL;
   const addressText = settings?.address || CONSTANTS.STORE_ADDRESS;
+  const cnpj = formatCnpj(settings?.cnpj);
 
   const logoInfo = getSiteLogo(settings);
   const socialLinks = getSocialLinks(settings);
@@ -265,6 +267,12 @@ export function Footer({ settings }: { settings?: any }) {
                     <Mail className="w-4 h-4 text-[#c9a44c] shrink-0" />
                     <span>{contactEmail}</span>
                   </a>
+                </li>
+              )}
+              {cnpj && (
+                <li className="flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-[#c9a44c] shrink-0" />
+                  <span>CNPJ: {cnpj}</span>
                 </li>
               )}
               {/* Endereço clicável com link para Google Maps */}

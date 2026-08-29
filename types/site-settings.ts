@@ -134,6 +134,7 @@ export interface SiteSettingsRecord {
   id: string;
   site_name: string;
   whatsapp_phone: string;
+  cnpj?: string | null;
   contact_email: string | null;
   address: string | null;
   settings: SiteSettingsData | null;
