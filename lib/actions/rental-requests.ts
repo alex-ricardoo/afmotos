@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { findOrCreateCustomer } from '@/lib/domain/customer-dedup';
 
 const rentalRequestSchema = z.object({
   name: z.string().min(2, 'Nome é obrigatório'),
@@ -23,9 +24,28 @@ export async function createRentalRequestAction(data: RentalRequestValues) {
 
     const supabase = await createClient();
 
+    // 0. Vincular ou criar cliente central
+    let customerId: string | null = null;
+    try {
+      const custRes = await findOrCreateCustomer(
+        supabase,
+        {
+          full_name: validatedData.name,
+          phone: validatedData.phone,
+        },
+        'rental_registration',
+      );
+      if (custRes.customer) {
+        customerId = custRes.customer.id;
+      }
+    } catch (custErr) {
+      console.warn('Aviso: falha ao vincular cliente na locação:', custErr);
+    }
+
     const { data: result, error } = await supabase
       .from('rental_requests')
       .insert({
+        customer_id: customerId,
         name: validatedData.name,
         phone: validatedData.phone,
         age: validatedData.age,

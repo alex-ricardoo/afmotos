@@ -12,6 +12,7 @@ import {
   mapLeadToProposal,
   mapRentalRequestToProposal,
 } from '../admin/proposal-view-model';
+import { findOrCreateCustomer } from '@/lib/domain/customer-dedup';
 
 export interface CreateLeadPayload {
   type:
@@ -31,8 +32,28 @@ export interface CreateLeadPayload {
 export async function createLeadAction(data: CreateLeadPayload) {
   const supabase = await createClient();
 
+  // 1. Vincular ou criar cliente central
+  let customerId: string | null = null;
+  try {
+    const custRes = await findOrCreateCustomer(
+      supabase,
+      {
+        full_name: data.name,
+        phone: data.phone,
+        email: data.email || null,
+      },
+      'website_contact',
+    );
+    if (custRes.customer) {
+      customerId = custRes.customer.id;
+    }
+  } catch (custErr) {
+    console.warn('Aviso: falha ao vincular cliente no lead:', custErr);
+  }
+
   const payload = {
     ...data,
+    customer_id: customerId,
     source: (data as { source?: string }).source || 'WEBSITE',
     message: data.message || 'Contato enviado pelo site',
   };
@@ -240,8 +261,35 @@ export async function createSellRequestAction(data: SellRequestPayload) {
     calculatedEstimatedOffer = Number(((effectiveFipePrice * clampedPercentage) / 100).toFixed(2));
   }
 
+  // 0. Resolução/Criação do Cliente Central (CRM)
+  let customerId: string | null = null;
+  try {
+    const custRes = await findOrCreateCustomer(
+      supabase,
+      {
+        full_name: data.name,
+        phone: data.phone,
+        email: data.email || null,
+        cep: data.postal_code || null,
+        street: data.address_street || null,
+        number: data.address_number || null,
+        neighborhood: data.address_neighborhood || null,
+        complement: data.address_complement || null,
+        city: data.city || null,
+        state: 'PE',
+      },
+      isAnnouncement ? 'website_consignment_request' : 'website_sell_request',
+    );
+    if (custRes.customer) {
+      customerId = custRes.customer.id;
+    }
+  } catch (custErr) {
+    console.warn('Aviso: falha ao vincular cliente no sell_request:', custErr);
+  }
+
   // 1. Gravar em public.sell_requests
   const sellRequestInsertPayload = {
+    customer_id: customerId,
     request_kind: requestKind,
     name: data.name.trim(),
     phone: data.phone.replace(/\D/g, ''),
@@ -336,6 +384,7 @@ export async function createSellRequestAction(data: SellRequestPayload) {
 
   // 3. Gravar em leads para visibilidade comercial centralizada
   const leadPayload = {
+    customer_id: customerId,
     type: isAnnouncement ? 'CONSIGNMENT' : 'SELL_MOTORCYCLE',
     source: 'WEBSITE',
     name: data.name.trim(),

@@ -51,6 +51,10 @@ export const saleSchema = z.object({
   buyer_city: z.string().min(1, 'Cidade é obrigatória'),
   buyer_state: z.string().min(2, 'UF é obrigatória'),
 
+  // Vínculo Central de Cliente (CRM)
+  customer_id: z.string().uuid().optional().nullable(),
+  update_customer_profile: z.boolean().optional().default(false),
+
   // Termos e Observações
   legal_terms_accepted: z.boolean().default(true),
   receipt_number: z.string().optional().nullable(),

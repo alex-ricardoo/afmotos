@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Search,
@@ -68,6 +68,11 @@ interface Props {
 export function AdminPropostasContacts({ initialData, siteName }: Props) {
   const storeName = siteName || CONSTANTS.STORE_NAME;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const proposalIdParam = searchParams.get('id') || searchParams.get('proposalId');
+  const sellRequestIdParam = searchParams.get('sellRequestId');
+  const searchParam = searchParams.get('search');
+
   const [proposals, setProposals] = useState<ProposalViewModel[]>(initialData);
   const [prevInitialData, setPrevInitialData] = useState<ProposalViewModel[]>(initialData);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -82,6 +87,26 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
     setPrevInitialData(initialData);
     setProposals(initialData);
   }
+
+  // Auto-select proposal from URL query parameters (id, sellRequestId, etc.)
+  useEffect(() => {
+    if (proposalIdParam || sellRequestIdParam) {
+      const match = proposals.find(
+        (p) =>
+          p.id === proposalIdParam ||
+          p.sourceId === proposalIdParam ||
+          p.sourceId === sellRequestIdParam ||
+          (p.metadata as any)?.sell_request_id === sellRequestIdParam ||
+          (p.metadata as any)?.sellRequestId === sellRequestIdParam ||
+          (p.metadata as any)?.lead_id === proposalIdParam,
+      );
+      if (match) {
+        setSelectedProposal(match);
+      }
+    } else if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, [proposalIdParam, sellRequestIdParam, searchParam, proposals]);
 
   // Filter local data
   const filteredProposals = proposals.filter((item) => {

@@ -20,6 +20,10 @@ import {
   Printer,
   ChevronDown,
   ChevronUp,
+  RotateCcw,
+  Edit,
+  AlertTriangle,
+  Check,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -54,6 +58,11 @@ import {
   formatCurrency,
   cleanNumeric,
 } from '@/lib/utils/formatters';
+import { CustomerSearchCombobox } from '@/components/admin/customers/customer-search-combobox';
+import { CustomerQuickCreateDialog } from '@/components/admin/customers/customer-quick-create-dialog';
+import { CustomerStatusBadge } from '@/components/admin/customers/customer-status-badge';
+import { Customer } from '@/types/customer';
+import { cn } from '@/lib/utils';
 
 interface AvailableMotorcycle {
   id: string;
@@ -127,6 +136,12 @@ export function SaleForm({
   const [loadingCep, setLoadingCep] = useState(false);
   const [showManualFiscal, setShowManualFiscal] = useState(false);
   const [successSale, setSuccessSale] = useState<{ id: string; receiptNumber: string } | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [buyerMode, setBuyerMode] = useState<'existing' | 'manual'>(
+    initialSale && !initialSale.customer_id ? 'manual' : 'existing'
+  );
+  const [showAllBuyerFields, setShowAllBuyerFields] = useState(false);
 
   const isEditing = !!initialSale;
   const todayStr = new Date().toISOString().split('T')[0];
@@ -136,6 +151,8 @@ export function SaleForm({
   const form = useForm<SaleFormValues>({
     resolver: zodResolver(saleSchema) as any,
     defaultValues: {
+      customer_id: (initialSale as any)?.customer_id || null,
+      update_customer_profile: false,
       motorcycle_id: motoId,
       renavam: initialSale?.renavam || defaultMotorcycle?.renavam || '',
       chassi: initialSale?.chassi || defaultMotorcycle?.chassi || '',
@@ -166,6 +183,56 @@ export function SaleForm({
       notes: initialSale?.notes || '',
     },
   });
+
+  const handleSelectCustomer = (cust: Customer | null) => {
+    setSelectedCustomer(cust);
+    if (cust) {
+      form.setValue('customer_id', cust.id, { shouldValidate: true });
+      form.setValue('buyer_name', cust.full_name, { shouldValidate: true });
+      form.setValue('buyer_phone', formatPhone(cust.phone), { shouldValidate: true });
+      if (cust.email) form.setValue('buyer_email', cust.email, { shouldValidate: true });
+      if (cust.cpf) form.setValue('buyer_document', formatCpf(cust.cpf), { shouldValidate: true });
+      if (cust.cep) form.setValue('buyer_cep', formatCep(cust.cep), { shouldValidate: true });
+      if (cust.street) form.setValue('buyer_street', cust.street, { shouldValidate: true });
+      if (cust.number) form.setValue('buyer_number', cust.number, { shouldValidate: true });
+      if (cust.complement) form.setValue('buyer_complement', cust.complement, { shouldValidate: true });
+      if (cust.neighborhood) form.setValue('buyer_neighborhood', cust.neighborhood, { shouldValidate: true });
+      if (cust.city) form.setValue('buyer_city', cust.city, { shouldValidate: true });
+      if (cust.state) form.setValue('buyer_state', cust.state, { shouldValidate: true });
+      toast.success(`Cliente ${cust.full_name} vinculado com sucesso!`);
+    } else {
+      form.setValue('customer_id', null, { shouldValidate: true });
+    }
+  };
+
+  const handleClearCustomer = () => {
+    setSelectedCustomer(null);
+    form.setValue('customer_id', null);
+    form.setValue('buyer_name', '');
+    form.setValue('buyer_phone', '');
+    form.setValue('buyer_email', '');
+    form.setValue('buyer_document', '');
+    form.setValue('buyer_cep', '');
+    form.setValue('buyer_street', '');
+    form.setValue('buyer_number', '');
+    form.setValue('buyer_complement', '');
+    form.setValue('buyer_neighborhood', '');
+    form.setValue('buyer_city', '');
+    form.setValue('buyer_state', 'PE');
+    setShowAllBuyerFields(false);
+  };
+
+  const isCpfMissing = !selectedCustomer?.cpf || cleanNumeric(selectedCustomer.cpf).length !== 11;
+  const isPhoneMissing = !selectedCustomer?.phone || cleanNumeric(selectedCustomer.phone).length < 8;
+  const isAddressMissing =
+    !selectedCustomer?.cep ||
+    !selectedCustomer?.street ||
+    !selectedCustomer?.number ||
+    !selectedCustomer?.neighborhood ||
+    !selectedCustomer?.city ||
+    !selectedCustomer?.state;
+
+  const hasMissingFields = Boolean(selectedCustomer && (isCpfMissing || isAddressMissing || isPhoneMissing));
 
   const selectedMotoId = form.watch('motorcycle_id');
   const selectedMoto = motorcycles.find((m) => m.id === selectedMotoId) || defaultMotorcycle;
@@ -386,27 +453,44 @@ export function SaleForm({
                     </FormLabel>
                     <Select onValueChange={handleMotorcycleChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
-                          <SelectValue placeholder="Selecione a moto disponível..." />
+                        <SelectTrigger className="w-full bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                          <SelectValue placeholder="Selecione a moto disponível...">
+                            {selectedMoto ? (
+                              <div className="flex items-center justify-between w-full gap-3 truncate pr-2">
+                                <span className="font-semibold text-white truncate">
+                                  {selectedMoto.brand} {selectedMoto.model} ({selectedMoto.year_manufacture}/{selectedMoto.year_model})
+                                </span>
+                                <span className="text-emerald-400 font-bold font-mono text-xs sm:text-sm shrink-0">
+                                  {formatCurrency(selectedMoto.price)}
+                                </span>
+                              </div>
+                            ) : (
+                              'Selecione a moto disponível...'
+                            )}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-72">
+                      <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-72 w-(--anchor-width) min-w-[340px] sm:min-w-[560px]">
                         {motorcycles.map((m) => (
-                          <SelectItem key={m.id} value={m.id} className="py-2.5 cursor-pointer">
-                            <span className="font-semibold text-white">
-                              {m.brand} {m.model} {m.version || ''}
-                            </span>{' '}
-                            <span className="text-slate-400 text-xs">
-                              ({m.year_manufacture}/{m.year_model})
-                            </span>{' '}
-                            {m.license_plate && (
-                              <span className="bg-slate-800 px-1.5 py-0.5 rounded text-[11px] text-amber-400 font-mono ml-1">
-                                {m.license_plate}
+                          <SelectItem key={m.id} value={m.id} className="py-2.5 px-3 cursor-pointer">
+                            <div className="flex items-center justify-between w-full gap-3">
+                              <div className="flex items-center gap-2 truncate">
+                                <span className="font-bold text-white">
+                                  {m.brand} {m.model} {m.version || ''}
+                                </span>
+                                <span className="text-slate-400 text-xs shrink-0">
+                                  ({m.year_manufacture}/{m.year_model})
+                                </span>
+                                {m.license_plate && (
+                                  <span className="bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-amber-400 font-mono shrink-0">
+                                    {m.license_plate}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-emerald-400 font-bold font-mono text-xs sm:text-sm shrink-0 pl-2">
+                                {formatCurrency(m.price)}
                               </span>
-                            )}{' '}
-                            <span className="text-emerald-400 font-medium ml-2">
-                              {formatCurrency(m.price)}
-                            </span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -559,259 +643,684 @@ export function SaleForm({
 
         {/* 2. DADOS DO COMPRADOR & ENDEREÇO */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
-          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
-              2
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
-                <User className="w-5 h-5 text-amber-500" />
-                Dados do Comprador & Endereço Completo
-              </h2>
-              <p className="text-xs text-slate-400">
-                Informações cadastrais para identificação no recibo e termo de transferência.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {/* Nome do Comprador */}
-            <FormField
-              control={form.control}
-              name="buyer_name"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel className="text-slate-300 font-medium">
-                    Nome Completo do Comprador <span className="text-rose-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value || ''}
-                      placeholder="Ex: Alex Ricardo da Silva"
-                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* CPF */}
-            <FormField
-              control={form.control}
-              name="buyer_document"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-slate-300 font-medium">
-                    CPF do Comprador <span className="text-rose-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value || ''}
-                      maxLength={14}
-                      onChange={(e) => field.onChange(formatCpf(e.target.value))}
-                      placeholder="000.000.000-00"
-                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Telefone / WhatsApp */}
-            <FormField
-              control={form.control}
-              name="buyer_phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-slate-300 font-medium flex items-center gap-1">
-                    <Phone className="w-3.5 h-3.5 text-amber-500" />
-                    Telefone / WhatsApp <span className="text-rose-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value || ''}
-                      onChange={(e) => field.onChange(formatPhone(e.target.value))}
-                      placeholder="(11) 98765-4321"
-                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Sub-seção de Endereço */}
-            <div className="md:col-span-2 pt-2 border-t border-slate-800/80">
-              <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-amber-500" />
-                Endereço de Faturamento & Residência
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3.5 sm:gap-4">
-                {/* CEP */}
-                <FormField
-                  control={form.control}
-                  name="buyer_cep"
-                  render={({ field }) => (
-                    <FormItem className="sm:col-span-2 md:col-span-2">
-                      <FormLabel className="text-slate-300 text-xs font-medium flex items-center justify-between">
-                        <span>CEP <span className="text-rose-500">*</span></span>
-                        {loadingCep && <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value || ''}
-                          onChange={(e) => handleCepLookup(e.target.value)}
-                          placeholder="00000-000"
-                          maxLength={9}
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl font-mono focus:border-amber-500"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Logradouro */}
-                <FormField
-                  control={form.control}
-                  name="buyer_street"
-                  render={({ field }) => (
-                    <FormItem className="sm:col-span-2 md:col-span-4">
-                      <FormLabel className="text-slate-300 text-xs font-medium">
-                        Rua / Logradouro <span className="text-rose-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value || ''}
-                          placeholder="Ex: Av. Principal, Rua das Flores"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Número */}
-                <FormField
-                  control={form.control}
-                  name="buyer_number"
-                  render={({ field }) => (
-                    <FormItem className="sm:col-span-1 md:col-span-2">
-                      <FormLabel className="text-slate-300 text-xs font-medium">
-                        Número <span className="text-rose-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value || ''}
-                          placeholder="Ex: 120 ou S/N"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Complemento */}
-                <FormField
-                  control={form.control}
-                  name="buyer_complement"
-                  render={({ field }) => (
-                    <FormItem className="sm:col-span-1 md:col-span-4">
-                      <FormLabel className="text-slate-300 text-xs font-medium">Complemento (Opcional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value || ''}
-                          placeholder="Apto, Casa 2, Bloco B"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Bairro */}
-                <FormField
-                  control={form.control}
-                  name="buyer_neighborhood"
-                  render={({ field }) => (
-                    <FormItem className="sm:col-span-1 md:col-span-2">
-                      <FormLabel className="text-slate-300 text-xs font-medium">
-                        Bairro <span className="text-rose-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value || ''}
-                          placeholder="Ex: Centro"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Cidade */}
-                <FormField
-                  control={form.control}
-                  name="buyer_city"
-                  render={({ field }) => (
-                    <FormItem className="sm:col-span-1 md:col-span-3">
-                      <FormLabel className="text-slate-300 text-xs font-medium">
-                        Cidade <span className="text-rose-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value || ''}
-                          placeholder="Ex: São Paulo"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* UF */}
-                <FormField
-                  control={form.control}
-                  name="buyer_state"
-                  render={({ field }) => (
-                    <FormItem className="sm:col-span-1 md:col-span-1">
-                      <FormLabel className="text-slate-300 text-xs font-medium">
-                        UF <span className="text-rose-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value || ''}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase().slice(0, 2))}
-                          placeholder="PE"
-                          maxLength={2}
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl uppercase font-mono text-center focus:border-amber-500"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
+                2
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+                  <User className="w-5 h-5 text-amber-500" />
+                  Comprador / Cliente da Loja
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Selecione um cliente da carteira ou preencha os dados do comprador.
+                </p>
               </div>
             </div>
+
+            {/* Seletor de Modo (Carteira vs Manual) */}
+            <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setBuyerMode('existing')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
+                  buyerMode === 'existing'
+                    ? 'bg-[#c9a44c] text-zinc-950 shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                )}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Cliente da Carteira</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBuyerMode('manual');
+                  setShowAllBuyerFields(true);
+                }}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
+                  buyerMode === 'manual'
+                    ? 'bg-[#c9a44c] text-zinc-950 shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                )}
+              >
+                <Edit className="w-3.5 h-3.5" />
+                <span>Digitação Manual</span>
+              </button>
+            </div>
           </div>
+
+          {/* MODO 1: CLIENTE DA CARTEIRA */}
+          {buyerMode === 'existing' && (
+            <div className="space-y-4">
+              {!selectedCustomer ? (
+                /* Busca de Cliente */
+                <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Buscar na Carteira de Clientes (CRM)
+                    </span>
+                    <span className="text-[11px] text-slate-400">Preenchimento automático</span>
+                  </div>
+
+                  <CustomerSearchCombobox
+                    selectedCustomer={selectedCustomer}
+                    onSelectCustomer={handleSelectCustomer}
+                    onOpenQuickCreate={() => setQuickCreateOpen(true)}
+                  />
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-900 text-xs text-slate-400">
+                    <p>Digite o nome, telefone ou CPF do comprador cadastrado.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBuyerMode('manual');
+                        setShowAllBuyerFields(true);
+                      }}
+                      className="text-[#e3c56c] hover:underline font-medium text-left cursor-pointer"
+                    >
+                      Ou preencher dados manualmente como comprador avulso →
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Card do Cliente Selecionado */
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-slate-950 via-[#0d0d12] to-slate-950 border border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-[#e3c56c] font-black text-sm shrink-0">
+                          {selectedCustomer.full_name
+                            .split(' ')
+                            .filter(Boolean)
+                            .slice(0, 2)
+                            .map((n) => n[0])
+                            .join('')
+                            .toUpperCase() || 'CL'}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-base text-white">
+                              {selectedCustomer.full_name}
+                            </h3>
+                            <CustomerStatusBadge isActive={selectedCustomer.is_active} />
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-0.5">
+                            <span className="font-mono">{formatPhone(selectedCustomer.phone)}</span>
+                            {selectedCustomer.email && (
+                              <>
+                                <span>•</span>
+                                <span className="truncate max-w-[200px]">{selectedCustomer.email}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleClearCustomer}
+                          className="h-8 text-xs border-slate-800 text-slate-300 hover:text-white bg-slate-900 cursor-pointer"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5 mr-1 text-amber-400" />
+                          Trocar Cliente
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setShowAllBuyerFields(!showAllBuyerFields)}
+                          className="h-8 text-xs text-slate-400 hover:text-white cursor-pointer"
+                        >
+                          <Edit className="w-3.5 h-3.5 mr-1" />
+                          {showAllBuyerFields ? 'Ocultar Campos' : 'Editar Dados'}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Status dos Dados para o Recibo */}
+                    {!hasMissingFields && !showAllBuyerFields ? (
+                      <div className="bg-emerald-950/30 border border-emerald-800/40 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2 text-emerald-300">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>
+                            <strong>Cadastro Completo:</strong> CPF ({formatCpf(selectedCustomer.cpf || '')}) e endereço ({selectedCustomer.city}/{selectedCustomer.state}) prontos para emissão do recibo.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowAllBuyerFields(true)}
+                          className="text-emerald-400 hover:underline font-medium shrink-0 cursor-pointer"
+                        >
+                          Ajustar nesta venda
+                        </button>
+                      </div>
+                    ) : hasMissingFields && !showAllBuyerFields ? (
+                      <div className="bg-amber-950/40 border border-amber-800/50 rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-amber-200">
+                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>
+                          <strong>Informações Faltantes:</strong> Complete apenas os campos pendentes abaixo para emissão do recibo. O cadastro na carteira será atualizado automaticamente ao finalizar.
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Form com campos faltantes OU todos os campos se showAllBuyerFields */}
+                  {(hasMissingFields || showAllBuyerFields) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 bg-slate-950/40 p-4 sm:p-5 rounded-2xl border border-slate-800/80 animate-in fade-in duration-200">
+                      {/* Se o usuário clicou em editar todos, ou se o nome/telefone estava faltando */}
+                      {showAllBuyerFields && (
+                        <>
+                          <FormField
+                            control={form.control}
+                            name="buyer_name"
+                            render={({ field }) => (
+                              <FormItem className="md:col-span-2">
+                                <FormLabel className="text-slate-300 font-medium">Nome Completo</FormLabel>
+                                <FormControl>
+                                  <Input {...field} value={field.value || ''} className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="buyer_phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-300 font-medium">Telefone / WhatsApp</FormLabel>
+                                <FormControl>
+                                  <Input {...field} value={field.value || ''} onChange={(e) => field.onChange(formatPhone(e.target.value))} className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="buyer_email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-300 font-medium">E-mail</FormLabel>
+                                <FormControl>
+                                  <Input {...field} value={field.value || ''} className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
+
+                      {/* CPF: Renderiza se estiver faltando OU se showAllBuyerFields */}
+                      {(isCpfMissing || showAllBuyerFields) && (
+                        <FormField
+                          control={form.control}
+                          name="buyer_document"
+                          render={({ field }) => (
+                            <FormItem className={!showAllBuyerFields ? 'md:col-span-2' : ''}>
+                              <FormLabel className="text-slate-300 font-medium flex items-center justify-between">
+                                <span>CPF do Comprador <span className="text-rose-500">*</span></span>
+                                {isCpfMissing && (
+                                  <span className="text-[11px] text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                                    Pendente no cadastro
+                                  </span>
+                                )}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value || ''}
+                                  maxLength={14}
+                                  onChange={(e) => field.onChange(formatCpf(e.target.value))}
+                                  placeholder="000.000.000-00"
+                                  className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                                />
+                              </FormControl>
+                              <FormDescription className="text-[11px] text-slate-500">
+                                Obrigatório para emissão do recibo e termo de transferência.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {/* Endereço: Renderiza se estiver faltando OU se showAllBuyerFields */}
+                      {(isAddressMissing || showAllBuyerFields) && (
+                        <div className="md:col-span-2 pt-2 border-t border-slate-800/80 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-amber-500" />
+                              Endereço de Faturamento & Residência
+                            </h3>
+                            {isAddressMissing && (
+                              <span className="text-[11px] text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                                Endereço pendente
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3.5 sm:gap-4">
+                            {/* CEP */}
+                            <FormField
+                              control={form.control}
+                              name="buyer_cep"
+                              render={({ field }) => (
+                                <FormItem className="sm:col-span-2 md:col-span-2">
+                                  <FormLabel className="text-slate-300 text-xs font-medium flex items-center justify-between">
+                                    <span>CEP <span className="text-rose-500">*</span></span>
+                                    {loadingCep && <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />}
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      value={field.value || ''}
+                                      onChange={(e) => handleCepLookup(e.target.value)}
+                                      placeholder="00000-000"
+                                      maxLength={9}
+                                      className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl font-mono focus:border-amber-500"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {/* Rua */}
+                            <FormField
+                              control={form.control}
+                              name="buyer_street"
+                              render={({ field }) => (
+                                <FormItem className="sm:col-span-2 md:col-span-4">
+                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                    Rua / Logradouro <span className="text-rose-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ''} placeholder="Ex: Av. Principal, Rua das Flores" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {/* Número */}
+                            <FormField
+                              control={form.control}
+                              name="buyer_number"
+                              render={({ field }) => (
+                                <FormItem className="sm:col-span-1 md:col-span-2">
+                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                    Número <span className="text-rose-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ''} placeholder="Ex: 120 ou S/N" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {/* Complemento */}
+                            <FormField
+                              control={form.control}
+                              name="buyer_complement"
+                              render={({ field }) => (
+                                <FormItem className="sm:col-span-1 md:col-span-4">
+                                  <FormLabel className="text-slate-300 text-xs font-medium">Complemento</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ''} placeholder="Apto, Casa 2, Bloco B" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {/* Bairro */}
+                            <FormField
+                              control={form.control}
+                              name="buyer_neighborhood"
+                              render={({ field }) => (
+                                <FormItem className="sm:col-span-1 md:col-span-2">
+                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                    Bairro <span className="text-rose-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ''} placeholder="Ex: Centro" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {/* Cidade */}
+                            <FormField
+                              control={form.control}
+                              name="buyer_city"
+                              render={({ field }) => (
+                                <FormItem className="sm:col-span-1 md:col-span-3">
+                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                    Cidade <span className="text-rose-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ''} placeholder="Ex: Recife" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {/* UF */}
+                            <FormField
+                              control={form.control}
+                              name="buyer_state"
+                              render={({ field }) => (
+                                <FormItem className="sm:col-span-1 md:col-span-1">
+                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                    UF <span className="text-rose-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      value={field.value || 'PE'}
+                                      onChange={(e) => field.onChange(e.target.value.toUpperCase().slice(0, 2))}
+                                      placeholder="PE"
+                                      maxLength={2}
+                                      className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl uppercase font-mono text-center focus:border-amber-500"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MODO 2: PREENCHIMENTO MANUAL COMPLETO */}
+          {buyerMode === 'manual' && (
+            <div className="space-y-4">
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Edit className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Preencha os dados do comprador avulso. Ao salvar a venda, ele será adicionado à sua carteira de clientes.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBuyerMode('existing')}
+                  className="text-[#e3c56c] hover:underline font-semibold cursor-pointer shrink-0"
+                >
+                  🔍 Buscar cliente na carteira
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {/* Nome do Comprador */}
+                <FormField
+                  control={form.control}
+                  name="buyer_name"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-slate-300 font-medium">
+                        Nome Completo do Comprador <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          placeholder="Digite o nome completo do cliente"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* CPF */}
+                <FormField
+                  control={form.control}
+                  name="buyer_document"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-300 font-medium">
+                        CPF do Comprador <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          maxLength={14}
+                          onChange={(e) => field.onChange(formatCpf(e.target.value))}
+                          placeholder="000.000.000-00"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Telefone / WhatsApp */}
+                <FormField
+                  control={form.control}
+                  name="buyer_phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-slate-300 font-medium flex items-center gap-1">
+                        <Phone className="w-3.5 h-3.5 text-amber-500" />
+                        Telefone / WhatsApp <span className="text-rose-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          onChange={(e) => field.onChange(formatPhone(e.target.value))}
+                          placeholder="(81) 98765-4321"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* E-mail (Opcional) */}
+                <FormField
+                  control={form.control}
+                  name="buyer_email"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-slate-300 font-medium">E-mail (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          {...field}
+                          value={field.value || ''}
+                          placeholder="comprador@email.com"
+                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Endereço Completo */}
+                <div className="md:col-span-2 pt-2 border-t border-slate-800/80">
+                  <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-amber-500" />
+                    Endereço de Faturamento & Residência
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3.5 sm:gap-4">
+                    <FormField
+                      control={form.control}
+                      name="buyer_cep"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-2 md:col-span-2">
+                          <FormLabel className="text-slate-300 text-xs font-medium flex items-center justify-between">
+                            <span>CEP <span className="text-rose-500">*</span></span>
+                            {loadingCep && <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || ''}
+                              onChange={(e) => handleCepLookup(e.target.value)}
+                              placeholder="00000-000"
+                              maxLength={9}
+                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl font-mono focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="buyer_street"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-2 md:col-span-4">
+                          <FormLabel className="text-slate-300 text-xs font-medium">
+                            Rua / Logradouro <span className="text-rose-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || ''}
+                              placeholder="Ex: Av. Principal"
+                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="buyer_number"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-1 md:col-span-2">
+                          <FormLabel className="text-slate-300 text-xs font-medium">
+                            Número <span className="text-rose-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || ''}
+                              placeholder="Ex: 120 ou S/N"
+                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="buyer_complement"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-1 md:col-span-4">
+                          <FormLabel className="text-slate-300 text-xs font-medium">Complemento</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || ''}
+                              placeholder="Apto, Casa 2, Bloco B"
+                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="buyer_neighborhood"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-1 md:col-span-2">
+                          <FormLabel className="text-slate-300 text-xs font-medium">
+                            Bairro <span className="text-rose-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || ''}
+                              placeholder="Ex: Centro"
+                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="buyer_city"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-1 md:col-span-3">
+                          <FormLabel className="text-slate-300 text-xs font-medium">
+                            Cidade <span className="text-rose-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || ''}
+                              placeholder="Ex: Recife"
+                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="buyer_state"
+                      render={({ field }) => (
+                        <FormItem className="sm:col-span-1 md:col-span-1">
+                          <FormLabel className="text-slate-300 text-xs font-medium">
+                            UF <span className="text-rose-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || 'PE'}
+                              onChange={(e) => field.onChange(e.target.value.toUpperCase().slice(0, 2))}
+                              maxLength={2}
+                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl uppercase font-mono text-center focus:border-amber-500"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 3. CONDIÇÕES FINANCEIRAS & DISCRIMINAÇÃO DE VALORES (SEM FINANCIAMENTO) */}
@@ -872,8 +1381,10 @@ export function SaleForm({
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
-                        <SelectValue placeholder="Selecione a forma..." />
+                      <SelectTrigger className="w-full bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                        <SelectValue placeholder="Selecione a forma...">
+                          {paymentMethods.find((pm) => pm.value === field.value)?.label || 'Selecione a forma...'}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -972,8 +1483,10 @@ export function SaleForm({
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
-                        <SelectValue placeholder="Selecione a situação..." />
+                      <SelectTrigger className="w-full bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                        <SelectValue placeholder="Selecione a situação...">
+                          {paymentStatuses.find((ps) => ps.value === field.value)?.label || 'Selecione a situação...'}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -1155,6 +1668,13 @@ export function SaleForm({
             )}
           </Button>
         </div>
+
+        {/* Modal de Criação Rápida de Cliente */}
+        <CustomerQuickCreateDialog
+          open={quickCreateOpen}
+          onOpenChange={setQuickCreateOpen}
+          onCustomerCreated={handleSelectCustomer}
+        />
       </form>
     </Form>
   );

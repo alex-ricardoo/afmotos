@@ -1,5 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
+export * from './customer';
+
 export interface MotorcycleImage {
   id: string;
   motorcycle_id: string;
@@ -25,6 +27,7 @@ export interface UploadMotorcycleImageInput {
 
 export interface Lead {
   id: string;
+  customer_id?: string | null;
   type: string;
   name: string;
   phone: string;
@@ -38,6 +41,7 @@ export interface Lead {
 
 export interface RentalRequest {
   id: string;
+  customer_id?: string | null;
   name: string;
   phone: string;
   age: number;
@@ -54,6 +58,7 @@ export interface RentalRequest {
 
 export interface SellRequest {
   id: string;
+  customer_id?: string | null;
   request_kind?: 'ANNOUNCEMENT' | 'DIRECT_SALE' | string;
   lead_id?: string | null;
   name: string;
@@ -145,6 +150,7 @@ export interface FipeConsultation {
 
 export interface Sale {
   id: string;
+  customer_id?: string | null;
   motorcycle_id: string;
   sale_price: number;
   sale_date: string;
@@ -503,10 +509,16 @@ export interface Database {
           created_at?: string;
         };
       };
+      customers: {
+        Row: import('./customer').Customer;
+        Insert: import('./customer').CustomerInsert;
+        Update: import('./customer').CustomerUpdate;
+      };
       sales: {
         Row: Sale;
         Insert: {
           id?: string;
+          customer_id?: string | null;
           motorcycle_id: string;
           sale_price: number;
           sale_date?: string;
@@ -527,6 +539,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          customer_id?: string | null;
           motorcycle_id?: string;
           sale_price?: number;
           sale_date?: string;

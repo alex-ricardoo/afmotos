@@ -69,7 +69,7 @@ export const transmissionLabels = TRANSMISSION_LABELS;
 export const LEAD_TYPE_LABELS: Record<string, string> = {
   MOTORCYCLE_INTEREST: 'Interesse em Moto',
   SELL_MOTORCYCLE: 'Proposta de Venda',
-  CONSIGNMENT: 'Consignação',
+  CONSIGNMENT: 'Deixar para Vender',
   RENTAL: 'Locação',
   MOTORCYCLE_REQUEST: 'Busca por Modelo',
   GENERAL_CONTACT: 'Contato Geral',

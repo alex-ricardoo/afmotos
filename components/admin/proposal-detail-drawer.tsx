@@ -585,6 +585,20 @@ export function ProposalDetail({
                 </div>
               )}
             </div>
+
+            {/* Link para CRM de Clientes */}
+            <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between">
+              <span className="text-[11px] text-zinc-400">Vínculo na Carteira de Clientes:</span>
+              <Link
+                href={`/admin/clientes?q=${encodeURIComponent(proposal.phone || proposal.name)}`}
+                target="_blank"
+                className="inline-flex items-center justify-center h-7 px-2.5 rounded-lg border border-zinc-800 bg-zinc-900 text-xs text-[#e3c56c] hover:bg-zinc-800 gap-1.5 transition-colors font-medium"
+              >
+                <User className="w-3 h-3" />
+                Ver Cliente no CRM
+                <ExternalLink className="w-3 h-3 ml-0.5" />
+              </Link>
+            </div>
           </div>
 
           {/* Card: Dados de Aluguel (Se for proposta de aluguel) */}

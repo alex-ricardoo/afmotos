@@ -4,6 +4,13 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { saleSchema, SaleFormValues } from '@/lib/validations/sale';
 import { getNextSequentialReceiptNumber } from '@/lib/queries/sales';
+import { findOrCreateCustomer } from '@/lib/domain/customer-dedup';
+import {
+  normalizePhone,
+  normalizeEmail,
+  cleanNumeric,
+} from '@/lib/utils/customer-normalizers';
+import { formatCpf } from '@/lib/utils/formatters';
 
 export async function createSaleAction(rawData: SaleFormValues) {
   const supabase = await createClient();
@@ -31,7 +38,89 @@ export async function createSaleAction(rawData: SaleFormValues) {
 
   const formattedAddress = addressParts.length > 0 ? addressParts.join(', ') : data.buyer_address?.trim() || null;
 
+  // 0. Resolução/Criação do Cliente Central (CRM)
+  let effectiveCustomerId = data.customer_id || null;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!effectiveCustomerId && data.buyer_name && data.buyer_phone) {
+    try {
+      const custRes = await findOrCreateCustomer(
+        supabase,
+        {
+          full_name: data.buyer_name,
+          phone: data.buyer_phone,
+          email: data.buyer_email || null,
+          cpf: data.buyer_document || null,
+          cep: data.buyer_cep || null,
+          street: data.buyer_street || null,
+          number: data.buyer_number || null,
+          complement: data.buyer_complement || null,
+          neighborhood: data.buyer_neighborhood || null,
+          city: data.buyer_city || null,
+          state: data.buyer_state || null,
+        },
+        'sale_registration',
+        user?.id,
+      );
+
+      if (custRes.customer) {
+        effectiveCustomerId = custRes.customer.id;
+      }
+    } catch (custErr) {
+      console.warn('Não foi possível vincular cliente central na venda:', custErr);
+    }
+  } else if (effectiveCustomerId) {
+    // Atualização e enriquecimento automático do cadastro do cliente a partir da venda
+    try {
+      const patchData: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (user?.id) patchData.updated_by = user.id;
+
+      if (data.buyer_name?.trim()) patchData.full_name = data.buyer_name.trim();
+      if (data.buyer_phone?.trim()) {
+        patchData.phone = data.buyer_phone.trim();
+        patchData.phone_normalized = normalizePhone(data.buyer_phone);
+      }
+      if (data.buyer_email?.trim()) {
+        patchData.email = data.buyer_email.trim();
+        patchData.email_normalized = normalizeEmail(data.buyer_email);
+      }
+      if (data.buyer_document?.trim()) {
+        const cpfDigits = cleanNumeric(data.buyer_document);
+        patchData.cpf = formatCpf(cpfDigits);
+        patchData.cpf_normalized = cpfDigits;
+      }
+      if (data.buyer_cep?.trim()) patchData.cep = data.buyer_cep.trim();
+      if (data.buyer_street?.trim()) patchData.street = data.buyer_street.trim();
+      if (data.buyer_number?.trim()) patchData.number = data.buyer_number.trim();
+      if (data.buyer_complement?.trim()) patchData.complement = data.buyer_complement.trim();
+      if (data.buyer_neighborhood?.trim()) patchData.neighborhood = data.buyer_neighborhood.trim();
+      if (data.buyer_city?.trim()) patchData.city = data.buyer_city.trim();
+      if (data.buyer_state?.trim()) patchData.state = data.buyer_state.trim().toUpperCase().slice(0, 2);
+
+      const { error: custUpdError } = await supabase
+        .from('customers')
+        .update(patchData)
+        .eq('id', effectiveCustomerId);
+
+      if (custUpdError) {
+        console.error('Erro ao atualizar cliente na venda:', custUpdError);
+      } else {
+        revalidatePath('/admin/clientes');
+        revalidatePath(`/admin/clientes/${effectiveCustomerId}`);
+        revalidatePath(`/admin/clientes/${effectiveCustomerId}/editar`);
+      }
+    } catch (updErr) {
+      console.warn('Erro ao enriquecer perfil do cliente a partir da venda:', updErr);
+    }
+  }
+
   const salePayload = {
+    customer_id: effectiveCustomerId,
     motorcycle_id: data.motorcycle_id,
     sale_price: data.sale_price,
     sale_date: data.sale_date,
@@ -147,6 +236,42 @@ export async function updateSaleAction(id: string, rawData: Partial<SaleFormValu
   if (error) {
     console.error('Error updating sale:', error);
     return { error: 'Não foi possível atualizar os dados da venda.' };
+  }
+
+  // Sincronizar dados cadastrais do cliente se vinculado
+  if (rawData.customer_id) {
+    try {
+      const patchData: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (rawData.buyer_name?.trim()) patchData.full_name = rawData.buyer_name.trim();
+      if (rawData.buyer_phone?.trim()) {
+        patchData.phone = rawData.buyer_phone.trim();
+        patchData.phone_normalized = normalizePhone(rawData.buyer_phone);
+      }
+      if (rawData.buyer_email?.trim()) {
+        patchData.email = rawData.buyer_email.trim();
+        patchData.email_normalized = normalizeEmail(rawData.buyer_email);
+      }
+      if (rawData.buyer_document?.trim()) {
+        const cpfDigits = cleanNumeric(rawData.buyer_document);
+        patchData.cpf = formatCpf(cpfDigits);
+        patchData.cpf_normalized = cpfDigits;
+      }
+      if (rawData.buyer_cep?.trim()) patchData.cep = rawData.buyer_cep.trim();
+      if (rawData.buyer_street?.trim()) patchData.street = rawData.buyer_street.trim();
+      if (rawData.buyer_number?.trim()) patchData.number = rawData.buyer_number.trim();
+      if (rawData.buyer_complement?.trim()) patchData.complement = rawData.buyer_complement.trim();
+      if (rawData.buyer_neighborhood?.trim()) patchData.neighborhood = rawData.buyer_neighborhood.trim();
+      if (rawData.buyer_city?.trim()) patchData.city = rawData.buyer_city.trim();
+      if (rawData.buyer_state?.trim()) patchData.state = rawData.buyer_state.trim().toUpperCase().slice(0, 2);
+
+      await supabase.from('customers').update(patchData).eq('id', rawData.customer_id);
+      revalidatePath('/admin/clientes');
+      revalidatePath(`/admin/clientes/${rawData.customer_id}`);
+    } catch (custErr) {
+      console.warn('Erro ao sincronizar cliente na atualização da venda:', custErr);
+    }
   }
 
   // Sincronizar dados veiculares caso alterados

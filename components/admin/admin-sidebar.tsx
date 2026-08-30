@@ -15,6 +15,7 @@ import {
   Scale,
   Receipt,
   Wallet,
+  Users,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Motos', href: '/admin/motos', icon: Bike },
   { name: 'Vendas', href: '/admin/vendas', icon: Receipt },
+  { name: 'Clientes', href: '/admin/clientes', icon: Users },
   { name: 'Contatos & Propostas', href: '/admin/propostas', icon: MessageSquare },
   { name: 'Gastos', href: '/admin/gastos', icon: Wallet },
   { name: 'Tabela FIPE', href: '/admin/fipe', icon: Scale },
