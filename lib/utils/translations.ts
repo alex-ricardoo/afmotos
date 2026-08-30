@@ -12,12 +12,30 @@ export const MOTORCYCLE_STATUS_LABELS: Record<string, string> = {
   UNAVAILABLE: 'Indisponível',
   HIDDEN: 'Oculta',
   // Variações em minúsculo
+  available: 'Disponível',
   disponivel: 'Disponível',
+  reserved: 'Reservada',
   reservada: 'Reservada',
+  sold: 'Vendida',
   vendida: 'Vendida',
+  rented: 'Alugada',
   alugada: 'Alugada',
+  maintenance: 'Em revisão',
   manutencao: 'Em revisão',
+  unavailable: 'Indisponível',
   indisponivel: 'Indisponível',
+  hidden: 'Oculta',
+  oculta: 'Oculta',
+};
+
+export const MOTORCYCLE_STATUS_OPTIONS: Record<string, string> = {
+  AVAILABLE: 'Disponível',
+  RESERVED: 'Reservada',
+  SOLD: 'Vendida',
+  RENTED: 'Alugada',
+  MAINTENANCE: 'Em revisão',
+  UNAVAILABLE: 'Indisponível',
+  HIDDEN: 'Oculta',
 };
 
 export const motorcycleStatusLabels = MOTORCYCLE_STATUS_LABELS;
@@ -34,10 +52,10 @@ export const OPERATION_TYPE_LABELS: Record<string, string> = {
 export const operationTypeLabels = OPERATION_TYPE_LABELS;
 
 export const OWNERSHIP_TYPE_LABELS: Record<string, string> = {
-  OWNED: 'Própria',
-  CONSIGNMENT: 'De um Cliente',
-  propria: 'Própria',
-  consignada: 'De um Cliente',
+  OWNED: 'Estoque Próprio',
+  CONSIGNMENT: 'Veículo de Cliente',
+  propria: 'Estoque Próprio',
+  consignada: 'Veículo de Cliente',
 };
 
 export const ownershipTypeLabels = OWNERSHIP_TYPE_LABELS;

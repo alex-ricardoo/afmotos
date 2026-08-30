@@ -69,6 +69,7 @@ import { Switch } from '@/components/ui/switch';
 
 import { formatRenavam, formatChassi, formatCurrency, formatKm } from '@/lib/utils/formatters';
 import {
+  MOTORCYCLE_STATUS_OPTIONS,
   motorcycleStatusLabels,
   operationTypeLabels,
   ownershipTypeLabels,
@@ -1566,7 +1567,9 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                         <Select onValueChange={field.onChange} value={field.value || 'gasolina'}>
                           <FormControl>
                             <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
-                              <SelectValue placeholder="Selecione o combustível..." />
+                              <SelectValue placeholder="Selecione o combustível...">
+                                {fuelLabels[field.value] || field.value}
+                              </SelectValue>
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -1593,7 +1596,9 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                         <Select onValueChange={field.onChange} value={field.value || 'manual'}>
                           <FormControl>
                             <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
-                              <SelectValue placeholder="Selecione o câmbio..." />
+                              <SelectValue placeholder="Selecione o câmbio...">
+                                {transmissionLabels[field.value] || field.value}
+                              </SelectValue>
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -1748,7 +1753,7 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                       onClick={(v) => form.setValue('ownership_type', v as any)}
                     />
                     <RadioPill
-                      label="Consignada (Veículo de Cliente)"
+                      label="Veículo de Cliente"
                       value="CONSIGNMENT"
                       selected={watchedValues.ownership_type === 'CONSIGNMENT'}
                       onClick={(v) => form.setValue('ownership_type', v as any)}
@@ -1768,11 +1773,15 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
-                            <SelectValue placeholder="Selecione o status..." />
+                            <SelectValue placeholder="Selecione o status...">
+                              {motorcycleStatusLabels[field.value] ||
+                                motorcycleStatusLabels[field.value?.toUpperCase()] ||
+                                field.value}
+                            </SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
-                          {Object.entries(motorcycleStatusLabels).map(([k, v]) => (
+                          {Object.entries(MOTORCYCLE_STATUS_OPTIONS).map(([k, v]) => (
                             <SelectItem key={k} value={k} className="cursor-pointer">
                               {v}
                             </SelectItem>

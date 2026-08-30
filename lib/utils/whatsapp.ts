@@ -125,7 +125,7 @@ export function generateProposalWhatsAppMessage(
     }
 
     case 'CONSIGNMENT':
-      return `Olá ${name}! Recebemos sua solicitação para anunciar/consignar sua moto${moto ? ` (${moto})` : ''}. Gostaria de passar os detalhes do nosso modelo de venda.`;
+      return `Olá ${name}! Recebemos sua solicitação para anunciar sua moto${moto ? ` (${moto})` : ''}. Gostaria de passar os detalhes do nosso modelo de venda.`;
 
     case 'MOTORCYCLE_INTEREST':
       return `Olá ${name}! Vi seu interesse${moto ? ` na moto ${moto}` : ' em uma moto'} pelo site da ${storeName} e gostaria de passar mais informações e condições especiais.`;

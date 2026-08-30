@@ -253,7 +253,7 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
         <div className="bg-zinc-950/70 p-4 rounded-2xl border border-zinc-800/80 shadow-xs flex items-center justify-between hover:border-zinc-700 transition-colors">
           <div>
             <span className="text-[11px] font-bold text-zinc-400 block uppercase tracking-wider">
-              Consignadas
+              De Clientes
             </span>
             <span className="text-2xl font-black text-white tabular-nums mt-0.5 block">
               {consignmentCount}
@@ -329,7 +329,7 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
             { id: 'ALL', label: 'Todas as Motos' },
             { id: 'AVAILABLE', label: 'Disponíveis' },
             { id: 'SOLD', label: 'Vendidas' },
-            { id: 'CONSIGNMENT', label: 'Consignação' },
+            { id: 'CONSIGNMENT', label: 'De Clientes' },
             { id: 'RENTED', label: 'Alugadas' },
             { id: 'MAINTENANCE', label: 'Em Revisão' },
             { id: 'UNAVAILABLE', label: 'Indisponíveis' },

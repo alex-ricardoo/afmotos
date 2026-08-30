@@ -383,18 +383,24 @@ export async function generateMotorcycleAiDescriptionAction(data: {
   const model = data.model?.trim() || '';
   const version = data.version?.trim() ? ` ${data.version.trim()}` : '';
 
+  const fallbackText = `🚀 OPORTUNIDADE: ${brand.toUpperCase()} ${model.toUpperCase()}${version.toUpperCase()}
+
+Está cansado de perder horas preciosas no trânsito, depender de transporte público lotado ou gastar uma fortuna em combustível todo mês? Chegou a sua vez de conquistar liberdade, agilidade e economia real!
+
+✨ POR QUE ESSA MOTO É IDEAL PARA VOCÊ:
+• Economia no Bolso: Consumo extremamente baixo de combustível e manutenção simples e acessível.
+• Parceira de Trabalho & Renda: Perfeita para o corre do dia a dia, deslocamento para o trabalho ou entregas e aplicativos.
+• Praticidade Máxima: Fuja do engarrafamento, chegue sempre no horário e estacione em qualquer lugar com facilidade.
+• Liberdade no Cotidiano: Mais tempo livre para você aproveitar sua rotina e seus fins de semana.
+
+💳 FACILIDADES DE NEGOCIAÇÃO:
+• Aceitamos sua moto usada na troca com avaliação justa e sem complicação.
+• Parcelamento no cartão de crédito, dinheiro e PIX.
+• Opções de financiamento com parcelas que cabem no seu orçamento (sujeito à análise).
+
+⚡ Uma oportunidade como essa não dura muito no nosso estoque! Entre em contato agora mesmo pelo nosso WhatsApp, tire suas dúvidas e agende sua visita antes que seja vendida!`;
+
   if (!apiKey) {
-    const fallbackText = `🔥 OPORTUNIDADE IMPERDÍVEL: ${brand.toUpperCase()} ${model.toUpperCase()}${version.toUpperCase()}
-
-Cansado de andar de ônibus, pegar trânsito todo santo dia e gastar com transporte? Chegou a hora de ter sua própria moto com economia real no bolso e total agilidade no dia a dia!
-
-💳 FACILIDADES DE PAGAMENTO:
-• Aceitamos sua moto usada na troca com avaliação justa!
-• Aceitamos cartão de crédito, dinheiro e PIX.
-• Trabalhamos com financiamento sujeito à análise e aprovação.
-
-⚡ Essa joia não vai durar muito em nosso estoque! Mande uma mensagem agora mesmo no nosso WhatsApp e venha conferir de perto!`;
-
     return { success: true, description: fallbackText, isFallback: true };
   }
 
@@ -406,24 +412,39 @@ Cansado de andar de ônibus, pegar trânsito todo santo dia e gastar com transpo
     .maybeSingle();
   const siteName = settingsRes?.data?.site_name || 'nossa loja';
 
-  const prompt = `Você é um vendedor amigável e direto de moto usada da loja ${siteName}.
-Crie um texto de anúncio comercial ENXUTO, CURTO, FÁCIL DE LER E COM BONS GATILHOS DE VENDA.
+  const prompt = `Você é um especialista em vendas e consultor de motos da ${siteName}.
+Crie um texto de anúncio comercial ALTAMENTE PERSUASIVO, ENVOLVENTE, COMPLETO E COM FORTES GATILHOS DE CONVERSÃO para venda desta motocicleta.
 
 MOTOCICLETA: ${brand} ${model}${version}
 
-REGRAS RÍGIDAS DE CONTEÚDO (SIGA RIGOROSAMENTE):
-1. PROIBIDO LISTAR FICHA TÉCNICA DA MOTO: NUNCA coloque ano, quilometragem, cor, cilindrada ou preço FIPE no texto. Essas informações já ficam exibidas no topo do site acima do texto.
-2. DORES DO COMPRADOR: Fale de forma simples e direta sobre a dor de estar cansado de andar de ônibus, pegar trânsito diário e o desejo de ter economia real de combustível e praticidade.
-3. FORMAS DE PAGAMENTO REAIS DA LOJA:
-   - Aceitamos moto na troca.
-   - Aceitamos cartão de crédito, dinheiro e PIX.
-  - Trabalhamos com financiamento sujeito à análise e aprovação.
-  - NUNCA mencione "consórcio" ou "carta contemplada".
-4. ENCERRAMENTO E URGÊNCIA:
-   - Inclua obrigatoriamente a frase de gatilho: "Essa joia não vai durar muito em nosso estoque!"
-   - Convide o cliente de forma simples a enviar mensagem no WhatsApp da ${siteName} ou vir na loja conferir.
-   - REGRA ABSOLUTA DE PROIBIÇÃO: NUNCA use a expressão "link da bio", pois o cliente já está navegando diretamente no site.
-5. FORMATO DE SAÍDA: Texto curto, em torno de 2 a 3 parágrafos bem espaçados, com emojis discretos. Retorne APENAS o texto pronto do anúncio.`;
+OBJETIVO DO TEXTO:
+Fazer o cliente visualizar imediatamente a transformação e os benefícios reais que essa moto trará para a vida dele, despertando o desejo imediato de entrar em contato e garantir o veículo.
+
+ESTRUTURA OBRIGATÓRIA DO ANÚNCIO:
+1. TÍTULO / GANCHO DE ABERTURA:
+   - Destaque impactante para ${brand} ${model}${version} com emojis adequados.
+   - Conexão emocional com as dores reais do cliente (chega de depender de ponto de ônibus lotado, atrasos, estresse no trânsito ou altos gastos de transporte).
+
+2. BENEFÍCIOS PRÁTICOS PARA O DIA A DIA E TRABALHO:
+   - Economia brutal de combustível e baixo custo de manutenção, fazendo sobrar dinheiro no bolso no final do mês.
+   - Versatilidade total: Excelente tanto para quem precisa de uma ferramenta de trabalho (deslocamento diário para o serviço, entregas ou renda extra) quanto para a rotina diária (estudos, compromissos rápidos e lazer).
+   - Agilidade e ganho de tempo: fugir dos engarrafamentos, estacionar com facilidade e ter liberdade de horários.
+
+3. CONDIÇÕES FACILITADAS DE PAGAMENTO NA ${siteName}:
+   - Aceitamos sua moto usada na troca com ótima avaliação.
+   - Parcelamento no cartão de crédito, dinheiro e PIX.
+   - Financiamento facilitado com parcelas que cabem no bolso (sujeito à análise).
+   - REGRA: NUNCA mencione "consórcio" ou "carta contemplada".
+
+4. GATILHO DE URGÊNCIA E CHAMADA PARA AÇÃO (CTA):
+   - Inclua gatilho de escassez (ex: motos com essa procedência e qualidade vendem muito rápido no estoque).
+   - Convide o cliente a chamar no WhatsApp da loja para tirar dúvidas, fazer uma simulação personalizada sem compromisso ou agendar uma visita para ver a moto de perto.
+   - REGRA: NUNCA use "link na bio", pois o cliente já está navegando no site.
+
+REGRAS RÍGIDAS DE FORMATAÇÃO:
+- NÃO coloque tabelas frias de ficha técnica repetitiva (ano, km, cor ou preço FIPE), foque nos benefícios, emoção e facilidades comerciais.
+- Utilize tópicos com bullet points e emojis discretos para tornar a leitura visualmente agradável no celular.
+- Retorne APENAS o texto final do anúncio, pronto para publicação.`;
 
   const configuredFallbackModels = (process.env.GEMINI_FALLBACK_MODELS || '')
     .split(',')
@@ -446,8 +467,8 @@ REGRAS RÍGIDAS DE CONTEÚDO (SIGA RIGOROSAMENTE):
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1024,
+              temperature: 0.75,
+              maxOutputTokens: 1500,
             },
           }),
         },
@@ -469,17 +490,6 @@ REGRAS RÍGIDAS DE CONTEÚDO (SIGA RIGOROSAMENTE):
   if (aiDescription) {
     return { success: true, description: aiDescription };
   }
-
-  const fallbackText = `🔥 OPORTUNIDADE IMPERDÍVEL: ${brand.toUpperCase()} ${model.toUpperCase()}${version.toUpperCase()}
-
-Cansado de andar de ônibus, pegar trânsito todo santo dia e gastar com transporte? Chegou a hora de ter sua própria moto com economia real no bolso e total agilidade no dia a dia!
-
-💳 FACILIDADES DE PAGAMENTO:
-• Aceitamos sua moto usada na troca com avaliação justa!
-• Aceitamos cartão de crédito, dinheiro e PIX.
-• Trabalhamos com financiamento sujeito à análise e aprovação.
-
-⚡ Essa joia não vai durar muito em nosso estoque! Mande uma mensagem agora mesmo no nosso WhatsApp e venha conferir de perto!`;
 
   return { success: true, description: fallbackText, isFallback: true };
 }
