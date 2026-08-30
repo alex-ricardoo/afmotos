@@ -16,6 +16,7 @@ import {
   Receipt,
   Wallet,
   Users,
+  BarChart3,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -28,6 +29,7 @@ const navigation = [
   { name: 'Clientes', href: '/admin/clientes', icon: Users },
   { name: 'Contatos & Propostas', href: '/admin/propostas', icon: MessageSquare },
   { name: 'Gastos', href: '/admin/gastos', icon: Wallet },
+  { name: 'Relatórios', href: '/admin/relatorios', icon: BarChart3 },
   { name: 'Tabela FIPE', href: '/admin/fipe', icon: Scale },
   { name: 'Configurações', href: '/admin/configuracoes', icon: Settings },
 ];
