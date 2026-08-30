@@ -4,6 +4,7 @@ import { SaleWithDetails } from '@/lib/queries/sales';
 import { SiteSettings } from '@/types/database';
 import { formatPhone, formatCpf, formatRenavam, formatChassi } from '@/lib/utils/formatters';
 import { formatCnpj } from '@/lib/utils/cnpj';
+import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
 
 const styles = StyleSheet.create({
   page: {
@@ -350,8 +351,14 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
               </View>
 
               <View style={styles.col4}>
-                <Text style={styles.fieldLabel}>Placa</Text>
-                <Text style={styles.fieldValueBold}>{moto?.license_plate || 'Em emplacamento'}</Text>
+                <Text style={styles.fieldLabel}>Placa de Identificação</Text>
+                {moto?.license_plate ? (
+                  <View style={{ marginTop: 1 }}>
+                    <MercosulPlateBadge plate={moto.license_plate} width={82} fontSize={9} />
+                  </View>
+                ) : (
+                  <Text style={styles.fieldValueBold}>0km / Em emplacamento</Text>
+                )}
               </View>
 
               <View style={styles.col4}>

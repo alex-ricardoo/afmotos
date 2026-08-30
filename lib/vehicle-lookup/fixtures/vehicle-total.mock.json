@@ -1,0 +1,615 @@
+{
+  "user": {
+    "first_name": "VINICIUS",
+    "email": "vinicius.costa@apibrasil.com.br",
+    "cellphone": "31984771686",
+    "notification": "yes"
+  },
+  "balance": "105,660",
+  "balance_before": "105,660",
+  "tax": "0,000",
+  "status_code": 200,
+  "error": false,
+  "message": "Dados validos em homologacao! Voce nao foi tarifado e a requisicao nao foi contabilizada.",
+  "valor_consulta": 0,
+  "api_limit_for": "homolog",
+  "homolog": true,
+  "data": {
+    "acessorios": {
+      "veiculosFipe": []
+    },
+    "acessoriosCategorizados": {
+      "acessorios": [],
+      "categorias": []
+    },
+    "analiseRisco": {
+      "imageLink": null,
+      "indiceRisco": "2",
+      "parecer": "Veiculo sem indicio real, dados ficticios para homologacao"
+    },
+    "anoFabricacao": "2021",
+    "anoModelo": "2022",
+    "anuncio": {
+      "data": "03/05/2024 14:22:11",
+      "fotos": [],
+      "km": "12850",
+      "observacao": "Oferta teste exclusiva para ambiente de desenvolvimento.",
+      "opcionais": [
+        {
+          "descricao": "Direcao eletrica"
+        },
+        {
+          "descricao": "Camera de reverso"
+        },
+        {
+          "descricao": "Chave presencial"
+        }
+      ],
+      "placa": "ABC9234",
+      "valor": "125000.00"
+    },
+    "baseEstadual": {
+      "categoria": "PARTICULAR",
+      "chassi": "8AJZZZ999JZ123456",
+      "combustivel": "GASOLINA/EL",
+      "comunicacaoInclusao": null,
+      "comunicacaoVenda": "NAO CONSTA COMUNICACAO DE VENDAS",
+      "cor": "AZUL",
+      "dataAlteracaoMotor": null,
+      "dataEmissaoCrv": "10/01/2024",
+      "dataInclusaoIntencaoTrocaFinanceira": null,
+      "dataLimiteRestricaoTributaria": null,
+      "dataVenda": null,
+      "dataVigenciaContratoFinanceira": null,
+      "debitoCetesb": null,
+      "debitoDer": null,
+      "debitoDersa": null,
+      "debitoDetran": null,
+      "debitoDpvat": null,
+      "debitoIpva": "0,00",
+      "debitoLicenciamento": "0,00",
+      "debitoMultas": "0,00",
+      "debitoMunicipais": "0,00",
+      "debitoPoliciaRodoviariaFederal": null,
+      "debitoRenainf": null,
+      "especie": "PASSAGEIRO",
+      "exercicioLicenciamento": null,
+      "existeDebitoDpvat": "NAO EXISTE DEBITO DE DPVAT",
+      "existeDebitoIpva": "NAO EXISTE DEBITO DE IPVA",
+      "existeDebitoLicenciamento": "NAO EXISTE DEBITO DE LICENCIAMENTO",
+      "existeDebitoMulta": "NAO EXISTE DEBITO DE MULTA",
+      "licdata": "10/01/2024",
+      "motor": "XZ9JK123456",
+      "municipio": "CIDADE INVENTADA",
+      "observacoes": null,
+      "outrasRestricoes1": "NADA CONSTA",
+      "outrasRestricoes2": "NADA CONSTA",
+      "outrasRestricoes3": "NADA CONSTA",
+      "outrasRestricoes4": "NADA CONSTA",
+      "placa": "ABC1234",
+      "pronome": "EMPRESA FICTICIA LTDA",
+      "pronomeAnterior": null,
+      "renavam": "00999111222",
+      "restricaoAdminisrativa": "NADA CONSTA",
+      "restricaoAmbiental": null,
+      "restricaoArrendatario": null,
+      "restricaoDataInclusao": null,
+      "restricaoDocArrendatario": null,
+      "restricaoFinanceira": "NADA CONSTA",
+      "restricaoGuincho": "NADA CONSTA",
+      "restricaoJudicial": "NADA CONSTA",
+      "restricaoNomeAgente": null,
+      "restricaoRenajud": "NADA CONSTA",
+      "restricaoRouboFurto": "NADA CONSTA",
+      "restricaoTributaria": "NADA CONSTA",
+      "situacaoVeiculo": "CIRCULACAO",
+      "tipo": "AUTOMOVEL",
+      "tipoMarcacaoChassi": "NORMAL",
+      "uf": "SP"
+    },
+    "baseNacional": {
+      "anoFabricacao": "2021",
+      "anoModelo": "2022",
+      "categoria": "PARTICULAR",
+      "chassi": "8AJZZZ999JZ123456",
+      "combustivel": "GASOLINA/EL",
+      "cor": "AZUL",
+      "di": null,
+      "docFaturado": "12345000000123",
+      "dtEmissaoCrv": null,
+      "dtUltimaAtualizacao": null,
+      "especie": "PASSAGEIRO",
+      "especieVeiculo": "PASSAGEIRO",
+      "indicadorComunicacaoVendas": "NAO",
+      "indicadorRestricaoRenajud": "NAO",
+      "motor": "XZ9JK123456",
+      "municipio": "CIDADE INVENTADA",
+      "ocorrencia": "VEICULO NAO INDICA OCORRENCIA DE ROUBO/FURTO",
+      "outrasRestricoes1": "NADA CONSTA",
+      "outrasRestricoes2": "NADA CONSTA",
+      "outrasRestricoes3": "NADA CONSTA",
+      "outrasRestricoes4": "NADA CONSTA",
+      "outrasRestricoes5": "NADA CONSTA",
+      "outrasRestricoes6": "NADA CONSTA",
+      "outrasRestricoes7": "NADA CONSTA",
+      "outrasRestricoes8": "NADA CONSTA",
+      "placa": "ABC1234",
+      "renavam": "00999111222",
+      "restricao1": "NADA CONSTA",
+      "restricao2": "NADA CONSTA",
+      "restricao3": "NADA CONSTA",
+      "restricao4": "NADA CONSTA",
+      "restricaoDataInclusao": null,
+      "restricaoFinanciadora": "NADA CONSTA",
+      "restricaoFinanciamento": null,
+      "restricaoNomeAgente": null,
+      "restricaoTipoTransacao": "NADA CONSTA",
+      "situacaoVeiculo": "CIRCULACAO",
+      "tipoDocFaturado": "JURIDICA",
+      "tipoDocImportadora": null,
+      "tipoMarcacaoChassi": "NORMAL",
+      "tipoVeiculo": "AUTOMOVEL",
+      "uf": "SP",
+      "ufFaturado": null
+    },
+    "caixaCambio": null,
+    "capMaxTracao": "0,0000",
+    "capacidadeCarga": "00000",
+    "capacidadePassageiro": "5",
+    "categoria": "BU - SUV MEDIO",
+    "cestaBasica": {
+      "registros": [],
+      "veiculosFipe": []
+    },
+    "chassi": "8AJZZZ999JZ123456",
+    "cidade": "NAO IDENTIFICADO",
+    "cilindradas": "1999",
+    "cmt": null,
+    "codigoCombustivel": "GASOLINA/EL",
+    "codigoFipe": [
+      {
+        "codigo": "002999-9",
+        "valorZeroKM": null
+      },
+      {
+        "codigo": "002998-1",
+        "valorZeroKM": null
+      }
+    ],
+    "codigoMarcaModelo": "909090",
+    "combustivel": "GASOLINA/EL",
+    "comparativoEspecificacoes": {
+      "opinioesDoDono": [],
+      "veiculoComparativo": []
+    },
+    "corVeiculo": "AZUL",
+    "custoMedio": {
+      "custoCada10k": [],
+      "custoDesgastePecasTotal": 0,
+      "custoPlanoRevisaoTotal": 0,
+      "custoTotal": 0
+    },
+    "dadosBasicosDoVeiculo": {
+      "anoFabricacao": "2021",
+      "anoModelo": "2022",
+      "chassi": "8AJZZZ999JZ123456",
+      "cilindradas": "1999",
+      "codigoFipe": "002999",
+      "combustivel": "Gasolina, Eletrico",
+      "descricao": "SUV CONCEITO FLEX",
+      "informacoesFipe": [
+        {
+          "ano": "2022",
+          "combustivel": "Hibrido",
+          "fipeId": "002999",
+          "historicoPreco": [
+            {
+              "ano": "2023",
+              "mes": "1",
+              "predicao": false,
+              "valor": "150000"
+            },
+            {
+              "ano": "2023",
+              "mes": "7",
+              "predicao": false,
+              "valor": "152500"
+            },
+            {
+              "ano": "2024",
+              "mes": "1",
+              "predicao": false,
+              "valor": "154000"
+            },
+            {
+              "ano": "2024",
+              "mes": "6",
+              "predicao": false,
+              "valor": "155500"
+            },
+            {
+              "ano": "2025",
+              "mes": "1",
+              "predicao": false,
+              "valor": "158900"
+            }
+          ],
+          "marca": "Marca Ficticia",
+          "modelo": "Modelo Demo",
+          "valorAtual": "158900.00",
+          "versao": "Pack Tecnologia 2.0 Hibrido"
+        }
+      ],
+      "informacoesGerais": [
+        {
+          "fipeId": "002999",
+          "idVersao": "5555",
+          "marca": "Marca Ficticia",
+          "modelo": "SUV Demo",
+          "versao": "Pack Tecnologia 2.0"
+        }
+      ],
+      "marca": "MARCA FICTICIA",
+      "nacional": "NACIONAL",
+      "placa": "ABC1234"
+    },
+    "decodificadorPrecificador": {
+      "anoFabricacao": null,
+      "anoModelo": "2022",
+      "categoria": "AUTOMOVEL",
+      "chassi": "8AJZZZ999JZ123456",
+      "classificacao": null,
+      "codigoFipe": null,
+      "combustivel": null,
+      "comprimento": null,
+      "cor": null,
+      "distanciaEntreEixos": null,
+      "localFabricacao": "FABRICA TESTE / SP",
+      "marca": "MARCA FICTICIA",
+      "modelo": "SUV CONCEITO",
+      "motor": null,
+      "origem": "NACIONAL",
+      "pais": "BRASIL",
+      "pesoBruto": null,
+      "portas": null,
+      "potenciaMotor": "2.0",
+      "precificadorI": [
+        {
+          "codigo": "002999-9",
+          "combustivel": "H",
+          "dataRefFipe": null,
+          "graphMes1": null,
+          "graphMes10": null,
+          "graphMes11": null,
+          "graphMes12": null,
+          "graphMes2": null,
+          "graphMes3": null,
+          "graphMes4": null,
+          "graphMes5": null,
+          "graphMes6": null,
+          "graphMes7": null,
+          "graphMes8": null,
+          "graphMes9": null,
+          "graphValor1": null,
+          "graphValor10": null,
+          "graphValor11": null,
+          "graphValor12": null,
+          "graphValor2": null,
+          "graphValor3": null,
+          "graphValor4": null,
+          "graphValor5": null,
+          "graphValor6": null,
+          "graphValor7": null,
+          "graphValor8": null,
+          "graphValor9": null,
+          "marca": "Marca Ficticia",
+          "modelo": "SUV Conceito 2.0 Hibrido",
+          "valor": "168200",
+          "valorZeroKM": null
+        },
+        {
+          "codigo": "002998-1",
+          "combustivel": "F",
+          "dataRefFipe": null,
+          "graphMes1": null,
+          "graphMes10": null,
+          "graphMes11": null,
+          "graphMes12": null,
+          "graphMes2": null,
+          "graphMes3": null,
+          "graphMes4": null,
+          "graphMes5": null,
+          "graphMes6": null,
+          "graphMes7": null,
+          "graphMes8": null,
+          "graphMes9": null,
+          "graphValor1": null,
+          "graphValor10": null,
+          "graphValor11": null,
+          "graphValor12": null,
+          "graphValor2": null,
+          "graphValor3": null,
+          "graphValor4": null,
+          "graphValor5": null,
+          "graphValor6": null,
+          "graphValor7": null,
+          "graphValor8": null,
+          "graphValor9": null,
+          "marca": "Marca Ficticia",
+          "modelo": "SUV Conceito 2.0 Flex",
+          "valor": "161500",
+          "valorZeroKM": null
+        }
+      ],
+      "precificadorII": [
+        {
+          "combustivel": null,
+          "marca": "Marca Ficticia",
+          "modelo": "SUV CONCEITO",
+          "valor": "175000",
+          "versao": "2.0 HIBRIDO 4p Mec"
+        },
+        {
+          "combustivel": null,
+          "marca": "Marca Ficticia",
+          "modelo": "SUV CONCEITO",
+          "valor": "177500",
+          "versao": "2.0 HIBRIDO 4p Aut"
+        },
+        {
+          "combustivel": null,
+          "marca": "Marca Ficticia",
+          "modelo": "SUV CONCEITO",
+          "valor": "180000",
+          "versao": "2.0 PREMIUM 4p Aut"
+        }
+      ],
+      "quantidadeEixos": null,
+      "quantidadeIrregularidades": null,
+      "regiao": "BRASIL / TESTE",
+      "tipoCarroceria": "SUV",
+      "tipoFreio": null,
+      "tipoMotor": null,
+      "tracao": null,
+      "transmissao": null,
+      "versao": "HIBRIDO"
+    },
+    "docFaturado": "12345000000123",
+    "dtUltimaAtualizacao": null,
+    "eixoTraseiroDif": null,
+    "eixos": "2",
+    "especieVeiculo": "PASSAGEIRO",
+    "fichaTecnica": {
+      "registros": [],
+      "veiculosFipe": []
+    },
+    "fotos": [],
+    "fotosLoteVeiculo": {
+      "conteudo": []
+    },
+    "gravame": [
+      {
+        "agente": "BANCO FICTICIO S/A",
+        "anoFabricacao": null,
+        "anoModelo": null,
+        "chassi": "8AJZZZ999JZ123456",
+        "codigoAgente": null,
+        "contrato": "SIRCAF: SIM 0",
+        "dataEmissao": null,
+        "dataInclusao": null,
+        "dataSituacao": null,
+        "dataVigencia": null,
+        "dataVigenciaContrato": null,
+        "documentoAgente": null,
+        "documentoFinanciado": "10020030040",
+        "gravame": "VEICULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
+        "intencao": null,
+        "municipio": null,
+        "numero": "80020010",
+        "observacoes": "Historico",
+        "placa": "ABC1234",
+        "renavam": "00999111222",
+        "responsavel": "FINANCEIRA",
+        "situacao": "VEICULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
+        "uf": null,
+        "ufPlaca": null
+      },
+      {
+        "agente": "COOPERATIVA DEMO CREDITO",
+        "anoFabricacao": null,
+        "anoModelo": null,
+        "chassi": "8AJZZZ999JZ123456",
+        "codigoAgente": null,
+        "contrato": "SIRCAF: SIM 0",
+        "dataEmissao": null,
+        "dataInclusao": null,
+        "dataSituacao": null,
+        "dataVigencia": null,
+        "dataVigenciaContrato": null,
+        "documentoAgente": null,
+        "documentoFinanciado": "50060070080",
+        "gravame": "VEICULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
+        "intencao": null,
+        "municipio": null,
+        "numero": "80020011",
+        "observacoes": "Historico",
+        "placa": "ABC1234",
+        "renavam": "00999111222",
+        "responsavel": "FINANCEIRA",
+        "situacao": "VEICULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
+        "uf": null,
+        "ufPlaca": null
+      },
+      {
+        "agente": "FINTECH PILOTO LTDA",
+        "anoFabricacao": null,
+        "anoModelo": null,
+        "chassi": "8AJZZZ999JZ123456",
+        "codigoAgente": null,
+        "contrato": "SIRCAF: SIM 0",
+        "dataEmissao": null,
+        "dataInclusao": null,
+        "dataSituacao": null,
+        "dataVigencia": null,
+        "dataVigenciaContrato": "31/12/2025",
+        "documentoAgente": null,
+        "documentoFinanciado": "70080090010",
+        "gravame": "VEICULO COM ALIENACAO FIDUCIARIA PENDENTE EMISSAO DE DOCUMENTO",
+        "intencao": null,
+        "municipio": null,
+        "numero": "80020012",
+        "observacoes": "Atual",
+        "placa": "ABC9234",
+        "renavam": "00999111222",
+        "responsavel": "FINANCEIRA",
+        "situacao": "VEICULO COM ALIENACAO FIDUCIARIA PENDENTE EMISSAO DE DOCUMENTO",
+        "uf": null,
+        "ufPlaca": null
+      }
+    ],
+    "historicoAnuncios": [
+      {
+        "data": "03/05/2024 14:22:11",
+        "fotos": [],
+        "km": "12850",
+        "observacao": "Oferta teste exclusiva para ambiente de desenvolvimento.",
+        "opcionais": [
+          {
+            "descricao": "Direcao eletrica"
+          },
+          {
+            "descricao": "Camera de reverso"
+          },
+          {
+            "descricao": "Chave presencial"
+          }
+        ],
+        "placa": "ABC9234",
+        "valor": "125000.00"
+      }
+    ],
+    "historicoKm": [
+      {
+        "dataInclusao": "03/05/2024 14:22:11",
+        "km": "12850"
+      }
+    ],
+    "historicoProprietarios": [
+      {
+        "anoExercicio": "2024",
+        "chassi": "8AJZZZ999JZ123456",
+        "correlacaoChassiRenavam": false,
+        "cpfCnpj": "10020030040",
+        "dataEmplacamento": null,
+        "dataProcessamento": null,
+        "motivoTipoAutorizacao": null,
+        "municipio": null,
+        "ocorrencia": null,
+        "placa": "ABC1234",
+        "proprietario": "EMPRESA FICTICIA LTDA",
+        "renavam": "00999111222",
+        "tipoDocumento": null,
+        "uf": "SP"
+      },
+      {
+        "anoExercicio": "2023",
+        "chassi": "8AJZZZ999JZ123456",
+        "correlacaoChassiRenavam": false,
+        "cpfCnpj": "50060070080",
+        "dataEmplacamento": null,
+        "dataProcessamento": null,
+        "motivoTipoAutorizacao": null,
+        "municipio": null,
+        "ocorrencia": null,
+        "placa": "ABC9234",
+        "proprietario": "LOCADORA DEMO SA",
+        "renavam": "00999111222",
+        "tipoDocumento": null,
+        "uf": "SP"
+      },
+      {
+        "anoExercicio": "2022",
+        "chassi": "8AJZZZ999JZ123456",
+        "correlacaoChassiRenavam": false,
+        "cpfCnpj": "70080090010",
+        "dataEmplacamento": null,
+        "dataProcessamento": null,
+        "motivoTipoAutorizacao": null,
+        "municipio": null,
+        "ocorrencia": null,
+        "placa": "ABC1234",
+        "proprietario": "PESSOA FISICA TREINAMENTO",
+        "renavam": "00999111222",
+        "tipoDocumento": null,
+        "uf": "SP"
+      }
+    ],
+    "identImportadora": null,
+    "indicioSinistro": {
+      "classificacao": null,
+      "descricao": "NAO CONSTA INDICIO DE SINISTRO PARA O VEICULO INFORMADO"
+    },
+    "leilao": {
+      "descricao": "Nao consta registro de leilao para o veiculo informado",
+      "registros": [],
+      "score": {
+        "aceitacao": null,
+        "exigenciaVistoriaEspecial": null,
+        "percentualSobreRef": null,
+        "pontuacao": null,
+        "score": null
+      }
+    },
+    "limiteRestricaoTrib": null,
+    "marcaModelo": "MARCA FICTICIA/SUV CONCEITO",
+    "municipio": "NAO IDENTIFICADO",
+    "municipioEmplacamento": "NAO IDENTIFICADO",
+    "nacionalidade": "NACIONAL",
+    "numCarroceria": "INEXISTENTE",
+    "numFaturado": "12345000000123",
+    "numMotor": "XZ9JK123456",
+    "numTerceiroEixo": null,
+    "opcionais": [],
+    "pbt": "0,0180",
+    "placa": "ABC1234",
+    "potencia": "180",
+    "procedencia": "NACIONAL",
+    "qtdPax": "5",
+    "recall": {
+      "anoModelo": null,
+      "chassi": null,
+      "descricaoRetorno": null,
+      "detalhes": [],
+      "marca": null,
+      "modelo": null,
+      "recallsPendente": []
+    },
+    "registroDi": null,
+    "registroEmLocadora": {
+      "registroEmLocadora": false
+    },
+    "renavam": "00999111222",
+    "restricoes": null,
+    "revisao": {
+      "veiculosFipe": []
+    },
+    "rouboFurto": {
+      "constaOcorrencia": false,
+      "constaOcorrenciaAtiva": false,
+      "historico": [],
+      "indicadorProcedencia": null,
+      "municipioEmplacamento": null
+    },
+    "situacaoChassi": " ",
+    "situacaoVeiculo": " ",
+    "tipoCarroceria": "Desconhecido",
+    "tipoDocFaturado": "JURIDICA",
+    "tipoDocImportadora": "DESCONHECIDA",
+    "tipoMontagem": "1",
+    "tipoVeiculo": "AUTOMOVEL",
+    "uf": "--",
+    "ufFaturado": "SP",
+    "ultimaDataInclusao": null,
+    "valorAnunciado": null
+  }
+}
