@@ -40,7 +40,7 @@ interface ImgBBResponse {
 }
 
 /**
- * Upload an image to ImgBB via the official v1 API.
+ * Upload an image to ImgBB via official v1 API exclusively as a fallback method.
  * Runs strictly on the server using process.env.IMGBB_API_KEY.
  */
 export async function uploadToImgBB(input: UploadImageInput): Promise<UploadedImage> {
@@ -52,11 +52,12 @@ export async function uploadToImgBB(input: UploadImageInput): Promise<UploadedIm
     });
   }
 
-  // Pre-validate file
+  // Pre-validate file against provider limits
   const validation = validateImageFile(input.file, UPLOAD_LIMITS.MAX_IMGBB_FILE_SIZE_BYTES);
   if (!validation.valid) {
     throw new ImgBBError(validation.error || 'Arquivo inválido para upload no ImgBB.', {
       isTransient: false,
+      statusCode: 400,
     });
   }
 
@@ -75,7 +76,6 @@ export async function uploadToImgBB(input: UploadImageInput): Promise<UploadedIm
 
     try {
       const formData = new FormData();
-      // If fileName was specified, use it
       const originalName = validation.sanitizedName || input.fileName || 'imagem';
       formData.append('image', input.file, originalName);
       formData.append('name', originalName.replace(/\.[^/.]+$/, ''));
@@ -105,7 +105,8 @@ export async function uploadToImgBB(input: UploadImageInput): Promise<UploadedIm
 
         if (isTransient && attempt <= maxRetries) {
           const delay =
-            UPLOAD_LIMITS.RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1) + Math.random() * 100;
+            UPLOAD_LIMITS.IMGBB_RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1) +
+            Math.random() * 100;
           await new Promise((res) => setTimeout(res, delay));
           continue;
         }
@@ -131,9 +132,10 @@ export async function uploadToImgBB(input: UploadImageInput): Promise<UploadedIm
         thumbnailUrl: uploadedData.thumb?.url || null,
         storagePath: null,
         deleteUrl: uploadedData.delete_url || null,
-        originalName: originalName,
+        originalName,
         mimeType: (input.file as File).type || 'image/jpeg',
         sizeBytes: input.file.size,
+        fallbackTriggered: true,
       };
     } catch (err: unknown) {
       clearTimeout(timeoutId);
@@ -145,13 +147,15 @@ export async function uploadToImgBB(input: UploadImageInput): Promise<UploadedIm
       }
 
       const isAbort = (err as Error)?.name === 'AbortError';
-      const errorCode = typeof err === 'object' && err !== null && 'code' in err ? (err as { code?: string }).code : undefined;
-      const isTransient =
-        isAbort || errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT';
+      const errorCode =
+        typeof err === 'object' && err !== null && 'code' in err
+          ? String((err as { code?: unknown }).code)
+          : undefined;
+      const isTransient = isAbort || errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT';
 
       if (isTransient && attempt <= maxRetries) {
         const delay =
-          UPLOAD_LIMITS.RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1) + Math.random() * 100;
+          UPLOAD_LIMITS.IMGBB_RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1) + Math.random() * 100;
         await new Promise((res) => setTimeout(res, delay));
         continue;
       }

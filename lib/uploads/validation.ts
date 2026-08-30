@@ -1,4 +1,4 @@
-import { ALLOWED_IMAGE_MIME_TYPES, UPLOAD_LIMITS } from './constants';
+import { ALLOWED_IMAGE_MIME_TYPES, UPLOAD_LIMITS } from './constants.ts';
 
 export interface ValidationResult {
   valid: boolean;

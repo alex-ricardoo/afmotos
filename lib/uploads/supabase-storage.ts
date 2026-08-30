@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { SUPABASE_STORAGE_BUCKETS } from './constants';
-import { StorageFallbackError } from './errors';
+import { StorageError } from './errors';
 import { UploadedImage, UploadImageInput } from './types';
 import { validateImageFile } from './validation';
 
@@ -40,14 +40,15 @@ export function generateStoragePath(
 }
 
 /**
- * Upload an image to Supabase Storage as a fallback or direct method.
+ * Upload an image to Supabase Storage as the PRIMARY method.
  * Runs on the server and respects RLS policies.
  */
 export async function uploadToSupabaseStorage(input: UploadImageInput): Promise<UploadedImage> {
   const validation = validateImageFile(input.file);
   if (!validation.valid) {
-    throw new StorageFallbackError(
+    throw new StorageError(
       validation.error || 'Arquivo inválido para upload no Supabase Storage.',
+      { statusCode: 400, isTransient: false, code: 'INVALID_FILE' },
     );
   }
 
@@ -68,11 +69,22 @@ export async function uploadToSupabaseStorage(input: UploadImageInput): Promise<
     });
 
   if (uploadError || !uploadData) {
-    console.error('Supabase Storage upload error:', uploadError);
-    throw new StorageFallbackError(
-      `Falha no upload para Supabase Storage: ${uploadError?.message || 'Erro desconhecido'}`,
-      uploadError,
-    );
+    const errorMsg = uploadError?.message || 'Erro desconhecido no Supabase Storage';
+    const statusCode =
+      typeof uploadError === 'object' && uploadError !== null && 'statusCode' in uploadError
+        ? Number((uploadError as { statusCode?: unknown }).statusCode)
+        : typeof uploadError === 'object' && uploadError !== null && 'status' in uploadError
+          ? Number((uploadError as { status?: unknown }).status)
+          : undefined;
+
+    throw new StorageError(`Falha no upload para Supabase Storage: ${errorMsg}`, {
+      statusCode,
+      code:
+        typeof uploadError === 'object' && uploadError !== null && 'error' in uploadError
+          ? String((uploadError as { error?: unknown }).error)
+          : 'STORAGE_UPLOAD_FAILED',
+      cause: uploadError,
+    });
   }
 
   const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(uploadData.path);
@@ -92,6 +104,7 @@ export async function uploadToSupabaseStorage(input: UploadImageInput): Promise<
 
 /**
  * Remove an image object from Supabase Storage by its relative path.
+ * Used for deletion and rollback/compensation if DB persistence fails.
  */
 export async function removeFromSupabaseStorage(storagePath: string): Promise<boolean> {
   if (!storagePath || storagePath.startsWith('http://') || storagePath.startsWith('https://')) {

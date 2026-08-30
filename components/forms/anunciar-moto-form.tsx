@@ -39,7 +39,7 @@ import {
   uploadPublicSellRequestImageAction,
   SellRequestImageItem,
 } from '@/lib/actions/leads';
-import { compressImageFiles, formatFileSize } from '@/lib/utils/image-compression';
+import { compressImageFiles } from '@/lib/utils/image-compression';
 import { PECityCombobox } from '@/components/forms/pe-city-combobox';
 import { FipeBrandCombobox } from '@/components/forms/fipe-brand-combobox';
 import { FipeModelCombobox } from '@/components/forms/fipe-model-combobox';
@@ -193,7 +193,7 @@ export function AnunciarMotoForm() {
       }
       if (
         !['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/avif'].includes(
-          file.type.toLowerCase()
+          file.type.toLowerCase(),
         )
       ) {
         toast.error(`O arquivo "${file.name}" não é um formato suportado (use JPG, PNG ou WebP).`);
@@ -205,7 +205,7 @@ export function AnunciarMotoForm() {
     if (validRawFiles.length === 0) return;
 
     try {
-      const { files: compressedFiles, statsList } = await compressImageFiles(validRawFiles, {
+      const { files: compressedFiles } = await compressImageFiles(validRawFiles, {
         maxDimension: 1920,
         quality: 0.82,
         outputFormat: 'auto',
@@ -219,7 +219,7 @@ export function AnunciarMotoForm() {
       toast.success(
         compressedFiles.length === 1
           ? '1 foto adicionada com sucesso!'
-          : `${compressedFiles.length} fotos adicionadas com sucesso!`
+          : `${compressedFiles.length} fotos adicionadas com sucesso!`,
       );
     } catch (err) {
       console.error('Erro na compressão:', err);
@@ -229,7 +229,7 @@ export function AnunciarMotoForm() {
       toast.success(
         validRawFiles.length === 1
           ? '1 foto adicionada com sucesso!'
-          : `${validRawFiles.length} fotos adicionadas com sucesso!`
+          : `${validRawFiles.length} fotos adicionadas com sucesso!`,
       );
     }
   };
@@ -276,7 +276,13 @@ export function AnunciarMotoForm() {
 
   // Submissão do formulário
   async function onSubmit(data: SellRequestInput) {
-    if (!data.postal_code || !data.address_street || !data.address_number || !data.address_neighborhood || !data.license_plate) {
+    if (
+      !data.postal_code ||
+      !data.address_street ||
+      !data.address_number ||
+      !data.address_neighborhood ||
+      !data.license_plate
+    ) {
       toast.error('Informe o CEP, endereço, número da residência e placa da moto.');
       return;
     }
@@ -285,9 +291,12 @@ export function AnunciarMotoForm() {
     try {
       const uploadedImages: SellRequestImageItem[] = [];
 
-      for (const file of selectedFiles) {
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const uploadRequestId = `public-announcement-${crypto.randomUUID()}`;
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('uploadRequestId', uploadRequestId);
         const uploadResult = await uploadPublicSellRequestImageAction(formData);
 
         if (uploadResult.success && uploadResult.url) {
@@ -355,7 +364,8 @@ export function AnunciarMotoForm() {
             Proposta Enviada com Sucesso!
           </h3>
           <p className="text-sm sm:text-base text-zinc-300 max-w-lg mx-auto leading-relaxed">
-            Recebemos as informações e fotos da sua moto. Nossa equipe analisará suas informações e entrará em contato com você via WhatsApp para te passar a melhor proposta.
+            Recebemos as informações e fotos da sua moto. Nossa equipe analisará suas informações e
+            entrará em contato com você via WhatsApp para te passar a melhor proposta.
           </p>
         </div>
 
@@ -512,13 +522,22 @@ export function AnunciarMotoForm() {
               name="license_plate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">Placa *</FormLabel>
+                  <FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
+                    Placa *
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="ABC1D23"
                       maxLength={7}
                       value={field.value || ''}
-                      onChange={(event) => field.onChange(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7))}
+                      onChange={(event) =>
+                        field.onChange(
+                          event.target.value
+                            .toUpperCase()
+                            .replace(/[^A-Z0-9]/g, '')
+                            .slice(0, 7),
+                        )
+                      }
                       disabled={loading}
                       className="bg-zinc-950/80 border-zinc-800 focus:border-amber-500/50 h-12 rounded-xl text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-amber-500/50 transition-colors"
                     />
@@ -683,13 +702,17 @@ export function AnunciarMotoForm() {
               name="postal_code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">CEP *</FormLabel>
+                  <FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
+                    CEP *
+                  </FormLabel>
                   <FormControl>
                     <Input
                       inputMode="numeric"
                       placeholder="50000-000"
                       value={field.value || ''}
-                      onChange={(event) => field.onChange(event.target.value.replace(/\D/g, '').slice(0, 8))}
+                      onChange={(event) =>
+                        field.onChange(event.target.value.replace(/\D/g, '').slice(0, 8))
+                      }
                       onBlur={() => handleCepLookup(field.value || '')}
                       disabled={loading || isLookingUpCep}
                       className="bg-zinc-950/80 border-zinc-800 focus:border-amber-500/50 h-12 rounded-xl text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-amber-500/50 transition-colors"
@@ -736,20 +759,92 @@ export function AnunciarMotoForm() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 items-start">
-            <FormField control={form.control} name="address_street" render={({ field }) => (
-              <FormItem><FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">Rua / Avenida *</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="Preenchida pelo CEP" disabled={loading} className="bg-zinc-950/80 border-zinc-800 h-12 rounded-xl text-white" /></FormControl><FormMessage className="text-xs text-rose-400 font-medium" /></FormItem>
-            )} />
-            <FormField control={form.control} name="address_number" render={({ field }) => (
-              <FormItem><FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">Número *</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="Ex: 123" disabled={loading} className="bg-zinc-950/80 border-zinc-800 h-12 rounded-xl text-white" /></FormControl><FormMessage className="text-xs text-rose-400 font-medium" /></FormItem>
-            )} />
-            <FormField control={form.control} name="address_neighborhood" render={({ field }) => (
-              <FormItem><FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">Bairro *</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="Preenchido pelo CEP" disabled={loading} className="bg-zinc-950/80 border-zinc-800 h-12 rounded-xl text-white" /></FormControl><FormMessage className="text-xs text-rose-400 font-medium" /></FormItem>
-            )} />
+            <FormField
+              control={form.control}
+              name="address_street"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
+                    Rua / Avenida *
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      placeholder="Preenchida pelo CEP"
+                      disabled={loading}
+                      className="bg-zinc-950/80 border-zinc-800 h-12 rounded-xl text-white"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs text-rose-400 font-medium" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
+                    Número *
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      placeholder="Ex: 123"
+                      disabled={loading}
+                      className="bg-zinc-950/80 border-zinc-800 h-12 rounded-xl text-white"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs text-rose-400 font-medium" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address_neighborhood"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
+                    Bairro *
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      placeholder="Preenchido pelo CEP"
+                      disabled={loading}
+                      className="bg-zinc-950/80 border-zinc-800 h-12 rounded-xl text-white"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs text-rose-400 font-medium" />
+                </FormItem>
+              )}
+            />
           </div>
 
-          <FormField control={form.control} name="address_complement" render={({ field }) => (
-            <FormItem><FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">Complemento (opcional)</FormLabel><FormControl><Input {...field} value={field.value || ''} placeholder="Apartamento, bloco, referência..." disabled={loading} className="bg-zinc-950/80 border-zinc-800 h-12 rounded-xl text-white" /></FormControl><FormMessage className="text-xs text-rose-400 font-medium" /></FormItem>
-          )} />
+          <FormField
+            control={form.control}
+            name="address_complement"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-bold uppercase text-zinc-300 tracking-wider">
+                  Complemento (opcional)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    placeholder="Apartamento, bloco, referência..."
+                    disabled={loading}
+                    className="bg-zinc-950/80 border-zinc-800 h-12 rounded-xl text-white"
+                  />
+                </FormControl>
+                <FormMessage className="text-xs text-rose-400 font-medium" />
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* SEÇÃO 4: FOTOS DA MOTO (DROPZONE INTERATIVO) */}
@@ -794,9 +889,7 @@ export function AnunciarMotoForm() {
             {isPhotosLimitReached ? (
               <div className="flex flex-col items-center justify-center gap-2 py-2">
                 <CheckCircle2 className="w-10 h-10 text-emerald-400" />
-                <p className="text-sm font-bold text-white">
-                  Limite de 5 fotos atingido.
-                </p>
+                <p className="text-sm font-bold text-white">Limite de 5 fotos atingido.</p>
                 <p className="text-xs text-zinc-400">
                   Para trocar uma imagem, remova alguma das fotos adicionadas abaixo.
                 </p>
@@ -814,7 +907,8 @@ export function AnunciarMotoForm() {
                     Arraste ou clique para selecionar as fotos
                   </span>
                   <span className="text-xs text-zinc-400 block">
-                    Fotos da lateral, painel e motor valorizam a avaliação (JPG, PNG ou WebP até 20MB - otimização automática)
+                    Fotos da lateral, painel e motor valorizam a avaliação (JPG, PNG ou WebP até
+                    20MB - otimização automática)
                   </span>
                 </div>
               </label>
@@ -878,7 +972,8 @@ export function AnunciarMotoForm() {
           <div className="p-4 bg-zinc-950/80 rounded-xl border border-zinc-800/80 flex items-start gap-3 text-xs text-zinc-400 leading-relaxed text-center sm:text-left">
             <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 mx-auto sm:mx-0" />
             <p>
-              Seus dados estão seguros. O envio do formulário nos ajuda a analisar sua moto e te chamar no WhatsApp com a melhor proposta.
+              Seus dados estão seguros. O envio do formulário nos ajuda a analisar sua moto e te
+              chamar no WhatsApp com a melhor proposta.
             </p>
           </div>
         </div>

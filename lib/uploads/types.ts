@@ -1,12 +1,23 @@
-export type ImageUploadProvider = 'imgbb' | 'supabase';
+export type ImageUploadProvider = 'supabase' | 'imgbb';
 
 export type UploadImageContext =
   'motorcycle' | 'sell_request' | 'consignment_request' | 'site_settings' | 'profile' | 'other';
 
+export interface UploadIntent {
+  /** Unique client/session idempotent identifier for this upload attempt */
+  uploadRequestId?: string;
+  /** Context / entity type */
+  entityType?: UploadImageContext;
+  /** Related entity ID */
+  entityId?: string;
+  /** Optional file fingerprint or unique tag */
+  fileFingerprint?: string;
+}
+
 export interface UploadImageInput {
   /** The binary File or Blob to upload */
   file: File | Blob;
-  /** Business context for bucket/path organization on fallback */
+  /** Business context for bucket/path organization */
   context: UploadImageContext;
   /** Related entity ID (e.g. motorcycleId, requestId, userId) */
   entityId?: string;
@@ -14,12 +25,14 @@ export interface UploadImageInput {
   fileName?: string;
   /** Optional accessibility / SEO alt text */
   altText?: string;
+  /** Unique client request / idempotency tracking ID */
+  uploadRequestId?: string;
   /** Abort signal for user cancellation */
   signal?: AbortSignal;
 }
 
 export interface UploadedImage {
-  /** Provider that stored the file */
+  /** Provider that stored the file ('supabase' as primary, 'imgbb' as fallback) */
   provider: ImageUploadProvider;
   /** Canonical public URL for web display */
   publicUrl: string;
@@ -37,6 +50,8 @@ export interface UploadedImage {
   mimeType: string;
   /** File size in bytes */
   sizeBytes: number;
+  /** Indicates whether ImgBB fallback was triggered */
+  fallbackTriggered?: boolean;
 }
 
 export interface UploadServiceResult {

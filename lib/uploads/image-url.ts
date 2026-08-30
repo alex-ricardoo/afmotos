@@ -1,4 +1,4 @@
-import { SUPABASE_STORAGE_BUCKETS } from './constants';
+import { SUPABASE_STORAGE_BUCKETS } from './constants.ts';
 
 export interface ImageRecordLike {
   provider?: string | null;
@@ -9,28 +9,35 @@ export interface ImageRecordLike {
   url?: string | null;
 }
 
+export interface ResolveImageUrlOptions {
+  useThumbnail?: boolean;
+  fallbackUrl?: string;
+  bucket?: string;
+}
+
 /**
- * Resolves the canonical display URL for an image.
- * Works seamlessly with:
- * 1. ImgBB images (provider = 'imgbb', public_url)
- * 2. Supabase Storage images (provider = 'supabase', storage_path or public_url)
- * 3. Legacy images without provider (storage_path)
+ * Universal image URL resolver for the AF Motos platform.
+ * Transparently resolves images from:
+ * 1. Supabase Storage (provider = 'supabase', storage_path or public_url)
+ * 2. ImgBB (provider = 'imgbb', public_url, display_url, thumbnail_url)
+ * 3. Legacy records without explicit provider
  * 4. External full URLs (http:// or https://)
  */
-export function getImageSource(
+export function resolveImageUrl(
   image?: ImageRecordLike | string | null,
-  options?: { useThumbnail?: boolean; fallbackUrl?: string },
+  options?: ResolveImageUrlOptions,
 ): string {
   const fallback = options?.fallbackUrl || '';
+  const bucketName = options?.bucket || SUPABASE_STORAGE_BUCKETS.MOTORCYCLE_IMAGES;
 
   if (!image) return fallback;
 
-  // If passed directly as a string
+  // 1. If passed directly as a string (URL or relative path)
   if (typeof image === 'string') {
     const trimmed = image.trim();
     if (!trimmed) return fallback;
 
-    // Full URL
+    // Full absolute URL
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       return trimmed;
     }
@@ -38,17 +45,17 @@ export function getImageSource(
     // Relative storage path
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     if (supabaseUrl) {
-      return `${supabaseUrl}/storage/v1/object/public/${SUPABASE_STORAGE_BUCKETS.MOTORCYCLE_IMAGES}/${trimmed}`;
+      return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${trimmed}`;
     }
     return trimmed;
   }
 
-  // If thumbnail is requested and available
+  // 2. If thumbnail is specifically requested and available
   if (options?.useThumbnail && image.thumbnail_url) {
     return image.thumbnail_url;
   }
 
-  // 1. If explicit public_url exists, use it
+  // 3. If explicit canonical public_url exists
   if (
     image.public_url &&
     (image.public_url.startsWith('http://') || image.public_url.startsWith('https://'))
@@ -56,12 +63,12 @@ export function getImageSource(
     return image.public_url;
   }
 
-  // 2. If precomputed url exists
+  // 4. If precomputed url exists
   if (image.url && (image.url.startsWith('http://') || image.url.startsWith('https://'))) {
     return image.url;
   }
 
-  // 3. If storage_path is already an absolute URL
+  // 5. If storage_path is already an absolute URL
   if (
     image.storage_path &&
     (image.storage_path.startsWith('http://') || image.storage_path.startsWith('https://'))
@@ -69,19 +76,24 @@ export function getImageSource(
     return image.storage_path;
   }
 
-  // 4. If storage_path is a relative path in Supabase bucket
+  // 6. If storage_path is a relative path in Supabase bucket
   if (image.storage_path) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     if (supabaseUrl) {
-      return `${supabaseUrl}/storage/v1/object/public/${SUPABASE_STORAGE_BUCKETS.MOTORCYCLE_IMAGES}/${image.storage_path}`;
+      return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${image.storage_path}`;
     }
     return image.storage_path;
   }
 
-  // 5. Fallback to display_url if available
+  // 7. Fallback to display_url if available
   if (image.display_url) {
     return image.display_url;
   }
 
   return fallback;
 }
+
+/**
+ * Backward-compatible alias for resolveImageUrl.
+ */
+export const getImageSource = resolveImageUrl;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Upload, Trash2, Loader2, Star, ImagePlus, Info, AlertCircle } from 'lucide-react';
+import { Upload, Trash2, Loader2, Star, ImagePlus, Info } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import {
@@ -55,6 +55,7 @@ export function ImageUploader({
 
     const filesArray = Array.from(files);
     let successCount = 0;
+    let fallbackCount = 0;
     let updatedList = [...currentImages];
 
     for (let i = 0; i < filesArray.length; i++) {
@@ -62,7 +63,7 @@ export function ImageUploader({
       setUploadProgressText(
         filesArray.length > 1
           ? `Otimizando e enviando foto ${i + 1} de ${filesArray.length}...`
-          : 'Otimizando e enviando foto...'
+          : 'Otimizando e enviando foto...',
       );
 
       // Smart client-side compression (up to 20MB source -> ~300-600KB WebP)
@@ -76,24 +77,31 @@ export function ImageUploader({
         fileToUpload = compressed;
         if (stats.savedBytes > 0) {
           console.log(
-            `[ImageUploader] Otimizado ${originalFile.name}: ${formatFileSize(stats.originalSize)} -> ${formatFileSize(stats.compressedSize)} (${stats.compressionRatioPercent}% reduzido)`
+            `[ImageUploader] Otimizado ${originalFile.name}: ${formatFileSize(stats.originalSize)} -> ${formatFileSize(stats.compressedSize)} (${stats.compressionRatioPercent}% reduzido)`,
           );
         }
       } catch (compErr) {
         console.warn('Compressão preliminar falhou, usando arquivo original:', compErr);
       }
 
+      const uploadRequestId = `admin-${motorcycleId}-${crypto.randomUUID()}`;
       const formData = new FormData();
       formData.append('motorcycleId', motorcycleId);
       formData.append('file', fileToUpload);
+      formData.append('uploadRequestId', uploadRequestId);
 
       try {
         const result = await uploadMotorcycleImageAction(formData);
 
         if (!result.success || !result.image) {
-          toast.error(`Erro ao enviar ${originalFile.name}: ${result.error || 'Falha desconhecida'}`);
+          toast.error(
+            `Erro ao enviar ${originalFile.name}: ${result.error || 'Falha desconhecida'}`,
+          );
         } else {
           successCount++;
+          if (result.fallbackTriggered) {
+            fallbackCount++;
+          }
           // If this is the first image or returned as primary, update other images in local state
           if (result.image.is_primary) {
             updatedList = updatedList.map((img) => ({ ...img, is_primary: false }));
@@ -108,11 +116,15 @@ export function ImageUploader({
     }
 
     if (successCount > 0) {
-      toast.success(
-        successCount === 1
-          ? '1 foto adicionada com sucesso!'
-          : `${successCount} fotos adicionadas com sucesso!`,
-      );
+      if (fallbackCount > 0) {
+        toast.info('Foto(s) salvas com sucesso em armazenamento alternativo.');
+      } else {
+        toast.success(
+          successCount === 1
+            ? '1 foto adicionada com sucesso!'
+            : `${successCount} fotos adicionadas com sucesso!`,
+        );
+      }
     }
 
     setUploading(false);
@@ -222,9 +234,7 @@ export function ImageUploader({
           ) : (
             <>
               <Upload className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm font-semibold text-foreground">
-                Tirar Foto / Galeria
-              </span>
+              <span className="text-sm font-semibold text-foreground">Tirar Foto / Galeria</span>
             </>
           )}
           <input

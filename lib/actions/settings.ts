@@ -87,7 +87,7 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
 }
 
 /**
- * Server Action para upload seguro de Logo ou Favicon via ImgBB / Supabase Storage.
+ * Server Action para upload seguro de Logo ou Favicon via Supabase Storage / ImgBB fallback.
  */
 export async function uploadSiteBrandingAction(formData: FormData): Promise<{
   success: boolean;
@@ -96,10 +96,10 @@ export async function uploadSiteBrandingAction(formData: FormData): Promise<{
   error?: string;
 }> {
   try {
-    const file = formData.get('file') as File;
+    const file = formData.get('file') as File | null;
     const type = (formData.get('type') as string) || 'logo';
 
-    if (!file || file.size === 0) {
+    if (!file || !(file instanceof File) || file.size === 0) {
       return { success: false, error: 'Nenhum arquivo enviado.' };
     }
 
@@ -114,11 +114,11 @@ export async function uploadSiteBrandingAction(formData: FormData): Promise<{
       url: uploaded.publicUrl,
       provider: uploaded.provider,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Erro no upload de branding:', err);
     return {
       success: false,
-      error: err.message || 'Falha ao processar upload da imagem da marca.',
+      error: (err as Error).message || 'Falha ao processar upload da imagem da marca.',
     };
   }
 }

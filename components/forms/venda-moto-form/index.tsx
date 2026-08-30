@@ -102,9 +102,11 @@ export function VendaMotoForm({ siteName }: { siteName?: string }) {
       if (selectedFiles.length > 0) {
         for (let i = 0; i < selectedFiles.length; i++) {
           const file = selectedFiles[i];
+          const uploadRequestId = `public-venda-${crypto.randomUUID()}`;
           const formData = new FormData();
           formData.append('file', file);
           formData.append('index', String(i));
+          formData.append('uploadRequestId', uploadRequestId);
 
           const res = await uploadPublicSellRequestImageAction(formData);
           if (res.success && res.image) {
@@ -139,9 +141,14 @@ export function VendaMotoForm({ siteName }: { siteName?: string }) {
       setCreatedProposalId(result.id || null);
       setIsSuccess(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[VendaMotoForm] Erro inesperado:', err);
-      toast.error('Erro de conexão ao enviar a proposta. Tente novamente.', { id: toastId });
+      toast.error(
+        (err as Error)?.message || 'Erro inesperado ao enviar formulário. Tente novamente.',
+        {
+          id: toastId,
+        },
+      );
     } finally {
       setIsSubmitting(false);
     }

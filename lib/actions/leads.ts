@@ -112,13 +112,15 @@ export interface SellRequestPayload {
 
 /**
  * Server action to upload an image from public announcement/sell form.
- * Uses centralized uploadImage orchestrator (ImgBB with Supabase Storage fallback).
+ * Uses centralized uploadImage orchestrator (Supabase Storage with ImgBB fallback).
  */
 export async function uploadPublicSellRequestImageAction(
   formData: FormData,
 ): Promise<{ success: boolean; image?: UploadedImage; url?: string; error?: string }> {
   try {
     const file = formData.get('file') as File | null;
+    const uploadRequestId = (formData.get('uploadRequestId') as string) || undefined;
+
     if (!file || !(file instanceof File) || file.size === 0) {
       return { success: false, error: 'Nenhum arquivo de imagem válido enviado.' };
     }
@@ -131,6 +133,7 @@ export async function uploadPublicSellRequestImageAction(
     const uploaded = await uploadImage({
       file,
       context: 'sell_request',
+      uploadRequestId,
     });
 
     return {

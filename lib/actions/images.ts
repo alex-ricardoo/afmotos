@@ -3,17 +3,22 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { MotorcycleImage } from '@/types/database';
-import { uploadImage, removeFromSupabaseStorage, getImageSource } from '@/lib/uploads';
+import {
+  uploadImage,
+  removeFromSupabaseStorage,
+  resolveImageUrl,
+  logUploadEvent,
+} from '@/lib/uploads';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type UploadImageResult =
-  | { success: true; image: MotorcycleImage; error?: never }
+  | { success: true; image: MotorcycleImage; fallbackTriggered?: boolean; error?: never }
   | { success: false; error: string; image?: never };
 
 /**
  * Server action to upload an image and associate it with a specific motorcycle.
- * Uses ImgBB as primary provider with automated Supabase Storage fallback.
+ * Follows Supabase Storage as primary provider with automated ImgBB fallback.
  */
 export async function uploadMotorcycleImageAction(formData: FormData): Promise<UploadImageResult> {
   const supabase = await createClient();
@@ -21,6 +26,7 @@ export async function uploadMotorcycleImageAction(formData: FormData): Promise<U
   const motorcycleId = formData.get('motorcycleId') as string;
   const file = formData.get('file') as File | null;
   const altText = (formData.get('altText') as string) || null;
+  const uploadRequestId = (formData.get('uploadRequestId') as string) || undefined;
 
   // 1. Basic validation
   if (!motorcycleId || !UUID_REGEX.test(motorcycleId)) {
@@ -42,7 +48,7 @@ export async function uploadMotorcycleImageAction(formData: FormData): Promise<U
     return { success: false, error: 'Motocicleta não encontrada no sistema.' };
   }
 
-  // 3. Upload image via centralized orchestrator (ImgBB -> Supabase Storage fallback)
+  // 3. Upload image via centralized orchestrator (Supabase Storage 1st -> ImgBB fallback)
   let uploadResult;
   try {
     uploadResult = await uploadImage({
@@ -50,6 +56,7 @@ export async function uploadMotorcycleImageAction(formData: FormData): Promise<U
       context: 'motorcycle',
       entityId: motorcycleId,
       altText: altText || undefined,
+      uploadRequestId,
     });
   } catch (err: unknown) {
     console.error('Error during image upload orchestration:', err);
@@ -74,7 +81,7 @@ export async function uploadMotorcycleImageAction(formData: FormData): Promise<U
       : -1;
   const nextSortOrder = maxSortOrder + 1;
 
-  // 5. Insert row in public.motorcycle_images with external metadata
+  // 5. Insert row in public.motorcycle_images
   const insertPayload = {
     motorcycle_id: motorcycleId,
     provider: uploadResult.provider,
@@ -94,7 +101,7 @@ export async function uploadMotorcycleImageAction(formData: FormData): Promise<U
     .select('*')
     .single();
 
-  // Fallback: se o banco ainda não possuir as novas colunas de metadados externos
+  // Fallback for legacy DB schema if external metadata columns are absent
   if (insertError) {
     const legacyPayload = {
       motorcycle_id: motorcycleId,
@@ -114,15 +121,46 @@ export async function uploadMotorcycleImageAction(formData: FormData): Promise<U
     }
   }
 
-  // 6. Rollback if insert fails
+  // 6. Rollback / Compensation if DB insert fails
   if (insertError || !imageRow) {
-    console.error(
-      'Failed to insert motorcycle_images record. Rolling back uploaded file if on Supabase:',
-      insertError,
-    );
+    logUploadEvent('image_record_persist_failed', {
+      requestId: uploadRequestId,
+      context: 'motorcycle',
+      entityId: motorcycleId,
+      provider: uploadResult.provider,
+      storagePath: uploadResult.storagePath,
+      message: insertError?.message || 'Falha ao inserir registro da imagem no banco de dados',
+    });
+
     if (uploadResult.provider === 'supabase' && uploadResult.storagePath) {
-      await removeFromSupabaseStorage(uploadResult.storagePath);
+      logUploadEvent('image_cleanup_attempted', {
+        requestId: uploadRequestId,
+        context: 'motorcycle',
+        entityId: motorcycleId,
+        provider: 'supabase',
+        storagePath: uploadResult.storagePath,
+      });
+
+      const cleaned = await removeFromSupabaseStorage(uploadResult.storagePath);
+      if (cleaned) {
+        logUploadEvent('image_cleanup_succeeded', {
+          requestId: uploadRequestId,
+          context: 'motorcycle',
+          entityId: motorcycleId,
+          provider: 'supabase',
+          storagePath: uploadResult.storagePath,
+        });
+      } else {
+        logUploadEvent('image_cleanup_failed', {
+          requestId: uploadRequestId,
+          context: 'motorcycle',
+          entityId: motorcycleId,
+          provider: 'supabase',
+          storagePath: uploadResult.storagePath,
+        });
+      }
     }
+
     return {
       success: false,
       error:
@@ -140,9 +178,10 @@ export async function uploadMotorcycleImageAction(formData: FormData): Promise<U
 
   return {
     success: true,
+    fallbackTriggered: uploadResult.fallbackTriggered,
     image: {
       ...imageRow,
-      url: getImageSource(imageRow),
+      url: resolveImageUrl(imageRow),
     },
   };
 }
@@ -179,7 +218,6 @@ export async function deleteMotorcycleImageAction(
   if (provider === 'supabase' && imageRecord.storage_path) {
     await removeFromSupabaseStorage(imageRecord.storage_path);
   } else if (provider === 'imgbb') {
-    // Audit log for ImgBB deletion
     console.info(`[ImgBB] Imagem desvinculada do catálogo (ID: ${imageId}). Delete URL arquivada.`);
   }
 
@@ -215,7 +253,7 @@ export async function deleteMotorcycleImageAction(
   revalidatePath('/admin/motos');
   revalidatePath(`/admin/motos/${motorcycleId}/editar`);
   revalidatePath('/motos');
-  const slug = (imageRecord.motorcycles as any)?.slug;
+  const slug = (imageRecord.motorcycles as { slug?: string } | null)?.slug;
   if (slug) {
     revalidatePath(`/motos/${slug}`);
   }
@@ -311,6 +349,6 @@ export async function getMotorcycleImagesAction(motorcycleId: string): Promise<M
 
   return data.map((img) => ({
     ...img,
-    url: getImageSource(img),
+    url: resolveImageUrl(img),
   }));
 }
