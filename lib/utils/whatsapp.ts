@@ -1,5 +1,6 @@
-import { CONSTANTS } from './constants';
-import { ProposalViewModel } from '../admin/proposal-view-model';
+import { CONSTANTS } from './constants.ts';
+import type { ProposalViewModel } from '../admin/proposal-view-model.ts';
+import { formatBrazilianPlate } from '../vehicle-lookup/plate.ts';
 
 /**
  * Normaliza o número de telefone para o padrão internacional do WhatsApp (wa.me)
@@ -62,6 +63,48 @@ export function generateWhatsAppLink(phone: string | undefined | null, message: 
   const encodedMessage = encodeURIComponent(message);
 
   return `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+}
+
+export interface BuildVehicleHistoryWhatsAppParams {
+  phone?: string | null;
+  plate?: string | null;
+  price?: number;
+  template?: string;
+  siteName?: string;
+}
+
+/**
+ * Monta o link wa.me para solicitação de Histórico Veicular com placa opcional e preço dinâmico.
+ */
+export function buildVehicleHistoryWhatsAppUrl({
+  phone,
+  plate,
+  price = 39.99,
+  template,
+  siteName = CONSTANTS.STORE_NAME,
+}: BuildVehicleHistoryWhatsAppParams): string {
+  const formattedPrice = price.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+
+  let message: string;
+
+  if (plate && plate.trim().length > 0) {
+    const formattedPlate = formatBrazilianPlate(plate);
+    if (template && template.includes('{PLATE}')) {
+      message = template
+        .replace(/{PLATE}/g, formattedPlate)
+        .replace(/{PRICE}/g, formattedPrice)
+        .replace(/{SITE_NAME}/g, siteName);
+    } else {
+      message = `Olá! Quero solicitar o Histórico Veicular da moto com placa ${formattedPlate}. Vi a consulta por ${formattedPrice} no site da ${siteName} e gostaria de saber como pagar e receber o relatório.`;
+    }
+  } else {
+    message = `Olá! Vi o serviço de Histórico Veicular no site da ${siteName} e gostaria de tirar algumas dúvidas antes de solicitar a consulta.`;
+  }
+
+  return generateWhatsAppLink(phone, message);
 }
 
 export function generateMotorcycleInterestMessage(motorcycle: {

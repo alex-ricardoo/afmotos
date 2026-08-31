@@ -32,8 +32,14 @@ export function Header({ settings }: { settings?: any }) {
   const logoInfo = getSiteLogo(settings);
   const initials = getSiteInitials(siteName, settings?.settings?.shortName || settings?.settings?.short_name);
   const isAboutPublished = settings?.settings?.about?.isPublished === true;
+  const isVehicleHistoryPublished =
+    settings?.settings?.vehicleHistory?.isEnabled !== false &&
+    settings?.settings?.vehicleHistory?.isPublishedInNav !== false;
 
   const navLinks = [...baseNavLinks];
+  if (isVehicleHistoryPublished) {
+    navLinks.push({ href: '/historico-veicular', label: 'Histórico Veicular' });
+  }
   if (isAboutPublished) {
     navLinks.push({ href: '/sobre', label: 'Sobre nós' }); // Inserir no final
   }

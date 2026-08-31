@@ -21,6 +21,7 @@ import {
   ArrowLeft,
   Sparkles,
   Info,
+  FileSearch,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,8 @@ import { SocialTab } from './settings/social-tab';
 import { ContentTab } from './settings/content-tab';
 import { SeoTab } from './settings/seo-tab';
 import { AboutTab } from './settings/about-tab';
-import { aboutSettingsSchema } from '@/lib/settings/schema';
+import { VehicleHistoryTab } from './settings/vehicle-history-tab';
+import { aboutSettingsSchema, vehicleHistorySettingsSchema } from '@/lib/settings/schema';
 import { isValidCnpj, normalizeCnpj, formatCnpj } from '@/lib/utils/cnpj';
 
 const settingsSchema = z.object({
@@ -99,6 +101,7 @@ const settingsSchema = z.object({
       })
       .optional(),
     about: aboutSettingsSchema.optional(),
+    vehicleHistory: vehicleHistorySettingsSchema.optional(),
     // Chaves legadas
     short_name: z.string().optional(),
     institutional_description: z.string().optional(),
@@ -126,6 +129,7 @@ const TABS = [
   { id: 'social', label: 'Redes Sociais', icon: Share2 },
   { id: 'content', label: 'Conteúdo', icon: FileText },
   { id: 'about', label: 'Sobre a Loja', icon: Info },
+  { id: 'vehicle-history', label: 'Histórico Veicular', icon: FileSearch },
   { id: 'seo', label: 'SEO & Buscas', icon: Search },
 ] as const;
 
@@ -216,6 +220,26 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
           description: '',
           ogImageUrl: '',
         },
+      },
+      vehicleHistory: rawSettings.vehicleHistory || {
+        isEnabled: true,
+        price: 39.99,
+        currency: 'BRL',
+        priceLabel: 'Consulta completa por R$ 39,99',
+        positioningMode: 'COMPETITIVE',
+        customPositioningText: '',
+        claimEvidenceText: '',
+        claimEvidenceDate: '',
+        whatsappPhoneOverride: '',
+        whatsappMessageTemplate:
+          'Olá! Quero solicitar o Histórico Veicular da moto com placa {PLATE}. Vi a consulta por {PRICE} no site da {SITE_NAME} e gostaria de realizar o pagamento via WhatsApp para receber o laudo.',
+        heroTitle:
+          'Vai comprar, vender ou já tem uma moto? Consulte o histórico veicular.',
+        heroSubtitle:
+          'Com apenas a placa, obtenha o laudo completo para negociar com segurança máxima, valorizar sua moto na venda ou checar pendências. Pagamento 100% no WhatsApp com atendimento ágil.',
+        disclaimerText:
+          'O relatório reúne informações disponibilizadas pelas bases consultadas na data da consulta. Ele ajuda na análise do veículo, mas não substitui vistoria mecânica, conferência de documentos ou avaliação física.',
+        isPublishedInNav: true,
       },
       // Compatibilidade legada
       short_name: rawSettings.short_name || rawSettings.shortName || '',
@@ -337,6 +361,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
             {activeTab === 'social' && <SocialTab form={form} />}
             {activeTab === 'content' && <ContentTab form={form} />}
             {activeTab === 'about' && <AboutTab form={form} />}
+            {activeTab === 'vehicle-history' && <VehicleHistoryTab form={form} />}
             {activeTab === 'seo' && <SeoTab form={form} />}
           </div>
 

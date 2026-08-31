@@ -54,3 +54,59 @@ export const aboutSettingsSchema = z.object({
   location: locationSettingsSchema.optional(),
   seo: seoSettingsSchema.optional(),
 });
+
+export const vehicleHistorySettingsSchema = z
+  .object({
+    isEnabled: z.boolean().default(true),
+    price: z.coerce
+      .number({ message: 'Preço deve ser um valor numérico' })
+      .positive('O preço da consulta deve ser maior que zero')
+      .max(999.99, 'Preço máximo permitido é R$ 999,99')
+      .default(39.99),
+    currency: z.string().default('BRL'),
+    priceLabel: z.string().max(100).optional().default('Consulta completa por R$ 39,99'),
+    positioningMode: z
+      .enum(['COMPETITIVE', 'REGIONAL_BEST', 'SPECIAL_OFFER', 'CHEAPEST_MARKET', 'CUSTOM'])
+      .default('COMPETITIVE'),
+    customPositioningText: z.string().max(160).optional().nullable(),
+    claimEvidenceText: z.string().max(300).optional().nullable(),
+    claimEvidenceDate: z.string().optional().nullable(),
+    whatsappPhoneOverride: z.string().max(25).optional().nullable(),
+    whatsappMessageTemplate: z.string().max(500).optional(),
+    heroTitle: z.string().max(120).optional(),
+    heroSubtitle: z.string().max(250).optional(),
+    disclaimerText: z.string().max(500).optional(),
+    isPublishedInNav: z.boolean().default(true),
+    updatedAt: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.positioningMode === 'CHEAPEST_MARKET') {
+      if (!data.claimEvidenceText || data.claimEvidenceText.trim().length < 10) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['claimEvidenceText'],
+          message:
+            'Para usar a alegação "Mais barato do mercado", é obrigatório registrar a fonte e metodologia da pesquisa comprobatória (mínimo 10 caracteres).',
+        });
+      }
+      if (!data.claimEvidenceDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['claimEvidenceDate'],
+          message: 'Informe a data em que a pesquisa de mercado foi realizada.',
+        });
+      }
+    }
+
+    if (
+      data.positioningMode === 'CUSTOM' &&
+      (!data.customPositioningText || data.customPositioningText.trim().length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['customPositioningText'],
+        message: 'Informe o texto personalizado de posicionamento.',
+      });
+    }
+  });
+

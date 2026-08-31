@@ -81,6 +81,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
 
+    // Inclui a página /historico-veicular apenas se o serviço estiver ativo
+    if (!siteSettings?.vehicleHistory || siteSettings.vehicleHistory.isEnabled !== false) {
+      staticRoutes.push({
+        url: `${baseUrl}/historico-veicular`,
+        lastModified: currentDate,
+        changeFrequency: 'weekly',
+        priority: 0.8,
+      });
+    }
+
     // 2. Consulta de Inventário Ativo (Apenas motos com status AVAILABLE)
     const { data: activeMotorcycles, error } = await supabase
       .from('motorcycles')

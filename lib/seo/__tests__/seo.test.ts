@@ -12,6 +12,7 @@ import { buildAutoDealerSchema } from '../schemas/auto-dealer.ts';
 import { buildMotorcycleProductSchema } from '../schemas/product.ts';
 import { buildBreadcrumbsSchema } from '../schemas/breadcrumbs.ts';
 import { buildFaqSchema } from '../schemas/faq.ts';
+import { buildVehicleHistoryServiceSchema } from '../schemas/vehicle-history.ts';
 
 describe('SEO Centralized Configuration & Helpers', () => {
   it('resolves fallback site URL when environment variable is unset', () => {
@@ -204,6 +205,24 @@ describe('Schema.org Builders', () => {
     assert.strictEqual(entities[0].name, 'Como funciona a avaliação?');
     assert.strictEqual(entities[0].acceptedAnswer['@type'], 'Answer');
     assert.strictEqual(entities[0].acceptedAnswer.text, 'Avaliamos pela tabela FIPE.');
+  });
+
+  it('builds valid Vehicle History Service, Breadcrumb and FAQ schemas', () => {
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://afmotos.com.br';
+    const schemas = buildVehicleHistoryServiceSchema({
+      siteName: 'AF Motos',
+      price: 39.99,
+      faqs: [
+        { question: 'O que consulta?', answer: 'Débitos e leilão.' },
+      ],
+    });
+
+    assert.strictEqual(schemas.length, 3);
+    const [service, breadcrumb, faq] = schemas;
+    assert.strictEqual(service['@type'], 'Service');
+    assert.strictEqual((service.offers as Record<string, unknown>).price, '39.99');
+    assert.strictEqual(breadcrumb['@type'], 'BreadcrumbList');
+    assert.strictEqual(faq['@type'], 'FAQPage');
   });
 });
 

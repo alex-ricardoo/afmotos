@@ -7,6 +7,7 @@ import {
   DetailedAddress,
   FormattedBusinessHours,
   AboutSettings,
+  VehicleHistorySettings,
 } from '@/types/site-settings';
 
 /**
@@ -76,6 +77,7 @@ export function resolvePublicSiteSettings(raw?: SiteSettingsRecord | null): {
   aboutText?: string;
   footerText?: string;
   about?: AboutSettings;
+  vehicleHistory?: VehicleHistorySettings;
 } {
   const siteName = raw?.site_name || CONSTANTS.STORE_NAME;
   const shortName = raw?.settings?.shortName || raw?.settings?.short_name || siteName;
@@ -113,6 +115,39 @@ export function resolvePublicSiteSettings(raw?: SiteSettingsRecord | null): {
     aboutText: raw?.settings?.publicContent?.aboutText,
     footerText: raw?.settings?.publicContent?.footerText,
     about: raw?.settings?.about,
+    vehicleHistory: getVehicleHistorySettings(raw),
+  };
+}
+
+/**
+ * Retorna as configurações de histórico veicular com defaults seguros.
+ */
+export function getVehicleHistorySettings(raw?: SiteSettingsRecord | null): VehicleHistorySettings {
+  const custom = raw?.settings?.vehicleHistory;
+  return {
+    isEnabled: custom?.isEnabled !== false,
+    price: typeof custom?.price === 'number' && custom.price > 0 ? custom.price : 39.99,
+    currency: custom?.currency || 'BRL',
+    priceLabel: custom?.priceLabel || 'Consulta completa por R$ 39,99',
+    positioningMode: custom?.positioningMode || 'COMPETITIVE',
+    customPositioningText: custom?.customPositioningText || null,
+    claimEvidenceText: custom?.claimEvidenceText || null,
+    claimEvidenceDate: custom?.claimEvidenceDate || null,
+    whatsappPhoneOverride: custom?.whatsappPhoneOverride || null,
+    whatsappMessageTemplate:
+      custom?.whatsappMessageTemplate ||
+      'Olá! Quero solicitar o Histórico Veicular da moto com placa {PLATE}. Vi a consulta por {PRICE} no site da {SITE_NAME} e gostaria de realizar o pagamento via WhatsApp para receber o laudo.',
+    heroTitle:
+      custom?.heroTitle ||
+      'Vai comprar, vender ou já tem uma moto? Consulte o histórico veicular.',
+    heroSubtitle:
+      custom?.heroSubtitle ||
+      'Com apenas a placa, obtenha o laudo completo para negociar com segurança máxima, valorizar sua moto na venda ou checar pendências. Pagamento 100% no WhatsApp com atendimento ágil.',
+    disclaimerText:
+      custom?.disclaimerText ||
+      'O relatório reúne informações disponibilizadas pelas bases consultadas na data da consulta. Ele ajuda na análise do veículo, mas não substitui vistoria mecânica, conferência de documentos ou avaliação física.',
+    isPublishedInNav: custom?.isPublishedInNav !== false,
+    updatedAt: custom?.updatedAt,
   };
 }
 

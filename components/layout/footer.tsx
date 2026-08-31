@@ -229,6 +229,17 @@ export function Footer({ settings }: { settings?: any }) {
                   Anuncie sua Moto
                 </Link>
               </li>
+              {settings?.settings?.vehicleHistory?.isEnabled !== false &&
+                settings?.settings?.vehicleHistory?.isPublishedInNav !== false && (
+                  <li>
+                    <Link
+                      href="/historico-veicular"
+                      className="hover:text-amber-500 transition-colors duration-200"
+                    >
+                      Histórico Veicular
+                    </Link>
+                  </li>
+                )}
 
               <li>
                 <Link

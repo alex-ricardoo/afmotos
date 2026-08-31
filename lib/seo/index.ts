@@ -10,3 +10,5 @@ export * from './schemas/auto-dealer.ts';
 export * from './schemas/product.ts';
 export * from './schemas/breadcrumbs.ts';
 export * from './schemas/faq.ts';
+export * from './schemas/vehicle-history.ts';
+

@@ -107,6 +107,31 @@ export interface AboutSettings {
   seo?: SeoSettings;
 }
 
+export type VehicleHistoryPositioningMode =
+  | 'COMPETITIVE'
+  | 'REGIONAL_BEST'
+  | 'SPECIAL_OFFER'
+  | 'CHEAPEST_MARKET'
+  | 'CUSTOM';
+
+export interface VehicleHistorySettings {
+  isEnabled: boolean;
+  price: number;
+  currency: string;
+  priceLabel?: string;
+  positioningMode: VehicleHistoryPositioningMode;
+  customPositioningText?: string | null;
+  claimEvidenceText?: string | null;
+  claimEvidenceDate?: string | null;
+  whatsappPhoneOverride?: string | null;
+  whatsappMessageTemplate?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  disclaimerText?: string;
+  isPublishedInNav: boolean;
+  updatedAt?: string;
+}
+
 export interface SiteSettingsData {
   shortName?: string;
   slogan?: string;
@@ -128,6 +153,7 @@ export interface SiteSettingsData {
   youtube_url?: string;
   
   about?: AboutSettings;
+  vehicleHistory?: VehicleHistorySettings;
 }
 
 export interface SiteSettingsRecord {

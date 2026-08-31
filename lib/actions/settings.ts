@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { uploadImage } from '@/lib/uploads';
 import { SiteSettingsData } from '@/types/site-settings';
-import { aboutSettingsSchema } from '@/lib/settings/schema';
+import { aboutSettingsSchema, vehicleHistorySettingsSchema } from '@/lib/settings/schema';
 
 export async function getSettings() {
   const supabase = await createClient();
@@ -51,6 +51,19 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
     settings.about = aboutValidation.data;
   }
 
+  if (settings.vehicleHistory) {
+    const vehicleHistoryValidation = vehicleHistorySettingsSchema.safeParse(settings.vehicleHistory);
+    if (!vehicleHistoryValidation.success) {
+      const firstError = vehicleHistoryValidation.error.issues[0]?.message || 'Dados de Histórico Veicular inválidos.';
+      console.error('Erro de validação em Histórico Veicular:', vehicleHistoryValidation.error);
+      return { error: firstError };
+    }
+    settings.vehicleHistory = {
+      ...vehicleHistoryValidation.data,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   const dbPayload = {
     site_name,
     whatsapp_phone,
@@ -82,6 +95,7 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
   }
 
   revalidatePath('/', 'layout');
+  revalidatePath('/historico-veicular');
   revalidatePath('/admin/configuracoes');
   return { success: true };
 }
