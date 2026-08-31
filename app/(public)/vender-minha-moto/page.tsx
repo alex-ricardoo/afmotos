@@ -5,27 +5,51 @@ import { Banknote, ShieldCheck, Zap, FileCheck, Scale } from 'lucide-react';
 
 import { getSettings } from '@/lib/actions/settings';
 import { CONSTANTS } from '@/lib/utils/constants';
+import {
+  buildPageMetadata,
+  JsonLd,
+  buildBreadcrumbsSchema,
+  buildFaqSchema,
+  SEO_CONFIG,
+} from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
-  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
-  return {
+  const siteName = settings?.site_name || SEO_CONFIG.defaultStoreName;
+
+  return buildPageMetadata({
     title: `Venda sua Moto para a ${siteName} | Avaliação Justa e Pagamento Seguro`,
-    description: `Quer vender sua moto com rapidez e segurança? Consulte o valor na Tabela FIPE, simule uma proposta e venda diretamente para a ${siteName} sem dor de cabeça.`,
-    openGraph: {
-      title: `Venda sua Moto para a ${siteName} | Avaliação Justa e Pagamento Seguro`,
-      description: `Receba uma avaliação transparente e venda sua motocicleta diretamente para a ${siteName} com pagamento via PIX.`,
-      type: 'website',
-    },
-  };
+    description: `Quer vender sua moto em Cabo de Santo Agostinho ou Pernambuco? Consulte a Tabela FIPE, simule sua proposta e venda diretamente para a ${siteName} com pagamento seguro via PIX.`,
+    path: '/vender-minha-moto',
+  });
 }
 
 export default async function VenderMinhaMotoPage() {
   const settings = await getSettings();
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
 
+  const breadcrumbsSchema = buildBreadcrumbsSchema([
+    { name: 'Início', path: '/' },
+    { name: 'Venda sua Moto', path: '/vender-minha-moto' },
+  ]);
+
+  const faqSchema = buildFaqSchema([
+    {
+      question: `Como a ${siteName} avalia minha moto?`,
+      answer:
+        'Utilizamos a Tabela FIPE oficial atualizada como referência de mercado e avaliamos o estado de conservação, quilometragem e documentação do veículo para fazer uma proposta justa.',
+    },
+    {
+      question: 'Como e quando recebo o pagamento da moto?',
+      answer:
+        'Após a vistoria presencial e conferência do laudo cautelar e documentação de transferência, o pagamento é realizado integralmente à vista via transferência bancária ou PIX.',
+    },
+  ]);
+
   return (
     <div className="bg-[#050505] min-h-screen pb-20 text-zinc-100">
+      <JsonLd data={breadcrumbsSchema} id="vender-breadcrumbs-schema" />
+      <JsonLd data={faqSchema} id="vender-faq-schema" />
       {/* Header Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-b from-zinc-950 via-zinc-900 to-[#050505] py-14 sm:py-20 border-b border-zinc-800/80">
         {/* Luxury Gold Glow Effects */}

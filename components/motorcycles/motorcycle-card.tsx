@@ -69,7 +69,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
                 <div className="absolute inset-0 animate-pulse bg-zinc-800/50" />
                 <Image
                   src={motorcycle.image_url}
-                  alt={`${motorcycle.brand} ${motorcycle.model}`}
+                  alt={`${motorcycle.brand} ${motorcycle.model} ${motorcycle.year_model || ''} - ${storeName}`}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover relative z-10"
@@ -105,7 +105,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
                   <div className="absolute inset-0 animate-pulse bg-zinc-800/50" />
                   <Image
                     src={motorcycle.image_url}
-                    alt={`${motorcycle.brand} ${motorcycle.model}`}
+                    alt={`${motorcycle.brand} ${motorcycle.model} ${motorcycle.year_model || ''} à venda na ${storeName}`}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover relative z-10 transition-transform duration-500 ease-out group-hover:scale-105"

@@ -3,6 +3,7 @@
  */
 
 import { CONSTANTS } from './constants';
+import { getBaseSiteUrl } from '@/lib/seo';
 
 export interface ShareableMotorcycle {
   slug: string;
@@ -26,9 +27,8 @@ export function getPublicMotorcycleUrl(
 ): string {
   const origin =
     baseUrl ||
-    (typeof window !== 'undefined' ? window.location.origin : '') ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    'https://aflocacoesevendas.com.br';
+    (typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '') ||
+    getBaseSiteUrl();
 
   const cleanOrigin = origin.replace(/\/+$/, '');
   const path = motorcycle.slug ? `/motos/${motorcycle.slug}` : `/motos`;

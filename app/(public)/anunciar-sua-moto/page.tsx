@@ -13,19 +13,46 @@ import {
 import { getSettings } from '@/lib/actions/settings';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { Metadata } from 'next';
+import {
+  buildPageMetadata,
+  JsonLd,
+  buildBreadcrumbsSchema,
+  buildFaqSchema,
+  SEO_CONFIG,
+} from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
-  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
-  return {
+  const siteName = settings?.site_name || SEO_CONFIG.defaultStoreName;
+
+  return buildPageMetadata({
     title: `Anuncie sua Moto | ${siteName}`,
-    description: `Quer vender sua moto? Envie as informações e fotos para a ${siteName}. Analisamos os dados e combinamos os próximos passos diretamente pelo WhatsApp.`,
-  };
+    description: `Quer vender ou consignar sua moto em Cabo de Santo Agostinho - PE? Envie as fotos e dados para a ${siteName}. Cuidamos do anúncio, atendimento e transferência segura.`,
+    path: '/anunciar-sua-moto',
+  });
 }
 
 export default async function AnunciarSuaMotoPage() {
   const settings = await getSettings();
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+
+  const breadcrumbsSchema = buildBreadcrumbsSchema([
+    { name: 'Início', path: '/' },
+    { name: 'Anuncie sua Moto', path: '/anunciar-sua-moto' },
+  ]);
+
+  const faqSchema = buildFaqSchema([
+    {
+      question: 'Como funciona o anúncio e intermediação da moto?',
+      answer:
+        'Você envia as fotos e informações da sua motocicleta. Nós analisamos os dados e histórico FIPE, definimos o valor com você e divulgamos para compradores interessados.',
+    },
+    {
+      question: `A ${siteName} ajuda na transferência no DETRAN?`,
+      answer:
+        'Sim, orientamos e cuidamos de todo o processo de documentação e contrato de compra e venda com total segurança jurídica.',
+    },
+  ]);
 
   const steps = [
     {
@@ -56,6 +83,8 @@ export default async function AnunciarSuaMotoPage() {
 
   return (
     <div className="bg-[#050505] min-h-screen pb-20 text-zinc-100">
+      <JsonLd data={breadcrumbsSchema} id="anunciar-breadcrumbs-schema" />
+      <JsonLd data={faqSchema} id="anunciar-faq-schema" />
       {/* Header Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-b from-zinc-950 via-zinc-900 to-[#050505] py-16 sm:py-20 border-b border-zinc-800/80">
         {/* Subtle Luxury Glow Effects */}
@@ -72,7 +101,8 @@ export default async function AnunciarSuaMotoPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto font-normal">
-            Preencha as informações abaixo e receba uma avaliação justa da nossa equipe para vender sua moto de forma rápida, simples e sem dor de cabeça.
+            Preencha as informações abaixo e receba uma avaliação justa da nossa equipe para vender
+            sua moto de forma rápida, simples e sem dor de cabeça.
           </p>
         </div>
       </div>
@@ -140,7 +170,8 @@ export default async function AnunciarSuaMotoPage() {
               </div>
               <h4 className="font-extrabold text-sm text-white">Avaliação Justa & Transparente</h4>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Análise baseada no valor de mercado FIPE e no estado de conservação real da sua moto.
+                Análise baseada no valor de mercado FIPE e no estado de conservação real da sua
+                moto.
               </p>
             </div>
 
@@ -158,7 +189,9 @@ export default async function AnunciarSuaMotoPage() {
               <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
                 <FileCheck className="w-6 h-6" />
               </div>
-              <h4 className="font-extrabold text-sm text-white">Segurança na Transferência Legal</h4>
+              <h4 className="font-extrabold text-sm text-white">
+                Segurança na Transferência Legal
+              </h4>
               <p className="text-xs text-zinc-400 leading-relaxed">
                 Ajudamos com toda a documentação e transferência no DETRAN de forma segura.
               </p>

@@ -1,14 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import {
-  ChevronRight,
-  ArrowLeft,
-  MapPin,
-  Clock,
-  BadgeCheck,
-  ClipboardCheck,
-} from 'lucide-react';
+import { ChevronRight, ArrowLeft, MapPin, Clock, BadgeCheck, ClipboardCheck } from 'lucide-react';
 import { Metadata } from 'next';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { getMotorcycleBySlug, getFeaturedMotorcycles } from '@/lib/queries/motorcycles';
@@ -28,6 +21,15 @@ import { getBusinessHours, getMapsUrl } from '@/lib/site-settings';
 import { MotorcycleShareSection } from '@/components/motorcycles/motorcycle-share-section';
 import { getPublicMotorcycleUrl } from '@/lib/utils/share';
 import { PaymentMethods } from '@/components/ui/payment-methods';
+import {
+  buildPageMetadata,
+  JsonLd,
+  buildMotorcycleProductSchema,
+  buildBreadcrumbsSchema,
+  formatMotorcycleTitle,
+  formatMotorcycleDescription,
+  SEO_CONFIG,
+} from '@/lib/seo';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -35,38 +37,31 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const [moto, settings] = await Promise.all([
-    getMotorcycleBySlug(slug),
-    getSettings(),
-  ]);
+  const [moto, settings] = await Promise.all([getMotorcycleBySlug(slug), getSettings()]);
 
-  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  const siteName = settings?.site_name || SEO_CONFIG.defaultStoreName;
 
-  if (!moto) {
-    return { title: `Moto não encontrada | ${siteName}` };
+  if (!moto || moto.status === 'HIDDEN') {
+    return {
+      title: 'Moto não encontrada',
+      description: 'A motocicleta solicitada não está disponível no momento.',
+      robots: { index: false, follow: true },
+    };
   }
 
-  const priceFormatted = moto.price ? ` - ${formatCurrency(moto.price)}` : '';
-  const title = `${moto.brand} ${moto.model} ${moto.year_model}${priceFormatted} | ${siteName}`;
-  const description = moto.description
-    ? moto.description.substring(0, 160)
-    : `Confira a ${moto.brand} ${moto.model} (${moto.year_model}) na ${siteName}. Negociação direta e atendimento pelo WhatsApp.`;
+  const isSold = moto.status === 'SOLD';
+  const title = formatMotorcycleTitle(moto);
+  const description = formatMotorcycleDescription(moto, siteName);
+  const primaryImage = moto.images?.[0]?.url || moto.image_url || null;
 
-  const canonicalUrl = getPublicMotorcycleUrl(moto);
-
-  return {
+  return buildPageMetadata({
     title,
     description,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
-      title,
-      description,
-      url: canonicalUrl,
-      images: moto.images?.[0] ? [moto.images[0].url] : [],
-    },
-  };
+    path: `/motos/${moto.slug}`,
+    ogImage: primaryImage,
+    ogType: 'website',
+    noIndex: isSold,
+  });
 }
 
 export default async function MotorcycleDetailPage({ params }: Props) {
@@ -77,19 +72,19 @@ export default async function MotorcycleDetailPage({ params }: Props) {
     getSettings(),
   ]);
 
-  if (!moto) {
+  if (!moto || moto.status === 'HIDDEN') {
     notFound();
   }
 
   const whatsappPhone = settings?.whatsapp_phone;
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
   const businessHours = getBusinessHours(settings);
-  const addressText = settings?.address || 'Visitação e checagem da moto disponíveis com agendamento prévio pelo WhatsApp.';
+  const addressText =
+    settings?.address ||
+    'Visitação e checagem da moto disponíveis com agendamento prévio pelo WhatsApp.';
   const mapsUrl = getMapsUrl(settings);
 
-  const relatedMotos = allFeatured
-    .filter((m) => m.slug !== moto.slug)
-    .slice(0, 3);
+  const relatedMotos = allFeatured.filter((m) => m.slug !== moto.slug).slice(0, 3);
 
   const images =
     moto.images?.length > 0
@@ -103,8 +98,17 @@ export default async function MotorcycleDetailPage({ params }: Props) {
     generateMotorcycleInterestMessage(moto),
   );
 
+  const productSchema = buildMotorcycleProductSchema(moto, siteName);
+  const breadcrumbsSchema = buildBreadcrumbsSchema([
+    { name: 'Início', path: '/' },
+    { name: 'Motos Disponíveis', path: '/motos' },
+    { name: `${moto.brand} ${moto.model}`, path: `/motos/${moto.slug}` },
+  ]);
+
   return (
     <div className="bg-[#050505] min-h-screen pb-24 md:pb-16 text-[#f4f4f2]">
+      <JsonLd data={productSchema} id="motorcycle-product-schema" />
+      <JsonLd data={breadcrumbsSchema} id="motorcycle-breadcrumbs-schema" />
       {/* Breadcrumb Bar */}
       <div className="border-b border-[#c9a44c]/20 bg-[#0d0d0d]">
         <div className="container mx-auto px-4 md:px-6 py-3.5 flex items-center justify-between text-xs text-[#a6a6a1]">
@@ -210,15 +214,21 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                 <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5">
                   <BadgeCheck className="w-5 h-5 text-amber-400 shrink-0" />
                   <div>
-                    <span className="block text-xs font-black text-amber-300">Garantia de 90 dias</span>
-                    <span className="block text-[10px] text-zinc-400">Cobre motor e câmbio por 90 dias.</span>
+                    <span className="block text-xs font-black text-amber-300">
+                      Garantia de 90 dias
+                    </span>
+                    <span className="block text-[10px] text-zinc-400">
+                      Cobre motor e câmbio por 90 dias.
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5">
                   <ClipboardCheck className="w-5 h-5 text-amber-400 shrink-0" />
                   <div>
                     <span className="block text-xs font-black text-amber-300">Moto revisada</span>
-                    <span className="block text-[10px] text-zinc-400">Verificada antes de chegar até você.</span>
+                    <span className="block text-[10px] text-zinc-400">
+                      Verificada antes de chegar até você.
+                    </span>
                   </div>
                 </div>
               </div>
@@ -300,7 +310,11 @@ export default async function MotorcycleDetailPage({ params }: Props) {
               </Link>
             </div>
 
-            <MotorcycleGrid motorcycles={relatedMotos} whatsappPhone={whatsappPhone} siteName={siteName} />
+            <MotorcycleGrid
+              motorcycles={relatedMotos}
+              whatsappPhone={whatsappPhone}
+              siteName={siteName}
+            />
           </div>
         )}
       </div>

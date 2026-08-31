@@ -4,11 +4,8 @@ import {
   ArrowRight,
   ShieldCheck,
   FileCheck,
-  Wrench,
-  KeyRound,
   Sparkles,
   CheckCircle2,
-  ChevronRight,
   Bike,
   Tag,
   Banknote,
@@ -26,6 +23,22 @@ import { getSettings } from '@/lib/actions/settings';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 import { PaymentMethods } from '@/components/ui/payment-methods';
+import { Metadata } from 'next';
+import { buildPageMetadata, JsonLd, buildAutoDealerSchema, SEO_CONFIG } from '@/lib/seo';
+import { getSiteLogo, getSocialLinks } from '@/lib/site-settings';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const siteName = settings?.site_name || SEO_CONFIG.defaultStoreName;
+
+  return buildPageMetadata({
+    title: `${siteName} | Motos usadas e seminovas em Cabo de Santo Agostinho - PE`,
+    description:
+      settings?.settings?.description ||
+      `Encontre motos usadas e seminovas na ${siteName}, em Cabo de Santo Agostinho - PE. Confira nosso estoque revisado com laudo cautelar aprovado e garantia. Fale conosco pelo WhatsApp.`,
+    path: '/',
+  });
+}
 
 export default async function HomePage() {
   const [featuredMotos, facets, settings] = await Promise.all([
@@ -35,9 +48,24 @@ export default async function HomePage() {
   ]);
 
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
+  const logoInfo = getSiteLogo(settings);
+  const socialLinks = getSocialLinks(settings);
+
+  const autoDealerSchema = buildAutoDealerSchema({
+    siteName,
+    description: settings?.settings?.description,
+    phone: settings?.whatsapp_phone,
+    email: settings?.contact_email,
+    address: settings?.address,
+    detailedAddress: settings?.settings?.address,
+    cnpj: settings?.cnpj,
+    logoUrl: logoInfo.src,
+    socialLinks,
+  });
 
   return (
     <div className="flex flex-col gap-12 md:gap-16 pb-16 overflow-hidden bg-[#050505] text-[#f4f4f2]">
+      <JsonLd data={autoDealerSchema} id="homepage-autodealer-schema" />
       {/* 1. Hero Section - Refined for high photo visibility & WCAG AAA contrast */}
       <section className="relative w-full bg-zinc-950 text-white pt-16 pb-24 md:pt-28 md:pb-36 overflow-hidden border-b border-white/5">
         {/* Background Image */}
@@ -73,7 +101,8 @@ export default async function HomePage() {
             {/* Direct Transparent Subtitle */}
             <p className="text-base sm:text-lg text-zinc-300 max-w-2xl mx-auto font-normal leading-relaxed">
               Veja as motos disponíveis ou anuncie a sua com a {siteName}. Todas revisadas,{' '}
-              <span className="text-amber-400 font-semibold">com garantia de 90 dias</span> e atendimento direto pelo WhatsApp.
+              <span className="text-amber-400 font-semibold">com garantia de 90 dias</span> e
+              atendimento direto pelo WhatsApp.
             </p>
 
             {/* Dual CTAs */}
@@ -152,7 +181,8 @@ export default async function HomePage() {
           <div className="mt-4 flex flex-col gap-2 border-t border-white/5 pt-4 text-[10px] text-zinc-400 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center lg:justify-end">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-              Cartão em até <span className="font-bold text-amber-300">18x</span> com acréscimo da maquineta
+              Cartão em até <span className="font-bold text-amber-300">18x</span> com acréscimo da
+              maquineta
             </span>
             <span className="hidden text-zinc-700 sm:inline">•</span>
             <span className="inline-flex items-center gap-1.5">
@@ -211,7 +241,9 @@ export default async function HomePage() {
                   </span>
                 </h2>
                 <p className="text-sm sm:text-base text-zinc-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                  Na {siteName} você escolhe o melhor caminho: a gente compra a sua moto à vista com pagamento no PIX, ou coloca para anunciar no nosso site para vender rápido e sem dor de cabeça.
+                  Na {siteName} você escolhe o melhor caminho: a gente compra a sua moto à vista com
+                  pagamento no PIX, ou coloca para anunciar no nosso site para vender rápido e sem
+                  dor de cabeça.
                 </p>
               </div>
 
@@ -235,14 +267,18 @@ export default async function HomePage() {
                   <div className="w-5 h-5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
                   </div>
-                  <span className="font-medium text-zinc-200">Divulgação para centenas de compradores</span>
+                  <span className="font-medium text-zinc-200">
+                    Divulgação para centenas de compradores
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl px-3.5 py-2.5 backdrop-blur-sm">
                   <div className="w-5 h-5 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
                     <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400 fill-current" />
                   </div>
-                  <span className="font-medium text-zinc-200">Atendimento direto pelo WhatsApp</span>
+                  <span className="font-medium text-zinc-200">
+                    Atendimento direto pelo WhatsApp
+                  </span>
                 </div>
               </div>
             </div>
@@ -254,9 +290,7 @@ export default async function HomePage() {
                   <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-400">
                     100% Gratuito & Sem Compromisso
                   </span>
-                  <h3 className="text-xl font-bold text-white">
-                    Escolha como quer negociar
-                  </h3>
+                  <h3 className="text-xl font-bold text-white">Escolha como quer negociar</h3>
                   <p className="text-xs text-zinc-400">
                     Envie os dados e fotos da sua moto em menos de 2 minutos.
                   </p>
@@ -303,7 +337,6 @@ export default async function HomePage() {
       {/* 5. Trust Pillars & Differentials Section */}
       <section className="bg-[#0d0d0d] py-16 md:py-20 border-y border-[#c9a44c]/20">
         <div className="container mx-auto px-4 md:px-6">
-
           {/* Guarantee Banner — destaque de 90 dias */}
           <div className="relative mb-12 overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 p-6 sm:p-8">
             <div className="absolute -right-10 -top-10 w-52 h-52 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -321,8 +354,8 @@ export default async function HomePage() {
                   Garantia de 90 dias em todas as motos
                 </h3>
                 <p className="text-sm text-zinc-400 max-w-xl">
-                  Toda moto vendida pela {siteName} passa por revisão antes de ir para o comprador
-                  e sai com <span className="text-amber-400 font-semibold">3 meses de garantia</span>{' '}
+                  Toda moto vendida pela {siteName} passa por revisão antes de ir para o comprador e
+                  sai com <span className="text-amber-400 font-semibold">3 meses de garantia</span>{' '}
                   no motor e câmbio.
                 </p>
               </div>
@@ -330,11 +363,15 @@ export default async function HomePage() {
               <div className="shrink-0 flex sm:flex-col gap-3">
                 <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2">
                   <ClipboardCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-xs font-bold text-amber-300 whitespace-nowrap">Revisada</span>
+                  <span className="text-xs font-bold text-amber-300 whitespace-nowrap">
+                    Revisada
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2">
                   <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-xs font-bold text-amber-300 whitespace-nowrap">90 dias garantia</span>
+                  <span className="text-xs font-bold text-amber-300 whitespace-nowrap">
+                    90 dias garantia
+                  </span>
                 </div>
               </div>
             </div>
@@ -373,8 +410,8 @@ export default async function HomePage() {
               <h3 className="text-lg font-bold text-white">Revisada e com Garantia</h3>
               <p className="text-sm text-[#a6a6a1] leading-relaxed">
                 Toda moto é revisada antes da venda e sai com{' '}
-                <span className="text-amber-400 font-semibold">90 dias de garantia</span>.
-                Você compra sabendo o que está levando.
+                <span className="text-amber-400 font-semibold">90 dias de garantia</span>. Você
+                compra sabendo o que está levando.
               </p>
             </div>
 

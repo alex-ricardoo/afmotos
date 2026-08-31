@@ -5,14 +5,17 @@ import { getSettings } from '@/lib/actions/settings';
 import { formatPhoneForDisplay } from '@/lib/utils/whatsapp';
 
 import { Metadata } from 'next';
+import { buildPageMetadata, JsonLd, buildBreadcrumbsSchema, SEO_CONFIG } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
-  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
-  return {
+  const siteName = settings?.site_name || SEO_CONFIG.defaultStoreName;
+
+  return buildPageMetadata({
     title: `Política de Privacidade | ${siteName}`,
     description: `Política de Privacidade e Proteção de Dados da ${siteName} em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).`,
-  };
+    path: '/politica-de-privacidade',
+  });
 }
 
 export default async function PoliticaPrivacidadePage() {
@@ -20,8 +23,14 @@ export default async function PoliticaPrivacidadePage() {
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
   const whatsappPhone = settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
 
+  const breadcrumbsSchema = buildBreadcrumbsSchema([
+    { name: 'Início', path: '/' },
+    { name: 'Política de Privacidade', path: '/politica-de-privacidade' },
+  ]);
+
   return (
     <div className="bg-[#050505] min-h-screen pb-16 text-[#f4f4f2]">
+      <JsonLd data={breadcrumbsSchema} id="privacy-breadcrumbs-schema" />
       {/* Header Hero */}
       <div className="bg-[#0d0d0d] text-white py-12 md:py-16 border-b border-[#c9a44c]/20">
         <div className="container mx-auto px-4 md:px-6 text-center max-w-3xl space-y-4">
@@ -78,8 +87,8 @@ export default async function PoliticaPrivacidadePage() {
                 pretendido e fotos da moto (quando preenchido o formulário de anúncio de moto).
               </li>
               <li>
-                <strong>Dados de Navegação:</strong> Informações técnicas básicas de acesso (como IP,
-                data e hora) para segurança da aplicação, conforme exigido pelo Marco Civil da
+                <strong>Dados de Navegação:</strong> Informações técnicas básicas de acesso (como
+                IP, data e hora) para segurança da aplicação, conforme exigido pelo Marco Civil da
                 Internet.
               </li>
             </ul>
@@ -104,8 +113,8 @@ export default async function PoliticaPrivacidadePage() {
               <li>Cumprimento de obrigações legais e regulatórias.</li>
             </ul>
             <p className="pt-2 text-xs text-[#e3c56c] font-semibold">
-              Importante: A {siteName} não comercializa, não aluga e não repassa seus dados pessoais a
-              terceiros para fins publicitários ou disparos em massa.
+              Importante: A {siteName} não comercializa, não aluga e não repassa seus dados pessoais
+              a terceiros para fins publicitários ou disparos em massa.
             </p>
           </section>
 
@@ -133,9 +142,7 @@ export default async function PoliticaPrivacidadePage() {
             <ul className="list-disc list-inside space-y-1 text-[#a6a6a1] pl-2">
               <li>Confirmar a existência de tratamento de seus dados.</li>
               <li>Acessar e corrigir dados incompletos ou desatualizados.</li>
-              <li>
-                Solicitar a exclusão ou anonimização de seus dados de nossa base de contatos.
-              </li>
+              <li>Solicitar a exclusão ou anonimização de seus dados de nossa base de contatos.</li>
               <li>Revogar o consentimento para recebimento de comunicações.</li>
             </ul>
           </section>
@@ -155,7 +162,8 @@ export default async function PoliticaPrivacidadePage() {
                 <strong className="text-white">Responsável:</strong> {siteName}
               </p>
               <p>
-                <strong className="text-white">WhatsApp:</strong> {formatPhoneForDisplay(whatsappPhone)}
+                <strong className="text-white">WhatsApp:</strong>{' '}
+                {formatPhoneForDisplay(whatsappPhone)}
               </p>
               <p>
                 <strong className="text-white">Atendimento:</strong> {CONSTANTS.OPENING_HOURS}

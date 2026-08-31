@@ -10,21 +10,21 @@ import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 import { cn } from '@/lib/utils';
 import { Metadata } from 'next';
+import { buildPageMetadata, JsonLd, buildBreadcrumbsSchema, SEO_CONFIG } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
-  const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
-  return {
+  const siteName = settings?.site_name || SEO_CONFIG.defaultStoreName;
+
+  return buildPageMetadata({
     title: `Motos Vendidas | ${siteName}`,
-    description: `Confira o histórico de motos negociadas pela ${siteName}. Fale conosco pelo WhatsApp para saber sobre novos modelos disponíveis.`,
-  };
+    description: `Confira o histórico de motos já negociadas pela ${siteName} em Cabo de Santo Agostinho - PE. Qualidade, transparência e satisfação garantida.`,
+    path: '/motos-vendidas',
+  });
 }
 
 export default async function MotosVendidasPage() {
-  const [motorcycles, settings] = await Promise.all([
-    getSoldMotorcycles(),
-    getSettings(),
-  ]);
+  const [motorcycles, settings] = await Promise.all([getSoldMotorcycles(), getSettings()]);
 
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
 
@@ -33,9 +33,14 @@ export default async function MotosVendidasPage() {
     `Olá! Vi um modelo na lista de motos vendidas da ${siteName} e gostaria de saber se há previsão de alguma similar.`,
   );
 
+  const breadcrumbsSchema = buildBreadcrumbsSchema([
+    { name: 'Início', path: '/' },
+    { name: 'Motos Vendidas', path: '/motos-vendidas' },
+  ]);
 
   return (
     <div className="bg-[#050505] min-h-screen pb-16 text-[#f4f4f2]">
+      <JsonLd data={breadcrumbsSchema} id="motos-vendidas-breadcrumbs-schema" />
       {/* Header Hero */}
       <div className="bg-[#0d0d0d] text-white py-12 md:py-16 border-b border-[#c9a44c]/20">
         <div className="container mx-auto px-4 md:px-6 text-center max-w-3xl space-y-4">
