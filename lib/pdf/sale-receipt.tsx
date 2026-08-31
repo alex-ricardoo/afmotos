@@ -318,9 +318,15 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
           </View>
 
           <View style={styles.headerRight}>
-            <View style={styles.receiptBadge}>
-              <Text style={styles.receiptBadgeText}>{receiptCode}</Text>
-            </View>
+            {moto?.license_plate?.trim() ? (
+              <View style={{ marginBottom: 2 }}>
+                <MercosulPlateBadge plate={moto.license_plate} width={96} fontSize={10.5} />
+              </View>
+            ) : (
+              <View style={styles.receiptBadge}>
+                <Text style={styles.receiptBadgeText}>{receiptCode}</Text>
+              </View>
+            )}
             <Text style={styles.receiptDate}>Emissão: {formatDateBR(sale.sale_date)}</Text>
             <Text style={{ fontSize: 6, color: '#15803d', fontFamily: 'Helvetica-Bold', marginTop: 1.5 }}>
               COMPROVANTE OFICIAL DE ENTREGA

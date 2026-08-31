@@ -173,12 +173,25 @@ export function OfficialReceiptPrint({
               </div>
             </div>
 
-            {/* Identificador Único do Recibo */}
+            {/* Identificador Único do Recibo / Placa Mercosul */}
             <div className="w-full sm:w-auto text-left sm:text-right shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex sm:flex-col justify-between items-end sm:items-end">
               <div>
-                <div className="inline-block bg-slate-950 text-amber-400 font-mono text-xs sm:text-sm font-bold px-3 py-1 rounded-lg border border-amber-500/30">
-                  {receiptCode}
-                </div>
+                {moto?.license_plate?.trim() ? (
+                  <div className="inline-flex flex-col border-[1.5px] border-slate-900 rounded overflow-hidden shadow-xs bg-white">
+                    <div className="bg-[#003399] px-3 py-0.5 text-center flex items-center justify-center">
+                      <span className="text-[6.5px] font-black tracking-widest text-white font-mono">BRASIL</span>
+                    </div>
+                    <div className="bg-white px-3 py-0.5 text-center flex items-center justify-center">
+                      <span className="text-xs font-mono font-black tracking-wider text-slate-900">
+                        {moto.license_plate.toUpperCase().trim()}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="inline-block bg-slate-950 text-amber-400 font-mono text-xs sm:text-sm font-bold px-3 py-1 rounded-lg border border-amber-500/30">
+                    {receiptCode}
+                  </div>
+                )}
                 <span className="block text-[10px] text-slate-500 mt-0.5 font-mono">
                   Emissão: {emissionDate}
                 </span>

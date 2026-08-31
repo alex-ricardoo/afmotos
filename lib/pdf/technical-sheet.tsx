@@ -3,6 +3,7 @@ import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/render
 import type { MotorcycleTechnicalSheet } from '@/lib/technical-sheet/schema';
 import type { SiteSettings } from '@/types/database';
 import { formatCnpj } from '@/lib/utils/cnpj';
+import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
 
 const styles = StyleSheet.create({
   page: {
@@ -211,6 +212,11 @@ export function TechnicalSheetPDF({ sheet, settings, logoSrc }: Props) {
             </View>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
+            {unitData.licensePlate?.trim() && (
+              <View style={{ marginBottom: 3 }}>
+                <MercosulPlateBadge plate={unitData.licensePlate} width={90} fontSize={10} />
+              </View>
+            )}
             {verifiedBadgeActive && (
               <View style={styles.badge}>
                 <Text style={{ fontSize: 6, color: '#1d6f33', fontFamily: 'Helvetica-Bold' }}>

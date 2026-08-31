@@ -131,13 +131,37 @@ export async function POST(request: NextRequest) {
     const { sell_request_id, owner_cpf, owner_rg, commission_percentage, expected_sale_value } = parsed.data;
     const commissionValue = Number((expected_sale_value * (commission_percentage / 100)).toFixed(2));
 
-    const { data: sellRequest, error: sellRequestError } = await supabase
+    let { data: sellRequest, error: sellRequestError } = await supabase
       .from('sell_requests')
       .select('*')
       .eq('id', sell_request_id)
-      .single();
+      .maybeSingle();
+
+    if (!sellRequest) {
+      const { data: leadRecord } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('id', sell_request_id)
+        .maybeSingle();
+
+      if (leadRecord) {
+        const metaSellReqId = (leadRecord.metadata as Record<string, unknown> | null)?.sell_request_id as string | undefined;
+        if (metaSellReqId) {
+          const { data: linkedSellReq } = await supabase
+            .from('sell_requests')
+            .select('*')
+            .eq('id', metaSellReqId)
+            .maybeSingle();
+          if (linkedSellReq) {
+            sellRequest = linkedSellReq;
+            sellRequestError = null;
+          }
+        }
+      }
+    }
+
     if (sellRequestError || !sellRequest) {
-      return NextResponse.json({ success: false, error: 'Solicitação de venda não encontrada.' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Solicitação de venda ou anúncio não encontrada.' }, { status: 404 });
     }
 
     const settings = await getSiteSettings();

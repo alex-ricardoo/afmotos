@@ -126,6 +126,7 @@ function buildSheet(
       price: motorcycle.price,
       fipePrice: motorcycle.fipe_price,
       imageUrl: image ? getImageSource(image) : null,
+      licensePlate: (motorcycle as any).license_plate || null,
     },
     engine: {
       displacementCc: motorcycle.engine_capacity,

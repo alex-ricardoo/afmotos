@@ -135,6 +135,7 @@ export const motorcycleTechnicalSheetSchema = z.object({
     price: nullableNumber,
     fipePrice: nullableNumber,
     imageUrl: z.string().url().nullable(),
+    licensePlate: nullableString.optional().nullable(),
   }),
   engine: engineSchema,
   performance: performanceSchema,

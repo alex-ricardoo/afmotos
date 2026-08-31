@@ -1,5 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
+import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
 
 export interface AgreementPdfInput {
   saleId: string;
@@ -136,10 +137,16 @@ export function AgreementSalePDF({
           </View>
 
           <View style={styles.headerRight}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>ACORDO DE VENDA {saleId.slice(0, 8).toUpperCase()}</Text>
-            </View>
-            <Text style={{ fontSize: 7, color: '#64748b', marginTop: 4 }}>Data: {agreementDate}</Text>
+            {vehiclePlate?.trim() ? (
+              <View style={{ marginBottom: 2 }}>
+                <MercosulPlateBadge plate={vehiclePlate} width={96} fontSize={10.5} />
+              </View>
+            ) : (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>ACORDO DE VENDA {saleId.slice(0, 8).toUpperCase()}</Text>
+              </View>
+            )}
+            <Text style={{ fontSize: 7, color: '#64748b', marginTop: 3 }}>Data: {agreementDate}</Text>
           </View>
         </View>
 

@@ -150,11 +150,16 @@ function AgreementCommissionForm({ proposal }: { proposal: ProposalViewModel }) 
     setSuccessMessage(null);
 
     try {
+      const targetSellRequestId =
+        (proposal.metadata as Record<string, unknown> | null)?.sell_request_id ||
+        proposal.sourceId ||
+        proposal.id;
+
       const response = await fetch('/api/agreements/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sell_request_id: proposal.sourceId,
+          sell_request_id: targetSellRequestId,
           owner_cpf: formattedCpf,
           owner_rg: rg.trim(),
           commission_percentage: Number(commissionPercentage),
@@ -437,10 +442,7 @@ export function ProposalDetail({
 
   const typeInfo = getTypeBadge(proposal.type);
   const TypeIcon = typeInfo.icon;
-  const isConsignmentApproved =
-    proposal.source === 'sell_request' &&
-    proposal.type === 'CONSIGNMENT' &&
-    proposal.status === 'QUALIFIED';
+  const isConsignmentProposal = proposal.type === 'CONSIGNMENT';
 
   const currentStatusInfo = statusConfig[proposal.status] || statusConfig.NEW;
 
@@ -902,15 +904,15 @@ export function ProposalDetail({
             </div>
           )}
 
-          {isConsignmentApproved && (
+          {isConsignmentProposal && (
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4.5 space-y-4 shadow-xs">
               <div className="flex items-center justify-between pb-2.5 border-b border-emerald-500/30">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Contrato de anúncio
+                  <Calculator className="w-3.5 h-3.5" />
+                  Contrato & Comissão de Anúncio
                 </h4>
                 <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5">
-                  Anúncio aprovado
+                  {proposal.status === 'QUALIFIED' ? 'Anúncio aprovado' : 'Comissão de anúncio'}
                 </Badge>
               </div>
 

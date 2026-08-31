@@ -60,11 +60,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       imageAvailable: Boolean(imageSrc),
       logoAvailable: Boolean(logoSrc),
     });
+
+    const { data: moto } = await (supabase as SupabaseClient)
+      .from('motorcycles')
+      .select('license_plate')
+      .eq('id', id)
+      .maybeSingle();
+
+    const resolvedPlate = parsed.data.unitData.licensePlate || moto?.license_plate || null;
+
     const buffer = await renderToBuffer(
       React.createElement(TechnicalSheetPDF, {
         sheet: {
           ...parsed.data,
-          unitData: { ...parsed.data.unitData, imageUrl: imageSrc },
+          unitData: { ...parsed.data.unitData, imageUrl: imageSrc, licensePlate: resolvedPlate },
           pdfVersion: data.pdf_version,
         },
         settings,
