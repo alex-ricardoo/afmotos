@@ -107,6 +107,14 @@ export function buildVehicleHistoryWhatsAppUrl({
   return generateWhatsAppLink(phone, message);
 }
 
+/**
+ * Monta o link wa.me para negociação B2B de pacotes e volume de consultas para lojistas/revendedores.
+ */
+export function buildVehicleHistoryB2BWhatsAppUrl(phone: string): string {
+  const message = 'Olá, gostaria de conhecer a tabela de preços e pacotes de consultas para loja/revenda.';
+  return generateWhatsAppLink(phone, message);
+}
+
 export function generateMotorcycleInterestMessage(motorcycle: {
   brand: string;
   model: string;

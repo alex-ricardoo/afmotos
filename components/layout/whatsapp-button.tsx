@@ -48,7 +48,7 @@ export function WhatsAppButton({
 
   if (isFloating && !children) {
     return (
-      <div className="fixed bottom-6 right-6 z-40 flex items-center group pointer-events-none">
+      <div className="fixed bottom-6 right-4 sm:right-6 z-40 flex items-center group pointer-events-none">
         {/* Tooltip on Desktop hover */}
         <span className="hidden md:inline-block mr-3 px-3 py-1.5 rounded-full bg-[#0B0D0F] text-white text-xs font-semibold shadow-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
           Falar no WhatsApp

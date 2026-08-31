@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import {
   ShieldCheck,
   TrendingUp,
@@ -7,108 +9,153 @@ import {
   DollarSign,
   FileCheck2,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function VehicleHistoryReasons() {
+  const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>('buyer');
+
   return (
-    <section className="py-16 sm:py-24 bg-zinc-900/30 border-t border-white/5 relative">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
-            <span>Vantagem Para Todos os Lados</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight font-heading">
-            O histórico veicular protege quem compra e valoriza quem vende
+    <section className="py-10 sm:py-16 bg-[#0D111A] border-t border-[#1F293D] relative">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-xl mx-auto mb-6 sm:mb-8 space-y-1.5">
+          <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+            Vantagens da Consulta
+          </span>
+          <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
+            Protege quem compra e valoriza quem vende
           </h2>
-          <p className="text-sm sm:text-base text-zinc-400">
-            A transparência documental acelera negociações e elimina desconfianças na compra e venda de motocicletas.
-          </p>
         </div>
 
-        {/* Dual Pillar Comparison */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-          {/* Card: Para Quem Vai Comprar */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-zinc-950 border border-zinc-800 hover:border-amber-500/30 transition-all flex flex-col justify-between space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-6 h-6" />
+        {/* Interactive Segmented Switcher (Tabs) */}
+        <div className="max-w-md mx-auto mb-5 p-1 rounded-2xl bg-[#080B11] border border-[#1F293D] grid grid-cols-2 gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab('buyer')}
+            className={cn(
+              'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer',
+              activeTab === 'buyer'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'text-zinc-400 hover:text-white',
+            )}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Para Compradores</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('seller')}
+            className={cn(
+              'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer',
+              activeTab === 'seller'
+                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'text-zinc-400 hover:text-white',
+            )}
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>Para Vendedores & Lojas</span>
+          </button>
+        </div>
+
+        {/* Single Unified Card */}
+        <div className="p-5 sm:p-7 rounded-3xl bg-[#131A26] border border-[#1F293D] shadow-xl">
+          {activeTab === 'buyer' ? (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-[#1F293D]">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
-                    Para Quem Quer Comprar
-                  </span>
-                  <h3 className="text-xl font-extrabold text-white">
+                  <h3 className="text-base sm:text-lg font-bold text-white">
                     Compre Sem Medo de Golpes
                   </h3>
+                  <p className="text-xs text-zinc-400">
+                    Saiba o passado real do veículo antes de dar sinal ou assinar o recibo.
+                  </p>
                 </div>
               </div>
 
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Descubra a verdade sobre a moto antes de pagar sinal ou assinar o recibo de transferência.
-              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+                    <BadgeCheck className="w-3.5 h-3.5" />
+                    <span>Roubo & Sinistro</span>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-snug">
+                    Verifique se há queixa policial ativa ou registro de sinistro.
+                  </p>
+                </div>
 
-              <ul className="space-y-3 text-xs sm:text-sm text-zinc-300">
-                <li className="flex items-start gap-2.5">
-                  <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Cheque se há ocorrências ativas de roubo, furto ou sinistros.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Verifique se a moto é de leilão ou possui alienação fiduciária.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Descubra débitos de IPVA e multas para abater no preço final.</span>
-                </li>
-              </ul>
+                <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                    <BadgeCheck className="w-3.5 h-3.5" />
+                    <span>Leilão & Gravame</span>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-snug">
+                    Descubra alienação fiduciária e passagem em leilões.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-purple-400">
+                    <BadgeCheck className="w-3.5 h-3.5" />
+                    <span>IPVA & Multas</span>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-snug">
+                    Identifique débitos estaduais para abater no valor negociado.
+                  </p>
+                </div>
+              </div>
             </div>
-
-            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-[11px] text-zinc-400">
-              💡 Evite surpresas e negocie sabendo exatamente a situação jurídica da moto.
-            </div>
-          </div>
-
-          {/* Card: Para Quem Vai Vender ou Já Tem a Moto */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-zinc-950 border border-zinc-800 hover:border-amber-500/30 transition-all flex flex-col justify-between space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                  <TrendingUp className="w-6 h-6" />
+          ) : (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-[#1F293D]">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
-                    Para Quem Quer Vender ou Já Tem a Moto
-                  </span>
-                  <h3 className="text-xl font-extrabold text-white">
-                    Valorize Sua Moto na Venda
+                  <h3 className="text-base sm:text-lg font-bold text-white">
+                    Valorize Seu Veículo na Venda
                   </h3>
+                  <p className="text-xs text-zinc-400">
+                    Passe credibilidade imediata ao comprador com um laudo oficial limpo.
+                  </p>
                 </div>
               </div>
 
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Mostre o laudo limpo para interessados, transmita confiança e feche a venda muito mais rápido.
-              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Venda Mais Rápido</span>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-snug">
+                    Elimine desconfianças enviando o PDF completo pelo WhatsApp.
+                  </p>
+                </div>
 
-              <ul className="space-y-3 text-xs sm:text-sm text-zinc-300">
-                <li className="flex items-start gap-2.5">
-                  <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <span>Passe credibilidade imediata ao enviar o laudo em PDF para o comprador.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <DollarSign className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <span>Defenda o valor do seu anúncio comprovando que a moto não tem restrições.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <FileCheck2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <span>Cheque e regularize qualquer pendência antiga na sua própria motocicleta.</span>
-                </li>
-              </ul>
-            </div>
+                <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+                    <DollarSign className="w-3.5 h-3.5" />
+                    <span>Defenda o Preço</span>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-snug">
+                    Comprove que seu veículo não tem restrições nem apontamentos.
+                  </p>
+                </div>
 
-            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-[11px] text-zinc-400">
-              🚀 Anúncios com laudo de procedência atraem compradores mais qualificados e decididos.
+                <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-blue-400">
+                    <FileCheck2 className="w-3.5 h-3.5" />
+                    <span>Laudo Autenticado</span>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-snug">
+                    Documento profissional pronto para anexar ao anúncio.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

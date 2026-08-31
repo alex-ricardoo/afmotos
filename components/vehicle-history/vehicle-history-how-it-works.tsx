@@ -1,91 +1,72 @@
 import React from 'react';
-import { Search, MessageSquareHeart, FileCheck2, ShieldCheck, UserCheck } from 'lucide-react';
+import { Search, QrCode, FileText, ShieldCheck } from 'lucide-react';
 
 const STEPS = [
   {
-    step: '01',
+    num: '1',
     title: 'Digite a Placa',
-    description: 'Insira os 7 dígitos da placa no site ou inicie o contato direto pelo WhatsApp.',
+    desc: 'Insira os 7 dígitos da moto ou carro para iniciar.',
     icon: Search,
-    highlight: 'Rápido & Sem Cadastro',
   },
   {
-    step: '02',
-    title: 'Atendimento Humano & Pix',
-    description: 'Um especialista da AF Motos confirma sua placa e gera a chave Pix diretamente na conversa.',
-    icon: MessageSquareHeart,
-    highlight: '100% Humano (Sem Robôs)',
+    num: '2',
+    title: 'Pagamento Pix Instantâneo',
+    desc: 'Confirmação rápida via WhatsApp sem cadastro demorado.',
+    icon: QrCode,
   },
   {
-    step: '03',
+    num: '3',
     title: 'Receba o Laudo em PDF',
-    description: 'Nosso consultor gera a checagem oficial e envia o documento em PDF completo no seu chat.',
-    icon: FileCheck2,
-    highlight: 'Emissão Rápida em Minutos',
+    desc: 'Relatório oficial direto na tela e no seu WhatsApp.',
+    icon: FileText,
   },
 ];
 
 export function VehicleHistoryHowItWorks() {
   return (
-    <section className="py-16 sm:py-24 bg-[#080B11] border-t border-[#1F293D] relative">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider">
-            <UserCheck className="w-3.5 h-3.5" />
-            <span>Atendimento Humanizado</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight font-heading">
-            Como funciona a consulta em 3 passos
+    <section className="py-10 sm:py-14 bg-[#080B11] border-t border-[#1F293D] relative">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-xl mx-auto mb-6 sm:mb-8 space-y-1.5">
+          <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+            Simples & Rápido
+          </span>
+          <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
+            Como funciona em 3 passos
           </h2>
-          <p className="text-sm sm:text-base text-zinc-400">
-            Você é atendido diretamente por uma pessoa da nossa equipe. Sem formulários complexos e sem robôs.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-          {STEPS.map((item, index) => {
+        {/* Compact Numbered Sequence (Mobile-First Minimal Scroll) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+          {STEPS.map((item, idx) => {
             const Icon = item.icon;
             return (
               <div
-                key={index}
-                className="relative p-6 sm:p-7 rounded-3xl bg-[#131A26] border border-[#1F293D] flex flex-col justify-between space-y-4 hover:border-amber-500/40 transition-all duration-300 shadow-lg"
+                key={idx}
+                className="flex items-center gap-3.5 p-4 rounded-2xl bg-[#131A26] border border-[#1F293D] hover:border-amber-500/30 transition-colors"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl font-black text-amber-500/30 font-mono">
-                    {item.step}
-                  </span>
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-                    <Icon className="w-6 h-6" />
-                  </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-black font-mono text-base flex items-center justify-center shrink-0">
+                  {item.num}
                 </div>
-
-                <div className="space-y-2">
-                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block">
-                    {item.highlight}
-                  </span>
-                  <h3 className="text-lg font-bold text-white">{item.title}</h3>
-                  <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                    {item.description}
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-bold text-white leading-snug">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-zinc-400 mt-0.5 leading-tight line-clamp-2">
+                    {item.desc}
                   </p>
                 </div>
+                <Icon className="w-4 h-4 text-zinc-500 shrink-0 hidden sm:block" />
               </div>
             );
           })}
         </div>
 
-        {/* Banner: Todas as motos da AF Motos possuem histórico veicular */}
-        <div className="mt-10 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-500/10 via-[#131A26] to-emerald-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-7 h-7" />
-          </div>
-          <div className="space-y-1">
-            <h4 className="text-base font-bold text-white">
-              Padrão de Qualidade AF Motos
-            </h4>
-            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-              <strong className="text-amber-400">100% das motos do nosso estoque passam por rigorosa consulta de histórico veicular</strong> antes de serem comercializadas. Aplicamos esse mesmo padrão de segurança para o laudo da moto que você quer consultar!
-            </p>
-          </div>
+        {/* Compact AF Motos Store Standard Reassurance */}
+        <div className="mt-4 p-3.5 rounded-xl bg-[#0D111A] border border-[#1F293D] flex items-center gap-3 text-xs text-zinc-400">
+          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>
+            <strong className="text-zinc-200">Padrão AF Motos:</strong> 100% das motos do nosso estoque passam por este mesmo histórico veicular.
+          </span>
         </div>
       </div>
     </section>
