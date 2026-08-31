@@ -1,9 +1,10 @@
 <!--
 Sync Impact Report:
-- Version change: 1.0.0 (Initial Ratification)
-- Modified principles: N/A (Initial principles defined)
-- Added sections: Core Principles (12 Principles), Architecture & Code Quality Guidelines, Technical Stack & Standards, Governance
-- Removed sections: N/A
+- Version change: 1.0.0 → 1.1.0
+- Modified principles:
+  - IX. Performance & SEO → IX. Performance & SEO Mandatório em Páginas Públicas (Reforçado requisito mandatório de SEO completo, metadados OpenGraph/Twitter, sitemap.ts, HTML semântico/Schema.org para qualquer nova página pública)
+- Added sections: None
+- Removed sections: None
 - Deferred items: None
 -->
 
@@ -43,9 +44,13 @@ APIs externas (especialmente consulta de placa/Veicular, integração com WhatsA
 
 Componentes, tokens visuais, espaçamentos, tipografia e estados padrão de interface (loading, erro, vazio e sucesso) MUST seguir um sistema de design consistente em todas as telas e fluxos.
 
-### IX. Performance & SEO
+### IX. Performance & SEO Mandatório em Páginas Públicas
 
-Imagens MUST ser otimizadas automaticamente (formatos modernos WebP/AVIF, lazy loading e dimensionamento correto). O carregamento inicial (LCP/FCP) deve ser prioridade máxima e todas as páginas públicas MUST cumprir as melhores práticas de SEO semântico e meta tags.
+Toda nova página pública (rotas na aplicação principal/visíveis ao usuário final) MUST possuir obrigatoriamente otimização de SEO completa:
+- **Metadados Obrigatórios**: Toda rota pública MUST exportar `metadata` ou `generateMetadata` contendo `title` descritivo, `description` persuasiva, `canonical URL`, `openGraph` (com imagem e título) e `twitter cards`.
+- **Descoberta & Indexação**: Novas rotas públicas MUST ser devidamente mapeadas no `app/sitemap.ts` com prioridade e frequência de alteração adequadas, além de respeitar as diretrizes do `robots.ts`.
+- **HTML Semântico & Schema**: As páginas MUST utilizar marcação semântica (hierarquia estrita de headings com um único `<h1>` por página) e dados estruturados (Schema.org / JSON-LD) onde couber (ex.: LocalBusiness, Product, Vehicle, BreadcrumbList).
+- **Otimização de Mídia e Performance**: Imagens MUST ser otimizadas automaticamente (formatos WebP/AVIF, lazy loading e dimensionamento correto). Carregamento inicial rápido (Core Web Vitals: LCP, FCP, CLS) é requisito inegociável.
 
 ### X. Testabilidade
 
@@ -86,4 +91,4 @@ O MVP MUST focar na simplicidade e não implementar complexidades futuras desnec
 2. Qualquer alteração ou inclusão de novos princípios requer atualização formal deste documento, incremento da versão e registro no Sync Impact Report.
 3. PRs e revisões de código devem atestar conformidade rigorosa com os 12 princípios constitucionais.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-21 | **Last Amended**: 2026-08-21
+**Version**: 1.1.0 | **Ratified**: 2026-08-21 | **Last Amended**: 2026-08-31
