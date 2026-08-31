@@ -539,3 +539,293 @@ export async function updateLeadStatus(
 
   return { success: true };
 }
+
+export interface CreateManualProposalPayload {
+  type:
+    | 'MOTORCYCLE_INTEREST'
+    | 'SELL_MOTORCYCLE'
+    | 'CONSIGNMENT'
+    | 'RENTAL'
+    | 'MOTORCYCLE_REQUEST'
+    | 'GENERAL_CONTACT';
+  status?: string;
+  source?: string;
+  name: string;
+  phone: string;
+  email?: string | null;
+  // Full address
+  postal_code?: string | null;
+  address_street?: string | null;
+  address_number?: string | null;
+  address_neighborhood?: string | null;
+  address_complement?: string | null;
+  city?: string | null;
+  state?: string | null;
+  message?: string | null;
+  notes?: string | null;
+  // Motorcycle & FIPE details
+  brand?: string | null;
+  brand_id?: string | null;
+  model?: string | null;
+  model_id?: string | null;
+  version?: string | null;
+  year_manufacture?: number | null;
+  year_model?: number | null;
+  year_id?: string | null;
+  fuel_id?: string | null;
+  fuel_name?: string | null;
+  color?: string | null;
+  mileage?: number | null;
+  license_plate?: string | null;
+  desired_price?: number | null;
+  fipe_price?: number | null;
+  fipe_code?: string | null;
+  fipe_reference_period?: string | null;
+  fipe_snapshot?: Record<string, unknown> | null;
+  // Rental details
+  rental_desired_plan?: string | null;
+  rental_expected_start_date?: string | null;
+  rental_has_cnh_a?: string | null;
+  rental_age?: number | null;
+  // Images
+  images?: Array<{
+    url: string;
+    provider?: string;
+    altText?: string;
+    storage_path?: string | null;
+    delete_url?: string | null;
+    isPrimary?: boolean;
+  }>;
+}
+
+export async function createManualProposalAction(data: CreateManualProposalPayload) {
+  const supabase = await createClient();
+
+  if (!data.name || !data.name.trim()) {
+    return { error: 'O nome do cliente é obrigatório.' };
+  }
+
+  if (!data.phone || !data.phone.trim()) {
+    return { error: 'O telefone/WhatsApp do cliente é obrigatório.' };
+  }
+
+  const rawPhone = data.phone.replace(/\D/g, '');
+  if (rawPhone.length < 10) {
+    return { error: 'Informe um telefone/WhatsApp válido com DDD (mínimo 10 dígitos).' };
+  }
+
+  const cleanSource = data.source || 'MANUAL';
+  const cleanStatus = data.status || 'NEW';
+  const isSellOrConsignment = data.type === 'SELL_MOTORCYCLE' || data.type === 'CONSIGNMENT';
+  const isAnnouncement = data.type === 'CONSIGNMENT';
+
+  // Tratar imagens: se nenhuma foto foi enviada, injetar a logo padrão da loja como fallback
+  let imagesToSave = (data.images || []).filter((img) => Boolean(img && img.url));
+  if (imagesToSave.length === 0) {
+    imagesToSave = [
+      {
+        url: '/logo.png',
+        altText: 'Logo AF Motos (Imagem Padrão)',
+        provider: 'system',
+        storage_path: null,
+        delete_url: null,
+        isPrimary: true,
+      },
+    ];
+  }
+
+  // 1. Vincular ou criar cliente no CRM central com endereço completo
+  let customerId: string | null = null;
+  try {
+    const custRes = await findOrCreateCustomer(
+      supabase,
+      {
+        full_name: data.name.trim(),
+        phone: rawPhone,
+        email: data.email ? data.email.trim() : null,
+        cep: data.postal_code?.replace(/\D/g, '') || null,
+        street: data.address_street?.trim() || null,
+        number: data.address_number?.trim() || null,
+        neighborhood: data.address_neighborhood?.trim() || null,
+        complement: data.address_complement?.trim() || null,
+        city: data.city ? data.city.trim() : null,
+        state: data.state ? data.state.trim() : 'PE',
+      },
+      'admin_proposal',
+    );
+    if (custRes?.customer) {
+      customerId = custRes.customer.id;
+    }
+  } catch (custErr) {
+    console.warn('Aviso: falha ao vincular cliente central na proposta manual:', custErr);
+  }
+
+  // 2. Se for venda ou consignação, criar registro em sell_requests para suporte a contratos e comissões
+  let sellRequestId: string | null = null;
+  if (isSellOrConsignment) {
+    try {
+      const sellRequestPayload = {
+        customer_id: customerId,
+        request_kind: isAnnouncement ? 'ANNOUNCEMENT' : 'DIRECT_SALE',
+        name: data.name.trim(),
+        phone: rawPhone,
+        email: data.email ? data.email.trim() : null,
+        license_plate: data.license_plate ? data.license_plate.trim().toUpperCase() : null,
+        brand: data.brand ? data.brand.trim() : 'Não informada',
+        model: data.model ? data.model.trim() : 'Não informado',
+        year_manufacture: data.year_manufacture || null,
+        year_model: data.year_model || data.year_manufacture || null,
+        color: data.color ? data.color.trim() : null,
+        mileage: data.mileage != null ? Number(data.mileage) : null,
+        desired_price: data.desired_price != null ? Number(data.desired_price) : null,
+        fipe_price: data.fipe_price != null ? Number(data.fipe_price) : null,
+        fipe_code: data.fipe_code || null,
+        fipe_reference_period: data.fipe_reference_period || null,
+        fipe_snapshot: data.fipe_snapshot || null,
+        status: cleanStatus,
+        postal_code: data.postal_code?.replace(/\D/g, '') || null,
+        address_street: data.address_street?.trim() || null,
+        address_number: data.address_number?.trim() || null,
+        address_neighborhood: data.address_neighborhood?.trim() || null,
+        address_complement: data.address_complement?.trim() || null,
+        state: data.state ? data.state.trim() : 'PE',
+        city: data.city ? data.city.trim() : 'Recife',
+        notes: data.notes ? data.notes.trim() : data.message ? data.message.trim() : null,
+        motorcycle_data: {
+          brand: data.brand || null,
+          brand_id: data.brand_id || null,
+          model: data.model || null,
+          model_id: data.model_id || null,
+          version: data.version || null,
+          year_manufacture: data.year_manufacture || null,
+          year_model: data.year_model || null,
+          year_id: data.year_id || null,
+          fuel_id: data.fuel_id || null,
+          fuel_name: data.fuel_name || null,
+          color: data.color || null,
+          license_plate: data.license_plate || null,
+        },
+      };
+
+      const { data: sellRecord, error: sellError } = await supabase
+        .from('sell_requests')
+        .insert(sellRequestPayload)
+        .select('id')
+        .single();
+
+      if (!sellError && sellRecord) {
+        sellRequestId = sellRecord.id;
+
+        // Salvar imagens na tabela sell_request_images se houver
+        if (imagesToSave.length > 0) {
+          const imagesInsert = imagesToSave.map((img, idx) => ({
+            sell_request_id: sellRecord.id,
+            public_url: img.url,
+            provider: img.provider || 'supabase',
+            storage_path: img.storage_path || null,
+            delete_url: img.delete_url || null,
+            sort_order: idx,
+          }));
+          await supabase.from('sell_request_images').insert(imagesInsert);
+        }
+      } else {
+        console.warn('Aviso ao gravar sell_request para proposta manual:', sellError);
+      }
+    } catch (sellErr) {
+      console.warn('Erro ao processar sell_request na proposta manual:', sellErr);
+    }
+  }
+
+  // 3. Persistir na tabela leads
+  const mappedImages = imagesToSave.map((img, idx) => ({
+    id: String(idx),
+    url: img.url,
+    thumbnailUrl: img.url,
+    altText: img.altText || `Foto ${idx + 1}`,
+    provider: img.provider || 'supabase',
+    sortOrder: idx,
+    isPrimary: img.isPrimary ?? idx === 0,
+  }));
+
+  const leadMetadata = {
+    sell_request_id: sellRequestId,
+    source: cleanSource,
+    brand: data.brand ? data.brand.trim() : null,
+    brand_id: data.brand_id || null,
+    model: data.model ? data.model.trim() : null,
+    model_id: data.model_id || null,
+    version: data.version ? data.version.trim() : null,
+    year_manufacture: data.year_manufacture || null,
+    year_model: data.year_model || null,
+    year_id: data.year_id || null,
+    fuel_id: data.fuel_id || null,
+    fuel_name: data.fuel_name || null,
+    year: data.year_model || data.year_manufacture || null,
+    color: data.color ? data.color.trim() : null,
+    mileage: data.mileage != null ? Number(data.mileage) : null,
+    license_plate: data.license_plate ? data.license_plate.trim().toUpperCase() : null,
+    desired_price: data.desired_price != null ? Number(data.desired_price) : null,
+    fipe_price: data.fipe_price != null ? Number(data.fipe_price) : null,
+    fipe_code: data.fipe_code || null,
+    fipe_reference_period: data.fipe_reference_period || null,
+    fipe_snapshot: data.fipe_snapshot || null,
+    postal_code: data.postal_code?.replace(/\D/g, '') || null,
+    address_street: data.address_street?.trim() || null,
+    address_number: data.address_number?.trim() || null,
+    address_neighborhood: data.address_neighborhood?.trim() || null,
+    address_complement: data.address_complement?.trim() || null,
+    city: data.city ? data.city.trim() : null,
+    state: data.state ? data.state.trim() : 'PE',
+    notes: data.notes ? data.notes.trim() : null,
+    images: mappedImages,
+    photos: mappedImages.map((i) => i.url),
+    // Rental fields
+    desired_plan: data.rental_desired_plan || null,
+    expected_start_date: data.rental_expected_start_date || null,
+    has_cnh_a: data.rental_has_cnh_a || null,
+    age: data.rental_age || null,
+  };
+
+  const defaultMsg =
+    data.message?.trim() ||
+    (data.brand && data.model
+      ? `Proposta manual de ${data.type === 'SELL_MOTORCYCLE' ? 'venda' : data.type === 'CONSIGNMENT' ? 'anúncio' : 'interesse'} para ${data.brand} ${data.model} (Origem: ${cleanSource}).`
+      : `Contato manual registrado via ${cleanSource}.`);
+
+  const leadInsertPayload = {
+    customer_id: customerId,
+    type: data.type,
+    source: cleanSource,
+    status: cleanStatus,
+    name: data.name.trim(),
+    phone: rawPhone,
+    email: data.email ? data.email.trim() : null,
+    message: defaultMsg,
+    metadata: leadMetadata,
+  };
+
+  const { data: leadRecord, error: leadError } = await supabase
+    .from('leads')
+    .insert(leadInsertPayload)
+    .select('id')
+    .single();
+
+  if (leadError) {
+    console.error('Error inserting manual proposal lead:', leadError);
+    return { error: 'Não foi possível cadastrar a proposta. Tente novamente.' };
+  }
+
+  try {
+    revalidatePath('/admin/propostas');
+    revalidatePath('/admin/clientes');
+    revalidatePath('/admin');
+  } catch (revalErr) {
+    console.warn('Revalidation notice:', revalErr);
+  }
+
+  return {
+    success: true,
+    id: leadRecord?.id,
+    sellRequestId,
+  };
+}

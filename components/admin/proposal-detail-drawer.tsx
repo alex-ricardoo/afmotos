@@ -1088,26 +1088,42 @@ export function ProposalDetail({
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                {proposal.images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setSelectedImageIndex(idx);
-                      setIsFullscreenOpen(true);
-                    }}
-                    className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-800/80 bg-zinc-950 cursor-zoom-in hover:border-[#c9a44c]/60 transition-all"
-                  >
-                    <img
-                      src={img.url}
-                      alt={`Foto ${idx + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <Eye className="w-5 h-5 text-white" />
-                    </div>
-                  </button>
-                ))}
+                {proposal.images.map((img, idx) => {
+                  const isLogoFallback = img.url.includes('/logo.') || img.provider === 'system';
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setSelectedImageIndex(idx);
+                        setIsFullscreenOpen(true);
+                      }}
+                      className={cn(
+                        "relative group aspect-square rounded-xl overflow-hidden border border-zinc-800/80 bg-zinc-950 cursor-zoom-in hover:border-[#c9a44c]/60 transition-all",
+                        isLogoFallback && "p-2 flex items-center justify-center"
+                      )}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.altText || `Foto ${idx + 1}`}
+                        className={cn(
+                          "transition-transform duration-300",
+                          isLogoFallback
+                            ? "w-full h-full object-contain opacity-90 group-hover:scale-105"
+                            : "w-full h-full object-cover group-hover:scale-110"
+                        )}
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <Eye className="w-5 h-5 text-white" />
+                      </div>
+                      {isLogoFallback && (
+                        <span className="absolute bottom-1 right-1 px-1 py-0.5 rounded bg-black/80 text-[8px] font-bold text-zinc-400">
+                          Padrão
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

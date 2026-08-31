@@ -23,10 +23,12 @@ import {
   Copy,
   Check,
   PlusCircle,
+  Plus,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { ManualProposalModal } from './manual-proposal-modal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,6 +83,7 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
   const [activeType, setActiveType] = useState<string>('ALL');
   const [selectedProposal, setSelectedProposal] = useState<ProposalViewModel | null>(null);
   const [copiedPhoneId, setCopiedPhoneId] = useState<string | null>(null);
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
   // Sync state if initialData changes during server revalidation
   if (initialData !== prevInitialData) {
@@ -330,6 +333,17 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
             Gestão inteligente de clientes interessados em comprar, vender ou alugar motos com
             contato direto no WhatsApp.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Button
+            type="button"
+            onClick={() => setIsManualModalOpen(true)}
+            className="w-full sm:w-auto bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] hover:opacity-95 text-zinc-950 font-extrabold rounded-xl px-5 h-11 shadow-[0_0_20px_rgba(201,164,76,0.25)] transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 text-sm"
+          >
+            <Plus className="h-5 w-5 stroke-[2.5]" />
+            <span>Cadastrar Nova Proposta</span>
+          </Button>
         </div>
       </div>
 
@@ -612,15 +626,29 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
 
                 {/* Cover Image (if available) */}
                 {proposal.images && proposal.images.length > 0 && (
-                  <div className="relative h-38 w-full bg-zinc-900 overflow-hidden border-b border-zinc-900 shrink-0">
+                  <div className={cn(
+                    "relative h-38 w-full overflow-hidden border-b border-zinc-900 shrink-0",
+                    proposal.images[0].url.includes('/logo.') || proposal.images[0].provider === 'system'
+                      ? "bg-zinc-950 flex items-center justify-center p-4"
+                      : "bg-zinc-900"
+                  )}>
                     <img
                       src={proposal.images[0].url}
                       alt="Foto da moto"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className={cn(
+                        "transition-transform duration-500",
+                        proposal.images[0].url.includes('/logo.') || proposal.images[0].provider === 'system'
+                          ? "w-full h-full object-contain max-h-28 opacity-90 group-hover:scale-105"
+                          : "w-full h-full object-cover group-hover:scale-105"
+                      )}
                     />
                     <div className="absolute top-2.5 right-2.5 bg-black/80 backdrop-blur-sm px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-[11px] text-white font-bold border border-white/10 shadow-sm">
                       <ImageIcon className="w-3.5 h-3.5 text-[#c9a44c]" />
-                      <span>{proposal.images.length} fotos</span>
+                      <span>
+                        {proposal.images[0].url.includes('/logo.') || proposal.images[0].provider === 'system'
+                          ? 'Logo Padrão'
+                          : `${proposal.images.length} fotos`}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -1058,6 +1086,14 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
         open={!!selectedProposal}
         onOpenChange={(open) => !open && setSelectedProposal(null)}
         onStatusChange={handleStatusChange}
+        siteName={storeName}
+      />
+
+      {/* 6. Manual Proposal Modal */}
+      <ManualProposalModal
+        open={isManualModalOpen}
+        onOpenChange={setIsManualModalOpen}
+        onSuccess={() => router.refresh()}
         siteName={storeName}
       />
     </div>

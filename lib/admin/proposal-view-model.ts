@@ -13,7 +13,7 @@ export interface ProposalImage {
   url: string;
   thumbnailUrl?: string | null;
   altText?: string | null;
-  provider?: 'imgbb' | 'supabase' | null;
+  provider?: 'imgbb' | 'supabase' | 'system' | null;
   sortOrder?: number;
   isPrimary?: boolean;
 }
