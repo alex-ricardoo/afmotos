@@ -326,6 +326,7 @@ export function toVehicleConsultationSummaryDto(
     vehicle_type: record.vehicle_type,
     year_manufacture: record.year_manufacture,
     year_model: record.year_model,
+    color: record.color,
     state: record.state,
     city: record.city,
     risk_level: record.risk_level || 'LOW',

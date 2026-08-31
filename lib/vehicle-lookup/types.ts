@@ -77,6 +77,7 @@ export interface VehicleConsultationSummaryDto {
   vehicle_type: string | null;
   year_manufacture: number | null;
   year_model: number | null;
+  color?: string | null;
   state: string | null;
   city: string | null;
   risk_level: RiskLevel;

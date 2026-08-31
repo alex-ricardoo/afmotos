@@ -48,6 +48,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/admin/laudos',
+        destination: '/admin/consulta-placa',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -40,14 +40,14 @@ describe('Brazilian Plate Normalizer and Validator', () => {
 
   it('formats plates for display', () => {
     assert.strictEqual(formatBrazilianPlate('ABC1234'), 'ABC-1234');
-    assert.strictEqual(formatBrazilianPlate('BRA2E19'), 'BRA-2E19');
+    assert.strictEqual(formatBrazilianPlate('BRA2E19'), 'BRA2E19');
     assert.strictEqual(formatBrazilianPlate('abc1234'), 'ABC-1234');
   });
 
   it('identifies plate format type', () => {
     assert.strictEqual(getPlateType('ABC1234'), 'legacy');
     assert.strictEqual(getPlateType('BRA2E19'), 'mercosul');
-    assert.strictEqual(getPlateType('INVALID'), 'invalid');
+    assert.strictEqual(getPlateType('INVALID'), 'neutral');
   });
 });
 

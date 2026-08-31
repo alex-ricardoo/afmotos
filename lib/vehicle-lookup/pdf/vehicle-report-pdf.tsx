@@ -850,44 +850,41 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
               </View>
             </View>
 
-            {/* VII. ODÔMETRO & ANÚNCIOS WEB */}
+            {/* V. DÉBITOS ESTADUAIS */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>VII. Odômetro & Anúncios Web</Text>
-                <Text style={styles.sectionSub}>Histórico Web</Text>
+                <Text style={styles.sectionTitle}>V. Débitos Estaduais</Text>
+                <Text style={styles.sectionSub}>Detran / Sefaz</Text>
               </View>
-              <View style={styles.card}>
-                <Text style={styles.fieldLabel}>Última Quilometragem Registrada</Text>
-                {report.latest_km_record ? (
-                  <View>
-                    <Text style={[styles.fieldValueBold, { fontSize: 9.5, color: '#090d16', marginVertical: 1 }]}>
-                      {formatKm(report.latest_km_record.mileage)}
-                    </Text>
-                    <Text style={[styles.fieldValue, { color: '#64748b', fontSize: 6.4 }]}>
-                      {report.latest_km_record.date ? `Data: ${report.latest_km_record.date}` : ''}
-                      {report.latest_km_record.source ? ` (${report.latest_km_record.source})` : ''}
-                    </Text>
-                    {report.latest_km_record.announced_price ? (
-                      <Text style={[styles.fieldValueBold, { color: '#b45309', fontSize: 6.8, marginTop: 1 }]}>
-                        Oferta anunciada: {formatCurrency(report.latest_km_record.announced_price)}
-                      </Text>
-                    ) : null}
-                  </View>
-                ) : (
-                  <Text style={[styles.fieldValue, { color: '#64748b', fontSize: 6.5, marginVertical: 1 }]}>
-                    Sem registros de KM em anúncios públicos
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <View style={styles.miniDebtBox}>
+                  <Text style={styles.fieldLabel}>Multas</Text>
+                  <Text style={styles.fieldValueBold}>{formatCurrency(report.debts_summary?.fines_pending)}</Text>
+                </View>
+                <View style={styles.miniDebtBox}>
+                  <Text style={styles.fieldLabel}>IPVA</Text>
+                  <Text style={styles.fieldValueBold}>{formatCurrency(report.debts_summary?.ipva_pending)}</Text>
+                </View>
+                <View style={styles.miniDebtBox}>
+                  <Text style={styles.fieldLabel}>Licenc.</Text>
+                  <Text style={styles.fieldValueBold}>{formatCurrency(report.debts_summary?.licensing_pending)}</Text>
+                </View>
+                <View style={[styles.miniDebtBox, { borderColor: (report.debts_summary?.total_debts || 0) > 0 ? '#fcd34d' : '#e2e8f0' }]}>
+                  <Text style={styles.fieldLabel}>Total</Text>
+                  <Text style={[styles.fieldValueBold, { color: (report.debts_summary?.total_debts || 0) > 0 ? '#b45309' : '#166534' }]}>
+                    {formatCurrency(report.debts_summary?.total_debts)}
                   </Text>
-                )}
+                </View>
               </View>
             </View>
           </View>
 
           {/* ----------------- COLUNA DIREITA (50%) ----------------- */}
           <View style={styles.columnHalf}>
-            {/* V. HISTÓRICO DE PROPRIETÁRIOS (LGPD) */}
+            {/* VI. HISTÓRICO DE PROPRIETÁRIOS (LGPD) */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>V. Proprietários Anteriores (LGPD)</Text>
+                <Text style={styles.sectionTitle}>VI. Proprietários Anteriores (LGPD)</Text>
                 <Text style={styles.sectionSub}>{report.owners_history?.owners_count || 1} registro(s)</Text>
               </View>
 
@@ -922,10 +919,10 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
               </View>
             </View>
 
-            {/* VI. REFERÊNCIA TABELA FIPE */}
+            {/* VII. REFERÊNCIA TABELA FIPE */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>VI. Referência Tabela FIPE</Text>
+                <Text style={styles.sectionTitle}>VII. Referência Tabela FIPE</Text>
                 <Text style={styles.sectionSub}>Oficial FIPE</Text>
               </View>
               <View style={styles.card}>
@@ -944,34 +941,6 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                     <Text style={styles.fieldLabel}>Mês de Referência</Text>
                     <Text style={styles.fieldValue}>{report.fipe_reference?.reference_month || 'Atual'}</Text>
                   </View>
-                </View>
-              </View>
-            </View>
-
-            {/* VIII. DÉBITOS ESTADUAIS */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>VIII. Débitos Estaduais</Text>
-                <Text style={styles.sectionSub}>Detran / Sefaz</Text>
-              </View>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <View style={styles.miniDebtBox}>
-                  <Text style={styles.fieldLabel}>Multas</Text>
-                  <Text style={styles.fieldValueBold}>{formatCurrency(report.debts_summary?.fines_pending)}</Text>
-                </View>
-                <View style={styles.miniDebtBox}>
-                  <Text style={styles.fieldLabel}>IPVA</Text>
-                  <Text style={styles.fieldValueBold}>{formatCurrency(report.debts_summary?.ipva_pending)}</Text>
-                </View>
-                <View style={styles.miniDebtBox}>
-                  <Text style={styles.fieldLabel}>Licenc.</Text>
-                  <Text style={styles.fieldValueBold}>{formatCurrency(report.debts_summary?.licensing_pending)}</Text>
-                </View>
-                <View style={[styles.miniDebtBox, { borderColor: (report.debts_summary?.total_debts || 0) > 0 ? '#fcd34d' : '#e2e8f0' }]}>
-                  <Text style={styles.fieldLabel}>Total</Text>
-                  <Text style={[styles.fieldValueBold, { color: (report.debts_summary?.total_debts || 0) > 0 ? '#b45309' : '#166534' }]}>
-                    {formatCurrency(report.debts_summary?.total_debts)}
-                  </Text>
                 </View>
               </View>
             </View>

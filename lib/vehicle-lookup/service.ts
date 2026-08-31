@@ -11,6 +11,28 @@ import type {
   VehicleConsultationStatus,
 } from './types.ts';
 
+export class InsufficientBalanceError extends Error {
+  balance?: string;
+  rechargeUrl?: string;
+
+  constructor(message: string, balance?: string, rechargeUrl?: string) {
+    super(message);
+    this.name = 'InsufficientBalanceError';
+    this.balance = balance;
+    this.rechargeUrl = rechargeUrl || 'https://app.apibrasil.io/dashboard?modal=recharge';
+  }
+}
+
+export class InvalidTokenError extends Error {
+  constructor(message?: string) {
+    super(
+      message ||
+        'Token da API Brasil expirado ou inválido. Acesse a tela de credenciais na API Brasil (https://app.apibrasil.io), gere um novo token, configure a variável de ambiente APIBRASIL_TOKEN na Vercel ou entre em contato com o desenvolvedor Alex.'
+    );
+    this.name = 'InvalidTokenError';
+  }
+}
+
 export interface ExecuteLookupParams {
   plate: string;
   userId: string;
@@ -38,13 +60,13 @@ export async function findExistingConsultation(
   const normalized = normalizeBrazilianPlate(plate);
   if (!normalized) return null;
 
-  // Prefer LIVE completed consultation, otherwise latest MOCK consultation
+  // Prefer LIVE completed consultation, otherwise latest consultation
   const { data, error } = await supabase
     .from('vehicle_plate_consultations')
     .select('*')
     .eq('plate_normalized', normalized)
     .in('status', ['COMPLETED'])
-    .order('mode', { ascending: false }) // 'mock' vs 'live' -> 'mock' < 'live' so live first
+    .order('mode', { ascending: false }) // 'live' first
     .order('consulted_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -54,7 +76,7 @@ export async function findExistingConsultation(
 }
 
 /**
- * Loads mock fixture and adapts plate to the requested target plate
+ * Loads mock fixture only when explicitly in mock mode or unit testing
  */
 function loadMockFixture(targetPlate: string): Record<string, unknown> {
   try {
@@ -62,9 +84,7 @@ function loadMockFixture(targetPlate: string): Record<string, unknown> {
     const content = fs.readFileSync(fixturePath, 'utf-8');
     const parsed = JSON.parse(content);
 
-    // Override plate in mock fixture to match requested plate
     const norm = normalizeBrazilianPlate(targetPlate);
-    const disp = formatBrazilianPlate(norm);
     if (parsed.data) {
       parsed.data.placa = norm;
       if (parsed.data.dadosBasicosDoVeiculo) parsed.data.dadosBasicosDoVeiculo.placa = norm;
@@ -76,7 +96,6 @@ function loadMockFixture(targetPlate: string): Record<string, unknown> {
     }
     return parsed;
   } catch (err) {
-    // In-memory fallback if fs fails in bundled environment
     const norm = normalizeBrazilianPlate(targetPlate);
     return {
       error: false,
@@ -100,7 +119,7 @@ function loadMockFixture(targetPlate: string): Record<string, unknown> {
 }
 
 /**
- * Main Service Orchestrator: executes lookup following cache, mock/live, and concurrency rules
+ * Main Service Orchestrator: executes lookup following cache, live API, and error rules
  */
 export async function executeVehiclePlateLookup(
   params: ExecuteLookupParams,
@@ -118,33 +137,21 @@ export async function executeVehiclePlateLookup(
   // 1. Cache-first check (unless forceRefresh is explicitly requested)
   if (!params.forceRefresh) {
     const existing = await findExistingConsultation(normalizedPlate, supabase);
-    if (existing) {
-      // If live mode is on and existing is live completed -> Reuse (R$ 0,00)
-      if (currentMode === 'live' && existing.mode === 'live' && existing.status === 'COMPLETED') {
-        return {
-          success: true,
-          isCacheHit: true,
-          record: existing,
-          message: 'Consulta recuperada do cache local (Custo R$ 0,00).',
-        };
-      }
-      // If mock mode is on and existing is completed -> Reuse
-      if (currentMode === 'mock' && existing.status === 'COMPLETED') {
-        return {
-          success: true,
-          isCacheHit: true,
-          record: existing,
-          message: 'Consulta simulada recuperada do cache local.',
-        };
-      }
+    if (existing && existing.status === 'COMPLETED') {
+      return {
+        success: true,
+        isCacheHit: true,
+        record: existing,
+        message: 'Consulta recuperada do cache local (Custo R$ 0,00).',
+      };
     }
   }
 
-  // 2. Execution according to Mode (Mock vs Live)
+  // 2. Execution according to Mode (Live API vs Mock)
   let rawPayload: Record<string, unknown>;
-  let isMock = true;
-  let isChargeable = false;
-  let chargedAmount = 0.0;
+  let isMock = false;
+  let isChargeable = true;
+  let chargedAmount = config.estimatedCostPerLookup; // R$ 30,00
   let executionStatus: VehicleConsultationStatus = 'COMPLETED';
   let balanceBefore: number | null = null;
   let balanceAfter: number | null = null;
@@ -152,8 +159,8 @@ export async function executeVehiclePlateLookup(
 
   if (currentMode === 'live') {
     if (!config.apiBrasilToken) {
-      throw new Error(
-        'Modo LIVE ativado, porém a variável APIBRASIL_TOKEN não está configurada no servidor.'
+      throw new InvalidTokenError(
+        'Token da API Brasil não configurado. Por favor, configure a variável de ambiente APIBRASIL_TOKEN com o token obtido em https://app.apibrasil.io ou entre em contato com o desenvolvedor Alex.'
       );
     }
 
@@ -161,47 +168,105 @@ export async function executeVehiclePlateLookup(
     isChargeable = true;
     chargedAmount = config.estimatedCostPerLookup;
 
+    const rawToken = config.apiBrasilToken.trim();
+    const cleanToken = rawToken.replace(/^Bearer\s+/i, '');
+    const authHeader = `Bearer ${cleanToken}`;
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
 
     try {
-      const response = await fetch(`${config.apiBrasilBaseUrl}/vehicles/dados-veiculo`, {
+      const response = await fetch(config.apiBrasilBaseUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${config.apiBrasilToken}`,
+          Authorization: authHeader,
         },
         body: JSON.stringify({
-          placa: normalizedPlate,
           tipo: 'veiculos-total',
+          placa: normalizedPlate,
+          homolog: false,
         }),
         signal: controller.signal,
       });
 
       clearTimeout(timeout);
 
-      if (!response.ok) {
-        throw new Error(`Erro do provedor API Brasil: HTTP ${response.status} - ${response.statusText}`);
+      // Handle Authentication & Authorization errors
+      if (response.status === 401 || response.status === 403) {
+        throw new InvalidTokenError();
       }
 
-      rawPayload = (await response.json()) as Record<string, unknown>;
-      balanceBefore = typeof rawPayload.balance === 'number' ? rawPayload.balance : null;
-      taxCharged = typeof rawPayload.tax === 'number' ? rawPayload.tax : null;
+      const responseText = await response.text();
+      try {
+        rawPayload = JSON.parse(responseText) as Record<string, unknown>;
+      } catch (parseErr) {
+        throw new Error(`Resposta inválida recebida da API Brasil (HTTP ${response.status}): ${responseText.slice(0, 200)}`);
+      }
+
+      // Check for Insufficient Balance (Saldo Insuficiente)
+      if (
+        rawPayload.error === true &&
+        (String(rawPayload.message || '').toLowerCase().includes('saldo') ||
+          String(rawPayload.message || '').toLowerCase().includes('recarregue') ||
+          rawPayload.recharge_url)
+      ) {
+        const balanceStr = typeof rawPayload.balance === 'string' ? rawPayload.balance : 'R$ 0,00';
+        const rechargeUrl =
+          typeof rawPayload.recharge_url === 'string'
+            ? rawPayload.recharge_url
+            : 'https://app.apibrasil.io/dashboard?modal=recharge';
+
+        throw new InsufficientBalanceError(
+          String(rawPayload.message || 'Você não possui saldo suficiente para realizar essa consulta.'),
+          balanceStr,
+          rechargeUrl
+        );
+      }
+
+      // Check for other API errors
+      if (rawPayload.error === true) {
+        const errMsg = String(rawPayload.message || 'Erro ao processar consulta na API Brasil.');
+        if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('autentic')) {
+          throw new InvalidTokenError(errMsg);
+        }
+        throw new Error(`API Brasil: ${errMsg}`);
+      }
+
+      // Track balances if provided
+      if (typeof rawPayload.balance === 'string') {
+        const num = parseFloat(rawPayload.balance.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        balanceBefore = !isNaN(num) ? num : null;
+      } else if (typeof rawPayload.balance === 'number') {
+        balanceBefore = rawPayload.balance;
+      }
+
+      taxCharged = typeof rawPayload.tax === 'number' ? rawPayload.tax : 30.0;
       if (balanceBefore != null && taxCharged != null) {
         balanceAfter = balanceBefore - taxCharged;
       }
     } catch (fetchErr: any) {
       clearTimeout(timeout);
-      // Ambiguous state: if request was already sent, avoid immediate automated retries
+
+      // Re-throw our specific custom domain errors
+      if (fetchErr instanceof InsufficientBalanceError || fetchErr instanceof InvalidTokenError) {
+        throw fetchErr;
+      }
+
+      if (fetchErr.name === 'AbortError') {
+        throw new Error('A consulta na API Brasil excedeu o tempo limite de 120 segundos. Tente novamente.');
+      }
+
       executionStatus = 'CHARGE_STATUS_UNKNOWN';
       rawPayload = {
         error: true,
-        message: fetchErr?.message || 'Falha de comunicação de rede com API Brasil.',
+        message: fetchErr?.message || 'Falha de comunicação com gateway da API Brasil.',
         fetch_error: String(fetchErr),
       };
+      throw fetchErr;
     }
   } else {
-    // Mock Mode
+    // Mock Mode (Ambiente de desenvolvimento sem token)
     isMock = true;
     isChargeable = false;
     chargedAmount = 0.0;
@@ -254,6 +319,6 @@ export async function executeVehiclePlateLookup(
     record: inserted as VehicleConsultationRecord,
     message: isMock
       ? 'Consulta simulada executada com sucesso (Ambiente de Teste).'
-      : 'Consulta oficial realizada com sucesso.',
+      : 'Consulta oficial realizada com sucesso na API Brasil.',
   };
 }

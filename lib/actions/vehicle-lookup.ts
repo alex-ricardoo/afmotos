@@ -69,8 +69,25 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     };
   } catch (err: any) {
     console.error('Failed to execute vehicle plate lookup:', err);
+
+    if (err?.name === 'InsufficientBalanceError') {
+      return {
+        error: err.message,
+        isInsufficientBalance: true,
+        rechargeUrl: err.rechargeUrl || 'https://app.apibrasil.io/dashboard?modal=recharge',
+        balance: err.balance || 'R$ 0,00',
+      };
+    }
+
+    if (err?.name === 'InvalidTokenError') {
+      return {
+        error: err.message,
+        isTokenError: true,
+      };
+    }
+
     return {
-      error: err?.message || 'Ocorreu um erro interno ao processar a consulta veicular.',
+      error: err?.message || 'Ocorreu um erro interno ao processar a consulta veicular na API Brasil.',
     };
   }
 }
