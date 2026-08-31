@@ -351,16 +351,20 @@ export default async function HomePage() {
                   Compre com tranquilidade
                 </span>
                 <h3 className="text-xl sm:text-2xl font-black text-white">
-                  Garantia de 90 dias em todas as motos
+                  Histórico Veicular & Garantia de 90 dias
                 </h3>
                 <p className="text-sm text-zinc-400 max-w-xl">
-                  Toda moto vendida pela {siteName} passa por revisão antes de ir para o comprador e
-                  sai com <span className="text-amber-400 font-semibold">3 meses de garantia</span>{' '}
-                  no motor e câmbio.
+                  Toda moto vendida pela {siteName} possui <span className="text-emerald-400 font-semibold">Histórico Veicular oficial verificado</span> (livre de leilão, roubo e gravames), passa por revisão rigorosa e sai com <span className="text-amber-400 font-semibold">3 meses de garantia</span> no motor e câmbio.
                 </p>
               </div>
               {/* Badges */}
-              <div className="shrink-0 flex sm:flex-col gap-3">
+              <div className="shrink-0 flex flex-wrap sm:flex-col gap-2.5 justify-center">
+                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="text-xs font-bold text-emerald-300 whitespace-nowrap">
+                    Histórico 100% Verificado
+                  </span>
+                </div>
                 <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2">
                   <ClipboardCheck className="w-4 h-4 text-amber-400 shrink-0" />
                   <span className="text-xs font-bold text-amber-300 whitespace-nowrap">
@@ -368,7 +372,7 @@ export default async function HomePage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2">
-                  <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                  <BadgeCheck className="w-4 h-4 text-amber-400 shrink-0" />
                   <span className="text-xs font-bold text-amber-300 whitespace-nowrap">
                     90 dias garantia
                   </span>
@@ -415,15 +419,14 @@ export default async function HomePage() {
               </p>
             </div>
 
-            {/* Pillar 3 */}
-            <div className="bg-[#151515] p-6 rounded-2xl border border-[#c9a44c]/20 shadow-xs space-y-3 hover:border-[#e3c56c]/50 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-[#c9a44c]/15 text-[#e3c56c] flex items-center justify-center font-bold">
-                <FileCheck className="w-6 h-6" />
+            {/* Pillar 3 — Histórico Veicular */}
+            <div className="bg-[#151515] p-6 rounded-2xl border border-[#c9a44c]/20 shadow-xs space-y-3 hover:border-emerald-500/50 transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold">
+                <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Documentação Clara</h3>
+              <h3 className="text-lg font-bold text-white">Histórico 100% Verificado</h3>
               <p className="text-sm text-[#a6a6a1] leading-relaxed">
-                Orientação e transparência quanto aos documentos da moto para uma transferência
-                tranquila.
+                Todas as motos possuem consulta oficial de histórico veicular sem apontamentos de leilão, roubo ou gravames.
               </p>
             </div>
 

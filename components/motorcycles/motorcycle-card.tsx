@@ -249,11 +249,14 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
 
           {/* Preço e Call To Action */}
           <div className="pt-2 mt-auto flex flex-col gap-3">
-            {/* Mini badge de garantia (apenas para motos disponíveis) */}
+            {/* Mini badge de garantia e histórico (apenas para motos disponíveis) */}
             {!isSold && (
-              <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400">
-                <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                <span>Revisada • Garantia 90 dias</span>
+              <div className="flex items-center justify-between gap-1 text-[10px] font-bold">
+                <span className="text-emerald-400 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                  <span>Histórico Verificado</span>
+                </span>
+                <span className="text-amber-400/90">Garantia 90 dias</span>
               </div>
             )}
             {/* Preço */}

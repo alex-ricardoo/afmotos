@@ -41,16 +41,17 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
   const transmissionValue = motorcycle.transmission || 'Manual 6 velocidades';
 
   const defaultDifferentials = [
-  "Documentação 100% regularizada",
-  "IPVA pago",
-  "Totalmente revisada",
-  "Óleo e filtros revisados",
-  "Pneus em ótimo estado",
-  "Motor e câmbio com garantia de 90 dias",
-  "Moto pronta para rodar",
+    "Histórico Veicular 100% verificado",
+    "Documentação 100% regularizada",
+    "IPVA pago",
+    "Totalmente revisada",
+    "Óleo e filtros revisados",
+    "Pneus em ótimo estado",
+    "Motor e câmbio com garantia de 90 dias",
+    "Moto pronta para rodar",
   ];
 
-  const highlights = defaultDifferentials; // Override para padronizar os 4 selos de valor
+  const highlights = defaultDifferentials; // Override para padronizar os selos de valor
 
   const specItems = [
     {
@@ -117,6 +118,24 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
               {diff}
             </span>
           ))}
+        </div>
+      </div>
+
+      {/* Trust Banner: Histórico Veicular Garantido */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-[#151515] to-amber-500/10 border border-emerald-500/30 flex items-start sm:items-center gap-3.5">
+        <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+          <ShieldCheck className="w-5 h-5" />
+        </div>
+        <div className="space-y-0.5">
+          <h4 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+            <span>Procedência & Histórico Veicular Verificados</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold uppercase tracking-wider">
+              Padrão AF Motos
+            </span>
+          </h4>
+          <p className="text-xs text-zinc-300 leading-relaxed">
+            Todas as motos da <strong>AF Motos</strong> passam por consulta oficial completa de histórico veicular (Nada Consta em Leilão, Roubo/Furto, Sinistro e Gravames). Compre com segurança e procedência garantida.
+          </p>
         </div>
       </div>
 

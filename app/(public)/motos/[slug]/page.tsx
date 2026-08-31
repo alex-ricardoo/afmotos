@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronRight, ArrowLeft, MapPin, Clock, BadgeCheck, ClipboardCheck } from 'lucide-react';
+import { ChevronRight, ArrowLeft, MapPin, Clock, BadgeCheck, ClipboardCheck, ShieldCheck } from 'lucide-react';
 import { Metadata } from 'next';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { getMotorcycleBySlug, getFeaturedMotorcycles } from '@/lib/queries/motorcycles';
@@ -209,8 +209,19 @@ export default async function MotorcycleDetailPage({ params }: Props) {
               {/* Formas de Pagamento */}
               <PaymentMethods variant="full" />
 
-              {/* Selos de Garantia e Revisão */}
+              {/* Selos de Garantia, Revisão e Histórico */}
               <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3.5 py-2.5">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <div>
+                    <span className="block text-xs font-black text-emerald-300">
+                      Histórico Veicular Verificado
+                    </span>
+                    <span className="block text-[10px] text-zinc-400">
+                      Todas as motos da {siteName} possuem laudo de procedência 100% checado.
+                    </span>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5">
                   <BadgeCheck className="w-5 h-5 text-amber-400 shrink-0" />
                   <div>

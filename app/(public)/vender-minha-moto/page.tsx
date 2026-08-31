@@ -77,12 +77,12 @@ export default async function VenderMinhaMotoPage() {
               <span>Avaliação de mercado baseada na FIPE</span>
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>Pagamento seguro e ágil</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Histórico Veicular & Procedência Verificados</span>
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>Atendimento direto com a loja</span>
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>Pagamento seguro e ágil</span>
             </span>
           </div>
         </div>
