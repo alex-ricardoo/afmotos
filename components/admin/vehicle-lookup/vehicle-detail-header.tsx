@@ -1,11 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Download, Link2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Download, Link2, ExternalLink, FileSignature } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import type { InternalVehicleConsultationDto } from '@/lib/vehicle-lookup/types';
 import { RiskBadge, ModeBadge, StatusBadge } from './consultation-badge';
+import { PurchaseAgreementModal } from '@/components/admin/purchase-agreement-modal';
+import { PurchaseAgreementPrepareInput } from '@/types/purchase-agreement';
 
 interface VehicleDetailHeaderProps {
   dto: InternalVehicleConsultationDto;
@@ -13,6 +15,26 @@ interface VehicleDetailHeaderProps {
 }
 
 export function VehicleDetailHeader({ dto, onOpenLinkModal }: VehicleDetailHeaderProps) {
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+
+  const initialData: Partial<PurchaseAgreementPrepareInput> = {
+    vehicle_consultation_id: dto.id,
+    motorcycle_id: dto.motorcycle_id || undefined,
+    brand: dto.summary?.brand || dto.vehicle_data?.brand || '',
+    model: dto.summary?.model || dto.vehicle_data?.model || '',
+    version: dto.summary?.version || '',
+    year_manufacture: dto.vehicle_data?.year_manufacture || new Date().getFullYear(),
+    year_model: dto.vehicle_data?.year_model || new Date().getFullYear(),
+    color: dto.summary?.color || dto.vehicle_data?.color || '',
+    fuel: dto.vehicle_data?.fuel || 'Flex',
+    license_plate: dto.plate_display || dto.plate_normalized,
+    renavam: dto.vehicle_data?.renavam || '',
+    chassi: dto.vehicle_data?.chassis || '',
+    mileage: 0,
+    fipe_price: dto.fipe?.price || 0,
+    purchase_amount: dto.fipe?.price || 0,
+    paid_amount: dto.fipe?.price || 0,
+  };
 
   return (
     <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-7 shadow-xs">
@@ -75,6 +97,16 @@ export function VehicleDetailHeader({ dto, onOpenLinkModal }: VehicleDetailHeade
           <Button
             type="button"
             variant="outline"
+            onClick={() => setIsPurchaseModalOpen(true)}
+            className="rounded-xl border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 text-xs font-semibold gap-1.5 h-10"
+          >
+            <FileSignature className="w-4 h-4 text-amber-400" />
+            Gerar Contrato de Compra
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
             onClick={onOpenLinkModal}
             className="rounded-xl text-xs font-semibold gap-1.5 h-10"
           >
@@ -96,6 +128,12 @@ export function VehicleDetailHeader({ dto, onOpenLinkModal }: VehicleDetailHeade
           </a>
         </div>
       </div>
+
+      <PurchaseAgreementModal
+        open={isPurchaseModalOpen}
+        onOpenChange={setIsPurchaseModalOpen}
+        initialData={initialData}
+      />
     </div>
   );
 }

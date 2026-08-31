@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+import { MotorcyclePurchaseAgreementAction } from '@/components/admin/motorcycle-purchase-agreement-action';
 
 export const metadata = {
   title: 'Editar Moto',
@@ -22,6 +23,14 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
   if (error || !moto) {
     notFound();
   }
+
+  const { data: existingAgreement } = await supabase
+    .from('motorcycle_purchase_agreements')
+    .select('*')
+    .eq('motorcycle_id', id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   const rawImages = ((moto.images as any[]) || []).sort(
     (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
@@ -78,13 +87,19 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
             </h1>
             <p className="text-muted-foreground mt-1">Modifique os dados do anúncio existente.</p>
           </div>
-          <Link
-            href={`/admin/motos/${id}/ficha-tecnica`}
-            className={buttonVariants({ variant: 'outline', size: 'sm' })}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Ficha técnica
-          </Link>
+          <div className="ml-auto flex items-center gap-2">
+            <MotorcyclePurchaseAgreementAction
+              motorcycle={moto}
+              existingAgreement={existingAgreement as any}
+            />
+            <Link
+              href={`/admin/motos/${id}/ficha-tecnica`}
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Ficha técnica
+            </Link>
+          </div>
         </div>
       </div>
 

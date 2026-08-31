@@ -1,0 +1,243 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GeneratePurchaseAgreementRequest",
+  "description": "Payload para requisição de preparação e emissão de Contrato de Compra de Motocicleta",
+  "type": "object",
+  "required": [
+    "seller_name",
+    "seller_document",
+    "seller_phone",
+    "seller_address",
+    "brand",
+    "model",
+    "year_manufacture",
+    "year_model",
+    "license_plate",
+    "mileage",
+    "purchase_amount",
+    "paid_amount",
+    "payment_status",
+    "payment_method",
+    "payment_date",
+    "delivery_datetime",
+    "delivery_km",
+    "keys_count",
+    "transfer_deadline_date",
+    "confirmed_data_accurate",
+    "confirmed_payment_realized",
+    "confirmed_vehicle_received"
+  ],
+  "properties": {
+    "motorcycle_id": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "ID da moto no estoque (se já cadastrada)"
+    },
+    "sell_request_id": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "ID da proposta/solicitação de venda original (se originada de proposta)"
+    },
+    "seller_customer_id": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "ID do vendedor no módulo CRM de clientes (se já cadastrado)"
+    },
+    "vehicle_consultation_id": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "ID da consulta veicular/placa realizada previamente (Spec 018)"
+    },
+    "seller_name": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Nome completo ou Razão Social do vendedor/proprietário"
+    },
+    "seller_document": {
+      "type": "string",
+      "minLength": 11,
+      "maxLength": 18,
+      "description": "CPF (11 dígitos) ou CNPJ (14 dígitos) formatado ou números puros"
+    },
+    "seller_rg": {
+      "type": ["string", "null"],
+      "description": "RG e órgão expedidor do vendedor pessoa física"
+    },
+    "seller_phone": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Telefone/WhatsApp para contato e registro contratual"
+    },
+    "seller_email": {
+      "type": ["string", "null"],
+      "format": "email",
+      "description": "E-mail do vendedor"
+    },
+    "seller_address": {
+      "type": "string",
+      "minLength": 5,
+      "description": "Endereço completo (Rua, Número, Bairro, Cidade/UF, CEP)"
+    },
+    "brand": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Marca da motocicleta (ex.: Honda, Yamaha)"
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Modelo da motocicleta (ex.: CG 160 Titan, CB 300F)"
+    },
+    "version": {
+      "type": ["string", "null"],
+      "description": "Versão ou subtipo (ex.: ABS, ESD, Flex)"
+    },
+    "year_manufacture": {
+      "type": "integer",
+      "minimum": 1900,
+      "description": "Ano de fabricação"
+    },
+    "year_model": {
+      "type": "integer",
+      "minimum": 1900,
+      "description": "Ano do modelo"
+    },
+    "color": {
+      "type": ["string", "null"],
+      "description": "Cor predominante da motocicleta"
+    },
+    "fuel": {
+      "type": ["string", "null"],
+      "description": "Tipo de combustível (Gasolina, Flex, Elétrico)"
+    },
+    "engine_capacity": {
+      "type": ["integer", "null"],
+      "minimum": 50,
+      "description": "Cilindradas da moto (ex.: 160, 250, 300)"
+    },
+    "license_plate": {
+      "type": "string",
+      "minLength": 7,
+      "maxLength": 8,
+      "description": "Placa de identificação (formato Mercosul ou antigo)"
+    },
+    "renavam": {
+      "type": ["string", "null"],
+      "description": "Código RENAVAM da motocicleta"
+    },
+    "chassi": {
+      "type": ["string", "null"],
+      "description": "Número do Chassi / VIN (17 caracteres)"
+    },
+    "engine_number": {
+      "type": ["string", "null"],
+      "description": "Número de identificação do motor"
+    },
+    "mileage": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Quilometragem registrada no odômetro no ato da compra"
+    },
+    "fipe_code": {
+      "type": ["string", "null"],
+      "description": "Código FIPE de referência"
+    },
+    "fipe_price": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "Valor FIPE na data da avaliação"
+    },
+    "purchase_amount": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Valor total acordado para compra da motocicleta (R$)"
+    },
+    "paid_amount": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Valor efetivamente transferido/pago ao vendedor (R$)"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": ["PAID_FULL", "PAID_PARTIAL", "PENDING"],
+      "description": "Status da liquidação financeira do preço de compra"
+    },
+    "payment_method": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Meio de pagamento utilizado (PIX, TED, Dinheiro, etc.)"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do pagamento ao vendedor (YYYY-MM-DD)"
+    },
+    "is_full_discharge_confirmed": {
+      "type": "boolean",
+      "description": "Confirmação de quitação integral pelo vendedor"
+    },
+    "delivery_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e horário exatos da tradição (entrega física da posse à AF Motos)"
+    },
+    "delivery_km": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "KM conferida no momento da entrega física"
+    },
+    "keys_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Quantidade de chaves entregues"
+    },
+    "has_manual": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se o manual do proprietário foi entregue"
+    },
+    "has_spare_key": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se a chave reserva foi entregue"
+    },
+    "documents_delivered": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lista de documentos entregues (CRLV, ATPV-e, etc.)"
+    },
+    "accessories_delivered": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lista de acessórios inclusos (Baú, Antena, etc.)"
+    },
+    "apparent_condition_notes": {
+      "type": ["string", "null"],
+      "description": "Observações sobre o estado estético/mecânico aparente na vistoria"
+    },
+    "transfer_deadline_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data limite estimada para transferência administrativa"
+    },
+    "transfer_notes": {
+      "type": ["string", "null"],
+      "description": "Observações sobre documentação e transferência"
+    },
+    "confirmed_data_accurate": {
+      "type": "boolean",
+      "const": true,
+      "description": "Checkbox obrigatório de conferência de dados"
+    },
+    "confirmed_payment_realized": {
+      "type": "boolean",
+      "const": true,
+      "description": "Checkbox obrigatório de conferência do pagamento"
+    },
+    "confirmed_vehicle_received": {
+      "type": "boolean",
+      "const": true,
+      "description": "Checkbox obrigatório de conferência da entrega do veículo"
+    }
+  }
+}

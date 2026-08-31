@@ -69,9 +69,13 @@ import {
   FileSignature,
   ExternalLink,
   Download,
+  FileCheck,
 } from 'lucide-react';
 
 import { toast } from 'sonner';
+import { PurchaseAgreementModal } from '@/components/admin/purchase-agreement-modal';
+import { preparePurchaseAgreementFromProposal } from '@/lib/actions/purchase-agreements';
+import { PurchaseAgreementPrepareInput } from '@/types/purchase-agreement';
 
 export function useMediaQuery(query: string) {
   const subscribe = useCallback(
@@ -344,6 +348,42 @@ export function ProposalDetail({
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [adminOfferPercent, setAdminOfferPercent] = useState<number>(85);
   const [adminCustomOffer, setAdminCustomOffer] = useState<number | null>(null);
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [purchaseInitialData, setPurchaseInitialData] = useState<Partial<PurchaseAgreementPrepareInput> | undefined>(undefined);
+  const [isLoadingPurchaseData, setIsLoadingPurchaseData] = useState(false);
+
+  const handleOpenPurchaseAgreement = async () => {
+    if (!proposal) return;
+    setIsLoadingPurchaseData(true);
+    try {
+      const targetId = (proposal.metadata as Record<string, unknown> | null)?.sell_request_id || proposal.sourceId || proposal.id;
+      const res = await preparePurchaseAgreementFromProposal(String(targetId));
+      if (res.success && res.data) {
+        setPurchaseInitialData(res.data);
+      } else {
+        setPurchaseInitialData({
+          seller_name: proposal.name,
+          seller_phone: proposal.phone,
+          seller_email: proposal.email || '',
+          brand: proposal.motorcycle?.brand || '',
+          model: proposal.motorcycle?.model || '',
+          version: proposal.motorcycle?.version || '',
+          year_manufacture: proposal.motorcycle?.yearManufacture || proposal.motorcycle?.year || new Date().getFullYear(),
+          year_model: proposal.motorcycle?.yearModel || proposal.motorcycle?.year || new Date().getFullYear(),
+          color: proposal.motorcycle?.color || '',
+          license_plate: proposal.motorcycle?.licensePlate || '',
+          mileage: proposal.motorcycle?.mileage || 0,
+          purchase_amount: proposal.motorcycle?.desiredPrice || proposal.motorcycle?.fipePrice || 0,
+          paid_amount: proposal.motorcycle?.desiredPrice || proposal.motorcycle?.fipePrice || 0,
+        });
+      }
+      setIsPurchaseModalOpen(true);
+    } catch {
+      setIsPurchaseModalOpen(true);
+    } finally {
+      setIsLoadingPurchaseData(false);
+    }
+  };
 
   if (!proposal) return null;
 
@@ -920,6 +960,34 @@ export function ProposalDetail({
             </div>
           )}
 
+          {(proposal.type === 'SELL_MOTORCYCLE' || proposal.source === 'sell_request') && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4.5 space-y-3.5 shadow-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-amber-500/20">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                  <FileSignature className="w-3.5 h-3.5" />
+                  Contrato de Compra de Motocicleta
+                </h4>
+                <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5">
+                  Estoque Próprio
+                </Badge>
+              </div>
+
+              <p className="text-xs text-zinc-300">
+                Formalize a aquisição da motocicleta para o estoque próprio da AF Motos, gerando o contrato com quitação, transferência e dados da vistoria.
+              </p>
+
+              <Button
+                type="button"
+                onClick={handleOpenPurchaseAgreement}
+                disabled={isLoadingPurchaseData}
+                className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs h-10 rounded-xl flex items-center justify-center gap-2 shadow-md"
+              >
+                <FileCheck className="size-4" />
+                {isLoadingPurchaseData ? 'Carregando dados...' : 'Gerar Contrato de Compra'}
+              </Button>
+            </div>
+          )}
+
           {/* Card 3: Mensagem do Cliente */}
           {proposal.message && (
             <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-2 shadow-xs">
@@ -1232,6 +1300,12 @@ export function ProposalDetail({
             initialSlide={selectedImageIndex}
           />
         )}
+
+        <PurchaseAgreementModal
+          open={isPurchaseModalOpen}
+          onOpenChange={setIsPurchaseModalOpen}
+          initialData={purchaseInitialData}
+        />
       </>
     );
   }
@@ -1308,6 +1382,12 @@ export function ProposalDetail({
           initialSlide={selectedImageIndex}
         />
       )}
+
+      <PurchaseAgreementModal
+        open={isPurchaseModalOpen}
+        onOpenChange={setIsPurchaseModalOpen}
+        initialData={purchaseInitialData}
+      />
     </Sheet>
   );
 }

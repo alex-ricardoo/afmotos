@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ContractSnapshotSchema",
+  "description": "JSON Schema para validação do snapshot imutável persistido em motorcycle_purchase_agreements.contract_snapshot",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "generated_by",
+    "store",
+    "seller",
+    "motorcycle",
+    "commercial_terms",
+    "delivery_and_possession",
+    "transfer_and_compliance",
+    "seller_declarations",
+    "signatures"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "enum": ["1.0"] },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "generated_by": {
+      "type": "object",
+      "required": ["user_id"],
+      "properties": {
+        "user_id": { "type": "string", "format": "uuid" },
+        "name": { "type": ["string", "null"] },
+        "email": { "type": ["string", "null"] }
+      }
+    },
+    "store": {
+      "type": "object",
+      "required": ["name", "address", "phone"],
+      "properties": {
+        "name": { "type": "string" },
+        "cnpj": { "type": ["string", "null"] },
+        "address": { "type": "string" },
+        "city": { "type": ["string", "null"] },
+        "state": { "type": ["string", "null"] },
+        "phone": { "type": "string" },
+        "email": { "type": ["string", "null"] },
+        "legal_representative": { "type": ["string", "null"] }
+      }
+    },
+    "seller": {
+      "type": "object",
+      "required": ["full_name", "document", "phone", "address"],
+      "properties": {
+        "customer_id": { "type": ["string", "null"], "format": "uuid" },
+        "person_type": { "type": "string", "enum": ["PF", "PJ"] },
+        "full_name": { "type": "string" },
+        "document": { "type": "string" },
+        "rg": { "type": ["string", "null"] },
+        "phone": { "type": "string" },
+        "email": { "type": ["string", "null"] },
+        "address": { "type": "string" }
+      }
+    },
+    "motorcycle": {
+      "type": "object",
+      "required": ["brand", "model", "year_manufacture", "year_model", "license_plate", "mileage_at_delivery"],
+      "properties": {
+        "id": { "type": ["string", "null"], "format": "uuid" },
+        "brand": { "type": "string" },
+        "model": { "type": "string" },
+        "version": { "type": ["string", "null"] },
+        "year_manufacture": { "type": "integer" },
+        "year_model": { "type": "integer" },
+        "color": { "type": ["string", "null"] },
+        "fuel": { "type": ["string", "null"] },
+        "engine_capacity": { "type": ["integer", "null"] },
+        "license_plate": { "type": "string" },
+        "renavam": { "type": ["string", "null"] },
+        "chassi": { "type": ["string", "null"] },
+        "engine_number": { "type": ["string", "null"] },
+        "mileage_at_delivery": { "type": "integer" },
+        "fipe_code": { "type": ["string", "null"] },
+        "fipe_price": { "type": ["number", "null"] },
+        "fipe_reference": { "type": ["string", "null"] }
+      }
+    },
+    "commercial_terms": {
+      "type": "object",
+      "required": ["purchase_amount", "paid_amount", "payment_status", "payment_method", "payment_date"],
+      "properties": {
+        "purchase_amount": { "type": "number" },
+        "paid_amount": { "type": "number" },
+        "payment_status": { "type": "string", "enum": ["PAID_FULL", "PAID_PARTIAL", "PENDING"] },
+        "payment_status_label": { "type": "string" },
+        "payment_method": { "type": "string" },
+        "payment_date": { "type": "string" },
+        "is_full_discharge": { "type": "boolean" },
+        "discharge_statement": { "type": "string" }
+      }
+    },
+    "delivery_and_possession": {
+      "type": "object",
+      "required": ["delivery_datetime", "delivery_km", "keys_count"],
+      "properties": {
+        "delivery_datetime": { "type": "string" },
+        "delivery_location": { "type": "string" },
+        "delivery_km": { "type": "integer" },
+        "keys_count": { "type": "integer" },
+        "has_manual": { "type": "boolean" },
+        "has_spare_key": { "type": "boolean" },
+        "documents_delivered": { "type": "array", "items": { "type": "string" } },
+        "accessories_delivered": { "type": "array", "items": { "type": "string" } },
+        "apparent_condition_notes": { "type": ["string", "null"] }
+      }
+    },
+    "transfer_and_compliance": {
+      "type": "object",
+      "required": ["transfer_status", "transfer_deadline_date", "transfer_deadline_days"],
+      "properties": {
+        "transfer_status": { "type": "string" },
+        "transfer_deadline_date": { "type": "string" },
+        "transfer_deadline_days": { "type": "integer" },
+        "legal_provisions": { "type": "string" }
+      }
+    },
+    "seller_declarations": {
+      "type": "object",
+      "required": [
+        "legitimate_ownership_confirmed",
+        "civil_capacity_confirmed",
+        "no_undisclosed_debts_confirmed",
+        "no_judicial_or_financial_restrictions_confirmed",
+        "no_theft_sinister_auction_record_confirmed",
+        "engine_and_chassis_integrity_confirmed",
+        "cooperation_for_transfer_confirmed"
+      ],
+      "properties": {
+        "legitimate_ownership_confirmed": { "type": "boolean" },
+        "civil_capacity_confirmed": { "type": "boolean" },
+        "no_undisclosed_debts_confirmed": { "type": "boolean" },
+        "no_judicial_or_financial_restrictions_confirmed": { "type": "boolean" },
+        "no_theft_sinister_auction_record_confirmed": { "type": "boolean" },
+        "engine_and_chassis_integrity_confirmed": { "type": "boolean" },
+        "cooperation_for_transfer_confirmed": { "type": "boolean" }
+      }
+    },
+    "vehicle_lookup_reference": {
+      "type": ["object", "null"],
+      "properties": {
+        "consultation_id": { "type": "string", "format": "uuid" },
+        "consulted_at": { "type": "string" },
+        "risk_level": { "type": "string" },
+        "summary_notes": { "type": ["string", "null"] }
+      }
+    },
+    "signatures": {
+      "type": "object",
+      "required": ["seller_name", "seller_document", "seller_role", "buyer_name", "buyer_role"],
+      "properties": {
+        "seller_name": { "type": "string" },
+        "seller_document": { "type": "string" },
+        "seller_role": { "type": "string" },
+        "buyer_name": { "type": "string" },
+        "buyer_document": { "type": ["string", "null"] },
+        "buyer_role": { "type": "string" },
+        "witness_1_name": { "type": ["string", "null"] },
+        "witness_1_document": { "type": ["string", "null"] },
+        "witness_2_name": { "type": ["string", "null"] },
+        "witness_2_document": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

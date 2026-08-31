@@ -1,6 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export * from './customer';
+export * from './purchase-agreement';
 
 export interface MotorcycleImage {
   id: string;
@@ -583,6 +584,15 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+      };
+      motorcycle_purchase_agreements: {
+        Row: import('./purchase-agreement').MotorcyclePurchaseAgreementRecord;
+        Insert: Omit<import('./purchase-agreement').MotorcyclePurchaseAgreementRecord, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<import('./purchase-agreement').MotorcyclePurchaseAgreementRecord>;
       };
       rental_requests: {
         Row: RentalRequest;
