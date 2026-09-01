@@ -162,7 +162,7 @@ export function MotorcycleDocumentOcr({
     return (
       <div
         onClick={() => setIsExpanded(true)}
-        className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border border-amber-500/20 bg-slate-900/90 hover:bg-slate-900 hover:border-amber-500/40 transition-all cursor-pointer shadow-lg group"
+        className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border border-amber-500/20 bg-zinc-900/90 hover:bg-zinc-900 hover:border-amber-500/40 transition-all cursor-pointer shadow-lg group"
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -197,9 +197,9 @@ export function MotorcycleDocumentOcr({
 
   // Estado Expandido
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-slate-900 via-slate-900/95 to-amber-950/20 p-4 sm:p-6 shadow-xl space-y-4 animate-in fade-in-50 duration-200">
+    <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900/95 to-amber-950/20 p-4 sm:p-6 shadow-xl space-y-4 animate-in fade-in-50 duration-200">
       {/* Header do Card */}
-      <div className="space-y-2 border-b border-slate-800/80 pb-3 sm:pb-4">
+      <div className="space-y-2 border-b border-zinc-800/80 pb-3 sm:pb-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
@@ -220,7 +220,7 @@ export function MotorcycleDocumentOcr({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(false)}
-            className="h-8 px-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 shrink-0"
+            className="h-8 px-2 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 shrink-0"
             title="Ocultar painel de IA"
           >
             <span className="hidden sm:inline mr-1">Ocultar</span>
@@ -229,10 +229,10 @@ export function MotorcycleDocumentOcr({
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-0.5">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-zinc-400">
             Tire foto ou anexe o documento (CRLV/CRV em foto ou PDF) para autocompletar a moto.
           </p>
-          <div className="flex items-center gap-1 text-[11px] text-slate-400 shrink-0">
+          <div className="flex items-center gap-1 text-[11px] text-zinc-400 shrink-0">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span>Documento seguro e temporário</span>
           </div>
@@ -282,16 +282,16 @@ export function MotorcycleDocumentOcr({
             type="button"
             disabled={disabled || isProcessing}
             onClick={() => cameraInputRef.current?.click()}
-            className="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-slate-800 hover:border-amber-500/50 text-slate-200 hover:text-white transition-all cursor-pointer group shadow-sm"
+            className="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-zinc-950/80 hover:bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-zinc-200 hover:text-white transition-all cursor-pointer group shadow-sm"
           >
             <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
               <Camera className="w-4 h-4" />
             </div>
             <div className="text-left min-w-0">
-              <div className="text-xs font-bold text-slate-100 group-hover:text-amber-300 transition-colors">
+              <div className="text-xs font-bold text-zinc-100 group-hover:text-amber-300 transition-colors">
                 Tirar foto do documento
               </div>
-              <div className="text-[11px] text-slate-400 truncate">Câmera traseira do celular</div>
+              <div className="text-[11px] text-zinc-400 truncate">Câmera traseira do celular</div>
             </div>
           </button>
 
@@ -300,16 +300,16 @@ export function MotorcycleDocumentOcr({
             type="button"
             disabled={disabled || isProcessing}
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-slate-800 hover:border-amber-500/50 text-slate-200 hover:text-white transition-all cursor-pointer group shadow-sm"
+            className="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-zinc-950/80 hover:bg-zinc-950 border border-zinc-800 hover:border-amber-500/50 text-zinc-200 hover:text-white transition-all cursor-pointer group shadow-sm"
           >
-            <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
               <FileUp className="w-4 h-4" />
             </div>
             <div className="text-left min-w-0">
-              <div className="text-xs font-bold text-slate-100 group-hover:text-amber-300 transition-colors">
+              <div className="text-xs font-bold text-zinc-100 group-hover:text-amber-300 transition-colors">
                 Anexar documento
               </div>
-              <div className="text-[11px] text-slate-400 truncate">Foto ou PDF (máx. 20 MB)</div>
+              <div className="text-[11px] text-zinc-400 truncate">Foto ou PDF (máx. 20 MB)</div>
             </div>
           </button>
         </div>
@@ -317,11 +317,11 @@ export function MotorcycleDocumentOcr({
 
       {/* Estado: Arquivo Selecionado */}
       {selectedFile && previewUrl && (
-        <div className="rounded-xl bg-slate-950/90 border border-slate-800 p-3.5 sm:p-4 space-y-3 animate-in fade-in-50">
+        <div className="rounded-xl bg-zinc-950/90 border border-zinc-800 p-3.5 sm:p-4 space-y-3 animate-in fade-in-50">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               {/* Thumbnail / Ícone do Arquivo */}
-              <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-slate-800 bg-slate-900 shrink-0 flex items-center justify-center">
+              <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900 shrink-0 flex items-center justify-center">
                 {isPdf ? (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-rose-500/10 border border-rose-500/20 text-rose-400">
                     <FileText className="w-5 h-5" />
@@ -345,7 +345,7 @@ export function MotorcycleDocumentOcr({
                 <div className="text-xs font-bold text-white truncate max-w-[180px] xs:max-w-[220px] sm:max-w-[320px]">
                   {selectedFile.name}
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5">
+                <div className="text-[11px] text-zinc-400 mt-0.5">
                   {formatFileSize(selectedFile.size)} • Pronto para leitura
                 </div>
               </div>
@@ -358,7 +358,7 @@ export function MotorcycleDocumentOcr({
               size="sm"
               onClick={handleRemoveFile}
               disabled={isProcessing}
-              className="h-8 w-8 p-0 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 shrink-0"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 shrink-0"
               title="Remover documento"
             >
               <Trash2 className="w-4 h-4" />
@@ -366,14 +366,14 @@ export function MotorcycleDocumentOcr({
           </div>
 
           {/* Linha de Ações (Responsiva Mobile / Desktop) */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 border-t border-slate-800/80">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 border-t border-zinc-800/80">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
-              className="h-9 text-xs border-slate-800 hover:bg-slate-900 text-slate-300 justify-center"
+              className="h-9 text-xs border-zinc-800 hover:bg-zinc-900 text-zinc-300 justify-center"
             >
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
               Trocar arquivo
@@ -384,7 +384,7 @@ export function MotorcycleDocumentOcr({
               size="sm"
               onClick={handleProcessOcr}
               disabled={isProcessing || disabled}
-              className="h-9 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 flex-1 justify-center"
+              className="h-9 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-zinc-950 shadow-md shadow-amber-500/20 flex-1 justify-center"
             >
               {isProcessing ? (
                 <>

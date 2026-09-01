@@ -62,25 +62,25 @@ export function FipeResultCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 sm:p-7 shadow-xl space-y-6">
+    <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950/70 p-5 sm:p-7 shadow-sm space-y-6">
       {/* Ações Rápidas Topo (Desktop) */}
-      <div className="hidden sm:flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="hidden sm:flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-zinc-800/80 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
               <Sparkles className="h-3 w-3" />
               Tabela FIPE Oficial
             </span>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-zinc-400">
               {quote.vehicleTypeLabel || 'Motocicleta'}
             </span>
           </div>
 
-          <h2 className="text-2xl font-extrabold tracking-tight text-white">
+          <h2 className="text-2xl font-black tracking-tight text-white">
             {quote.brandName} {quote.modelName}
           </h2>
           {quote.versionName && (
-            <p className="text-xs sm:text-sm text-slate-400 mt-0.5">{quote.versionName}</p>
+            <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">{quote.versionName}</p>
           )}
         </div>
 
@@ -90,7 +90,7 @@ export function FipeResultCard({
             <button
               onClick={onRequery}
               type="button"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
               title="Atualizar cotação"
             >
               <RotateCcw className="h-3.5 w-3.5" />
@@ -101,13 +101,13 @@ export function FipeResultCard({
       </div>
 
       {/* Cabeçalho Mobile */}
-      <div className="sm:hidden border-b border-slate-800 pb-4">
+      <div className="sm:hidden border-b border-zinc-800/80 pb-4">
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
             <Hash className="h-3 w-3" />
             {quote.fipeCode}
           </span>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-950 text-slate-400 border border-slate-800">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-zinc-900 text-zinc-400 border border-zinc-800">
             <Calendar className="h-3 w-3" />
             Ref: {quote.referenceLabel}
           </span>
@@ -117,32 +117,32 @@ export function FipeResultCard({
           {quote.brandName} {quote.modelName}
         </h2>
         {quote.versionName && (
-          <p className="text-xs text-slate-400 mt-1 line-clamp-1">{quote.versionName}</p>
+          <p className="text-xs text-zinc-400 mt-1 line-clamp-1">{quote.versionName}</p>
         )}
       </div>
 
       {/* Bloco de Preço em Destaque */}
-      <div className="rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800 p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-inner">
+      <div className="rounded-2xl bg-zinc-900/70 border border-zinc-800/80 p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-inner">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+          <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">
             Valor de Referência FIPE
           </span>
-          <div className="text-3xl sm:text-5xl font-black text-amber-400 tracking-tight mt-1 font-mono">
+          <div className="text-3xl sm:text-5xl font-black text-[#e3c56c] tracking-tight mt-1 font-mono">
             {formatFipeCurrency(quote.priceReais)}
           </div>
-          <div className="flex items-center gap-2 mt-2 text-xs text-slate-400">
-            <Clock className="h-3.5 w-3.5 text-slate-500" />
+          <div className="flex items-center gap-2 mt-2 text-xs text-zinc-400">
+            <Clock className="h-3.5 w-3.5 text-zinc-500" />
             <span>
-              Mês de referência: <strong className="text-slate-200">{quote.referenceLabel}</strong>
+              Mês de referência: <strong className="text-zinc-200">{quote.referenceLabel}</strong>
             </span>
           </div>
         </div>
       </div>
 
       {/* Calculadora Rápida de Margem de Negociação */}
-      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 space-y-4">
+      <div className="rounded-2xl border border-[#c9a44c]/30 bg-[#c9a44c]/5 p-4 sm:p-5 space-y-4">
         <div className="flex items-center gap-2">
-          <Calculator className="h-4 w-4 text-amber-400" />
+          <Calculator className="h-4 w-4 text-[#c9a44c]" />
           <h3 className="text-sm font-bold text-white">Calculadora Rápida de Compra / Avaliação</h3>
         </div>
 
@@ -154,8 +154,8 @@ export function FipeResultCard({
               onClick={() => setMargin(pct)}
               className={`flex-1 min-w-[60px] min-h-[44px] px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                 margin === pct
-                  ? 'bg-amber-500 border-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-amber-500/50 hover:text-white'
+                  ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] border-[#c9a44c] text-zinc-950 shadow-md shadow-amber-500/20'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-[#c9a44c]/50 hover:text-white'
               }`}
             >
               {Math.round(pct * 100)}%
@@ -173,19 +173,19 @@ export function FipeResultCard({
                 const val = Number(e.target.value);
                 if (val > 0) setMargin(val / 100);
               }}
-              className="w-full min-h-[44px] pl-3 pr-7 py-1.5 text-center text-sm font-bold rounded-xl border border-slate-800 bg-slate-950 text-white focus:border-amber-500 outline-none font-mono"
+              className="w-full min-h-[44px] pl-3 pr-7 py-1.5 text-center text-sm font-bold rounded-xl border border-zinc-800 bg-zinc-900 text-white focus:border-[#c9a44c] outline-none font-mono"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 pointer-events-none">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500 pointer-events-none">
               %
             </span>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 bg-slate-950 rounded-xl border border-slate-800">
-          <span className="text-xs font-semibold text-slate-400">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 bg-zinc-900 rounded-xl border border-zinc-800">
+          <span className="text-xs font-semibold text-zinc-400">
             Sugestão para Compra ({(margin * 100).toFixed(0)}%)
           </span>
-          <span className="text-xl font-black text-amber-400 font-mono">
+          <span className="text-xl font-black text-[#e3c56c] font-mono">
             {formatFipeCurrency(suggestedPrice)}
           </span>
         </div>
@@ -193,9 +193,9 @@ export function FipeResultCard({
 
       {/* Grid de Especificações Técnicas */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
-            <Calendar className="h-3.5 w-3.5 text-amber-400" />
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3.5">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-1">
+            <Calendar className="h-3.5 w-3.5 text-[#c9a44c]" />
             <span>Ano Modelo</span>
           </div>
           <p className="text-sm font-bold text-white">
@@ -203,17 +203,17 @@ export function FipeResultCard({
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
-            <Fuel className="h-3.5 w-3.5 text-amber-400" />
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3.5">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-1">
+            <Fuel className="h-3.5 w-3.5 text-[#c9a44c]" />
             <span>Combustível</span>
           </div>
           <p className="text-sm font-bold text-white">{quote.fuelName || 'Gasolina'}</p>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
-            <Hash className="h-3.5 w-3.5 text-amber-400" />
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3.5">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-1">
+            <Hash className="h-3.5 w-3.5 text-[#c9a44c]" />
             <span>Código FIPE</span>
           </div>
           <p className="text-sm font-mono font-bold text-white">
@@ -221,9 +221,9 @@ export function FipeResultCard({
           </p>
         </div>
 
-        <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
-            <Clock className="h-3.5 w-3.5 text-amber-400" />
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3.5">
+          <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-1">
+            <Clock className="h-3.5 w-3.5 text-[#c9a44c]" />
             <span>Provedor</span>
           </div>
           <p className="text-sm font-bold text-white">{quote.providerLabel}</p>
@@ -232,14 +232,14 @@ export function FipeResultCard({
 
       {/* Analytics Adicionais (se retornados pela API) */}
       {analytics && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4 space-y-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">
             Métricas de Mercado & Desvalorização
           </span>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
             {analytics.changeFromPreviousMonthPct !== null && (
               <div>
-                <span className="text-slate-400">Variação mensal</span>
+                <span className="text-zinc-400">Variação mensal</span>
                 <div className="flex items-center gap-1 font-semibold text-sm mt-0.5">
                   {analytics.changeFromPreviousMonthPct >= 0 ? (
                     <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
@@ -261,7 +261,7 @@ export function FipeResultCard({
 
             {analytics.annualDepreciationRate !== null && (
               <div>
-                <span className="text-slate-400">Depreciação anual</span>
+                <span className="text-zinc-400">Depreciação anual</span>
                 <div className="font-semibold text-sm text-white mt-0.5">
                   {analytics.annualDepreciationRate.toFixed(2)}%
                 </div>
@@ -270,8 +270,8 @@ export function FipeResultCard({
 
             {analytics.valueRetentionPct !== null && (
               <div>
-                <span className="text-slate-400">Retenção de valor</span>
-                <div className="font-semibold text-sm text-amber-400 mt-0.5">
+                <span className="text-zinc-400">Retenção de valor</span>
+                <div className="font-semibold text-sm text-[#e3c56c] mt-0.5">
                   {analytics.valueRetentionPct.toFixed(1)}%
                 </div>
               </div>
@@ -281,7 +281,7 @@ export function FipeResultCard({
       )}
 
       {/* Action Bar (Mobile First) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-slate-800">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-zinc-800/80">
         {onSave && (
           <button
             onClick={onSave}
@@ -290,7 +290,7 @@ export function FipeResultCard({
             className={`w-full min-h-[48px] inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm ${
               isSaved
                 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                : 'bg-slate-950 border border-slate-800 text-slate-200 hover:bg-slate-800 hover:text-white'
+                : 'bg-zinc-900 border border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-white'
             } disabled:opacity-60 disabled:cursor-not-allowed`}
           >
             {isSaved ? (
@@ -313,7 +313,7 @@ export function FipeResultCard({
           <button
             onClick={onOpenLinker}
             type="button"
-            className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-bold transition-all cursor-pointer shadow-sm"
+            className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#c9a44c]/40 bg-[#c9a44c]/10 text-[#e3c56c] hover:bg-[#c9a44c]/20 text-xs font-bold transition-all cursor-pointer shadow-sm"
           >
             <LinkIcon className="h-4 w-4" />
             <span>Vincular ao Estoque</span>
@@ -323,7 +323,7 @@ export function FipeResultCard({
         <button
           onClick={handleShare}
           type="button"
-          className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+          className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
         >
           <Copy className="h-4 w-4" />
           <span>Copiar Resumo</span>

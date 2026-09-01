@@ -597,16 +597,16 @@ export function FipeSearchForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 sm:p-7 shadow-xl space-y-6"
+      className="rounded-3xl border border-zinc-800/80 bg-zinc-950/70 p-5 sm:p-7 shadow-sm space-y-6"
     >
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c9a44c]/10 text-[#c9a44c] border border-[#c9a44c]/20">
             <Bike className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-bold text-base text-white">Formulário de Consulta</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="font-black text-base text-white">Formulário de Consulta</h3>
+            <p className="text-xs text-zinc-400">
               Selecione as especificações da motocicleta na base oficial
             </p>
           </div>
@@ -615,7 +615,7 @@ export function FipeSearchForm({
         <button
           type="button"
           onClick={handleClear}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-slate-400 bg-slate-950 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-zinc-400 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           <span>Limpar</span>
@@ -636,14 +636,14 @@ export function FipeSearchForm({
       <div className="space-y-4">
         {/* 1. Tipo de Veículo */}
         <div className="hidden">
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
             Tipo de veículo
           </label>
           <select
             value={selectedTypeId}
             onChange={(e) => handleTypeChange(e.target.value)}
             disabled={loadingPrelude || types.length === 0}
-            className="w-full min-h-[48px] rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm font-medium text-slate-200 focus:border-amber-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full min-h-[48px] rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2.5 text-sm font-medium text-zinc-200 focus:border-[#c9a44c] outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="" disabled>
               {loadingPrelude ? 'Carregando tipos...' : 'Selecione o tipo'}
@@ -659,10 +659,10 @@ export function FipeSearchForm({
         {/* 2. Marca (Chips Rápidos + Select com Auto-Complete) */}
         <div ref={brandComboboxRef} className="relative">
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-semibold text-slate-300">Marca</label>
+            <label className="block text-xs font-semibold text-zinc-300">Marca</label>
             <div className="flex items-center gap-2">
               {loadingBrands && (
-                <span className="inline-flex items-center gap-1 text-[11px] text-amber-400">
+                <span className="inline-flex items-center gap-1 text-[11px] text-[#e3c56c]">
                   <Loader2 className="h-3 w-3 animate-spin" /> Carregando marcas...
                 </span>
               )}
@@ -684,8 +684,8 @@ export function FipeSearchForm({
                   onClick={() => handleBrandSelect(brandObj)}
                   className={`min-h-[40px] px-3.5 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-amber-500 border-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                      : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-amber-500/50 hover:text-white'
+                      ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] border-[#c9a44c] text-zinc-950 shadow-md shadow-amber-500/20'
+                      : 'bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:border-[#c9a44c]/50 hover:text-white'
                   }`}
                 >
                   {brandName}
@@ -701,17 +701,17 @@ export function FipeSearchForm({
                 setIsBrandOpen((prev) => !prev);
               }
             }}
-            className={`w-full min-h-[48px] flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-sm cursor-pointer transition-all bg-slate-950 ${
+            className={`w-full min-h-[48px] flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-sm cursor-pointer transition-all bg-zinc-900 ${
               isBrandOpen
-                ? 'border-amber-500 ring-2 ring-amber-500/20'
-                : 'border-slate-800 hover:border-amber-500/50'
+                ? 'border-[#c9a44c] ring-2 ring-[#c9a44c]/20'
+                : 'border-zinc-800 hover:border-[#c9a44c]/50'
             } ${
               !selectedTypeId || loadingBrands || allBrands.length === 0
                 ? 'opacity-50 cursor-not-allowed pointer-events-none'
                 : ''
             }`}
           >
-            <span className={selectedBrand ? 'font-bold text-white' : 'text-slate-500'}>
+            <span className={selectedBrand ? 'font-bold text-white' : 'text-zinc-500'}>
               {selectedBrand
                 ? selectedBrand.name
                 : !selectedTypeId
@@ -722,41 +722,41 @@ export function FipeSearchForm({
                       ? 'Nenhuma marca encontrada'
                       : 'Pesquisar marca (ex: Honda, Yamaha...)'}
             </span>
-            <ChevronsUpDown className="h-4 w-4 text-slate-400 shrink-0" />
+            <ChevronsUpDown className="h-4 w-4 text-zinc-400 shrink-0" />
           </div>
 
           {/* Dropdown Auto-Complete Marca */}
           {isBrandOpen && (
-            <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-xl border border-slate-800 bg-slate-900 shadow-2xl p-2.5 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl p-2.5 space-y-2 animate-in fade-in zoom-in-95 duration-150">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
                 <input
                   type="text"
                   value={brandSearchTerm}
                   onChange={(e) => setBrandSearchTerm(e.target.value)}
                   placeholder="Digite para filtrar marca..."
                   autoFocus
-                  className="w-full min-h-[44px] rounded-lg border border-slate-800 bg-slate-950 pl-8 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:border-amber-500 outline-none"
+                  className="w-full min-h-[44px] rounded-xl border border-zinc-800 bg-zinc-900 pl-8 pr-8 py-2 text-xs text-white placeholder:text-zinc-500 focus:border-[#c9a44c] outline-none"
                 />
                 {brandSearchTerm && (
                   <button
                     type="button"
                     onClick={() => setBrandSearchTerm('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 )}
               </div>
 
-              <div className="flex items-center justify-between px-1 text-[11px] text-slate-400 border-b border-slate-800 pb-1.5">
+              <div className="flex items-center justify-between px-1 text-[11px] text-zinc-400 border-b border-zinc-800 pb-1.5">
                 <span>
                   {filteredBrands.length} {filteredBrands.length === 1 ? 'marca' : 'marcas'}
                 </span>
                 <button
                   type="button"
                   onClick={() => setOnlyPopularBrands((prev) => !prev)}
-                  className="text-amber-400 hover:underline cursor-pointer font-medium"
+                  className="text-[#e3c56c] hover:underline cursor-pointer font-medium"
                 >
                   {onlyPopularBrands ? 'Ver todas' : 'Filtrar principais'}
                 </button>
@@ -764,7 +764,7 @@ export function FipeSearchForm({
 
               <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
                 {filteredBrands.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-slate-400 space-y-1">
+                  <div className="p-4 text-center text-xs text-zinc-400 space-y-1">
                     <p className="font-medium text-white">
                       Nenhuma marca encontrada para &ldquo;{brandSearchTerm}&rdquo;
                     </p>
@@ -772,7 +772,7 @@ export function FipeSearchForm({
                       <button
                         type="button"
                         onClick={() => setOnlyPopularBrands(false)}
-                        className="text-amber-400 hover:underline cursor-pointer block mx-auto text-[11px] mt-1"
+                        className="text-[#e3c56c] hover:underline cursor-pointer block mx-auto text-[11px] mt-1"
                       >
                         Buscar em todas as marcas
                       </button>
@@ -787,8 +787,8 @@ export function FipeSearchForm({
                         onClick={() => handleBrandSelect(b)}
                         className={`flex items-center justify-between min-h-[38px] px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
                           isSelected
-                            ? 'bg-amber-500 text-slate-950 font-bold'
-                            : 'text-slate-200 hover:bg-amber-500/15 hover:text-amber-400'
+                            ? 'bg-[#c9a44c] text-zinc-950 font-bold'
+                            : 'text-zinc-200 hover:bg-[#c9a44c]/15 hover:text-[#e3c56c]'
                         }`}
                       >
                         <span>{b.name}</span>
@@ -805,9 +805,9 @@ export function FipeSearchForm({
         {/* 3. Modelo (Select com Auto-Complete) */}
         <div ref={modelComboboxRef} className="relative">
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-slate-300">Modelo</label>
+            <label className="block text-xs font-semibold text-zinc-300">Modelo</label>
             {loadingModels && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-amber-400">
+              <span className="inline-flex items-center gap-1 text-[11px] text-[#e3c56c]">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 <span>Carregando modelos...</span>
               </span>
@@ -821,17 +821,17 @@ export function FipeSearchForm({
                 setIsModelOpen((prev) => !prev);
               }
             }}
-            className={`w-full min-h-[48px] flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-sm cursor-pointer transition-all bg-slate-950 ${
+            className={`w-full min-h-[48px] flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-sm cursor-pointer transition-all bg-zinc-900 ${
               isModelOpen
-                ? 'border-amber-500 ring-2 ring-amber-500/20'
-                : 'border-slate-800 hover:border-amber-500/50'
+                ? 'border-[#c9a44c] ring-2 ring-[#c9a44c]/20'
+                : 'border-zinc-800 hover:border-[#c9a44c]/50'
             } ${
               !selectedBrandId || loadingModels || allModels.length === 0
                 ? 'opacity-50 cursor-not-allowed pointer-events-none'
                 : ''
             }`}
           >
-            <span className={selectedModel ? 'font-bold text-white' : 'text-slate-500'}>
+            <span className={selectedModel ? 'font-bold text-white' : 'text-zinc-500'}>
               {selectedModel
                 ? selectedModel.name
                 : !selectedBrandId
@@ -842,34 +842,34 @@ export function FipeSearchForm({
                       ? 'Nenhum modelo encontrado'
                       : 'Pesquisar modelo (ex: CG 160, Biz, Fazer...)'}
             </span>
-            <ChevronsUpDown className="h-4 w-4 text-slate-400 shrink-0" />
+            <ChevronsUpDown className="h-4 w-4 text-zinc-400 shrink-0" />
           </div>
 
           {/* Dropdown Auto-Complete Modelo */}
           {isModelOpen && (
-            <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-xl border border-slate-800 bg-slate-900 shadow-2xl p-2.5 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl p-2.5 space-y-2 animate-in fade-in zoom-in-95 duration-150">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
                 <input
                   type="text"
                   value={modelSearchTerm}
                   onChange={(e) => setModelSearchTerm(e.target.value)}
                   placeholder="Digite para filtrar modelo (ex: 160, Fan, Biz...)"
                   autoFocus
-                  className="w-full min-h-[44px] rounded-lg border border-slate-800 bg-slate-950 pl-8 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:border-amber-500 outline-none"
+                  className="w-full min-h-[44px] rounded-xl border border-zinc-800 bg-zinc-900 pl-8 pr-8 py-2 text-xs text-white placeholder:text-zinc-500 focus:border-[#c9a44c] outline-none"
                 />
                 {modelSearchTerm && (
                   <button
                     type="button"
                     onClick={() => setModelSearchTerm('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 )}
               </div>
 
-              <div className="px-1 text-[11px] text-slate-400 border-b border-slate-800 pb-1.5">
+              <div className="px-1 text-[11px] text-zinc-400 border-b border-zinc-800 pb-1.5">
                 <span>
                   {filteredModels.length} {filteredModels.length === 1 ? 'modelo' : 'modelos'}
                 </span>
@@ -877,7 +877,7 @@ export function FipeSearchForm({
 
               <div className="max-h-60 overflow-y-auto space-y-1 pr-1">
                 {filteredModels.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-slate-400">
+                  <div className="p-4 text-center text-xs text-zinc-400">
                     Nenhum modelo encontrado para &ldquo;{modelSearchTerm}&rdquo;
                   </div>
                 ) : (
@@ -889,8 +889,8 @@ export function FipeSearchForm({
                         onClick={() => handleModelSelect(m)}
                         className={`flex items-center justify-between min-h-[38px] px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
                           isSelected
-                            ? 'bg-amber-500 text-slate-950 font-bold'
-                            : 'text-slate-200 hover:bg-amber-500/15 hover:text-amber-400'
+                            ? 'bg-[#c9a44c] text-zinc-950 font-bold'
+                            : 'text-zinc-200 hover:bg-[#c9a44c]/15 hover:text-[#e3c56c]'
                         }`}
                       >
                         <span>{m.name}</span>
@@ -909,9 +909,9 @@ export function FipeSearchForm({
           {/* Ano */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold text-slate-300">Ano/modelo</label>
+              <label className="block text-xs font-semibold text-zinc-300">Ano/modelo</label>
               {loadingDetail && (
-                <span className="inline-flex items-center gap-1 text-[11px] text-amber-400">
+                <span className="inline-flex items-center gap-1 text-[11px] text-[#e3c56c]">
                   <Loader2 className="h-3 w-3 animate-spin" /> Carregando...
                 </span>
               )}
@@ -920,7 +920,7 @@ export function FipeSearchForm({
               value={selectedYear}
               onChange={(e) => handleYearChange(e.target.value)}
               disabled={loadingDetail || years.length === 0 || !selectedModelId}
-              className="w-full min-h-[48px] rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm font-medium text-slate-200 focus:border-amber-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full min-h-[48px] rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2.5 text-sm font-medium text-zinc-200 focus:border-[#c9a44c] outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">
                 {!selectedModelId
@@ -939,14 +939,14 @@ export function FipeSearchForm({
 
           {/* Combustível */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
               Combustível
             </label>
             <select
               value={selectedFuelId}
               onChange={(e) => setSelectedFuelId(e.target.value)}
               disabled={fuels.length === 0 || !selectedYear}
-              className="w-full min-h-[48px] rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-sm font-medium text-slate-200 focus:border-amber-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full min-h-[48px] rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-2.5 text-sm font-medium text-zinc-200 focus:border-[#c9a44c] outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">
                 {!selectedYear ? 'Selecione o ano' : 'Selecione o combustível'}
@@ -965,16 +965,16 @@ export function FipeSearchForm({
       <button
         type="submit"
         disabled={!isFormComplete || submitting}
-        className="w-full min-h-[50px] flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 px-5 py-3 text-sm sm:text-base font-bold shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-4"
+        className="w-full min-h-[50px] flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] hover:opacity-95 text-zinc-950 px-5 py-3 text-sm sm:text-base font-bold shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-4"
       >
         {submitting ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin text-slate-950" />
+            <Loader2 className="h-4 w-4 animate-spin text-zinc-950" />
             <span>Consultando tabela FIPE...</span>
           </>
         ) : (
           <>
-            <Search className="h-4 w-4 text-slate-950" />
+            <Search className="h-4 w-4 text-zinc-950" />
             <span>Consultar Tabela FIPE</span>
           </>
         )}

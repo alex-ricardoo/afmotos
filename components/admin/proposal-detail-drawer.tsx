@@ -519,9 +519,9 @@ export function ProposalDetail({
               )}
 
               {fipePrice != null && (
-                <div className="bg-blue-500/10 border border-blue-500/25 rounded-xl p-3 space-y-0.5">
+                <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3 space-y-0.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 block">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#e3c56c] block">
                       Tabela FIPE
                     </span>
                     {fipeDiffPercent !== null && (
@@ -532,7 +532,7 @@ export function ProposalDetail({
                             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                             : fipeDiffPercent > 0
                               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                              : 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+                              : 'bg-zinc-800 text-zinc-300 border border-zinc-700',
                         )}
                       >
                         {fipeDiffPercent < 0 ? (
@@ -955,13 +955,13 @@ export function ProposalDetail({
 
       {/* Dados de Locação se aplicável */}
       {(proposal.rental || proposal.type === 'RENTAL') && (
-        <div className="bg-blue-950/30 rounded-2xl border border-blue-500/30 p-4 space-y-3 shadow-xs">
-          <div className="flex items-center justify-between pb-2 border-b border-blue-500/30">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-blue-400" />
+        <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800 p-4 space-y-3 shadow-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#e3c56c] flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-[#c9a44c]" />
               Detalhes da Solicitação de Aluguel
             </h4>
-            <Badge variant="outline" className="text-[10px] font-bold border-blue-500/40 bg-blue-500/10 text-blue-300">
+            <Badge variant="outline" className="text-[10px] font-bold border-[#c9a44c]/40 bg-[#c9a44c]/10 text-[#e3c56c]">
               Locação
             </Badge>
           </div>

@@ -201,21 +201,21 @@ export default function AdminExpensesPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto select-none animate-in fade-in duration-150">
       {/* Breadcrumb de Navegação */}
-      <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+      <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium">
         <Link href="/admin" className="hover:text-white transition-colors">
           Admin
         </Link>
         <span>/</span>
-        <span className="text-slate-500">Financeiro</span>
+        <span className="text-zinc-500">Financeiro</span>
         <span>/</span>
-        <span className="text-amber-400 font-semibold">Central de Gastos</span>
+        <span className="text-[#e3c56c] font-semibold">Central de Gastos</span>
       </div>
 
       {/* 1. Header do Módulo */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-800">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-zinc-800">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#c9a44c]/10 border border-[#c9a44c]/20 text-[#e3c56c] flex items-center justify-center">
               <Wallet className="w-5 h-5" />
             </div>
             <div>
@@ -223,11 +223,11 @@ export default function AdminExpensesPage() {
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                   Central de Gastos
                 </h1>
-                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
                   Financeiro
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Controle detalhado de despesas operacionais da loja e custos acumulados por motocicleta.
               </p>
             </div>
@@ -237,23 +237,23 @@ export default function AdminExpensesPage() {
         {/* Controles de Ação e Competência */}
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Seletor de Competência Mensal */}
-          <div className="flex items-center rounded-xl bg-slate-900 border border-slate-800 p-1 shadow-sm">
+          <div className="flex items-center rounded-xl bg-zinc-900 border border-zinc-800 p-1 shadow-sm">
             <button
               onClick={handlePrevMonth}
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
               title="Mês anterior"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
             <div className="flex items-center gap-2 px-3.5 text-xs font-bold text-white min-w-[150px] justify-center">
-              <CalendarIcon className="w-3.5 h-3.5 text-amber-500" />
+              <CalendarIcon className="w-3.5 h-3.5 text-[#c9a44c]" />
               <span>{formatCompetenceMonthLabel(competenceMonth)}</span>
             </div>
 
             <button
               onClick={handleNextMonth}
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
               title="Próximo mês"
             >
               <ChevronRight className="w-4 h-4" />
@@ -262,9 +262,9 @@ export default function AdminExpensesPage() {
 
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer shadow-sm"
           >
-            <FolderCog className="w-4 h-4 text-amber-500" />
+            <FolderCog className="w-4 h-4 text-[#c9a44c]" />
             <span className="hidden sm:inline">Gerenciar Categorias</span>
           </button>
 
@@ -273,7 +273,7 @@ export default function AdminExpensesPage() {
               setSelectedExpense(null);
               setIsFormOpen(true);
             }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] hover:opacity-95 text-zinc-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Adicionar Gasto</span>

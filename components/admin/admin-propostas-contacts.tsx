@@ -77,7 +77,7 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
 
   const [proposals, setProposals] = useState<ProposalViewModel[]>(initialData);
   const [prevInitialData, setPrevInitialData] = useState<ProposalViewModel[]>(initialData);
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeStatus, setActiveStatus] = useState<string>('ALL');
   const [activeType, setActiveType] = useState<string>('ALL');
@@ -405,8 +405,8 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
           className={cn(
             'bg-zinc-950/70 p-4 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer',
             activeStatus === 'CONTACTED'
-              ? 'border-blue-500/60 bg-blue-950/30 shadow-md ring-1 ring-blue-500/40'
-              : 'border-blue-500/25 hover:border-blue-500/40 hover:bg-blue-950/15',
+              ? 'border-blue-500/60 bg-zinc-900 shadow-md ring-1 ring-blue-500/40'
+              : 'border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/50',
           )}
         >
           <div>
@@ -417,7 +417,7 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
               {contactedCount}
             </span>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 shadow-xs">
+          <div className="w-11 h-11 rounded-2xl bg-zinc-900 flex items-center justify-center text-blue-400 border border-zinc-800 shadow-xs">
             <Clock className="w-5 h-5" />
           </div>
         </button>
@@ -490,6 +490,21 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
                 type="button"
                 variant="ghost"
                 size="sm"
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  'flex-1 sm:flex-initial h-9 px-3.5 rounded-lg text-xs font-bold gap-1.5 transition-all cursor-pointer',
+                  viewMode === 'table'
+                    ? 'bg-[#c9a44c] text-zinc-950 shadow-xs hover:bg-[#e3c56c]'
+                    : 'text-zinc-400 hover:text-white',
+                )}
+              >
+                <List className="w-4 h-4" />
+                <span>Lista</span>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setViewMode('grid')}
                 className={cn(
                   'flex-1 sm:flex-initial h-9 px-3.5 rounded-lg text-xs font-bold gap-1.5 transition-all cursor-pointer',
@@ -500,21 +515,6 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
               >
                 <LayoutGrid className="w-4 h-4" />
                 <span>Cards</span>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className={cn(
-                  'flex-1 sm:flex-initial h-9 px-3.5 rounded-lg text-xs font-bold gap-1.5 transition-all cursor-pointer',
-                  viewMode === 'table'
-                    ? 'bg-[#c9a44c] text-zinc-950 shadow-xs hover:bg-[#e3c56c]'
-                    : 'text-zinc-400 hover:text-white',
-                )}
-              >
-                <List className="w-4 h-4" />
-                <span>Tabela</span>
               </Button>
             </div>
           </div>
@@ -720,9 +720,9 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
 
                   {/* Row 3: Rental or Motorcycle Info Card */}
                   {proposal.rental ? (
-                    <div className="bg-blue-950/20 p-3 rounded-2xl border border-blue-500/25 text-xs text-zinc-200 space-y-1.5 mt-auto">
+                    <div className="bg-zinc-900/60 p-3 rounded-2xl border border-zinc-800 text-xs text-zinc-200 space-y-1.5 mt-auto">
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-blue-400 font-bold">Plano</span>
+                        <span className="text-[#e3c56c] font-bold">Plano</span>
                         <span className="font-extrabold text-white">
                           {proposal.rental.desiredPlan || 'Não informado'}
                         </span>
@@ -912,7 +912,7 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
                   <th className="py-3.5 px-4 min-w-[130px]">Tipo</th>
                   <th className="py-3.5 px-4 min-w-[160px]">Cliente</th>
                   <th className="py-3.5 px-4 min-w-[140px]">Contato</th>
-                  <th className="py-3.5 px-4 min-w-[170px]">Veículo</th>
+                  <th className="py-3.5 px-4 min-w-[210px]">Veículo</th>
                   <th className="py-3.5 px-4 min-w-[130px]">Valor</th>
                   <th className="py-3.5 px-4 min-w-[130px]">Status</th>
                   <th className="py-3.5 px-4 text-right min-w-[160px]">Ações</th>
@@ -965,21 +965,49 @@ export function AdminPropostasContacts({ initialData, siteName }: Props) {
                       </td>
 
                       <td className="py-3 px-4">
-                        {proposal.motorcycle?.brand ? (
-                          <div className="text-xs">
-                            <span className="font-bold text-white">
-                              {proposal.motorcycle.brand}
-                            </span>{' '}
-                            <span className="text-zinc-300">{proposal.motorcycle.model}</span>
-                            {proposal.motorcycle.year && (
-                              <span className="text-zinc-500 font-mono text-[10px] block">
-                                Ano {proposal.motorcycle.year}
+                        <div className="flex items-center gap-3">
+                          {/* Thumbnail da moto */}
+                          <div className="relative w-12 h-10 rounded-lg overflow-hidden bg-black shrink-0 border border-zinc-800">
+                            {proposal.images && proposal.images.length > 0 ? (
+                              <img
+                                src={proposal.images[0].url}
+                                alt={proposal.motorcycle?.model || 'Foto'}
+                                className={cn(
+                                  'w-full h-full object-cover',
+                                  (proposal.images[0].url.includes('/logo.') ||
+                                    proposal.images[0].provider === 'system') &&
+                                    'object-contain p-1 bg-zinc-950',
+                                )}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-zinc-600 bg-zinc-900">
+                                <Bike className="w-4 h-4 text-[#c9a44c]" />
+                              </div>
+                            )}
+                          </div>
+
+                          <div>
+                            {proposal.motorcycle?.brand ? (
+                              <div className="text-xs">
+                                <span className="font-bold text-white">
+                                  {proposal.motorcycle.brand}
+                                </span>{' '}
+                                <span className="text-zinc-300">{proposal.motorcycle.model}</span>
+                                {proposal.motorcycle.year && (
+                                  <span className="text-zinc-500 font-mono text-[10px] block">
+                                    Ano {proposal.motorcycle.year}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-zinc-400">
+                                {proposal.type === 'RENTAL' && proposal.rental?.desiredPlan
+                                  ? `Plano: ${proposal.rental.desiredPlan}`
+                                  : 'Geral / Sem moto'}
                               </span>
                             )}
                           </div>
-                        ) : (
-                          <span className="text-xs text-zinc-500">-</span>
-                        )}
+                        </div>
                       </td>
 
                       <td className="py-3 px-4">

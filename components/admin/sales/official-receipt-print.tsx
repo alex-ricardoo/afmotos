@@ -66,7 +66,7 @@ export function OfficialReceiptPrint({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-3 sm:py-8 px-2 sm:px-6 print:p-0 print:bg-white print:text-black">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 py-3 sm:py-8 px-2 sm:px-6 print:p-0 print:bg-white print:text-black">
       {/* Barra de Ações Superior (Oculta na Impressão) */}
       <div className="max-w-4xl mx-auto mb-3 sm:mb-6 flex flex-wrap items-center justify-between gap-1.5 sm:gap-3 px-1 print:hidden">
         {onBack ? (
@@ -74,7 +74,7 @@ export function OfficialReceiptPrint({
             variant="outline"
             size="sm"
             onClick={onBack}
-            className="border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 flex items-center gap-1.5 rounded-xl h-8 sm:h-10 px-2.5 sm:px-3 text-xs font-semibold cursor-pointer"
+            className="border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 flex items-center gap-1.5 rounded-xl h-8 sm:h-10 px-2.5 sm:px-3 text-xs font-semibold cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Voltar</span>
@@ -86,7 +86,7 @@ export function OfficialReceiptPrint({
               variant: 'outline',
               size: 'sm',
               className:
-                'border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 flex items-center gap-1.5 rounded-xl h-8 sm:h-10 px-2.5 sm:px-3 text-xs font-semibold cursor-pointer',
+                'border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 flex items-center gap-1.5 rounded-xl h-8 sm:h-10 px-2.5 sm:px-3 text-xs font-semibold cursor-pointer',
             })}
           >
             <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -102,7 +102,7 @@ export function OfficialReceiptPrint({
               variant: 'outline',
               size: 'sm',
               className:
-                'h-8 sm:h-10 px-2 sm:px-3.5 rounded-xl border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-amber-400 flex items-center gap-1 sm:gap-1.5 text-xs font-semibold cursor-pointer',
+                'h-8 sm:h-10 px-2 sm:px-3.5 rounded-xl border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-[#e3c56c] flex items-center gap-1 sm:gap-1.5 text-xs font-semibold cursor-pointer',
             })}
             title="Editar informações desta venda"
           >
@@ -118,7 +118,7 @@ export function OfficialReceiptPrint({
               variant: 'outline',
               size: 'sm',
               className:
-                'h-8 sm:h-10 px-2 sm:px-3.5 rounded-xl border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 flex items-center gap-1 sm:gap-1.5 text-xs font-semibold cursor-pointer',
+                'h-8 sm:h-10 px-2 sm:px-3.5 rounded-xl border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 flex items-center gap-1 sm:gap-1.5 text-xs font-semibold cursor-pointer',
             })}
             title="Baixar comprovante em PDF"
           >
@@ -129,7 +129,7 @@ export function OfficialReceiptPrint({
           <Button
             onClick={handlePrint}
             size="sm"
-            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-2.5 sm:px-5 h-8 sm:h-10 rounded-xl flex items-center gap-1 sm:gap-2 shadow-lg shadow-amber-500/20 text-xs sm:text-sm cursor-pointer"
+            className="bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] hover:opacity-95 text-zinc-950 font-bold px-2.5 sm:px-5 h-8 sm:h-10 rounded-xl flex items-center gap-1 sm:gap-2 shadow-lg shadow-amber-500/20 text-xs sm:text-sm cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Imprimir Recibo A4</span>

@@ -8,6 +8,7 @@ import { agreementGenerateSchema } from '@/lib/agreements/schema';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { AgreementSalePDF } from '@/lib/agreements/pdf';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { getSiteLogo, getSiteName } from '@/lib/site-settings';
 import { SiteSettingsRecord } from '@/types/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';

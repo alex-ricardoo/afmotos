@@ -41,7 +41,7 @@ export default function NovaMotoPage() {
         </div>
       </div>
 
-      <Suspense fallback={<div className="p-8 text-center text-slate-400 text-sm">Carregando formulário...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-zinc-400 text-sm">Carregando formulário...</div>}>
         <MotorcycleForm />
       </Suspense>
     </div>

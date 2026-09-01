@@ -191,7 +191,7 @@ export function SalesTable({ sales }: SalesTableProps) {
                           variant: 'ghost',
                           size: 'icon-sm',
                           className:
-                            'rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800 cursor-pointer',
+                            'rounded-xl text-zinc-400 hover:text-[#e3c56c] hover:bg-zinc-800 cursor-pointer',
                         })}
                         title="Editar Dados da Venda e Recibo"
                       >
@@ -219,7 +219,7 @@ export function SalesTable({ sales }: SalesTableProps) {
                           variant: 'ghost',
                           size: 'icon-sm',
                           className:
-                            'rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer',
+                            'rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer',
                         })}
                         title="Baixar Arquivo PDF"
                       >

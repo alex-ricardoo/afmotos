@@ -9,6 +9,7 @@ import { CustomerFilters } from '@/components/admin/customers/customer-filters';
 import { CustomerSummaryKpis } from '@/components/admin/customers/customer-summary-kpis';
 import { getSettings } from '@/lib/actions/settings';
 import { getSiteName } from '@/lib/site-settings';
+import { CustomerSearchParams } from '@/lib/validations/customer';
 
 export const metadata = {
   title: 'Carteira de Clientes & CRM',

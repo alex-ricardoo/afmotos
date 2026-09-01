@@ -65,22 +65,22 @@ export function CategoryManagerModal({
   const storeCategories = categories.filter((c) => c.expense_type === 'LOJA');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-150">
-      <div className="relative w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="relative w-full max-w-xl rounded-3xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/60 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#c9a44c]/10 border border-[#c9a44c]/20 text-[#c9a44c] flex items-center justify-center">
               <FolderPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white">Gerenciar Categorias</h3>
-              <p className="text-xs text-slate-400">Classifique despesas por tipo de moto ou operação da loja.</p>
+              <h3 className="text-base sm:text-lg font-black text-white">Gerenciar Categorias</h3>
+              <p className="text-xs text-zinc-400">Classifique despesas por tipo de moto ou operação da loja.</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -91,10 +91,10 @@ export function CategoryManagerModal({
           {/* Formulário de Criação Rápida */}
           <form
             onSubmit={handleSubmit}
-            className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3"
+            className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-3"
           >
-            <h4 className="font-semibold text-white text-sm flex items-center gap-2">
-              <Plus className="w-4 h-4 text-amber-500" />
+            <h4 className="font-bold text-white text-sm flex items-center gap-2">
+              <Plus className="w-4 h-4 text-[#c9a44c]" />
               <span>Nova Categoria</span>
             </h4>
 
@@ -111,13 +111,13 @@ export function CategoryManagerModal({
                 placeholder="Nome da categoria (ex: Lavagem)"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-11 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all"
+                className="h-11 px-3.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[#c9a44c] focus:ring-1 focus:ring-[#c9a44c]/30 transition-all"
               />
 
               <select
                 value={expenseType}
                 onChange={(e) => setExpenseType(e.target.value as ExpenseType)}
-                className="h-11 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all cursor-pointer"
+                className="h-11 px-3.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-[#c9a44c] focus:ring-1 focus:ring-[#c9a44c]/30 transition-all cursor-pointer"
               >
                 <option value="MOTO">Gasto de Moto</option>
                 <option value="LOJA">Gasto da Loja</option>
@@ -130,12 +130,12 @@ export function CategoryManagerModal({
                 placeholder="Descrição opcional..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="flex-1 h-11 px-3.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all"
+                className="flex-1 h-11 px-3.5 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[#c9a44c] focus:ring-1 focus:ring-[#c9a44c]/30 transition-all"
               />
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-11 px-5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm shadow-md cursor-pointer disabled:opacity-50 transition-all"
+                className="h-11 px-5 rounded-xl bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] hover:opacity-95 text-zinc-950 font-bold text-sm shadow-md cursor-pointer disabled:opacity-50 transition-all"
               >
                 {isSubmitting ? 'Salvando...' : 'Adicionar'}
               </button>
@@ -147,11 +147,11 @@ export function CategoryManagerModal({
             {/* Categorias de Moto */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h5 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Bike className="w-4 h-4" />
+                <h5 className="text-xs font-bold text-[#e3c56c] uppercase tracking-wider flex items-center gap-1.5">
+                  <Bike className="w-4 h-4 text-[#c9a44c]" />
                   <span>Categorias de Motos</span>
                 </h5>
-                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
                   {motoCategories.length}
                 </span>
               </div>
@@ -159,9 +159,9 @@ export function CategoryManagerModal({
                 {motoCategories.map((cat) => (
                   <div
                     key={cat.id}
-                    className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 text-slate-300 font-medium truncate flex items-center gap-1.5"
+                    className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-zinc-300 font-medium truncate flex items-center gap-1.5"
                   >
-                    <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <Tag className="w-3.5 h-3.5 text-[#c9a44c] shrink-0" />
                     <span className="truncate">{cat.name}</span>
                   </div>
                 ))}
@@ -169,13 +169,13 @@ export function CategoryManagerModal({
             </div>
 
             {/* Categorias da Loja */}
-            <div className="space-y-2 pt-2 border-t border-slate-800">
+            <div className="space-y-2 pt-2 border-t border-zinc-800">
               <div className="flex items-center justify-between">
-                <h5 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Store className="w-4 h-4" />
+                <h5 className="text-xs font-bold text-[#e3c56c] uppercase tracking-wider flex items-center gap-1.5">
+                  <Store className="w-4 h-4 text-[#c9a44c]" />
                   <span>Categorias Gerais da Loja</span>
                 </h5>
-                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
                   {storeCategories.length}
                 </span>
               </div>
@@ -183,9 +183,9 @@ export function CategoryManagerModal({
                 {storeCategories.map((cat) => (
                   <div
                     key={cat.id}
-                    className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 text-slate-300 font-medium truncate flex items-center gap-1.5"
+                    className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-zinc-300 font-medium truncate flex items-center gap-1.5"
                   >
-                    <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <Tag className="w-3.5 h-3.5 text-[#c9a44c] shrink-0" />
                     <span className="truncate">{cat.name}</span>
                   </div>
                 ))}

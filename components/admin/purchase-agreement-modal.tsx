@@ -297,7 +297,7 @@ export function PurchaseAgreementModal({
 
                       {/* Mini Mercosul Badge & Info Row */}
                       <div className="flex items-center gap-3 pt-1">
-                        <div className="border border-slate-700 bg-slate-900 px-3 py-1.5 rounded-lg text-center font-mono font-black text-sm text-zinc-100 uppercase tracking-wider shadow-inner">
+                        <div className="border border-zinc-700 bg-zinc-900 px-3 py-1.5 rounded-lg text-center font-mono font-black text-sm text-zinc-100 uppercase tracking-wider shadow-inner">
                           <div className="text-[7px] text-blue-400 tracking-widest leading-none pb-0.5">BRASIL</div>
                           {formData.license_plate || 'SEM PLACA'}
                         </div>

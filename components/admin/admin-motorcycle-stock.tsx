@@ -26,7 +26,7 @@ import {
   FileText,
   Wallet,
 } from 'lucide-react';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -89,7 +89,7 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
   const storeName = siteName || CONSTANTS.STORE_NAME;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [activeStatus, setActiveStatus] = useState<string>('ALL');
   const [isPending, startTransition] = useTransition();
@@ -196,10 +196,7 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
 
         <Link
           href="/admin/motos/nova"
-          className={cn(
-            buttonVariants({ size: 'lg' }),
-            'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] hover:opacity-95 text-zinc-950 font-extrabold rounded-xl px-5 h-11 shadow-[0_0_20px_rgba(201,164,76,0.25)] transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 text-sm',
-          )}
+          className="bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] hover:opacity-95 text-zinc-950 font-extrabold rounded-xl px-5 h-11 shadow-[0_0_20px_rgba(201,164,76,0.25)] transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 text-sm"
         >
           <Plus className="h-5 w-5 stroke-[2.5]" />
           <span>Nova Motocicleta</span>
@@ -288,8 +285,23 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
             )}
           </div>
 
-          {/* View Toggle Buttons (Grid vs Table) */}
+          {/* View Toggle Buttons (Table vs Grid) */}
           <div className="flex items-center justify-center gap-1 bg-zinc-900/80 p-1 rounded-xl border border-zinc-800 shrink-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode('table')}
+              className={cn(
+                'flex-1 sm:flex-initial h-9 px-3.5 rounded-lg text-xs font-bold gap-1.5 transition-all cursor-pointer',
+                viewMode === 'table'
+                  ? 'bg-[#c9a44c] text-zinc-950 shadow-xs hover:bg-[#e3c56c]'
+                  : 'text-zinc-400 hover:text-white',
+              )}
+            >
+              <List className="w-4 h-4" />
+              <span>Lista</span>
+            </Button>
             <Button
               type="button"
               variant="ghost"
@@ -304,21 +316,6 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
             >
               <LayoutGrid className="w-4 h-4" />
               <span>Cards</span>
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setViewMode('table')}
-              className={cn(
-                'flex-1 sm:flex-initial h-9 px-3.5 rounded-lg text-xs font-bold gap-1.5 transition-all cursor-pointer',
-                viewMode === 'table'
-                  ? 'bg-[#c9a44c] text-zinc-950 shadow-xs hover:bg-[#e3c56c]'
-                  : 'text-zinc-400 hover:text-white',
-              )}
-            >
-              <List className="w-4 h-4" />
-              <span>Tabela</span>
             </Button>
           </div>
         </div>
@@ -527,10 +524,7 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                 <div className="pt-3 border-t border-zinc-900 flex items-center gap-2">
                   <Link
                     href={`/admin/motos/${moto.id}/editar`}
-                    className={cn(
-                      buttonVariants({ size: 'sm', variant: 'outline' }),
-                      'flex-1 bg-zinc-900/80 hover:bg-[#c9a44c] hover:text-zinc-950 border-zinc-800 hover:border-[#c9a44c] font-bold rounded-xl h-10 transition-all gap-1.5 text-xs text-zinc-200 cursor-pointer',
-                    )}
+                    className="flex-1 inline-flex items-center justify-center bg-zinc-900/80 hover:bg-[#c9a44c] hover:text-zinc-950 border border-zinc-800 hover:border-[#c9a44c] font-bold rounded-xl h-10 transition-all gap-1.5 text-xs text-zinc-200 cursor-pointer active:scale-95 shadow-xs"
                   >
                     <Edit className="w-3.5 h-3.5" />
                     <span>Editar</span>
@@ -538,10 +532,7 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
 
                   <Link
                     href={`/admin/motos/${moto.id}/ficha-tecnica`}
-                    className={cn(
-                      buttonVariants({ size: 'sm', variant: 'ghost' }),
-                      'h-10 w-10 p-0 rounded-xl border border-zinc-800 hover:bg-zinc-900 hover:text-[#e3c56c] text-zinc-400 shrink-0 cursor-pointer',
-                    )}
+                    className="inline-flex items-center justify-center h-10 w-10 p-0 rounded-xl border border-zinc-800 hover:bg-zinc-900 hover:text-[#e3c56c] text-zinc-400 shrink-0 cursor-pointer transition-colors"
                     title="Ficha técnica"
                   >
                     <FileText className="w-4 h-4" />
@@ -551,10 +542,7 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                   {moto.status === 'AVAILABLE' && (
                     <Link
                       href={`/admin/vendas/nova?motorcycle_id=${moto.id}`}
-                      className={cn(
-                        buttonVariants({ size: 'sm' }),
-                        'bg-amber-500/15 hover:bg-amber-500 text-[#e3c56c] hover:text-zinc-950 border border-amber-500/30 font-bold rounded-xl h-10 px-3 transition-all gap-1.5 text-xs cursor-pointer',
-                      )}
+                      className="inline-flex items-center justify-center bg-amber-500/15 hover:bg-amber-500 text-[#e3c56c] hover:text-zinc-950 border border-amber-500/30 font-bold rounded-xl h-10 px-3 transition-all gap-1.5 text-xs cursor-pointer active:scale-95"
                       title="Registrar venda desta moto"
                     >
                       <Receipt className="w-3.5 h-3.5" />
@@ -566,10 +554,7 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                     href={`/motos/${moto.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={cn(
-                      buttonVariants({ size: 'sm', variant: 'ghost' }),
-                      'h-10 w-10 p-0 rounded-xl border border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400 shrink-0 cursor-pointer',
-                    )}
+                    className="inline-flex items-center justify-center h-10 w-10 p-0 rounded-xl border border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400 shrink-0 cursor-pointer transition-colors"
                     title="Ver página pública no site"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -755,20 +740,14 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                       <div className="flex items-center justify-end gap-1.5">
                         <Link
                           href={`/admin/motos/${moto.id}/editar`}
-                          className={cn(
-                            buttonVariants({ size: 'sm', variant: 'outline' }),
-                            'h-8 px-3 rounded-xl text-xs font-bold bg-zinc-900 border-zinc-800 hover:bg-[#c9a44c] hover:text-zinc-950 transition-all text-zinc-200 cursor-pointer',
-                          )}
+                          className="inline-flex items-center justify-center h-8 px-3 rounded-xl text-xs font-bold bg-zinc-900/80 hover:bg-[#c9a44c] hover:text-zinc-950 border border-zinc-800 hover:border-[#c9a44c] transition-all text-zinc-200 cursor-pointer active:scale-95 shadow-xs"
                         >
                           <Edit className="w-3.5 h-3.5 mr-1" />
                           Editar
                         </Link>
                         <Link
                           href={`/admin/motos/${moto.id}/ficha-tecnica`}
-                          className={cn(
-                            buttonVariants({ size: 'sm', variant: 'ghost' }),
-                            'h-8 w-8 p-0 rounded-xl text-zinc-400 hover:text-[#e3c56c] border border-zinc-800 cursor-pointer',
-                          )}
+                          className="inline-flex items-center justify-center h-8 w-8 p-0 rounded-xl text-zinc-400 hover:text-[#e3c56c] border border-zinc-800 hover:bg-zinc-900 cursor-pointer transition-colors"
                           title="Ficha técnica"
                         >
                           <FileText className="w-3.5 h-3.5" />
@@ -777,13 +756,10 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                           href={`/motos/${moto.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={cn(
-                            buttonVariants({ size: 'sm', variant: 'ghost' }),
-                            'h-8 w-8 p-0 rounded-xl text-zinc-400 hover:text-white border border-zinc-800 cursor-pointer',
-                          )}
+                          className="inline-flex items-center justify-center h-8 w-8 p-0 rounded-xl text-zinc-400 hover:text-white border border-zinc-800 hover:bg-zinc-900 cursor-pointer transition-colors"
                           title="Ver no site"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-4 h-4" />
                         </a>
                       </div>
                     </td>

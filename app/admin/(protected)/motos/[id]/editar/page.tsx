@@ -103,7 +103,7 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <Suspense fallback={<div className="p-8 text-center text-slate-400 text-sm">Carregando formulário...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-zinc-400 text-sm">Carregando formulário...</div>}>
         <MotorcycleForm initialData={initialData} />
       </Suspense>
     </div>

@@ -213,8 +213,8 @@ export function ConsultationConfirmModal({
             disabled={!confirmedCheckbox || isExecuting}
             className={`w-full sm:w-auto h-10 sm:h-11 px-6 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md ${
               !confirmedCheckbox || isExecuting
-                ? 'opacity-50 cursor-not-allowed bg-amber-600/50 text-slate-200'
-                : 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold cursor-pointer shadow-lg shadow-amber-500/20 active:scale-[0.98]'
+                ? 'opacity-50 cursor-not-allowed bg-amber-600/50 text-zinc-200'
+                : 'bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold cursor-pointer shadow-lg shadow-amber-500/20 active:scale-[0.98]'
             }`}
           >
             {isExecuting ? (

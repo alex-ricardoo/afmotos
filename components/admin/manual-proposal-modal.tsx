@@ -1244,7 +1244,7 @@ export function ManualProposalModal({
                       </p>
                     </div>
 
-                    <div className="bg-blue-950/20 p-5 rounded-2xl border border-blue-500/30 space-y-4 shadow-xs">
+                    <div className="bg-zinc-900/60 p-5 rounded-2xl border border-zinc-800 space-y-4 shadow-xs">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <Label htmlFor="step3-rental-plan" className="text-xs text-zinc-300 font-semibold">
@@ -1255,7 +1255,7 @@ export function ManualProposalModal({
                             placeholder="Ex: Semanal, Mensal, Anual"
                             value={rentalDesiredPlan}
                             onChange={(e) => setRentalDesiredPlan(e.target.value)}
-                            className="h-11 bg-zinc-900/90 border-zinc-800 focus:border-blue-400 rounded-xl text-xs text-white"
+                            className="h-11 bg-zinc-900/90 border-zinc-800 focus:border-[#c9a44c] rounded-xl text-xs text-white"
                           />
                         </div>
 

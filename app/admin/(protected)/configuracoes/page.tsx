@@ -14,7 +14,7 @@ export default async function ConfiguracoesPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col gap-2 mb-6">
-        <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
+        <div className="flex items-center gap-2 text-sm text-zinc-400 mb-2">
           <Link href="/admin" className="hover:text-amber-400 transition-colors">
             Admin
           </Link>
@@ -29,7 +29,7 @@ export default async function ConfiguracoesPage() {
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               Configurações da Loja
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+            <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
               Gerencie a identidade visual, canais de contato e links públicos da {siteName}.
             </p>
           </div>

@@ -328,7 +328,7 @@ export function SaleForm({
   if (successSale) {
     return (
       <div className="max-w-3xl mx-auto py-12 px-4 animate-in fade-in-50 duration-300">
-        <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-8 text-center shadow-2xl relative overflow-hidden">
+        <div className="bg-zinc-900 border border-amber-500/30 rounded-2xl p-8 text-center shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -z-10" />
           
           <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -342,14 +342,14 @@ export function SaleForm({
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
             Venda Registrada com Sucesso!
           </h2>
-          <p className="text-slate-400 text-sm max-w-md mx-auto mb-8">
+          <p className="text-zinc-400 text-sm max-w-md mx-auto mb-8">
             O veículo foi marcado como vendido e o comprovante oficial A4 com todos os dados fiscais e contratuais está pronto para emissão.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               onClick={() => router.push(`/admin/vendas/${successSale.id}/recibo`)}
-              className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-6 py-2.5 h-auto rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-950 font-bold px-6 py-2.5 h-auto rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               Imprimir Recibo Oficial A4
@@ -358,7 +358,7 @@ export function SaleForm({
             <Button
               variant="outline"
               onClick={() => router.push('/admin/vendas')}
-              className="w-full sm:w-auto border-slate-700 hover:bg-slate-800 text-slate-200 px-6 py-2.5 h-auto rounded-xl cursor-pointer"
+              className="w-full sm:w-auto border-zinc-700 hover:bg-zinc-800 text-zinc-200 px-6 py-2.5 h-auto rounded-xl cursor-pointer"
             >
               Ver Histórico de Vendas
             </Button>
@@ -373,8 +373,8 @@ export function SaleForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8 max-w-5xl mx-auto pb-20">
         
         {/* 1. SELEÇÃO & DADOS DO VEÍCULO */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
-          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+        <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
+          <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
               1
             </div>
@@ -383,7 +383,7 @@ export function SaleForm({
                 <Bike className="w-5 h-5 text-amber-500" />
                 Identificação do Veículo
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-zinc-400">
                 {isEditing ? 'Motocicleta vinculada a este registro de venda.' : 'Selecione a motocicleta em estoque.'}
               </p>
             </div>
@@ -392,8 +392,8 @@ export function SaleForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Se estiver editando: exibe card da moto selecionada de forma limpa */}
             {isEditing ? (
-              <div className="md:col-span-2 bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
-                <div className="w-20 h-16 sm:w-24 sm:h-20 relative rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-slate-800">
+              <div className="md:col-span-2 bg-zinc-950/80 border border-zinc-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                <div className="w-20 h-16 sm:w-24 sm:h-20 relative rounded-lg overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
                   {selectedMoto?.images && selectedMoto.images.length > 0 ? (
                     <Image
                       src={selectedMoto.images[0].display_url || selectedMoto.images[0].public_url || ''}
@@ -402,7 +402,7 @@ export function SaleForm({
                       className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-600">
+                    <div className="w-full h-full flex items-center justify-center text-zinc-600">
                       <Bike className="w-8 h-8" />
                     </div>
                   )}
@@ -421,21 +421,21 @@ export function SaleForm({
                       Veículo da Venda
                     </span>
                   </div>
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1.5 text-xs text-slate-400">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1.5 text-xs text-zinc-400">
                     {selectedMoto && (
                       <>
                         <span>Ano: {selectedMoto.year_manufacture}/{selectedMoto.year_model}</span>
                         <span>•</span>
                         <span>Cor: {selectedMoto.color || 'Não informada'}</span>
                         <span>•</span>
-                        <span>Placa: <strong className="text-slate-200">{selectedMoto.license_plate || 'Sem placa'}</strong></span>
+                        <span>Placa: <strong className="text-zinc-200">{selectedMoto.license_plate || 'Sem placa'}</strong></span>
                       </>
                     )}
                   </div>
                 </div>
 
                 <div className="text-center sm:text-right shrink-0">
-                  <span className="text-[10px] text-slate-400 uppercase font-mono block">Preço de Tabela</span>
+                  <span className="text-[10px] text-zinc-400 uppercase font-mono block">Preço de Tabela</span>
                   <span className="text-base sm:text-lg font-bold text-emerald-400 font-mono">
                     {formatCurrency(selectedMoto?.price || initialSale?.sale_price || 0)}
                   </span>
@@ -448,12 +448,12 @@ export function SaleForm({
                 name="motorcycle_id"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
-                    <FormLabel className="text-slate-300 font-medium">
+                    <FormLabel className="text-zinc-300 font-medium">
                       Motocicleta em Estoque <span className="text-rose-500">*</span>
                     </FormLabel>
                     <Select onValueChange={handleMotorcycleChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="w-full bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                        <SelectTrigger className="w-full bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl focus:border-amber-500">
                           <SelectValue placeholder="Selecione a moto disponível...">
                             {selectedMoto ? (
                               <div className="flex items-center justify-between w-full gap-3 truncate pr-2">
@@ -470,7 +470,7 @@ export function SaleForm({
                           </SelectValue>
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-slate-900 border-slate-800 text-slate-200 max-h-72 w-(--anchor-width) min-w-[340px] sm:min-w-[560px]">
+                      <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-200 max-h-72 w-(--anchor-width) min-w-[340px] sm:min-w-[560px]">
                         {motorcycles.map((m) => (
                           <SelectItem key={m.id} value={m.id} className="py-2.5 px-3 cursor-pointer">
                             <div className="flex items-center justify-between w-full gap-3">
@@ -478,11 +478,11 @@ export function SaleForm({
                                 <span className="font-bold text-white">
                                   {m.brand} {m.model} {m.version || ''}
                                 </span>
-                                <span className="text-slate-400 text-xs shrink-0">
+                                <span className="text-zinc-400 text-xs shrink-0">
                                   ({m.year_manufacture}/{m.year_model})
                                 </span>
                                 {m.license_plate && (
-                                  <span className="bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-amber-400 font-mono shrink-0">
+                                  <span className="bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] text-amber-400 font-mono shrink-0">
                                     {m.license_plate}
                                   </span>
                                 )}
@@ -503,8 +503,8 @@ export function SaleForm({
 
             {/* Card de Preview se nova venda e selecionada */}
             {!isEditing && selectedMoto && (
-              <div className="md:col-span-2 bg-slate-950/60 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
-                <div className="w-20 h-16 sm:w-24 sm:h-20 relative rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-slate-800">
+              <div className="md:col-span-2 bg-zinc-950/60 border border-zinc-800 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                <div className="w-20 h-16 sm:w-24 sm:h-20 relative rounded-lg overflow-hidden bg-zinc-900 shrink-0 border border-zinc-800">
                   {selectedMoto.images && selectedMoto.images.length > 0 ? (
                     <Image
                       src={selectedMoto.images[0].display_url || selectedMoto.images[0].public_url || ''}
@@ -513,7 +513,7 @@ export function SaleForm({
                       className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-600">
+                    <div className="w-full h-full flex items-center justify-center text-zinc-600">
                       <Bike className="w-8 h-8" />
                     </div>
                   )}
@@ -523,17 +523,17 @@ export function SaleForm({
                   <h3 className="text-base font-bold text-white">
                     {selectedMoto.brand} {selectedMoto.model} {selectedMoto.version || ''}
                   </h3>
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1 text-xs text-slate-400">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1 text-xs text-zinc-400">
                     <span>Ano: {selectedMoto.year_manufacture}/{selectedMoto.year_model}</span>
                     <span>•</span>
                     <span>Cor: {selectedMoto.color || 'Não informada'}</span>
                     <span>•</span>
-                    <span>Placa: <strong className="text-slate-200">{selectedMoto.license_plate || 'Sem placa'}</strong></span>
+                    <span>Placa: <strong className="text-zinc-200">{selectedMoto.license_plate || 'Sem placa'}</strong></span>
                   </div>
                 </div>
 
                 <div className="text-center sm:text-right shrink-0">
-                  <span className="text-[10px] text-slate-400 uppercase font-mono block">Preço de Tabela</span>
+                  <span className="text-[10px] text-zinc-400 uppercase font-mono block">Preço de Tabela</span>
                   <span className="text-base sm:text-lg font-bold text-emerald-400">
                     {formatCurrency(selectedMoto.price)}
                   </span>
@@ -543,8 +543,8 @@ export function SaleForm({
 
             {/* Bloco Inteligente de Dados Fiscais (Renavam & Chassi) */}
             {hasMotoFiscalInStock && !showManualFiscal ? (
-              <div className="md:col-span-2 bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 text-slate-300">
+              <div className="md:col-span-2 bg-zinc-950/80 border border-zinc-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-zinc-300">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>
                     <strong>Dados Fiscais Vinculados:</strong> Renavam{' '}
@@ -568,9 +568,9 @@ export function SaleForm({
                   name="renavam"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-300 font-medium flex items-center justify-between">
+                      <FormLabel className="text-zinc-300 font-medium flex items-center justify-between">
                         <span>Renavam</span>
-                        <span className="text-xs text-slate-500 font-normal">11 dígitos</span>
+                        <span className="text-xs text-zinc-500 font-normal">11 dígitos</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -579,7 +579,7 @@ export function SaleForm({
                           maxLength={11}
                           onChange={(e) => field.onChange(formatRenavam(e.target.value))}
                           placeholder="Ex: 01234567890"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                          className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl font-mono focus:border-amber-500"
                         />
                       </FormControl>
                       <FormMessage />
@@ -593,9 +593,9 @@ export function SaleForm({
                   name="chassi"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-300 font-medium flex items-center justify-between">
+                      <FormLabel className="text-zinc-300 font-medium flex items-center justify-between">
                         <span>Chassi (VIN)</span>
-                        <span className="text-xs text-slate-500 font-normal">17 caracteres</span>
+                        <span className="text-xs text-zinc-500 font-normal">17 caracteres</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -604,7 +604,7 @@ export function SaleForm({
                           maxLength={17}
                           onChange={(e) => field.onChange(formatChassi(e.target.value))}
                           placeholder="Ex: 9C2JC4100ER000001"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono uppercase focus:border-amber-500"
+                          className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl font-mono uppercase focus:border-amber-500"
                         />
                       </FormControl>
                       <FormMessage />
@@ -620,9 +620,9 @@ export function SaleForm({
               name="delivery_km"
               render={({ field }) => (
                 <FormItem className="md:col-span-2">
-                  <FormLabel className="text-slate-300 font-medium flex items-center justify-between">
+                  <FormLabel className="text-zinc-300 font-medium flex items-center justify-between">
                     <span>Quilometragem no Ato da Entrega (KM)</span>
-                    <span className="text-xs text-slate-500 font-normal">Registrado no recibo de entrega física</span>
+                    <span className="text-xs text-zinc-500 font-normal">Registrado no recibo de entrega física</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -631,7 +631,7 @@ export function SaleForm({
                       value={field.value ?? ''}
                       onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                       placeholder="Ex: 14500"
-                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                      className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl font-mono focus:border-amber-500"
                     />
                   </FormControl>
                   <FormMessage />
@@ -642,8 +642,8 @@ export function SaleForm({
         </div>
 
         {/* 2. DADOS DO COMPRADOR & ENDEREÇO */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+        <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
                 2
@@ -653,14 +653,14 @@ export function SaleForm({
                   <User className="w-5 h-5 text-amber-500" />
                   Comprador / Cliente da Loja
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-zinc-400">
                   Selecione um cliente da carteira ou preencha os dados do comprador.
                 </p>
               </div>
             </div>
 
             {/* Seletor de Modo (Carteira vs Manual) */}
-            <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0 self-start sm:self-auto">
+            <div className="flex items-center bg-zinc-950 p-1 rounded-xl border border-zinc-800 shrink-0 self-start sm:self-auto">
               <button
                 type="button"
                 onClick={() => setBuyerMode('existing')}
@@ -668,7 +668,7 @@ export function SaleForm({
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
                   buyerMode === 'existing'
                     ? 'bg-[#c9a44c] text-zinc-950 shadow-xs'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-zinc-400 hover:text-white'
                 )}
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -684,7 +684,7 @@ export function SaleForm({
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
                   buyerMode === 'manual'
                     ? 'bg-[#c9a44c] text-zinc-950 shadow-xs'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-zinc-400 hover:text-white'
                 )}
               >
                 <Edit className="w-3.5 h-3.5" />
@@ -698,13 +698,13 @@ export function SaleForm({
             <div className="space-y-4">
               {!selectedCustomer ? (
                 /* Busca de Cliente */
-                <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 space-y-3">
+                <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-2xl p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" />
                       Buscar na Carteira de Clientes (CRM)
                     </span>
-                    <span className="text-[11px] text-slate-400">Preenchimento automático</span>
+                    <span className="text-[11px] text-zinc-400">Preenchimento automático</span>
                   </div>
 
                   <CustomerSearchCombobox
@@ -713,7 +713,7 @@ export function SaleForm({
                     onOpenQuickCreate={() => setQuickCreateOpen(true)}
                   />
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-900 text-xs text-slate-400">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-zinc-900 text-xs text-zinc-400">
                     <p>Digite o nome, telefone ou CPF do comprador cadastrado.</p>
                     <button
                       type="button"
@@ -730,8 +730,8 @@ export function SaleForm({
               ) : (
                 /* Card do Cliente Selecionado */
                 <div className="space-y-4">
-                  <div className="bg-gradient-to-br from-slate-950 via-[#0d0d12] to-slate-950 border border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3.5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                  <div className="bg-gradient-to-br from-zinc-950 via-[#0d0d12] to-zinc-950 border border-amber-500/40 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
                       <div className="flex items-center gap-3">
                         <div className="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-[#e3c56c] font-black text-sm shrink-0">
                           {selectedCustomer.full_name
@@ -749,7 +749,7 @@ export function SaleForm({
                             </h3>
                             <CustomerStatusBadge isActive={selectedCustomer.is_active} />
                           </div>
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-0.5">
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 mt-0.5">
                             <span className="font-mono">{formatPhone(selectedCustomer.phone)}</span>
                             {selectedCustomer.email && (
                               <>
@@ -767,7 +767,7 @@ export function SaleForm({
                           size="sm"
                           variant="outline"
                           onClick={handleClearCustomer}
-                          className="h-8 text-xs border-slate-800 text-slate-300 hover:text-white bg-slate-900 cursor-pointer"
+                          className="h-8 text-xs border-zinc-800 text-zinc-300 hover:text-white bg-zinc-900 cursor-pointer"
                         >
                           <RotateCcw className="w-3.5 h-3.5 mr-1 text-amber-400" />
                           Trocar Cliente
@@ -777,7 +777,7 @@ export function SaleForm({
                           size="sm"
                           variant="ghost"
                           onClick={() => setShowAllBuyerFields(!showAllBuyerFields)}
-                          className="h-8 text-xs text-slate-400 hover:text-white cursor-pointer"
+                          className="h-8 text-xs text-zinc-400 hover:text-white cursor-pointer"
                         >
                           <Edit className="w-3.5 h-3.5 mr-1" />
                           {showAllBuyerFields ? 'Ocultar Campos' : 'Editar Dados'}
@@ -814,7 +814,7 @@ export function SaleForm({
 
                   {/* Form com campos faltantes OU todos os campos se showAllBuyerFields */}
                   {(hasMissingFields || showAllBuyerFields) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 bg-slate-950/40 p-4 sm:p-5 rounded-2xl border border-slate-800/80 animate-in fade-in duration-200">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 bg-zinc-950/40 p-4 sm:p-5 rounded-2xl border border-zinc-800/80 animate-in fade-in duration-200">
                       {/* Se o usuário clicou em editar todos, ou se o nome/telefone estava faltando */}
                       {showAllBuyerFields && (
                         <>
@@ -823,9 +823,9 @@ export function SaleForm({
                             name="buyer_name"
                             render={({ field }) => (
                               <FormItem className="md:col-span-2">
-                                <FormLabel className="text-slate-300 font-medium">Nome Completo</FormLabel>
+                                <FormLabel className="text-zinc-300 font-medium">Nome Completo</FormLabel>
                                 <FormControl>
-                                  <Input {...field} value={field.value || ''} className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500" />
+                                  <Input {...field} value={field.value || ''} className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl focus:border-amber-500" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -836,9 +836,9 @@ export function SaleForm({
                             name="buyer_phone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-slate-300 font-medium">Telefone / WhatsApp</FormLabel>
+                                <FormLabel className="text-zinc-300 font-medium">Telefone / WhatsApp</FormLabel>
                                 <FormControl>
-                                  <Input {...field} value={field.value || ''} onChange={(e) => field.onChange(formatPhone(e.target.value))} className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500" />
+                                  <Input {...field} value={field.value || ''} onChange={(e) => field.onChange(formatPhone(e.target.value))} className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl font-mono focus:border-amber-500" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -849,9 +849,9 @@ export function SaleForm({
                             name="buyer_email"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-slate-300 font-medium">E-mail</FormLabel>
+                                <FormLabel className="text-zinc-300 font-medium">E-mail</FormLabel>
                                 <FormControl>
-                                  <Input {...field} value={field.value || ''} className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500" />
+                                  <Input {...field} value={field.value || ''} className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl focus:border-amber-500" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -867,7 +867,7 @@ export function SaleForm({
                           name="buyer_document"
                           render={({ field }) => (
                             <FormItem className={!showAllBuyerFields ? 'md:col-span-2' : ''}>
-                              <FormLabel className="text-slate-300 font-medium flex items-center justify-between">
+                              <FormLabel className="text-zinc-300 font-medium flex items-center justify-between">
                                 <span>CPF do Comprador <span className="text-rose-500">*</span></span>
                                 {isCpfMissing && (
                                   <span className="text-[11px] text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
@@ -882,10 +882,10 @@ export function SaleForm({
                                   maxLength={14}
                                   onChange={(e) => field.onChange(formatCpf(e.target.value))}
                                   placeholder="000.000.000-00"
-                                  className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                                  className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl font-mono focus:border-amber-500"
                                 />
                               </FormControl>
-                              <FormDescription className="text-[11px] text-slate-500">
+                              <FormDescription className="text-[11px] text-zinc-500">
                                 Obrigatório para emissão do recibo e termo de transferência.
                               </FormDescription>
                               <FormMessage />
@@ -896,9 +896,9 @@ export function SaleForm({
 
                       {/* Endereço: Renderiza se estiver faltando OU se showAllBuyerFields */}
                       {(isAddressMissing || showAllBuyerFields) && (
-                        <div className="md:col-span-2 pt-2 border-t border-slate-800/80 space-y-4">
+                        <div className="md:col-span-2 pt-2 border-t border-zinc-800/80 space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
                               <MapPin className="w-4 h-4 text-amber-500" />
                               Endereço de Faturamento & Residência
                             </h3>
@@ -916,7 +916,7 @@ export function SaleForm({
                               name="buyer_cep"
                               render={({ field }) => (
                                 <FormItem className="sm:col-span-2 md:col-span-2">
-                                  <FormLabel className="text-slate-300 text-xs font-medium flex items-center justify-between">
+                                  <FormLabel className="text-zinc-300 text-xs font-medium flex items-center justify-between">
                                     <span>CEP <span className="text-rose-500">*</span></span>
                                     {loadingCep && <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />}
                                   </FormLabel>
@@ -927,7 +927,7 @@ export function SaleForm({
                                       onChange={(e) => handleCepLookup(e.target.value)}
                                       placeholder="00000-000"
                                       maxLength={9}
-                                      className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl font-mono focus:border-amber-500"
+                                      className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl font-mono focus:border-amber-500"
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -941,11 +941,11 @@ export function SaleForm({
                               name="buyer_street"
                               render={({ field }) => (
                                 <FormItem className="sm:col-span-2 md:col-span-4">
-                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                  <FormLabel className="text-zinc-300 text-xs font-medium">
                                     Rua / Logradouro <span className="text-rose-500">*</span>
                                   </FormLabel>
                                   <FormControl>
-                                    <Input {...field} value={field.value || ''} placeholder="Ex: Av. Principal, Rua das Flores" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                    <Input {...field} value={field.value || ''} placeholder="Ex: Av. Principal, Rua das Flores" className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -958,11 +958,11 @@ export function SaleForm({
                               name="buyer_number"
                               render={({ field }) => (
                                 <FormItem className="sm:col-span-1 md:col-span-2">
-                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                  <FormLabel className="text-zinc-300 text-xs font-medium">
                                     Número <span className="text-rose-500">*</span>
                                   </FormLabel>
                                   <FormControl>
-                                    <Input {...field} value={field.value || ''} placeholder="Ex: 120 ou S/N" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                    <Input {...field} value={field.value || ''} placeholder="Ex: 120 ou S/N" className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -975,9 +975,9 @@ export function SaleForm({
                               name="buyer_complement"
                               render={({ field }) => (
                                 <FormItem className="sm:col-span-1 md:col-span-4">
-                                  <FormLabel className="text-slate-300 text-xs font-medium">Complemento</FormLabel>
+                                  <FormLabel className="text-zinc-300 text-xs font-medium">Complemento</FormLabel>
                                   <FormControl>
-                                    <Input {...field} value={field.value || ''} placeholder="Apto, Casa 2, Bloco B" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                    <Input {...field} value={field.value || ''} placeholder="Apto, Casa 2, Bloco B" className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -990,11 +990,11 @@ export function SaleForm({
                               name="buyer_neighborhood"
                               render={({ field }) => (
                                 <FormItem className="sm:col-span-1 md:col-span-2">
-                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                  <FormLabel className="text-zinc-300 text-xs font-medium">
                                     Bairro <span className="text-rose-500">*</span>
                                   </FormLabel>
                                   <FormControl>
-                                    <Input {...field} value={field.value || ''} placeholder="Ex: Centro" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                    <Input {...field} value={field.value || ''} placeholder="Ex: Centro" className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1007,11 +1007,11 @@ export function SaleForm({
                               name="buyer_city"
                               render={({ field }) => (
                                 <FormItem className="sm:col-span-1 md:col-span-3">
-                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                  <FormLabel className="text-zinc-300 text-xs font-medium">
                                     Cidade <span className="text-rose-500">*</span>
                                   </FormLabel>
                                   <FormControl>
-                                    <Input {...field} value={field.value || ''} placeholder="Ex: Recife" className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500" />
+                                    <Input {...field} value={field.value || ''} placeholder="Ex: Recife" className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1024,7 +1024,7 @@ export function SaleForm({
                               name="buyer_state"
                               render={({ field }) => (
                                 <FormItem className="sm:col-span-1 md:col-span-1">
-                                  <FormLabel className="text-slate-300 text-xs font-medium">
+                                  <FormLabel className="text-zinc-300 text-xs font-medium">
                                     UF <span className="text-rose-500">*</span>
                                   </FormLabel>
                                   <FormControl>
@@ -1034,7 +1034,7 @@ export function SaleForm({
                                       onChange={(e) => field.onChange(e.target.value.toUpperCase().slice(0, 2))}
                                       placeholder="PE"
                                       maxLength={2}
-                                      className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl uppercase font-mono text-center focus:border-amber-500"
+                                      className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl uppercase font-mono text-center focus:border-amber-500"
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -1054,8 +1054,8 @@ export function SaleForm({
           {/* MODO 2: PREENCHIMENTO MANUAL COMPLETO */}
           {buyerMode === 'manual' && (
             <div className="space-y-4">
-              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-2 text-slate-300">
+              <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2 text-zinc-300">
                   <Edit className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>Preencha os dados do comprador avulso. Ao salvar a venda, ele será adicionado à sua carteira de clientes.</span>
                 </div>
@@ -1075,7 +1075,7 @@ export function SaleForm({
                   name="buyer_name"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel className="text-slate-300 font-medium">
+                      <FormLabel className="text-zinc-300 font-medium">
                         Nome Completo do Comprador <span className="text-rose-500">*</span>
                       </FormLabel>
                       <FormControl>
@@ -1083,7 +1083,7 @@ export function SaleForm({
                           {...field}
                           value={field.value || ''}
                           placeholder="Digite o nome completo do cliente"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
+                          className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl focus:border-amber-500"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1097,7 +1097,7 @@ export function SaleForm({
                   name="buyer_document"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-300 font-medium">
+                      <FormLabel className="text-zinc-300 font-medium">
                         CPF do Comprador <span className="text-rose-500">*</span>
                       </FormLabel>
                       <FormControl>
@@ -1107,7 +1107,7 @@ export function SaleForm({
                           maxLength={14}
                           onChange={(e) => field.onChange(formatCpf(e.target.value))}
                           placeholder="000.000.000-00"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                          className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl font-mono focus:border-amber-500"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1121,7 +1121,7 @@ export function SaleForm({
                   name="buyer_phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-slate-300 font-medium flex items-center gap-1">
+                      <FormLabel className="text-zinc-300 font-medium flex items-center gap-1">
                         <Phone className="w-3.5 h-3.5 text-amber-500" />
                         Telefone / WhatsApp <span className="text-rose-500">*</span>
                       </FormLabel>
@@ -1131,7 +1131,7 @@ export function SaleForm({
                           value={field.value || ''}
                           onChange={(e) => field.onChange(formatPhone(e.target.value))}
                           placeholder="(81) 98765-4321"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                          className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl font-mono focus:border-amber-500"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1145,14 +1145,14 @@ export function SaleForm({
                   name="buyer_email"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel className="text-slate-300 font-medium">E-mail (Opcional)</FormLabel>
+                      <FormLabel className="text-zinc-300 font-medium">E-mail (Opcional)</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
                           {...field}
                           value={field.value || ''}
                           placeholder="comprador@email.com"
-                          className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
+                          className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl focus:border-amber-500"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1161,8 +1161,8 @@ export function SaleForm({
                 />
 
                 {/* Endereço Completo */}
-                <div className="md:col-span-2 pt-2 border-t border-slate-800/80">
-                  <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
+                <div className="md:col-span-2 pt-2 border-t border-zinc-800/80">
+                  <h3 className="text-sm font-semibold text-zinc-300 mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-amber-500" />
                     Endereço de Faturamento & Residência
                   </h3>
@@ -1173,7 +1173,7 @@ export function SaleForm({
                       name="buyer_cep"
                       render={({ field }) => (
                         <FormItem className="sm:col-span-2 md:col-span-2">
-                          <FormLabel className="text-slate-300 text-xs font-medium flex items-center justify-between">
+                          <FormLabel className="text-zinc-300 text-xs font-medium flex items-center justify-between">
                             <span>CEP <span className="text-rose-500">*</span></span>
                             {loadingCep && <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />}
                           </FormLabel>
@@ -1184,7 +1184,7 @@ export function SaleForm({
                               onChange={(e) => handleCepLookup(e.target.value)}
                               placeholder="00000-000"
                               maxLength={9}
-                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl font-mono focus:border-amber-500"
+                              className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl font-mono focus:border-amber-500"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1197,7 +1197,7 @@ export function SaleForm({
                       name="buyer_street"
                       render={({ field }) => (
                         <FormItem className="sm:col-span-2 md:col-span-4">
-                          <FormLabel className="text-slate-300 text-xs font-medium">
+                          <FormLabel className="text-zinc-300 text-xs font-medium">
                             Rua / Logradouro <span className="text-rose-500">*</span>
                           </FormLabel>
                           <FormControl>
@@ -1205,7 +1205,7 @@ export function SaleForm({
                               {...field}
                               value={field.value || ''}
                               placeholder="Ex: Av. Principal"
-                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                              className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1218,7 +1218,7 @@ export function SaleForm({
                       name="buyer_number"
                       render={({ field }) => (
                         <FormItem className="sm:col-span-1 md:col-span-2">
-                          <FormLabel className="text-slate-300 text-xs font-medium">
+                          <FormLabel className="text-zinc-300 text-xs font-medium">
                             Número <span className="text-rose-500">*</span>
                           </FormLabel>
                           <FormControl>
@@ -1226,7 +1226,7 @@ export function SaleForm({
                               {...field}
                               value={field.value || ''}
                               placeholder="Ex: 120 ou S/N"
-                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                              className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1239,13 +1239,13 @@ export function SaleForm({
                       name="buyer_complement"
                       render={({ field }) => (
                         <FormItem className="sm:col-span-1 md:col-span-4">
-                          <FormLabel className="text-slate-300 text-xs font-medium">Complemento</FormLabel>
+                          <FormLabel className="text-zinc-300 text-xs font-medium">Complemento</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
                               value={field.value || ''}
                               placeholder="Apto, Casa 2, Bloco B"
-                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                              className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1258,7 +1258,7 @@ export function SaleForm({
                       name="buyer_neighborhood"
                       render={({ field }) => (
                         <FormItem className="sm:col-span-1 md:col-span-2">
-                          <FormLabel className="text-slate-300 text-xs font-medium">
+                          <FormLabel className="text-zinc-300 text-xs font-medium">
                             Bairro <span className="text-rose-500">*</span>
                           </FormLabel>
                           <FormControl>
@@ -1266,7 +1266,7 @@ export function SaleForm({
                               {...field}
                               value={field.value || ''}
                               placeholder="Ex: Centro"
-                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                              className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1279,7 +1279,7 @@ export function SaleForm({
                       name="buyer_city"
                       render={({ field }) => (
                         <FormItem className="sm:col-span-1 md:col-span-3">
-                          <FormLabel className="text-slate-300 text-xs font-medium">
+                          <FormLabel className="text-zinc-300 text-xs font-medium">
                             Cidade <span className="text-rose-500">*</span>
                           </FormLabel>
                           <FormControl>
@@ -1287,7 +1287,7 @@ export function SaleForm({
                               {...field}
                               value={field.value || ''}
                               placeholder="Ex: Recife"
-                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl focus:border-amber-500"
+                              className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl focus:border-amber-500"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1300,7 +1300,7 @@ export function SaleForm({
                       name="buyer_state"
                       render={({ field }) => (
                         <FormItem className="sm:col-span-1 md:col-span-1">
-                          <FormLabel className="text-slate-300 text-xs font-medium">
+                          <FormLabel className="text-zinc-300 text-xs font-medium">
                             UF <span className="text-rose-500">*</span>
                           </FormLabel>
                           <FormControl>
@@ -1309,7 +1309,7 @@ export function SaleForm({
                               value={field.value || 'PE'}
                               onChange={(e) => field.onChange(e.target.value.toUpperCase().slice(0, 2))}
                               maxLength={2}
-                              className="bg-slate-950 border-slate-800 text-slate-200 h-11 rounded-xl uppercase font-mono text-center focus:border-amber-500"
+                              className="bg-zinc-950 border-zinc-800 text-zinc-200 h-11 rounded-xl uppercase font-mono text-center focus:border-amber-500"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1324,8 +1324,8 @@ export function SaleForm({
         </div>
 
         {/* 3. CONDIÇÕES FINANCEIRAS & DISCRIMINAÇÃO DE VALORES (SEM FINANCIAMENTO) */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
-          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+        <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
+          <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
               3
             </div>
@@ -1334,7 +1334,7 @@ export function SaleForm({
                 <DollarSign className="w-5 h-5 text-amber-500" />
                 Condições Financeiras & Discriminação de Valores
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-zinc-400">
                 Defina o valor fechado, forma de pagamento, valores de entrada ou moto na troca.
               </p>
             </div>
@@ -1347,7 +1347,7 @@ export function SaleForm({
               name="sale_price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300 font-medium">
+                  <FormLabel className="text-zinc-300 font-medium">
                     Valor Total da Venda (R$) <span className="text-rose-500">*</span>
                   </FormLabel>
                   <FormControl>
@@ -1362,7 +1362,7 @@ export function SaleForm({
                         form.setValue('amount_paid', val);
                       }}
                       placeholder="0.00"
-                      className="bg-slate-950 border-slate-800 text-emerald-400 font-bold text-lg h-12 rounded-xl focus:border-amber-500"
+                      className="bg-zinc-950 border-zinc-800 text-emerald-400 font-bold text-lg h-12 rounded-xl focus:border-amber-500"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1376,18 +1376,18 @@ export function SaleForm({
               name="payment_method"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300 font-medium">
+                  <FormLabel className="text-zinc-300 font-medium">
                     Forma de Pagamento <span className="text-rose-500">*</span>
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-full bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                      <SelectTrigger className="w-full bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl focus:border-amber-500">
                         <SelectValue placeholder="Selecione a forma...">
                           {paymentMethods.find((pm) => pm.value === field.value)?.label || 'Selecione a forma...'}
                         </SelectValue>
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                    <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-200">
                       {paymentMethods.map((pm) => (
                         <SelectItem key={pm.value} value={pm.value} className="cursor-pointer">
                           {pm.label}
@@ -1406,7 +1406,7 @@ export function SaleForm({
               name="sale_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300 font-medium flex items-center gap-1">
+                  <FormLabel className="text-zinc-300 font-medium flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-amber-500" />
                     Data da Venda <span className="text-rose-500">*</span>
                   </FormLabel>
@@ -1414,7 +1414,7 @@ export function SaleForm({
                     <Input
                       type="date"
                       {...field}
-                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500"
+                      className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl focus:border-amber-500"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1428,7 +1428,7 @@ export function SaleForm({
               name="entry_amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300 text-xs font-medium">
+                  <FormLabel className="text-zinc-300 text-xs font-medium">
                     Valor de Entrada (R$)
                   </FormLabel>
                   <FormControl>
@@ -1439,7 +1439,7 @@ export function SaleForm({
                       value={field.value ?? 0}
                       onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                       placeholder="0.00"
-                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                      className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl font-mono focus:border-amber-500"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1453,7 +1453,7 @@ export function SaleForm({
               name="trade_amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300 text-xs font-medium">
+                  <FormLabel className="text-zinc-300 text-xs font-medium">
                     Valor Moto na Troca (R$)
                   </FormLabel>
                   <FormControl>
@@ -1464,7 +1464,7 @@ export function SaleForm({
                       value={field.value ?? 0}
                       onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
                       placeholder="0.00"
-                      className="bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl font-mono focus:border-amber-500"
+                      className="bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl font-mono focus:border-amber-500"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1478,18 +1478,18 @@ export function SaleForm({
               name="payment_status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300 font-medium">
+                  <FormLabel className="text-zinc-300 font-medium">
                     Situação de Quitação <span className="text-rose-500">*</span>
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-full bg-slate-950 border-slate-800 text-slate-200 h-12 rounded-xl focus:border-amber-500">
+                      <SelectTrigger className="w-full bg-zinc-950 border-zinc-800 text-zinc-200 h-12 rounded-xl focus:border-amber-500">
                         <SelectValue placeholder="Selecione a situação...">
                           {paymentStatuses.find((ps) => ps.value === field.value)?.label || 'Selecione a situação...'}
                         </SelectValue>
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                    <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-200">
                       {paymentStatuses.map((ps) => (
                         <SelectItem key={ps.value} value={ps.value} className="cursor-pointer">
                           {ps.label}
@@ -1504,26 +1504,26 @@ export function SaleForm({
           </div>
 
           {/* Resumo visual de discriminação sem financiamento */}
-          <div className="bg-slate-950 border border-slate-800/80 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+          <div className="bg-zinc-950 border border-zinc-800/80 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
             <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
               <div>
-                <span className="text-slate-500 block text-[11px]">Valor Venda</span>
+                <span className="text-zinc-500 block text-[11px]">Valor Venda</span>
                 <span className="font-bold text-white text-sm font-mono">{formatCurrency(salePrice)}</span>
               </div>
-              <span className="text-slate-600 font-bold">=</span>
+              <span className="text-zinc-600 font-bold">=</span>
               <div>
-                <span className="text-slate-500 block text-[11px]">Entrada</span>
-                <span className="font-medium text-slate-300 font-mono">{formatCurrency(entryAmount)}</span>
+                <span className="text-zinc-500 block text-[11px]">Entrada</span>
+                <span className="font-medium text-zinc-300 font-mono">{formatCurrency(entryAmount)}</span>
               </div>
-              <span className="text-slate-600 font-bold">+</span>
+              <span className="text-zinc-600 font-bold">+</span>
               <div>
-                <span className="text-slate-500 block text-[11px]">Moto na Troca</span>
-                <span className="font-medium text-slate-300 font-mono">{formatCurrency(tradeAmount)}</span>
+                <span className="text-zinc-500 block text-[11px]">Moto na Troca</span>
+                <span className="font-medium text-zinc-300 font-mono">{formatCurrency(tradeAmount)}</span>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 px-3.5 py-1.5 rounded-lg text-left sm:text-right w-full sm:w-auto">
-              <span className="text-slate-400 block text-[10px] uppercase font-mono">Saldo em Aberto</span>
+            <div className="bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-lg text-left sm:text-right w-full sm:w-auto">
+              <span className="text-zinc-400 block text-[10px] uppercase font-mono">Saldo em Aberto</span>
               <span className={`font-bold font-mono text-sm ${salePrice - (entryAmount + tradeAmount) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
                 {formatCurrency(Math.max(0, salePrice - (entryAmount + tradeAmount)))}
               </span>
@@ -1532,8 +1532,8 @@ export function SaleForm({
         </div>
 
         {/* 4. OBSERVAÇÕES COMERCIAIS & TERMOS LEGAIS */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
-          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+        <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5">
+          <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm">
               4
             </div>
@@ -1542,7 +1542,7 @@ export function SaleForm({
                 <ShieldCheck className="w-5 h-5 text-amber-500" />
                 Observações Comerciais & Termos de Entrega
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-zinc-400">
                 Termos impressos no recibo formalizando a entrega física e a responsabilidade de transferência.
               </p>
             </div>
@@ -1551,7 +1551,7 @@ export function SaleForm({
           <div className="space-y-4">
             {/* Atalhos de Texto Padrão */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-slate-400 flex items-center gap-1 mr-1">
+              <span className="text-xs text-zinc-400 flex items-center gap-1 mr-1">
                 <Sparkles className="w-3 h-3 text-amber-400" /> Sugestões de texto rápido:
               </span>
               {quickDeliveryTemplates.map((item, idx) => (
@@ -1559,7 +1559,7 @@ export function SaleForm({
                   key={idx}
                   type="button"
                   onClick={() => form.setValue('receipt_notes', item.text)}
-                  className="px-2.5 py-1 bg-slate-950 border border-slate-800 hover:border-amber-500/40 text-[11px] text-slate-300 rounded-lg transition-colors cursor-pointer"
+                  className="px-2.5 py-1 bg-zinc-950 border border-zinc-800 hover:border-amber-500/40 text-[11px] text-zinc-300 rounded-lg transition-colors cursor-pointer"
                 >
                   {item.label}
                 </button>
@@ -1572,7 +1572,7 @@ export function SaleForm({
               name="receipt_notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300 font-medium">
+                  <FormLabel className="text-zinc-300 font-medium">
                     Observações de Entrega Técnica (Impresso no Recibo)
                   </FormLabel>
                   <FormControl>
@@ -1581,7 +1581,7 @@ export function SaleForm({
                       value={field.value || ''}
                       placeholder="Ex: Veículo entregue revisado, com chave reserva e manual. Vistoria aprovada sem ressalvas..."
                       rows={3}
-                      className="bg-slate-950 border-slate-800 text-slate-200 rounded-xl focus:border-amber-500 text-sm"
+                      className="bg-zinc-950 border-zinc-800 text-zinc-200 rounded-xl focus:border-amber-500 text-sm"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1595,7 +1595,7 @@ export function SaleForm({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-400 text-xs font-normal">
+                  <FormLabel className="text-zinc-400 text-xs font-normal">
                     Anotações Internas da Loja (Opcional - Não sai no recibo)
                   </FormLabel>
                   <FormControl>
@@ -1603,7 +1603,7 @@ export function SaleForm({
                       {...field}
                       value={field.value || ''}
                       placeholder="Ex: Venda indicada por parceiro ou detalhes internos..."
-                      className="bg-slate-950 border-slate-800 text-slate-300 h-11 rounded-xl focus:border-slate-700"
+                      className="bg-zinc-950 border-zinc-800 text-zinc-300 h-11 rounded-xl focus:border-zinc-700"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1625,10 +1625,10 @@ export function SaleForm({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel className="text-sm font-semibold text-slate-200 cursor-pointer">
+                    <FormLabel className="text-sm font-semibold text-zinc-200 cursor-pointer">
                       Aceite das Cláusulas Oficiais de Entrega e Responsabilidade CTB
                     </FormLabel>
-                    <FormDescription className="text-xs text-slate-400 leading-relaxed">
+                    <FormDescription className="text-xs text-zinc-400 leading-relaxed">
                       O comprador declara aprovação na vistoria, assume obrigação de transferência junto ao DETRAN em 30 dias (Art. 123 do CTB) e responsabilidade por infrações a partir da entrega física.
                     </FormDescription>
                   </div>
@@ -1639,13 +1639,13 @@ export function SaleForm({
         </div>
 
         {/* Barra Inferior com Botão de Ação */}
-        <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 pt-2 border-t border-slate-800">
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-4 pt-2 border-t border-zinc-800">
           <Button
             type="button"
             variant="ghost"
             onClick={() => router.back()}
             disabled={loading}
-            className="w-full sm:w-auto text-slate-400 hover:text-white cursor-pointer"
+            className="w-full sm:w-auto text-zinc-400 hover:text-white cursor-pointer"
           >
             Cancelar
           </Button>
@@ -1653,7 +1653,7 @@ export function SaleForm({
           <Button
             type="submit"
             disabled={loading || !selectedMotoId}
-            className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-8 py-3.5 h-auto rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base"
+            className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-950 font-bold px-8 py-3.5 h-auto rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base"
           >
             {loading ? (
               <>

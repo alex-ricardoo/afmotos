@@ -55,22 +55,22 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-150">
-      <div className="relative w-full max-w-xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="relative w-full max-w-xl rounded-3xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/60 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#c9a44c]/10 border border-[#c9a44c]/20 text-[#c9a44c] flex items-center justify-center">
               <Receipt className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white">Comprovante de Gasto</h3>
-              <p className="text-xs text-slate-400">Detalhamento financeiro e auditoria do lançamento.</p>
+              <h3 className="text-base sm:text-lg font-black text-white">Comprovante de Gasto</h3>
+              <p className="text-xs text-zinc-400">Detalhamento financeiro e auditoria do lançamento.</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -79,16 +79,16 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
         {/* Content */}
         <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar text-xs">
           {/* Header Card de Destaque Financeiro */}
-          <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between flex-wrap gap-4">
+          <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 flex items-center justify-between flex-wrap gap-4">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${typeInfo.badgeClass}`}
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${typeInfo.badgeClass}`}
                 >
                   {typeInfo.label}
                 </span>
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${statusInfo.badgeClass}`}
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusInfo.badgeClass}`}
                 >
                   {statusInfo.label}
                 </span>
@@ -96,10 +96,10 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
               <h2 className="text-base sm:text-lg font-bold text-white">{expense.title}</h2>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-emerald-400 font-mono">
+              <div className="text-2xl font-black text-emerald-400 font-mono">
                 {formatCurrency(expense.amount)}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
+              <div className="text-[11px] text-zinc-400 mt-0.5">
                 Competência: {formatDate(expense.competence_month)}
               </div>
             </div>
@@ -107,14 +107,14 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
 
           {/* Moto Vinculada (se tipo MOTO) */}
           {expense.expense_type === 'MOTO' && expense.motorcycle && (
-            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2.5">
-              <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Bike className="w-4 h-4" />
+            <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-2.5">
+              <span className="text-xs font-bold text-[#e3c56c] uppercase tracking-wider flex items-center gap-1.5">
+                <Bike className="w-4 h-4 text-[#c9a44c]" />
                 <span>Motocicleta Vinculada</span>
               </span>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-14 h-12 relative rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-slate-800">
+                  <div className="w-14 h-12 relative rounded-lg overflow-hidden bg-black shrink-0 border border-zinc-800">
                     {expense.motorcycle.primary_image_url ? (
                       <Image
                         src={expense.motorcycle.primary_image_url}
@@ -124,7 +124,7 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
                         className="object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-600">
+                      <div className="w-full h-full flex items-center justify-center text-zinc-600">
                         <Bike className="w-6 h-6" />
                       </div>
                     )}
@@ -134,10 +134,10 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
                       {expense.motorcycle.brand} {expense.motorcycle.model}
                     </div>
                     {expense.motorcycle.version && (
-                      <div className="text-xs text-slate-400 truncate">{expense.motorcycle.version}</div>
+                      <div className="text-xs text-zinc-400 truncate">{expense.motorcycle.version}</div>
                     )}
                     {expense.motorcycle.plate && (
-                      <span className="inline-block mt-1 bg-slate-800 px-1.5 py-0.5 rounded text-[11px] text-amber-400 font-mono">
+                      <span className="inline-block mt-1 bg-zinc-800 px-1.5 py-0.5 rounded text-[11px] text-[#e3c56c] font-mono">
                         {expense.motorcycle.plate}
                       </span>
                     )}
@@ -146,11 +146,11 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
 
                 <Link
                   href={`/admin/motos?id=${expense.motorcycle.id}`}
-                  className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-1.5 text-xs font-medium shrink-0"
+                  className="px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors flex items-center gap-1.5 text-xs font-medium shrink-0"
                   title="Ver moto no painel"
                 >
                   <span>Ver Moto</span>
-                  <ExternalLink className="w-3 h-3 text-amber-500" />
+                  <ExternalLink className="w-3 h-3 text-[#c9a44c]" />
                 </Link>
               </div>
             </div>
@@ -158,8 +158,8 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
 
           {/* Grid de Informações Classificatórias */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <div className="p-3.5 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-1">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                 Categoria
               </span>
               <span className="text-xs font-semibold text-white block">
@@ -167,8 +167,8 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
               </span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <div className="p-3.5 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-1">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                 Data do Gasto
               </span>
               <span className="text-xs font-semibold text-white block">
@@ -176,15 +176,15 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
               </span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <div className="p-3.5 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-1">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                 Forma de Pagamento
               </span>
               <span className="text-xs font-semibold text-white block">{paymentLabel}</span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <div className="p-3.5 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-1">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                 Recorrência
               </span>
               <span className="text-xs font-semibold text-white block">
@@ -197,21 +197,21 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
 
           {/* Dados de Fornecedor & Comprovante */}
           {(expense.supplier_name || expense.invoice_number) && (
-            <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Building className="w-3.5 h-3.5 text-amber-500" />
+            <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-2.5">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Building className="w-3.5 h-3.5 text-[#c9a44c]" />
                 <span>Dados do Fornecedor / Documento</span>
               </span>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 {expense.supplier_name && (
                   <div>
-                    <span className="text-slate-400 block text-[10px]">Fornecedor</span>
+                    <span className="text-zinc-400 block text-[10px]">Fornecedor</span>
                     <span className="font-semibold text-white">{expense.supplier_name}</span>
                   </div>
                 )}
                 {expense.invoice_number && (
                   <div>
-                    <span className="text-slate-400 block text-[10px]">Nº da Nota / Recibo</span>
+                    <span className="text-zinc-400 block text-[10px]">Nº da Nota / Recibo</span>
                     <span className="font-semibold text-white">{expense.invoice_number}</span>
                   </div>
                 )}
@@ -221,19 +221,19 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
 
           {/* Observações */}
           {expense.notes && (
-            <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+            <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-1.5">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                 Observações
               </span>
-              <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">{expense.notes}</p>
+              <p className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{expense.notes}</p>
             </div>
           )}
 
           {/* Auditoria */}
-          <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1.5">
+          <div className="pt-3 border-t border-zinc-850 text-[11px] text-zinc-400 space-y-1.5">
             <div className="flex justify-between">
               <span>Cadastrado em:</span>
-              <span className="text-slate-300 font-medium">{formatDateTime(expense.created_at)}</span>
+              <span className="text-zinc-300 font-medium">{formatDateTime(expense.created_at)}</span>
             </div>
             {expense.paid_at && (
               <div className="flex justify-between">
@@ -243,7 +243,7 @@ export function ExpenseDetailModal({ isOpen, onClose, expense }: ExpenseDetailMo
             )}
             <div className="flex justify-between">
               <span>Última atualização:</span>
-              <span className="text-slate-300 font-medium">{formatDateTime(expense.updated_at)}</span>
+              <span className="text-zinc-300 font-medium">{formatDateTime(expense.updated_at)}</span>
             </div>
           </div>
         </div>

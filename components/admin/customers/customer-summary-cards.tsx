@@ -42,16 +42,16 @@ export function CustomerSummaryCards({ relationships }: CustomerSummaryCardsProp
       count: rel.leads_count,
       description: 'Mensagens e interesses',
       icon: MessageSquare,
-      colorClass: 'text-sky-400',
-      bgClass: 'bg-sky-950/20 border-sky-900/40',
+      colorClass: 'text-[#e3c56c]',
+      bgClass: 'bg-[#c9a44c]/10 border-[#c9a44c]/20',
     },
     {
       title: 'Aluguel de Motos',
       count: rel.rentals_count + rel.rental_requests_count,
       description: 'Contratos e solicitações',
       icon: KeyRound,
-      colorClass: 'text-blue-400',
-      bgClass: 'bg-blue-950/20 border-blue-900/40',
+      colorClass: 'text-zinc-300',
+      bgClass: 'bg-zinc-900 border-zinc-800',
     },
   ];
 

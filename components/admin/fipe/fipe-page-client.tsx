@@ -278,9 +278,9 @@ export function FipePageClient({ initialMotorcycles, initialConsultations }: Fip
   return (
     <div className="space-y-6 max-w-md mx-auto sm:max-w-xl md:max-w-3xl lg:max-w-7xl pb-16">
       {/* Header com Breadcrumb e Título */}
-      <div className="flex flex-col gap-2 border-b border-slate-800 pb-5">
-        <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-          <a href="/admin" className="hover:text-amber-400 transition-colors">
+      <div className="flex flex-col gap-2 border-b border-zinc-800/80 pb-5">
+        <div className="flex items-center gap-2 text-sm text-zinc-400 mb-1">
+          <a href="/admin" className="hover:text-[#c9a44c] transition-colors">
             Admin
           </a>
           <span>/</span>
@@ -288,13 +288,13 @@ export function FipePageClient({ initialMotorcycles, initialConsultations }: Fip
         </div>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
               <span>Consulta Tabela FIPE Oficial</span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30">
                 FipeX Live
               </span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
               Avaliação de mercado em tempo real, histórico de consultas e precificação de estoque.
             </p>
           </div>
@@ -302,13 +302,13 @@ export function FipePageClient({ initialMotorcycles, initialConsultations }: Fip
       </div>
 
       {/* Segmented Control (Tabs) */}
-      <div className="flex p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-lg">
+      <div className="flex p-1.5 bg-zinc-950/80 rounded-2xl border border-zinc-800/80 shadow-sm">
         <button
           onClick={() => setActiveTab('search')}
           className={`flex-1 py-2.5 px-4 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === 'search'
-              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 shadow-md shadow-amber-500/20'
+              : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <span>🔍</span>
@@ -318,8 +318,8 @@ export function FipePageClient({ initialMotorcycles, initialConsultations }: Fip
           onClick={() => setActiveTab('history')}
           className={`flex-1 py-2.5 px-4 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === 'history'
-              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 shadow-md shadow-amber-500/20'
+              : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <span>📑</span>
@@ -372,12 +372,12 @@ export function FipePageClient({ initialMotorcycles, initialConsultations }: Fip
                   )}
                 </div>
               ) : (
-                <div className="hidden lg:flex rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 p-12 text-center space-y-3 flex-col items-center justify-center min-h-[420px]">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800/80 text-slate-400 border border-slate-700">
+                <div className="hidden lg:flex rounded-3xl border border-dashed border-zinc-800 bg-zinc-950/40 p-12 text-center space-y-3 flex-col items-center justify-center min-h-[420px]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 text-zinc-400 border border-zinc-800">
                     <Search className="h-6 w-6 opacity-70" />
                   </div>
                   <h3 className="font-bold text-base text-white">Nenhuma cotação ativa</h3>
-                  <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+                  <p className="text-xs text-zinc-400 max-w-md leading-relaxed">
                     Selecione a marca, modelo e ano no formulário ao lado para
                     obter a cotação oficial e métricas de mercado.
                   </p>

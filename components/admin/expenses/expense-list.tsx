@@ -82,10 +82,10 @@ export function ExpenseList({
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl bg-slate-900 border border-slate-800 p-12 text-center shadow-xl">
-        <div className="flex flex-col items-center justify-center gap-3 text-slate-400">
-          <RefreshCw className="w-6 h-6 animate-spin text-amber-500" />
-          <span className="text-sm font-medium text-slate-300">Carregando lançamentos de gastos...</span>
+      <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 p-12 text-center shadow-sm">
+        <div className="flex flex-col items-center justify-center gap-3 text-zinc-400">
+          <RefreshCw className="w-6 h-6 animate-spin text-[#c9a44c]" />
+          <span className="text-sm font-medium text-zinc-300">Carregando lançamentos de gastos...</span>
         </div>
       </div>
     );
@@ -93,17 +93,17 @@ export function ExpenseList({
 
   if (!expenses || expenses.length === 0) {
     return (
-      <div className="rounded-2xl bg-slate-900 border border-slate-800 p-12 text-center flex flex-col items-center justify-center shadow-xl">
-        <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center mb-4">
+      <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 p-12 text-center flex flex-col items-center justify-center shadow-sm">
+        <div className="w-12 h-12 rounded-xl bg-[#c9a44c]/10 border border-[#c9a44c]/20 text-[#c9a44c] flex items-center justify-center mb-4">
           <AlertCircle className="w-6 h-6" />
         </div>
         <h3 className="text-base font-bold text-white">Nenhum gasto registrado neste período</h3>
-        <p className="mt-1 text-xs text-slate-400 max-w-md">
+        <p className="mt-1 text-xs text-zinc-400 max-w-md">
           Adicione um novo lançamento para acompanhar os custos operacionais da loja ou as despesas vinculadas a cada moto.
         </p>
         <button
           onClick={onAddNew}
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] hover:opacity-95 px-5 py-2.5 text-sm font-bold text-zinc-950 shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Adicionar Primeiro Gasto</span>
@@ -125,7 +125,7 @@ export function ExpenseList({
           return (
             <div
               key={expense.id}
-              className="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 p-4 space-y-3 shadow-xl hover:border-slate-700 transition-all"
+              className="relative overflow-hidden rounded-2xl bg-zinc-950/70 border border-zinc-800/80 p-4 space-y-3 shadow-sm hover:border-zinc-700 transition-all"
             >
               {/* Header do Card */}
               <div className="flex items-start justify-between gap-3">
@@ -147,7 +147,7 @@ export function ExpenseList({
                       {statusInfo.label}
                     </span>
                     {expense.is_recurring && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-900 text-zinc-300 border border-zinc-800">
                         Recorrente
                       </span>
                     )}
@@ -158,21 +158,21 @@ export function ExpenseList({
                 <div className="relative shrink-0">
                   <button
                     onClick={() => setActiveMenuId(isMenuOpen ? null : expense.id)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
                     <MoreVertical className="w-4 h-4" />
                   </button>
 
                   {isMenuOpen && (
-                    <div className="absolute right-0 top-9 z-30 w-44 rounded-xl bg-slate-950 border border-slate-800 shadow-2xl py-1.5 text-xs animate-in fade-in-50">
+                    <div className="absolute right-0 top-9 z-30 w-44 rounded-xl bg-zinc-950 border border-zinc-800 shadow-2xl py-1.5 text-xs animate-in fade-in-50">
                       <button
                         onClick={() => {
                           onView(expense);
                           setActiveMenuId(null);
                         }}
-                        className="flex w-full items-center gap-2 px-3.5 py-2 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
+                        className="flex w-full items-center gap-2 px-3.5 py-2 text-zinc-300 hover:text-white hover:bg-zinc-900 cursor-pointer"
                       >
-                        <Eye className="w-3.5 h-3.5 text-amber-500" />
+                        <Eye className="w-3.5 h-3.5 text-[#c9a44c]" />
                         <span>Ver Comprovante</span>
                       </button>
                       <button
@@ -180,7 +180,7 @@ export function ExpenseList({
                           onEdit(expense);
                           setActiveMenuId(null);
                         }}
-                        className="flex w-full items-center gap-2 px-3.5 py-2 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
+                        className="flex w-full items-center gap-2 px-3.5 py-2 text-zinc-300 hover:text-white hover:bg-zinc-900 cursor-pointer"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                         <span>Editar</span>
@@ -188,11 +188,11 @@ export function ExpenseList({
                       <button
                         onClick={() => handleStatusClick(expense.id, expense.status)}
                         disabled={isItemLoading}
-                        className="flex w-full items-center gap-2 px-3.5 py-2 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
+                        className="flex w-full items-center gap-2 px-3.5 py-2 text-zinc-300 hover:text-white hover:bg-zinc-900 cursor-pointer"
                       >
                         {expense.status === 'PAID' ? (
                           <>
-                            <Clock className="w-3.5 h-3.5 text-amber-400" />
+                            <Clock className="w-3.5 h-3.5 text-[#e3c56c]" />
                             <span>Marcar Pendente</span>
                           </>
                         ) : (
@@ -205,12 +205,12 @@ export function ExpenseList({
                       <button
                         onClick={() => handleDuplicateClick(expense.id)}
                         disabled={isItemLoading}
-                        className="flex w-full items-center gap-2 px-3.5 py-2 text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
+                        className="flex w-full items-center gap-2 px-3.5 py-2 text-zinc-300 hover:text-white hover:bg-zinc-900 cursor-pointer"
                       >
                         <Copy className="w-3.5 h-3.5" />
                         <span>Duplicar Gasto</span>
                       </button>
-                      <div className="my-1 border-t border-slate-800" />
+                      <div className="my-1 border-t border-zinc-800" />
                       <button
                         onClick={() => {
                           onDelete(expense);
@@ -228,9 +228,9 @@ export function ExpenseList({
 
               {/* Moto Vinculada (se houver) */}
               {expense.expense_type === 'MOTO' && expense.motorcycle && (
-                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80">
                   {expense.motorcycle.primary_image_url ? (
-                    <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-800 bg-slate-900">
+                    <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-zinc-800 bg-black">
                       <Image
                         src={expense.motorcycle.primary_image_url}
                         alt={`${expense.motorcycle.brand} ${expense.motorcycle.model}`}
@@ -240,8 +240,8 @@ export function ExpenseList({
                       />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center shrink-0">
-                      <Bike className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg bg-zinc-900 text-zinc-400 flex items-center justify-center shrink-0 border border-zinc-800">
+                      <Bike className="w-4 h-4 text-[#c9a44c]" />
                     </div>
                   )}
                   <div className="text-xs truncate">
@@ -249,7 +249,7 @@ export function ExpenseList({
                       {expense.motorcycle.brand} {expense.motorcycle.model}
                     </div>
                     {expense.motorcycle.plate && (
-                      <span className="text-[10px] text-slate-400 font-mono">
+                      <span className="text-[10px] text-zinc-400 font-mono">
                         Placa: {expense.motorcycle.plate}
                       </span>
                     )}
@@ -258,12 +258,12 @@ export function ExpenseList({
               )}
 
               {/* Detalhes de Rodapé */}
-              <div className="pt-2.5 border-t border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
+              <div className="pt-2.5 border-t border-zinc-900 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                  <Calendar className="w-3.5 h-3.5 text-zinc-500" />
                   <span>{formatDate(expense.expense_date)}</span>
                   {expense.category && (
-                    <span className="text-slate-500 truncate max-w-[120px]">
+                    <span className="text-zinc-500 truncate max-w-[120px]">
                       • {expense.category.name}
                     </span>
                   )}
@@ -278,11 +278,11 @@ export function ExpenseList({
       </div>
 
       {/* 2. Visão Desktop (Tabela Completa) */}
-      <div className="hidden lg:block overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
+      <div className="hidden lg:block overflow-hidden rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400 uppercase tracking-wider font-bold text-[11px]">
+              <tr className="border-b border-zinc-800 bg-zinc-900/60 text-zinc-400 uppercase tracking-wider font-bold text-[11px]">
                 <th className="py-3.5 px-4">Data</th>
                 <th className="py-3.5 px-4">Descrição / Título</th>
                 <th className="py-3.5 px-4">Categoria</th>
@@ -294,7 +294,7 @@ export function ExpenseList({
                 <th className="py-3.5 px-4 text-center">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
+            <tbody className="divide-y divide-zinc-900 text-zinc-300">
               {expenses.map((expense) => {
                 const statusInfo = STATUS_LABELS[expense.status] || STATUS_LABELS.PAID;
                 const typeInfo =
@@ -304,21 +304,21 @@ export function ExpenseList({
                   : '-';
 
                 return (
-                  <tr key={expense.id} className="hover:bg-slate-800/40 transition-colors group">
-                    <td className="py-3.5 px-4 font-medium text-slate-400 whitespace-nowrap">
+                  <tr key={expense.id} className="hover:bg-zinc-900/40 transition-colors group">
+                    <td className="py-3.5 px-4 font-medium text-zinc-400 whitespace-nowrap">
                       {formatDate(expense.expense_date)}
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-white">{expense.title}</div>
                       {expense.supplier_name && (
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-[11px] text-zinc-500">
                           {expense.supplier_name}
                         </div>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                    <td className="py-3.5 px-4 font-medium text-zinc-300">
                       <span className="inline-flex items-center gap-1.5">
-                        <Tag className="w-3.5 h-3.5 text-amber-500" />
+                        <Tag className="w-3.5 h-3.5 text-[#c9a44c]" />
                         {expense.category?.name || '-'}
                       </span>
                     </td>
@@ -333,7 +333,7 @@ export function ExpenseList({
                       {expense.expense_type === 'MOTO' && expense.motorcycle ? (
                         <div className="flex items-center gap-2.5">
                           {expense.motorcycle.primary_image_url && (
-                            <div className="relative w-7 h-7 rounded-lg overflow-hidden shrink-0 border border-slate-800 bg-slate-900">
+                            <div className="relative w-7 h-7 rounded-lg overflow-hidden shrink-0 border border-zinc-800 bg-black">
                               <Image
                                 src={expense.motorcycle.primary_image_url}
                                 alt={expense.motorcycle.model}
@@ -348,17 +348,17 @@ export function ExpenseList({
                               {expense.motorcycle.brand} {expense.motorcycle.model}
                             </span>
                             {expense.motorcycle.plate && (
-                              <span className="text-[10px] text-slate-400 font-mono">
+                              <span className="text-[10px] text-zinc-400 font-mono">
                                 {expense.motorcycle.plate}
                               </span>
                             )}
                           </div>
                         </div>
                       ) : (
-                        <span className="text-slate-600">-</span>
+                        <span className="text-zinc-600">-</span>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 text-slate-400 font-medium">{paymentLabel}</td>
+                    <td className="py-3.5 px-4 text-zinc-400 font-medium">{paymentLabel}</td>
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <button
                         onClick={() => handleStatusClick(expense.id, expense.status)}
@@ -375,21 +375,21 @@ export function ExpenseList({
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => onView(expense)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
                           title="Ver comprovante"
                         >
-                          <Eye className="w-3.5 h-3.5 text-amber-500" />
+                          <Eye className="w-3.5 h-3.5 text-[#c9a44c]" />
                         </button>
                         <button
                           onClick={() => onEdit(expense)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
                           title="Editar"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDuplicateClick(expense.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
                           title="Duplicar gasto"
                         >
                           <Copy className="w-3.5 h-3.5" />
