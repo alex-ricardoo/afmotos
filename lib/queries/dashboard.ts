@@ -25,6 +25,37 @@ export interface BrandShare {
   percentage: number;
 }
 
+export interface DashboardRecentLead {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string | null;
+  type: string;
+  status: string;
+  message?: string | null;
+  created_at: string;
+  source?: string | null;
+  motorcycle?: {
+    id: string;
+    brand: string;
+    model: string;
+    price: number | null;
+  } | null;
+}
+
+export interface DashboardRecentConsultation {
+  id: string;
+  plate_display: string;
+  plate_normalized?: string;
+  brand: string;
+  model: string;
+  year_model?: number | null;
+  risk_level: string;
+  status: string;
+  consulted_at: string;
+  charged_amount?: number | null;
+}
+
 export interface DashboardMetrics {
   // Financial & Stock KPIs
   totalRevenue: number;
@@ -34,6 +65,8 @@ export interface DashboardMetrics {
   avgTicket: number;
   totalSalesCount: number;
   monthSalesCount: number;
+  monthExpenses: number;
+  netOperationalResult: number;
 
   availableStockCount: number;
   availableStockValue: number;
@@ -42,6 +75,8 @@ export interface DashboardMetrics {
   newLeadsCount: number;
   totalLeadsCount: number;
   conversionRatePct: number;
+  todayLeadsCount: number;
+  todaySalesCount: number;
 
   bestMonth: {
     label: string;
@@ -54,6 +89,8 @@ export interface DashboardMetrics {
   paymentDistribution: PaymentMethodShare[];
   topBrands: BrandShare[];
   recentSales: SaleWithDetails[];
+  recentLeads: DashboardRecentLead[];
+  recentConsultations: DashboardRecentConsultation[];
   pendingLeadsCount: number;
 }
 
@@ -103,6 +140,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const currentYear = now.getFullYear();
   const currentMonthNum = now.getMonth() + 1;
   const currentMonthKey = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
+  const todayDateKey = now.toISOString().split('T')[0];
 
   // Previous month key
   const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -149,7 +187,45 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     .select('id, price, status, brand, model');
 
   // 3. Fetch Leads
-  const { data: leadsData } = await supabase.from('leads').select('id, status, created_at');
+  const { data: leadsData } = await supabase
+    .from('leads')
+    .select('id, name, phone, email, type, status, message, metadata, source, created_at, motorcycle:motorcycles(id, brand, model, price)')
+    .order('created_at', { ascending: false });
+
+  // 4. Fetch Expenses for current month
+  let monthExpenses = 0;
+  try {
+    const { data: expensesData } = await supabase
+      .from('expenses')
+      .select('amount, expense_date, status')
+      .eq('status', 'PAID');
+
+    if (expensesData) {
+      for (const exp of expensesData) {
+        if (exp.expense_date && exp.expense_date.startsWith(currentMonthKey)) {
+          monthExpenses += Number(exp.amount) || 0;
+        }
+      }
+    }
+  } catch (expErr) {
+    console.warn('Dashboard: expenses query skipped or failed:', expErr);
+  }
+
+  // 5. Fetch Recent Vehicle Plate Consultations
+  let recentConsultations: DashboardRecentConsultation[] = [];
+  try {
+    const { data: consultationsData } = await supabase
+      .from('vehicle_plate_consultations')
+      .select('id, plate_display, plate_normalized, brand, model, year_model, risk_level, status, consulted_at, charged_amount')
+      .order('consulted_at', { ascending: false })
+      .limit(5);
+
+    if (consultationsData) {
+      recentConsultations = consultationsData as DashboardRecentConsultation[];
+    }
+  } catch (consErr) {
+    console.warn('Dashboard: consultations query skipped or failed:', consErr);
+  }
 
   const allSales = (salesData as unknown as SaleWithDetails[]) || [];
   const allMotos = motorcyclesData || [];
@@ -176,11 +252,12 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     return sale;
   });
 
-  // Calculate Revenue Metrics
+  // Calculate Revenue & Today Metrics
   let totalRevenue = 0;
   let monthRevenue = 0;
   let lastMonthRevenue = 0;
   let monthSalesCount = 0;
+  let todaySalesCount = 0;
   const totalSalesCount = allSales.length;
 
   for (const sale of allSales) {
@@ -194,6 +271,10 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       } else if (sale.sale_date.startsWith(prevMonthKey)) {
         lastMonthRevenue += price;
       }
+
+      if (sale.sale_date.startsWith(todayDateKey)) {
+        todaySalesCount += 1;
+      }
     }
   }
 
@@ -205,6 +286,8 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     revenueGrowthPct = 100;
   }
 
+  const netOperationalResult = monthRevenue - monthExpenses;
+
   // Calculate Stock Metrics
   let availableStockCount = 0;
   let availableStockValue = 0;
@@ -215,11 +298,21 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     }
   }
 
-  // Calculate Leads & Conversion
-  const newLeadsCount = allLeads.filter((l) => l.status === 'NEW').length;
+  // Calculate Leads & Conversion & Today Leads
+  let todayLeadsCount = 0;
+  const newLeadsCount = allLeads.filter((l) => {
+    if (l.created_at && l.created_at.startsWith(todayDateKey)) {
+      todayLeadsCount += 1;
+    }
+    return l.status === 'NEW';
+  }).length;
+
   const totalLeadsCount = allLeads.length;
   const conversionRatePct =
     totalLeadsCount > 0 ? Math.min(100, Math.round((totalSalesCount / totalLeadsCount) * 100)) : 0;
+
+  // Slice recent leads for dashboard widget
+  const recentLeads: DashboardRecentLead[] = (allLeads.slice(0, 5) as unknown as DashboardRecentLead[]);
 
   // 4. Monthly History (Last 6 Months)
   const monthlyHistory: MonthlySalesData[] = [];
@@ -315,17 +408,23 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     avgTicket,
     totalSalesCount,
     monthSalesCount,
+    monthExpenses,
+    netOperationalResult,
     availableStockCount,
     availableStockValue,
     totalMotorcyclesCount: allMotos.length,
     newLeadsCount,
     totalLeadsCount,
     conversionRatePct,
+    todayLeadsCount,
+    todaySalesCount,
     bestMonth,
     monthlyHistory,
     paymentDistribution,
     topBrands,
     recentSales,
+    recentLeads,
+    recentConsultations,
     pendingLeadsCount: newLeadsCount,
   };
 }
