@@ -186,8 +186,57 @@ export async function createSaleAction(rawData: SaleFormValues) {
     console.error('Error updating motorcycle status to SOLD:', motoError);
   }
 
+  // 3. Sincronizar e Confirmar Comissões de Intermediação para a Moto Vendida
+  try {
+    const salePrice = Number(data.sale_price || 0);
+
+    // Buscar comissões ativas associadas à moto ou ao acordo
+    const { data: matchedComms } = await supabase
+      .from('proposal_commissions')
+      .select('*')
+      .eq('motorcycle_id', data.motorcycle_id)
+      .neq('status', 'cancelled');
+
+    if (matchedComms && matchedComms.length > 0) {
+      for (const comm of matchedComms) {
+        let confirmedValue = comm.commission_expected_value;
+        if (comm.commission_type === 'percentage' && comm.commission_percentage) {
+          confirmedValue = Number(((salePrice * comm.commission_percentage) / 100).toFixed(2));
+        }
+
+        await supabase
+          .from('proposal_commissions')
+          .update({
+            sale_id: insertedSale.id,
+            buyer_customer_id: effectiveCustomerId,
+            final_sale_value: salePrice,
+            commission_confirmed_value: confirmedValue,
+            status: comm.status === 'received' ? 'received' : 'confirmed',
+            eligible_for_reports: true,
+            eligible_at: comm.eligible_at || new Date().toISOString(),
+            confirmed_at: comm.confirmed_at || new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', comm.id);
+
+        await supabase.from('proposal_commission_audit_logs').insert({
+          commission_id: comm.id,
+          action: 'confirmed',
+          previous_snapshot: comm,
+          new_snapshot: { ...comm, sale_id: insertedSale.id, final_sale_value: salePrice, commission_confirmed_value: confirmedValue },
+          reason: `Venda registrada no balcão (Recibo #${insertedSale.receipt_number})`,
+          changed_by: user?.id || null,
+        });
+      }
+    }
+  } catch (commErr) {
+    console.warn('Aviso: falha ao vincular comissão na venda:', commErr);
+  }
+
   revalidatePath('/admin/vendas');
   revalidatePath('/admin/motos');
+  revalidatePath('/admin/relatorios');
+  revalidatePath('/admin/propostas');
   revalidatePath('/admin');
   revalidatePath('/motos');
   revalidatePath(`/admin/motos/${data.motorcycle_id}/editar`);

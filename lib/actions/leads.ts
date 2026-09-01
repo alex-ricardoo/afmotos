@@ -529,10 +529,59 @@ export async function updateLeadStatus(
         await supabase.from('consignment_requests').update({ status }).eq('id', sourceId);
       }
     }
+
+    // Sincronizar elegibilidade e status de comissões vinculadas
+    try {
+      const isCancelled = ['LOST', 'PERDIDO', 'REJECTED', 'RECUSADO', 'CLOSED', 'CANCELLED'].includes(
+        status.toUpperCase(),
+      );
+      const isSuccess = ['CONVERTED', 'CONCLUDED', 'APPROVED', 'PURCHASED', 'SOLD', 'GANHO', 'CONCLUIDO'].includes(
+        status.toUpperCase(),
+      );
+
+      if (isCancelled) {
+        // Cancelar comissões ativas não recebidas
+        const { data: activeComms } = await supabase
+          .from('proposal_commissions')
+          .select('id, status')
+          .eq('proposal_id', id)
+          .neq('status', 'received');
+
+        if (activeComms && activeComms.length > 0) {
+          await supabase
+            .from('proposal_commissions')
+            .update({
+              status: 'cancelled',
+              eligible_for_reports: false,
+              cancelled_at: new Date().toISOString(),
+              cancellation_reason: `Proposta alterada para o status ${status}`,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('proposal_id', id)
+            .neq('status', 'received');
+        }
+      } else if (isSuccess) {
+        // Ativar elegibilidade de comissões confirmadas ou em proposta
+        await supabase
+          .from('proposal_commissions')
+          .update({
+            status: 'confirmed',
+            eligible_for_reports: true,
+            eligible_at: new Date().toISOString(),
+            confirmed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('proposal_id', id)
+          .in('status', ['draft', 'proposed']);
+      }
+    } catch (commSyncErr) {
+      console.warn('Aviso: falha ao sincronizar status da comissão com a proposta:', commSyncErr);
+    }
   }
 
   try {
     revalidatePath('/admin/propostas');
+    revalidatePath('/admin/relatorios');
   } catch {
     // Ignore in non-rendering contexts
   }

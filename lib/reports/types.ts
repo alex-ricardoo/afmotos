@@ -62,6 +62,10 @@ export interface OverviewReportData {
   dateRange: ReportDateRange;
   grossRevenue: ReportMetric<number>; // Receita efetiva da AF Motos (Vendas próprias + comissões)
   thirdPartyTransactedVolume?: ReportMetric<number>; // Volume total transacionado de terceiros (informativo)
+  confirmedCommissionsRevenue?: ReportMetric<number>; // Receita de comissões confirmadas (Competência)
+  receivedCommissionsRevenue?: ReportMetric<number>; // Receita de comissões recebidas (Caixa)
+  pendingCommissionsReceivable?: ReportMetric<number>; // Comissões pendentes de recebimento
+  cancelledCommissionsVolume?: ReportMetric<number>; // Comissões desqualificadas/canceladas no período
   salesCount: ReportMetric<number>;
   ownedSalesCount?: number;
   consignmentSalesCount?: number;

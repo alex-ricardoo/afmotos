@@ -129,44 +129,53 @@ export function generateExcelWorkbookXML(
   </Table>
  </Worksheet>
 
- <!-- ABA 2: VENDAS DETALHADAS -->
- <Worksheet ss:Name="Vendas">
-  <Table>
-   <Column ss:Width="90"/>
-   <Column ss:Width="160"/>
-   <Column ss:Width="90"/>
-   <Column ss:Width="110"/>
-   <Column ss:Width="160"/>
-   <Column ss:Width="110"/>
-   <Column ss:Width="110"/>
-   <Column ss:Width="90"/>
-   <Row ss:StyleID="Header">
-    <Cell><Data ss:Type="String">Data</Data></Cell>
-    <Cell><Data ss:Type="String">Motocicleta</Data></Cell>
-    <Cell><Data ss:Type="String">Placa</Data></Cell>
-    <Cell><Data ss:Type="String">Tipo Estoque</Data></Cell>
-    <Cell><Data ss:Type="String">Comprador</Data></Cell>
-    <Cell><Data ss:Type="String">Forma Pgto</Data></Cell>
-    <Cell><Data ss:Type="String">Valor Venda (R$)</Data></Cell>
-    <Cell><Data ss:Type="String">Nº Recibo</Data></Cell>
-   </Row>
-   ${sales.detailedSalesList
-     .map(
-       (s) => `
-   <Row>
-    <Cell ss:StyleID="Date"><Data ss:Type="String">${escapeXml(formatReportDate(s.saleDate))}</Data></Cell>
-    <Cell><Data ss:Type="String">${escapeXml(s.motorcycleLabel)}</Data></Cell>
-    <Cell><Data ss:Type="String">${escapeXml(s.motorcyclePlate || '-')}</Data></Cell>
-    <Cell><Data ss:Type="String">${escapeXml(s.ownershipType === 'CONSIGNMENT' ? 'Consignação' : 'Própria')}</Data></Cell>
-    <Cell><Data ss:Type="String">${escapeXml(s.buyerName || 'Cliente Balcão')}</Data></Cell>
-    <Cell><Data ss:Type="String">${escapeXml(s.paymentMethod || 'Não informado')}</Data></Cell>
-    <Cell ss:StyleID="Currency"><Data ss:Type="Number">${s.salePrice}</Data></Cell>
-    <Cell><Data ss:Type="String">${escapeXml(s.receiptNumber || 'Pendente')}</Data></Cell>
-   </Row>`,
-     )
-     .join('')}
-  </Table>
- </Worksheet>
+  <!-- ABA 2: VENDAS DETALHADAS -->
+  <Worksheet ss:Name="Vendas">
+   <Table>
+    <Column ss:Width="90"/>
+    <Column ss:Width="160"/>
+    <Column ss:Width="90"/>
+    <Column ss:Width="110"/>
+    <Column ss:Width="160"/>
+    <Column ss:Width="110"/>
+    <Column ss:Width="110"/>
+    <Column ss:Width="110"/>
+    <Column ss:Width="110"/>
+    <Column ss:Width="110"/>
+    <Column ss:Width="90"/>
+    <Row ss:StyleID="Header">
+     <Cell><Data ss:Type="String">Data</Data></Cell>
+     <Cell><Data ss:Type="String">Motocicleta</Data></Cell>
+     <Cell><Data ss:Type="String">Placa</Data></Cell>
+     <Cell><Data ss:Type="String">Tipo Estoque</Data></Cell>
+     <Cell><Data ss:Type="String">Comprador</Data></Cell>
+     <Cell><Data ss:Type="String">Forma Pgto</Data></Cell>
+     <Cell><Data ss:Type="String">Valor Total Veículo (R$)</Data></Cell>
+     <Cell><Data ss:Type="String">Receita AF Motos (R$)</Data></Cell>
+     <Cell><Data ss:Type="String">Comissão Loja (R$)</Data></Cell>
+     <Cell><Data ss:Type="String">Repasse Proprietário (R$)</Data></Cell>
+     <Cell><Data ss:Type="String">Nº Recibo</Data></Cell>
+    </Row>
+    ${sales.detailedSalesList
+      .map(
+        (s) => `
+    <Row>
+     <Cell ss:StyleID="Date"><Data ss:Type="String">${escapeXml(formatReportDate(s.saleDate))}</Data></Cell>
+     <Cell><Data ss:Type="String">${escapeXml(s.motorcycleLabel)}</Data></Cell>
+     <Cell><Data ss:Type="String">${escapeXml(s.motorcyclePlate || '-')}</Data></Cell>
+     <Cell><Data ss:Type="String">${escapeXml(s.ownershipType === 'CONSIGNMENT' ? 'Consignação' : 'Própria')}</Data></Cell>
+     <Cell><Data ss:Type="String">${escapeXml(s.buyerName || 'Cliente Balcão')}</Data></Cell>
+     <Cell><Data ss:Type="String">${escapeXml(s.paymentMethod || 'Não informado')}</Data></Cell>
+     <Cell ss:StyleID="Currency"><Data ss:Type="Number">${s.salePrice}</Data></Cell>
+     <Cell ss:StyleID="Currency"><Data ss:Type="Number">${s.storeRevenue}</Data></Cell>
+     <Cell ss:StyleID="Currency"><Data ss:Type="Number">${s.commissionValue || 0}</Data></Cell>
+     <Cell ss:StyleID="Currency"><Data ss:Type="Number">${s.payoutToOwner || 0}</Data></Cell>
+     <Cell><Data ss:Type="String">${escapeXml(s.receiptNumber || 'Pendente')}</Data></Cell>
+    </Row>`,
+      )
+      .join('')}
+   </Table>
+  </Worksheet>
 
  <!-- ABA 3: DESPESAS -->
  <Worksheet ss:Name="Despesas">

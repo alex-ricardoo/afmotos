@@ -1,6 +1,10 @@
 import React from 'react';
-import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
-import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { ContractCompanyHeader } from '@/lib/pdf/contract-company-header';
+import { ContractSectionHeader } from '@/lib/pdf/contract-section-header';
+import { ContractInfoGrid } from '@/lib/pdf/contract-info-grid';
+import { ContractSignatures } from '@/lib/pdf/contract-signatures';
+import { ContractFooter } from '@/lib/pdf/contract-footer';
 
 export interface AgreementPdfInput {
   saleId: string;
@@ -36,36 +40,63 @@ export interface AgreementPdfInput {
 }
 
 const styles = StyleSheet.create({
-  page: { padding: 28, fontSize: 9, fontFamily: 'Helvetica', color: '#0f172a', backgroundColor: '#ffffff' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 2, borderBottomColor: '#d97706', paddingBottom: 10, marginBottom: 12 },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logoBox: { width: 48, height: 48, borderRadius: 8, backgroundColor: '#0f172a', borderWidth: 1.2, borderColor: '#d97706', alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: '#fbbf24' },
-  headerInfo: { flexDirection: 'column' },
-  storeName: { fontSize: 19, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 2 },
-  smallText: { fontSize: 7.2, color: '#475569', lineHeight: 1.35 },
-  headerRight: { alignItems: 'flex-end' },
-  badge: { backgroundColor: '#0f172a', borderRadius: 6, borderWidth: 1, borderColor: '#d97706', paddingHorizontal: 8, paddingVertical: 4 },
-  badgeText: { fontSize: 8.2, fontFamily: 'Helvetica-Bold', color: '#fbbf24' },
-  section: { marginBottom: 12 },
-  sectionHeader: { backgroundColor: '#f8fafc', borderLeftWidth: 4, borderLeftColor: '#d97706', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 4, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { fontSize: 8.8, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.3 },
-  summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  infoCard: { width: '32%', backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 5, padding: 6, minHeight: 42 },
-  label: { fontSize: 6.2, fontFamily: 'Helvetica-Bold', color: '#64748b', textTransform: 'uppercase', marginBottom: 2 },
-  value: { fontSize: 8.1, fontFamily: 'Helvetica-Bold', color: '#0f172a' },
-  legalBox: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 5, padding: 8 },
-  paragraph: { fontSize: 6.6, color: '#334155', textAlign: 'justify', lineHeight: 1.45, marginBottom: 4 },
-  totals: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  totalBox: { borderWidth: 1, borderColor: '#fbbf24', backgroundColor: '#fff7ed', borderRadius: 6, padding: 8, width: '30%' },
-  totalLabel: { fontSize: 6.4, fontFamily: 'Helvetica-Bold', color: '#9a5b00', textTransform: 'uppercase', marginBottom: 3 },
-  totalValue: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#0f172a' },
-  signatureRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, marginBottom: 12 },
-  signatureBox: { width: '42%', alignItems: 'center' },
-  signatureLine: { width: '100%', borderTopWidth: 1, borderTopColor: '#475569', marginBottom: 4 },
-  signatureName: { fontSize: 8.2, fontFamily: 'Helvetica-Bold' },
-  signatureRole: { fontSize: 6.4, color: '#64748b' },
-  footer: { borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 6, flexDirection: 'row', justifyContent: 'space-between', color: '#64748b', fontSize: 6.2 },
+  page: {
+    padding: 26,
+    paddingTop: 22,
+    paddingBottom: 22,
+    fontSize: 8.5,
+    fontFamily: 'Helvetica',
+    color: '#0f172a',
+    backgroundColor: '#ffffff',
+  },
+  section: {
+    marginBottom: 8,
+  },
+  legalBox: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 4,
+    padding: 6,
+    paddingHorizontal: 7,
+  },
+  paragraph: {
+    fontSize: 6.3,
+    color: '#334155',
+    textAlign: 'justify',
+    lineHeight: 1.38,
+    marginBottom: 3.5,
+  },
+  bold: {
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+  },
+  totalsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 6,
+    marginBottom: 2,
+  },
+  totalBox: {
+    borderWidth: 1,
+    borderColor: '#fbbf24',
+    backgroundColor: '#fff7ed',
+    borderRadius: 5,
+    padding: 6,
+    width: '32%',
+  },
+  totalLabel: {
+    fontSize: 6,
+    fontFamily: 'Helvetica-Bold',
+    color: '#9a5b00',
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  totalValue: {
+    fontSize: 10.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+  },
 });
 
 const currency = (value: number) =>
@@ -116,153 +147,156 @@ export function AgreementSalePDF({
   commissionValue,
   agreementDate,
 }: AgreementPdfInput) {
+  const formattedAgreementNumber = saleId.slice(0, 10).toUpperCase();
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            {logoSrc ? (
-              <Image src={logoSrc} style={{ width: 52, height: 52, borderRadius: 8, objectFit: 'contain' }} />
-            ) : (
-              <View style={styles.logoBox}>
-                <Text style={styles.logoText}>AF</Text>
-              </View>
-            )}
-            <View style={styles.headerInfo}>
-              <Text style={styles.storeName}>{storeName}</Text>
-              <Text style={styles.smallText}>Endereço: {address}</Text>
-              <Text style={styles.smallText}>WhatsApp: {phone}{email ? ` • E-mail: ${email}` : ''}</Text>
-              {cnpj ? <Text style={styles.smallText}>CNPJ: {cnpj}</Text> : null}
-            </View>
-          </View>
+        {/* CABEÇALHO PADRÃO AF MOTOS */}
+        <ContractCompanyHeader
+          storeName={storeName}
+          logoSrc={logoSrc}
+          address={address}
+          phone={phone}
+          email={email}
+          cnpj={cnpj}
+          vehiclePlate={vehiclePlate}
+          documentIdentifier={formattedAgreementNumber}
+          documentDate={agreementDate}
+          documentTypeLabel="ACORDO DE VENDA"
+        />
 
-          <View style={styles.headerRight}>
-            {vehiclePlate?.trim() ? (
-              <View style={{ marginBottom: 2 }}>
-                <MercosulPlateBadge plate={vehiclePlate} width={96} fontSize={10.5} />
-              </View>
-            ) : (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>ACORDO DE VENDA {saleId.slice(0, 8).toUpperCase()}</Text>
-              </View>
-            )}
-            <Text style={{ fontSize: 7, color: '#64748b', marginTop: 3 }}>Data: {agreementDate}</Text>
-          </View>
+        {/* 1. IDENTIFICAÇÃO DO VEÍCULO E DAS PARTES */}
+        <View style={styles.section}>
+          <ContractSectionHeader title="1. Identificação da Motocicleta e das Partes" />
+          <ContractInfoGrid
+            items={[
+              // PRIMEIRO: INFORMAÇÕES DO VEÍCULO
+              {
+                label: 'Marca / Modelo / Versão',
+                value: `${vehicleBrand || ''} ${vehicleModel || ''} ${vehicleVersion || ''}`.trim() || 'Não informado',
+                width: '40%',
+              },
+              {
+                label: 'Ano Fab. / Mod.',
+                value: `${vehicleManufactureYear || vehicleYear || '-'} / ${vehicleModelYear || vehicleYear || '-'}`,
+                width: '20%',
+              },
+              {
+                label: 'Placa',
+                value: vehiclePlate || 'Não informada',
+                width: '18%',
+              },
+              {
+                label: 'Cor / Combustível',
+                value: `${vehicleColor || 'Não inf.'} • ${vehicleFuel || 'Flex'}`,
+                width: '18%',
+              },
+              {
+                label: 'Chassi (VIN)',
+                value: vehicleChassi || 'Não informado',
+                width: '49%',
+              },
+              {
+                label: 'Renavam',
+                value: vehicleRenavam || 'Não informado',
+                subValue: vehicleMileage ? `Km: ${vehicleMileage.toLocaleString('pt-BR')} km` : undefined,
+                width: '49%',
+              },
+
+              // ABAIXO: LOJA NA ESQUERDA, PROPRIETÁRIO NA DIREITA
+              {
+                label: 'Intermediadora (Loja)',
+                value: storeName,
+                subValue: `${cnpj ? `CNPJ: ${cnpj}\n` : ''}End.: ${address}\nWhatsApp: ${phone}${email ? ` • E-mail: ${email}` : ''}`,
+                width: '49%',
+              },
+              {
+                label: 'Vendedor (Proprietário)',
+                value: sellerName,
+                subValue: `CPF: ${formatCpf(sellerDocument)}${sellerRg ? ` • RG: ${sellerRg}` : ''}\nEnd.: ${sellerAddress}\nTel: ${formatPhone(sellerPhone)}`,
+                width: '49%',
+              },
+            ]}
+          />
         </View>
 
+        {/* 2. VALORES E CONDIÇÕES DE COMISSÃO */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>1. Identificação das partes e do veículo</Text>
-          </View>
-          <View style={styles.summaryGrid}>
-            <View style={{ ...styles.infoCard, width: '66%' }}>
-              <Text style={styles.label}>Loja / Representante Legal</Text>
-              <Text style={styles.value}>{storeName}</Text>
-              {cnpj ? <Text style={styles.smallText}>CNPJ: {cnpj}</Text> : null}
-            </View>
-            <View style={styles.infoCard}>
-              <Text style={styles.label}>Proprietário da moto</Text>
-              <Text style={styles.value}>{sellerName}</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Text style={styles.label}>CPF</Text>
-              <Text style={styles.value}>{formatCpf(sellerDocument)}</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Text style={styles.label}>RG</Text>
-              <Text style={styles.value}>{sellerRg}</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Text style={styles.label}>Telefone</Text>
-              <Text style={styles.value}>{formatPhone(sellerPhone)}</Text>
-            </View>
-            <View style={{ ...styles.infoCard, width: '66%' }}>
-              <Text style={styles.label}>Endereço</Text>
-              <Text style={styles.value}>{sellerAddress}</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Text style={styles.label}>Placa</Text>
-              <Text style={styles.value}>{vehiclePlate || 'Não informada'}</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Text style={styles.label}>Marca / Modelo</Text>
-              <Text style={styles.value}>{[vehicleBrand, vehicleModel].filter(Boolean).join(' ') || 'Não informado'}</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Text style={styles.label}>Ano / Versão</Text>
-              <Text style={styles.value}>{vehicleManufactureYear || vehicleYear || 'Não informado'} / modelo {vehicleModelYear || vehicleYear || 'Não informado'}{vehicleVersion ? ` / ${vehicleVersion}` : ''}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>2. Valores e comissão</Text>
-          </View>
-          <View style={styles.totals}>
+          <ContractSectionHeader title="2. Condições Comerciais e Comissão" />
+          <View style={styles.totalsRow}>
             <View style={styles.totalBox}>
-              <Text style={styles.totalLabel}>Base de cálculo</Text>
+              <Text style={styles.totalLabel}>Base de Cálculo (Anúncio)</Text>
               <Text style={styles.totalValue}>{currency(expectedSaleValue)}</Text>
             </View>
             <View style={styles.totalBox}>
-              <Text style={styles.totalLabel}>Comissão</Text>
+              <Text style={styles.totalLabel}>Comissão Acordada</Text>
               <Text style={styles.totalValue}>{Number(commissionPercentage).toFixed(2)}%</Text>
             </View>
             <View style={styles.totalBox}>
-              <Text style={styles.totalLabel}>Comissão projetada</Text>
+              <Text style={styles.totalLabel}>Comissão Projetada</Text>
               <Text style={styles.totalValue}>{currency(commissionValue)}</Text>
             </View>
           </View>
         </View>
 
+        {/* 3. CLÁUSULAS E TERMOS JURÍDICOS COM DESTAQUES EM NEGRITO */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>3. Cláusulas e termos jurídicos</Text>
-          </View>
+          <ContractSectionHeader title="3. Cláusulas e Termos Jurídicos de Intermediação" />
           <View style={styles.legalBox}>
             <Text style={styles.paragraph}>
-              3.1. Intermediação. O PROPRIETÁRIO autoriza a AF Motos a divulgar, anunciar, apresentar e intermediar a negociação da motocicleta descrita neste instrumento, sem que isso transfira à AF Motos a propriedade, a posse ou a responsabilidade pela conservação do veículo, salvo documento específico em sentido contrário. A AF Motos atua apenas como ponte entre o PROPRIETÁRIO e o comprador.
+              <Text style={styles.bold}>3.1. Intermediação: </Text>
+              O <Text style={styles.bold}>PROPRIETÁRIO</Text> autoriza expressamente a <Text style={styles.bold}>{storeName}</Text> a divulgar, anunciar, apresentar e intermediar a negociação da motocicleta descrita neste instrumento, <Text style={styles.bold}>sem transferência de propriedade ou posse</Text>, atuando a loja estritamente como <Text style={styles.bold}>intermediadora e aproximação de partes</Text> entre o proprietário e compradores.
             </Text>
+
             <Text style={styles.paragraph}>
-              3.2. Comissão. A comissão será de {Number(commissionPercentage).toFixed(2)}% sobre o valor total efetivamente negociado na venda, não sendo a quantia de {currency(commissionValue)} um valor fixo: trata-se da projeção calculada sobre a base de {currency(expectedSaleValue)}. O vencimento ocorrerá na data do recebimento do preço ou da assinatura do negócio, o que ocorrer primeiro, mediante pagamento por PIX para a chave informada pela AF Motos.
+              <Text style={styles.bold}>3.2. Comissão e Pagamento: </Text>
+              A comissão devida à loja será de <Text style={styles.bold}>{Number(commissionPercentage).toFixed(2)}%</Text> sobre o <Text style={styles.bold}>valor total efetivamente negociado</Text> na venda do veículo (estimativa calculada em <Text style={styles.bold}>{currency(commissionValue)}</Text> sobre o valor anunciado de <Text style={styles.bold}>{currency(expectedSaleValue)}</Text>). O pagamento da comissão é devido no <Text style={styles.bold}>ato do recebimento do preço da venda</Text> ou assinatura do instrumento definitivo, mediante quitação via <Text style={styles.bold}>PIX ou transferência bancária</Text>.
             </Text>
+
             <Text style={styles.paragraph}>
-              3.3. Cliente apresentado. Considera-se Cliente Apresentado qualquer pessoa que tenha conhecido a motocicleta, recebido informações, fotos, localização, preço ou contato do PROPRIETÁRIO por intermédio da AF Motos, seus anúncios, colaboradores, parceiros, site, WhatsApp, telefone, Instagram, Facebook, marketplaces ou outros canais utilizados pela empresa. A AF Motos poderá registrar esses dados, contatos, visitas, mensagens e propostas por meio físico ou eletrônico, para comprovar a intermediação, observada a legislação de proteção de dados.
+              <Text style={styles.bold}>3.3. Cliente Apresentado: </Text>
+              Considera-se <Text style={styles.bold}>Cliente Apresentado</Text> qualquer pessoa que tenha tomado conhecimento do veículo, fotos, especificações, localização ou contato do proprietário por intermédio dos canais da <Text style={styles.bold}>{storeName}</Text> (loja física, site, WhatsApp, Instagram, portais de classificados ou anúncios digitais).
             </Text>
+
             <Text style={styles.paragraph}>
-              3.4. Não desvio. O PROPRIETÁRIO não poderá ocultar, desviar ou concluir diretamente negócio com Cliente Apresentado com a finalidade de evitar a comissão. A venda direta ao Cliente Apresentado não afastará a obrigação quando a AF Motos demonstrar sua apresentação ou contribuição causal para a negociação. O contrato não é exclusivo: o PROPRIETÁRIO pode negociar por outros meios, preservada essa obrigação.
+              <Text style={styles.bold}>3.4. Vedação ao Desvio de Negócio: </Text>
+              O <Text style={styles.bold}>PROPRIETÁRIO</Text> compromete-se a <Text style={styles.bold}>não ocultar, desviar ou concluir diretamente a venda</Text> com Cliente Apresentado com a intenção de afastar a comissão devida. A conclusão direta com cliente apresentado <Text style={styles.bold}>não extingue a obrigação do pagamento integral da comissão</Text> fixada neste instrumento. O contrato não é exclusivo, podendo o proprietário anunciar por outros meios sem clientela concorrente.
             </Text>
+
             <Text style={styles.paragraph}>
-              3.5. Responsabilidades. O PROPRIETÁRIO declara a legitimidade da propriedade e responde perante a AF Motos pela exatidão das informações, conservação, débitos, gravames, restrições, financiamento, reserva de domínio e transferência do veículo. O PROPRIETÁRIO e o COMPRADOR serão responsáveis por vistoria, taxas, quitação de débitos anteriores, assinatura do ATPV-e, comunicação de venda ao DETRAN, transferência e multas entre a entrega e a efetiva transferência, conforme a obrigação legal aplicável a cada um. A AF Motos apenas aproxima as partes e não assume obrigações perante terceiros por força desta declaração.
+              <Text style={styles.bold}>3.5. Responsabilidade Civil e Documental: </Text>
+              O <Text style={styles.bold}>PROPRIETÁRIO</Text> declara e garante a <Text style={styles.bold}>legitimidade da propriedade</Text>, procedência do veículo e ausência de restrições ou gravames impeditivos, responsabilizando-se civil e criminalmente por <Text style={styles.bold}>débitos anteriores, multas, vistorias cautelares, quitação de financiamento e transferência no DETRAN (ATPV-e)</Text>.
             </Text>
+
             <Text style={styles.paragraph}>
-              3.6. Atraso e documentos. Em caso de atraso, incidirão multa de 2%, juros de mora de 1% ao mês pro rata die e correção pelo IPCA, sem prejuízo de perdas e danos comprovados e despesas razoáveis de cobrança. O PROPRIETÁRIO deverá informar imediatamente qualquer divergência, gravame, restrição judicial ou administrativa ou impedimento de transferência.
+              <Text style={styles.bold}>3.6. Atraso e Encargos Moratórios: </Text>
+              Em caso de inadimplemento ou atraso no repasse da comissão após a concretização da venda, incidirão <Text style={styles.bold}>multa moratória de 2%</Text>, <Text style={styles.bold}>juros de mora de 1% ao mês</Text> pro rata die e correção monetária pelo <Text style={styles.bold}>IPCA</Text>, além das despesas comprovadas de cobrança.
             </Text>
+
             <Text style={styles.paragraph}>
-              3.7. Divulgação e proteção de dados. O PROPRIETÁRIO autoriza a AF Motos a fotografar e filmar a motocicleta, publicar marca, modelo, ano, quilometragem, preço e imagens, compartilhar seus dados de contato com potenciais compradores e utilizar essas informações para divulgação, negociação e documentação, nos limites da legislação aplicável, especialmente a LGPD.
+              <Text style={styles.bold}>3.7. Autorização de Imagem e LGPD: </Text>
+              O <Text style={styles.bold}>PROPRIETÁRIO</Text> autoriza a produção e veiculação de fotos e vídeos da motocicleta para fins comerciais e documentais, nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
             </Text>
           </View>
         </View>
 
-        <View style={styles.signatureRow}>
-          <View style={styles.signatureBox}>
-            <View style={styles.signatureLine} />
-            <Text style={styles.signatureName}>{storeName.toUpperCase()}</Text>
-            <Text style={styles.signatureRole}>AF Motos • Representante Legal</Text>
-            {cnpj ? <Text style={styles.signatureRole}>CNPJ: {cnpj}</Text> : null}
-          </View>
+        {/* ASSINATURAS */}
+        <ContractSignatures
+          buyerName={storeName}
+          buyerRole="AF Motos • Intermediadora / Representante Legal"
+          buyerDocument={cnpj ? `CNPJ: ${cnpj}` : undefined}
+          sellerName={sellerName}
+          sellerRole="Vendedor / Proprietário"
+          sellerDocument={`CPF: ${formatCpf(sellerDocument)}`}
+          showWitnesses={false}
+        />
 
-          <View style={styles.signatureBox}>
-            <View style={styles.signatureLine} />
-            <Text style={styles.signatureName}>{sellerName.toUpperCase()}</Text>
-            <Text style={styles.signatureRole}>Proprietário • CPF {formatCpf(sellerDocument)}</Text>
-          </View>
-        </View>
-
-        <View style={styles.footer}>
-          <Text>Local e data: {address} • {agreementDate}</Text>
-          <Text>Documento interno: {saleId}</Text>
-        </View>
+        {/* RODAPÉ */}
+        <ContractFooter
+          locationAndDate={`${address} • ${agreementDate}`}
+          documentNumber={formattedAgreementNumber}
+        />
       </Page>
     </Document>
   );

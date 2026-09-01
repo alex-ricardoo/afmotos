@@ -37,6 +37,8 @@ export async function getOverviewReportData(
     { data: last6MonthsSales },
     { data: last6MonthsExpenses },
     { data: agreementsRaw },
+    { data: commissionsRaw },
+    { data: prevCommissionsRaw },
   ] = await Promise.all([
     supabase
       .from('sales')
@@ -89,6 +91,16 @@ export async function getOverviewReportData(
     supabase
       .from('sale_agreements')
       .select('sale_id, commission_value'),
+    supabase
+      .from('proposal_commissions')
+      .select('*')
+      .gte('created_at', `${dateRange.startDate}T00:00:00Z`)
+      .lte('created_at', `${dateRange.endDate}T23:59:59Z`),
+    supabase
+      .from('proposal_commissions')
+      .select('*')
+      .gte('created_at', `${prevDateRange.startDate}T00:00:00Z`)
+      .lte('created_at', `${prevDateRange.endDate}T23:59:59Z`),
   ]);
 
   // Vendas confirmadas
@@ -101,6 +113,46 @@ export async function getOverviewReportData(
       agreementMap[a.sale_id] = Number(a.commission_value);
     }
   });
+
+  // Mapear também comissões registradas diretamente em proposal_commissions
+  const commList = commissionsRaw || [];
+  commList.forEach((c: any) => {
+    if (c.sale_id) {
+      const val = Number(c.commission_confirmed_value || c.commission_expected_value || 0);
+      if (val > 0) agreementMap[c.sale_id] = val;
+    }
+  });
+
+  // Métricas de Comissões
+  const confirmedCommissions = commList.filter(
+    (c: any) => c.eligible_for_reports && (c.status === 'confirmed' || c.status === 'receivable' || c.status === 'received'),
+  );
+  const receivedCommissions = commList.filter(
+    (c: any) => c.status === 'received',
+  );
+  const pendingCommissions = commList.filter(
+    (c: any) => c.status === 'receivable' || (c.status === 'confirmed' && !c.received_at),
+  );
+  const cancelledCommissions = commList.filter(
+    (c: any) => c.status === 'cancelled',
+  );
+
+  const confirmedCommissionsValue = confirmedCommissions.reduce(
+    (acc: number, c: any) => acc + Number(c.commission_confirmed_value || c.commission_expected_value || 0),
+    0,
+  );
+  const receivedCommissionsValue = receivedCommissions.reduce(
+    (acc: number, c: any) => acc + Number(c.commission_received_value || c.commission_confirmed_value || 0),
+    0,
+  );
+  const pendingCommissionsValue = pendingCommissions.reduce(
+    (acc: number, c: any) => acc + Number(c.commission_confirmed_value || c.commission_expected_value || 0),
+    0,
+  );
+  const cancelledCommissionsValue = cancelledCommissions.reduce(
+    (acc: number, c: any) => acc + Number(c.commission_expected_value || 0),
+    0,
+  );
 
   // Segregação: Própria (100% da venda entra na receita) vs Consignação (apenas comissão entra na receita)
   let grossRevenueValue = 0;
@@ -345,6 +397,30 @@ export async function getOverviewReportData(
       confidence: 'confirmed',
       tooltipFormula: 'Valor total transacionado de veículos de terceiros (pago diretamente aos proprietários).',
     },
+    confirmedCommissionsRevenue: {
+      value: confirmedCommissionsValue,
+      formattedValue: formatCurrencyBRL(confirmedCommissionsValue),
+      confidence: 'confirmed',
+      tooltipFormula: 'Total de comissões geradas por propostas concluídas e vendas confirmadas (Regime de Competência).',
+    },
+    receivedCommissionsRevenue: {
+      value: receivedCommissionsValue,
+      formattedValue: formatCurrencyBRL(receivedCommissionsValue),
+      confidence: 'confirmed',
+      tooltipFormula: 'Total de comissões com recebimento financeiro baixado no caixa (Regime de Caixa).',
+    },
+    pendingCommissionsReceivable: {
+      value: pendingCommissionsValue,
+      formattedValue: formatCurrencyBRL(pendingCommissionsValue),
+      confidence: 'confirmed',
+      tooltipFormula: 'Comissões confirmadas que ainda aguardam repasse/recebimento financeiro.',
+    },
+    cancelledCommissionsVolume: {
+      value: cancelledCommissionsValue,
+      formattedValue: formatCurrencyBRL(cancelledCommissionsValue),
+      confidence: 'confirmed',
+      tooltipFormula: 'Comissões previstas desqualificadas por cancelamento de propostas no período.',
+    },
     ownedSalesCount,
     consignmentSalesCount,
     revenueVsExpenseEvolution,
@@ -358,7 +434,7 @@ export async function getOverviewReportData(
 export async function getSalesReportData(dateRange: ReportDateRange): Promise<SalesReportData> {
   const supabase = await createClient();
 
-  const [{ data: salesRaw }, { data: agreementsRaw }] = await Promise.all([
+  const [{ data: salesRaw }, { data: agreementsRaw }, { data: commissionsRaw }] = await Promise.all([
     supabase
       .from('sales')
       .select(
@@ -392,12 +468,23 @@ export async function getSalesReportData(dateRange: ReportDateRange): Promise<Sa
       .lte('sale_date', dateRange.endDate)
       .order('sale_date', { ascending: false }),
     supabase.from('sale_agreements').select('sale_id, commission_value'),
+    supabase
+      .from('proposal_commissions')
+      .select('sale_id, motorcycle_id, commission_confirmed_value, commission_expected_value, status, eligible_for_reports')
+      .eq('eligible_for_reports', true),
   ]);
 
   const agreementMap: Record<string, number> = {};
   (agreementsRaw || []).forEach((a: any) => {
     if (a.sale_id && a.commission_value) {
       agreementMap[a.sale_id] = Number(a.commission_value);
+    }
+  });
+
+  (commissionsRaw || []).forEach((c: any) => {
+    if (c.sale_id) {
+      const val = Number(c.commission_confirmed_value || c.commission_expected_value || 0);
+      if (val > 0) agreementMap[c.sale_id] = val;
     }
   });
 

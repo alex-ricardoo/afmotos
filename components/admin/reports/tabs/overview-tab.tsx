@@ -40,6 +40,30 @@ export function OverviewTab({ data }: OverviewTabProps) {
           tooltipFormula="Soma de vendas concluídas no período com pagamento confirmado."
         />
 
+        {/* Comissões Confirmadas (Competência) */}
+        {data.confirmedCommissionsRevenue && (
+          <ReportKpiCard
+            title="Comissões Confirmadas"
+            value={data.confirmedCommissionsRevenue.formattedValue}
+            icon={Coins}
+            iconColor="text-amber-300"
+            confidence={data.confirmedCommissionsRevenue.confidence}
+            tooltipFormula="Total de comissões por vendas concluídas no período (Regime de Competência)."
+          />
+        )}
+
+        {/* Comissões Recebidas (Caixa) */}
+        {data.receivedCommissionsRevenue && (
+          <ReportKpiCard
+            title="Comissões Recebidas (Caixa)"
+            value={data.receivedCommissionsRevenue.formattedValue}
+            icon={DollarSign}
+            iconColor="text-emerald-400"
+            confidence={data.receivedCommissionsRevenue.confidence}
+            tooltipFormula="Total de comissões efetivamente baixadas no caixa no período (Regime de Caixa)."
+          />
+        )}
+
         {/* Quantidade Vendida */}
         <ReportKpiCard
           title="Motos Vendidas"
