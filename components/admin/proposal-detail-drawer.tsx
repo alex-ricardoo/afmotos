@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useSyncExternalStore, useCallback } from 'react';
+import React, { useState, useSyncExternalStore, useCallback, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,9 +20,9 @@ import {
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   ProposalViewModel,
@@ -33,8 +33,6 @@ import {
   proposalStatusLabels,
   getProposalStatusLabel,
 } from '@/lib/admin/proposal-labels';
-
-
 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -61,7 +59,6 @@ import {
   Sparkles,
   Eye,
   User,
-  Phone,
   PlusCircle,
   Calculator,
   Percent,
@@ -70,12 +67,16 @@ import {
   ExternalLink,
   Download,
   FileCheck,
+  FileText,
+  History,
+  ArrowUpRight,
 } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { PurchaseAgreementModal } from '@/components/admin/purchase-agreement-modal';
 import { preparePurchaseAgreementFromProposal } from '@/lib/actions/purchase-agreements';
 import { PurchaseAgreementPrepareInput } from '@/types/purchase-agreement';
+import { CONSTANTS } from '@/lib/utils/constants';
 
 export function useMediaQuery(query: string) {
   const subscribe = useCallback(
@@ -98,8 +99,6 @@ export function useMediaQuery(query: string) {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-import { CONSTANTS } from '@/lib/utils/constants';
-
 interface ProposalDetailProps {
   proposal: ProposalViewModel | null;
   open: boolean;
@@ -109,6 +108,9 @@ interface ProposalDetailProps {
   siteName?: string;
 }
 
+// -------------------------------------------------------------
+// Componente de Contrato de Comissão / Consignação
+// -------------------------------------------------------------
 function AgreementCommissionForm({ proposal }: { proposal: ProposalViewModel }) {
   const defaultValue = proposal.motorcycle?.desiredPrice ?? proposal.motorcycle?.fipePrice ?? 0;
   const [commissionPercentage, setCommissionPercentage] = useState(5);
@@ -120,9 +122,21 @@ function AgreementCommissionForm({ proposal }: { proposal: ProposalViewModel }) 
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    const val = proposal.motorcycle?.desiredPrice ?? proposal.motorcycle?.fipePrice ?? 0;
+    setExpectedSaleValue(val);
+  }, [proposal.id, proposal.motorcycle?.desiredPrice, proposal.motorcycle?.fipePrice]);
+
   const commissionValue = expectedSaleValue * (commissionPercentage / 100);
+  const netClientValue = Math.max(0, expectedSaleValue - commissionValue);
   const formattedCpf = cpf.replace(/\D/g, '');
-  const isValid = Number.isFinite(expectedSaleValue) && expectedSaleValue > 0 && commissionPercentage >= 0 && commissionPercentage <= 100 && formattedCpf.length === 11 && rg.trim().length >= 2;
+  const isValid =
+    Number.isFinite(expectedSaleValue) &&
+    expectedSaleValue > 0 &&
+    commissionPercentage >= 0 &&
+    commissionPercentage <= 100 &&
+    formattedCpf.length === 11 &&
+    rg.trim().length >= 2;
 
   const handleCpfChange = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -173,164 +187,193 @@ function AgreementCommissionForm({ proposal }: { proposal: ProposalViewModel }) 
 
       const payload = await response.json();
       if (!response.ok || !payload?.success) {
-        throw new Error(payload?.error || 'Não foi possível gerar o acordo.');
+        throw new Error(payload?.error || 'Não foi possível gerar o contrato.');
       }
 
       setAgreementUrl(payload.pdf_url || null);
-      setSuccessMessage('Acordo gerado com sucesso.');
+      setSuccessMessage('Contrato de consignação gerado com sucesso!');
+      toast.success('Contrato de consignação gerado com sucesso!');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Não foi possível gerar o acordo.');
+      setError(err instanceof Error ? err.message : 'Não foi possível gerar o contrato.');
+      toast.error('Erro ao gerar contrato.');
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <Card className="overflow-hidden border-emerald-500/20 bg-zinc-950/60 shadow-none">
-      <CardHeader className="border-b border-emerald-500/10 bg-emerald-500/[0.03] pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm text-emerald-300">
-          <Calculator className="size-4" />
-          Calculadora de comissão
-        </CardTitle>
-        <CardDescription className="text-xs text-zinc-400">
-          Defina os valores do anúncio antes de gerar o contrato.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="owner-cpf" className="flex items-center gap-1.5 text-xs">
-              <User className="size-3.5 text-emerald-400" />
-              CPF do proprietário da moto
-            </Label>
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="owner-cpf" className="flex items-center gap-1.5 text-xs text-zinc-300">
+            <User className="size-3.5 text-emerald-400" />
+            CPF do Proprietário da Moto
+          </Label>
+          <Input
+            id="owner-cpf"
+            inputMode="numeric"
+            placeholder="000.000.000-00"
+            value={cpf}
+            onChange={(event) => handleCpfChange(event.target.value)}
+            className="h-10 bg-zinc-950/70 border-zinc-800 focus:border-emerald-500/50"
+            aria-describedby="owner-cpf-help"
+          />
+          <p id="owner-cpf-help" className="text-[11px] text-zinc-500">
+            Obrigatório para identificação legal das partes no contrato.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="owner-rg" className="flex items-center gap-1.5 text-xs text-zinc-300">
+            <FileSignature className="size-3.5 text-emerald-400" />
+            RG do Proprietário
+          </Label>
+          <Input
+            id="owner-rg"
+            placeholder="00.000.000-0"
+            inputMode="numeric"
+            maxLength={13}
+            value={rg}
+            onChange={(event) => handleRgChange(event.target.value)}
+            className="h-10 bg-zinc-950/70 border-zinc-800 focus:border-emerald-500/50"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="commission-percentage" className="flex items-center gap-1.5 text-xs text-zinc-300">
+            <Percent className="size-3.5 text-amber-400" />
+            Percentual de Comissão
+          </Label>
+          <div className="relative">
             <Input
-              id="owner-cpf"
-              inputMode="numeric"
-              placeholder="000.000.000-00"
-              value={cpf}
-              onChange={(event) => handleCpfChange(event.target.value)}
-              className="h-9"
-              aria-describedby="owner-cpf-help"
+              id="commission-percentage"
+              type="number"
+              min={0}
+              max={100}
+              step={0.1}
+              value={commissionPercentage}
+              onChange={(event) => {
+                const normalized = event.target.value.replace(/^0+(?=\d)/, '');
+                setCommissionPercentage(Number(normalized || 0));
+              }}
+              className="h-10 pr-9 bg-zinc-950/70 border-zinc-800 focus:border-amber-500/50"
             />
-            <p id="owner-cpf-help" className="text-[11px] text-zinc-500">
-              Necessário para identificar o responsável no contrato.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="owner-rg" className="flex items-center gap-1.5 text-xs">
-              <FileSignature className="size-3.5 text-emerald-400" />
-              RG do proprietário
-            </Label>
-            <Input id="owner-rg" placeholder="00.000.000-0" inputMode="numeric" maxLength={13} value={rg} onChange={(event) => handleRgChange(event.target.value)} className="h-9" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="commission-percentage" className="flex items-center gap-1.5 text-xs">
-              <Percent className="size-3.5 text-amber-400" />
-              Comissão combinada
-            </Label>
-            <div className="relative">
-              <Input
-                id="commission-percentage"
-                type="number"
-                min={0}
-                max={100}
-                step={0.1}
-                value={commissionPercentage}
-                onChange={(event) => {
-                  const normalized = event.target.value.replace(/^0+(?=\d)/, '');
-                  setCommissionPercentage(Number(normalized || 0));
-                }}
-                className="pr-9"
-              />
-              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-zinc-500">%</span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="expected-sale-value" className="flex items-center gap-1.5 text-xs">
-              <CircleDollarSign className="size-3.5 text-emerald-400" />
-              Valor esperado de venda
-            </Label>
-            <div className="relative">
-              <Input
-                id="expected-sale-value"
-                type="number"
-                min={0}
-                step={0.01}
-                value={expectedSaleValue}
-                onChange={(event) => setExpectedSaleValue(Number(event.target.value || 0))}
-                className="pr-10"
-              />
-              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-zinc-500">R$</span>
-            </div>
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-zinc-500">
+              %
+            </span>
           </div>
         </div>
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
-          <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-            <Calculator className="size-3" />
-            Resumo automático
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="expected-sale-value" className="flex items-center gap-1.5 text-xs text-zinc-300">
+            <CircleDollarSign className="size-3.5 text-emerald-400" />
+            Valor Esperado de Venda (Anúncio)
+          </Label>
+          <div className="relative">
+            <Input
+              id="expected-sale-value"
+              type="number"
+              min={0}
+              step={0.01}
+              value={expectedSaleValue}
+              onChange={(event) => setExpectedSaleValue(Number(event.target.value || 0))}
+              className="h-10 pr-10 bg-zinc-950/70 border-zinc-800 font-mono font-bold text-emerald-400 focus:border-emerald-500/50"
+            />
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-zinc-500">
+              R$
+            </span>
           </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <div className="rounded-lg bg-zinc-950/60 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-zinc-500">Percentual</div>
-              <div className="mt-1 text-lg font-black text-white">{commissionPercentage.toFixed(1)}%</div>
-            </div>
-            <div className="rounded-lg bg-amber-500/10 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-amber-400/70">Comissão em reais</div>
-              <div className="mt-1 text-lg font-black text-amber-300">
+        </div>
+      </div>
+
+      {/* Card de Resumo Automático em tempo real */}
+      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 space-y-3 shadow-xs">
+        <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-zinc-400 pb-2 border-b border-zinc-800/60">
+          <span className="flex items-center gap-1.5">
+            <Calculator className="size-3.5 text-emerald-400" />
+            Resumo do Contrato em Tempo Real
+          </span>
+          <span className="font-mono text-zinc-500">Comissão ({commissionPercentage.toFixed(1)}%)</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-xl bg-zinc-950/70 p-3 border border-zinc-800/60">
+            <span className="text-[10px] uppercase tracking-wider text-zinc-500 block">Valor do Anúncio</span>
+            <span className="mt-1 text-base font-black text-white font-mono block truncate">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(expectedSaleValue)}
+            </span>
+          </div>
+
+          <div className="rounded-xl bg-amber-500/10 p-3 border border-amber-500/20">
+            <span className="text-[10px] uppercase tracking-wider text-amber-400/80 block">Comissão em R$</span>
+            <span className="mt-1 text-base font-black text-amber-300 font-mono block truncate">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(commissionValue)}
-              </div>
-            </div>
-            <div className="rounded-lg bg-emerald-500/10 p-3">
-              <div className="text-[10px] uppercase tracking-wider text-emerald-400/70">Valor do anúncio</div>
-              <div className="mt-1 text-lg font-black text-emerald-300">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(expectedSaleValue)}
-              </div>
-            </div>
+            </span>
+          </div>
+
+          <div className="rounded-xl bg-emerald-500/10 p-3 border border-emerald-500/20">
+            <span className="text-[10px] uppercase tracking-wider text-emerald-400/80 block">Líquido do Cliente</span>
+            <span className="mt-1 text-base font-black text-emerald-300 font-mono block truncate">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(netClientValue)}
+            </span>
           </div>
         </div>
+      </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            type="button"
-            onClick={handleGenerate}
-            disabled={!isValid || isGenerating}
-            className="h-9 flex-1 gap-2 bg-amber-500 font-bold text-zinc-950 hover:bg-amber-400"
-          >
-            <FileSignature className="size-4" />
-            {isGenerating ? 'Gerando contrato...' : 'Gerar contrato'}
-          </Button>
-          {agreementUrl && (
-            <>
-              <a href={agreementUrl} target="_blank" rel="noreferrer" aria-label="Visualizar contrato" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
-                <ExternalLink className="size-3.5" />
-                Visualizar
-              </a>
-              <a href={agreementUrl} download aria-label="Baixar contrato" className={buttonVariants({ variant: 'default', size: 'sm' })}>
-                <Download className="size-3.5" />
-                Baixar PDF
-              </a>
-            </>
-          )}
-        </div>
+      <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+        <Button
+          type="button"
+          onClick={handleGenerate}
+          disabled={!isValid || isGenerating}
+          className="h-11 flex-1 gap-2 bg-emerald-500 hover:bg-emerald-400 font-black text-zinc-950 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.25)] transition-all cursor-pointer disabled:opacity-50"
+        >
+          <FileSignature className="size-4" />
+          {isGenerating ? 'Gerando contrato...' : 'Gerar e Imprimir Contrato PDF'}
+        </Button>
 
-        {error && (
-          <Alert className="border-red-500/30 bg-red-500/5 text-red-200">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+        {agreementUrl && (
+          <div className="flex items-center gap-2">
+            <a
+              href={agreementUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Visualizar contrato"
+              className={buttonVariants({ variant: 'outline', className: 'h-11 rounded-xl border-zinc-800 text-zinc-200 hover:bg-zinc-800 font-bold gap-1.5' })}
+            >
+              <ExternalLink className="size-4" />
+              Visualizar
+            </a>
+            <a
+              href={agreementUrl}
+              download
+              aria-label="Baixar contrato"
+              className={buttonVariants({ variant: 'default', className: 'h-11 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold gap-1.5' })}
+            >
+              <Download className="size-4" />
+              Baixar PDF
+            </a>
+          </div>
         )}
+      </div>
 
-        {successMessage && (
-          <Alert className="border-emerald-500/30 bg-emerald-500/5 text-emerald-200">
-            <AlertDescription>{successMessage}</AlertDescription>
-          </Alert>
-        )}
-      </CardContent>
-    </Card>
+      {error && (
+        <Alert className="border-red-500/30 bg-red-500/10 text-red-200 rounded-xl">
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {successMessage && (
+        <Alert className="border-emerald-500/30 bg-emerald-500/10 text-emerald-200 rounded-xl">
+          <AlertDescription className="text-xs font-semibold">{successMessage}</AlertDescription>
+        </Alert>
+      )}
+    </div>
   );
 }
 
+// -------------------------------------------------------------
+// Componente Principal: ProposalDetail
+// -------------------------------------------------------------
 export function ProposalDetail({
   proposal,
   open,
@@ -340,6 +383,7 @@ export function ProposalDetail({
 }: ProposalDetailProps) {
   const storeName = siteName || CONSTANTS.STORE_NAME;
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const [activeTab, setActiveTab] = useState<'atendimento' | 'contratos' | 'historico'>('atendimento');
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [copiedPhone, setCopiedPhone] = useState(false);
@@ -348,42 +392,72 @@ export function ProposalDetail({
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [adminOfferPercent, setAdminOfferPercent] = useState<number>(85);
   const [adminCustomOffer, setAdminCustomOffer] = useState<number | null>(null);
+
+  // Contract tab state
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [purchaseInitialData, setPurchaseInitialData] = useState<Partial<PurchaseAgreementPrepareInput> | undefined>(undefined);
   const [isLoadingPurchaseData, setIsLoadingPurchaseData] = useState(false);
+  const [customPurchaseAmount, setCustomPurchaseAmount] = useState<number>(0);
 
-  const handleOpenPurchaseAgreement = async () => {
-    if (!proposal) return;
-    setIsLoadingPurchaseData(true);
-    try {
-      const targetId = (proposal.metadata as Record<string, unknown> | null)?.sell_request_id || proposal.sourceId || proposal.id;
-      const res = await preparePurchaseAgreementFromProposal(String(targetId));
-      if (res.success && res.data) {
-        setPurchaseInitialData(res.data);
-      } else {
-        setPurchaseInitialData({
-          seller_name: proposal.name,
-          seller_phone: proposal.phone,
-          seller_email: proposal.email || '',
-          brand: proposal.motorcycle?.brand || '',
-          model: proposal.motorcycle?.model || '',
-          version: proposal.motorcycle?.version || '',
-          year_manufacture: proposal.motorcycle?.yearManufacture || proposal.motorcycle?.year || new Date().getFullYear(),
-          year_model: proposal.motorcycle?.yearModel || proposal.motorcycle?.year || new Date().getFullYear(),
-          color: proposal.motorcycle?.color || '',
-          license_plate: proposal.motorcycle?.licensePlate || '',
-          mileage: proposal.motorcycle?.mileage || 0,
-          purchase_amount: proposal.motorcycle?.desiredPrice || proposal.motorcycle?.fipePrice || 0,
-          paid_amount: proposal.motorcycle?.desiredPrice || proposal.motorcycle?.fipePrice || 0,
-        });
-      }
-      setIsPurchaseModalOpen(true);
-    } catch {
-      setIsPurchaseModalOpen(true);
-    } finally {
-      setIsLoadingPurchaseData(false);
+  // Sincronizar valor de compra negociado quando proposal mudar
+  useEffect(() => {
+    if (proposal) {
+      setCustomPurchaseAmount(proposal.motorcycle?.desiredPrice ?? proposal.motorcycle?.fipePrice ?? 0);
     }
-  };
+  }, [proposal?.id, proposal?.motorcycle?.desiredPrice, proposal?.motorcycle?.fipePrice]);
+
+  // Editable WhatsApp message
+  const [customMessage, setCustomMessage] = useState<string>('');
+
+  // Calculador de valores FIPE e Simulação
+  const desiredPrice = proposal?.motorcycle?.desiredPrice || null;
+  const fipePrice = proposal?.motorcycle?.fipePrice || null;
+  let fipeDiffPercent: number | null = null;
+  if (desiredPrice && fipePrice && fipePrice > 0) {
+    fipeDiffPercent = Number((((desiredPrice - fipePrice) / fipePrice) * 100).toFixed(1));
+  }
+
+  const simulatedOfferFromFipe = fipePrice ? (fipePrice * adminOfferPercent) / 100 : null;
+  const effectiveAdminOffer =
+    adminCustomOffer !== null
+      ? adminCustomOffer
+      : simulatedOfferFromFipe || proposal?.motorcycle?.estimatedOffer || null;
+
+  // Gerador de mensagem WhatsApp por preset
+  const getPresetBaseMessage = useCallback((presetKey: string) => {
+    if (!proposal) return '';
+    const name = proposal.name ? proposal.name.trim() : 'Cliente';
+    const moto = proposal.motorcycle?.brand
+      ? `${proposal.motorcycle.brand} ${proposal.motorcycle.model || ''}`.trim()
+      : '';
+
+    switch (presetKey) {
+      case 'offer': {
+        const fipeText = fipePrice
+          ? ` O valor de referência na Tabela FIPE é de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fipePrice)}.`
+          : '';
+        const offerText = effectiveAdminOffer
+          ? ` Temos uma proposta inicial de compra no valor de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(effectiveAdminOffer)} à vista no PIX.`
+          : '';
+        return `Olá ${name}! Aqui é da equipe da ${storeName}. Analisamos a proposta para a sua moto${moto ? ` (${moto})` : ''}.${fipeText}${offerText} Gostaria de agendar um horário para você vir à loja para finalizarmos a avaliação e fecharmos negócio?`;
+      }
+      case 'photos':
+        return `Olá ${name}, tudo bem? Aqui é da equipe da ${storeName}! Recebemos sua proposta sobre ${moto ? `a moto ${moto}` : 'sua moto'}. Você teria mais fotos e o documento dela para adiantarmos a avaliação?`;
+      case 'visit':
+        return `Olá ${name}! Tudo bem? Gostamos muito da proposta${moto ? ` para a moto ${moto}` : ''}. Gostaria de agendar um horário para você vir à nossa loja para finalizarmos a negociação?`;
+      case 'counter':
+        return `Olá ${name}! Tudo bem? Analisamos sua proposta${moto ? ` para ${moto}` : ''} com nossa equipe comercial e gostaríamos de apresentar uma proposta especial para você fechar negócio hoje.`;
+      case 'default':
+      default:
+        return generateProposalWhatsAppMessage(proposal, storeName);
+    }
+  }, [proposal, fipePrice, effectiveAdminOffer, storeName]);
+
+  // Inicializar e atualizar mensagem quando muda preset
+  useEffect(() => {
+    if (!proposal) return;
+    setCustomMessage(getPresetBaseMessage(selectedPreset));
+  }, [selectedPreset, proposal?.id, adminOfferPercent, adminCustomOffer, getPresetBaseMessage]);
 
   if (!proposal) return null;
 
@@ -400,7 +474,7 @@ export function ProposalDetail({
       text: 'text-amber-400',
       border: 'border-amber-500/30',
       dot: 'bg-amber-400',
-      line: 'bg-amber-500',
+      line: 'from-amber-500 via-amber-400 to-amber-600',
     },
     CONTACTED: {
       label: getProposalStatusLabel('CONTACTED', proposal.type),
@@ -408,7 +482,7 @@ export function ProposalDetail({
       text: 'text-blue-400',
       border: 'border-blue-500/30',
       dot: 'bg-blue-400',
-      line: 'bg-blue-500',
+      line: 'from-blue-500 via-cyan-400 to-blue-600',
     },
     QUALIFIED: {
       label: getProposalStatusLabel('QUALIFIED', proposal.type),
@@ -416,7 +490,7 @@ export function ProposalDetail({
       text: 'text-purple-400',
       border: 'border-purple-500/30',
       dot: 'bg-purple-400',
-      line: 'bg-purple-500',
+      line: 'from-purple-500 via-fuchsia-400 to-purple-600',
     },
     CONVERTED: {
       label: getProposalStatusLabel('CONVERTED', proposal.type),
@@ -424,7 +498,7 @@ export function ProposalDetail({
       text: 'text-emerald-400',
       border: 'border-emerald-500/30',
       dot: 'bg-emerald-400',
-      line: 'bg-emerald-500',
+      line: 'from-emerald-500 via-teal-400 to-emerald-600',
     },
     CLOSED: {
       label: getProposalStatusLabel('CLOSED', proposal.type),
@@ -432,7 +506,7 @@ export function ProposalDetail({
       text: 'text-zinc-400',
       border: 'border-zinc-700',
       dot: 'bg-zinc-500',
-      line: 'bg-zinc-600',
+      line: 'from-zinc-700 via-zinc-600 to-zinc-800',
     },
     LOST: {
       label: getProposalStatusLabel('LOST', proposal.type),
@@ -440,7 +514,7 @@ export function ProposalDetail({
       text: 'text-rose-400',
       border: 'border-rose-500/30',
       dot: 'bg-rose-400',
-      line: 'bg-rose-500',
+      line: 'from-rose-500 via-red-400 to-rose-600',
     },
   };
 
@@ -462,7 +536,7 @@ export function ProposalDetail({
       case 'CONSIGNMENT':
         return {
           icon: KeyRound,
-          label: 'Anunciar',
+          label: 'Anunciar com a Loja',
           className: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
         };
       case 'RENTAL':
@@ -482,54 +556,12 @@ export function ProposalDetail({
 
   const typeInfo = getTypeBadge(proposal.type);
   const TypeIcon = typeInfo.icon;
-  const isConsignmentProposal = proposal.type === 'CONSIGNMENT';
-
   const currentStatusInfo = statusConfig[proposal.status] || statusConfig.NEW;
 
-  // Calculador de valores da FIPE e simulação do administrador
-  const desiredPrice = proposal.motorcycle?.desiredPrice || null;
-  const fipePrice = proposal.motorcycle?.fipePrice || null;
-  let fipeDiffPercent: number | null = null;
-  if (desiredPrice && fipePrice && fipePrice > 0) {
-    fipeDiffPercent = Number((((desiredPrice - fipePrice) / fipePrice) * 100).toFixed(1));
-  }
-
-  const simulatedOfferFromFipe = fipePrice ? (fipePrice * adminOfferPercent) / 100 : null;
-  const effectiveAdminOffer =
-    adminCustomOffer !== null
-      ? adminCustomOffer
-      : simulatedOfferFromFipe || proposal.motorcycle?.estimatedOffer || null;
-
-  // Presets de resposta rápida no WhatsApp
-  const getWhatsAppMessageByPreset = () => {
-    const name = proposal.name ? proposal.name.trim() : 'Cliente';
-    const moto = proposal.motorcycle?.brand
-      ? `${proposal.motorcycle.brand} ${proposal.motorcycle.model || ''}`.trim()
-      : '';
-
-    switch (selectedPreset) {
-      case 'offer': {
-        const fipeText = fipePrice
-          ? ` O valor de referência na Tabela FIPE é de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fipePrice)}.`
-          : '';
-        const offerText = effectiveAdminOffer
-          ? ` Temos uma proposta inicial de compra no valor de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(effectiveAdminOffer)} à vista no PIX.`
-          : '';
-        return `Olá ${name}! Aqui é da equipe da ${storeName}. Analisamos a proposta para a sua moto${moto ? ` (${moto})` : ''}.${fipeText}${offerText} Gostaria de agendar um horário para você vir à loja para finalizarmos a avaliação e fecharmos negócio?`;
-      }
-      case 'photos':
-        return `Olá ${name}, tudo bem? Aqui é da equipe da ${storeName}! Recebemos sua proposta sobre ${moto ? `a moto ${moto}` : 'sua moto'}. Você teria mais fotos e o documento dela para adiantarmos a avaliação?`;
-      case 'visit':
-        return `Olá ${name}! Tudo bem? Gostamos muito da proposta${moto ? ` para a moto ${moto}` : ''}. Gostaria de agendar um horário para você vir à nossa loja para finalizarmos a negociação?`;
-      case 'counter':
-        return `Olá ${name}! Tudo bem? Analisamos sua proposta${moto ? ` para ${moto}` : ''} com nossa equipe comercial e gostaríamos de apresentar uma proposta especial para você fechar negócio hoje.`;
-      case 'default':
-      default:
-        return generateProposalWhatsAppMessage(proposal, storeName);
-    }
-  };
-
-  const activeWhatsAppLink = generateWhatsAppLink(proposal.phone, getWhatsAppMessageByPreset());
+  const activeWhatsAppLink = generateWhatsAppLink(
+    proposal.phone,
+    customMessage || getPresetBaseMessage(selectedPreset),
+  );
 
   const handleCopyPhone = () => {
     navigator.clipboard.writeText(proposal.phone.replace(/\D/g, ''));
@@ -553,678 +585,766 @@ export function ProposalDetail({
     try {
       if (onStatusChange) {
         await onStatusChange(proposal, newStatus);
+        toast.success(`Status atualizado para ${statusConfig[newStatus]?.label || newStatus}`);
       }
     } finally {
       setIsUpdatingStatus(false);
     }
   };
 
-  // Main Rich Content Body
-  const MainContent = (
-    <div className="space-y-6">
-      {/* 2-Column Responsive Grid on Desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (Customer & Motorcycle Data) - 7 cols on lg */}
-        <div className="lg:col-span-7 space-y-5">
-          {/* Card 1: Cliente & Contato */}
-          <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3.5 shadow-xs">
-            <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800/60">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-[#c9a44c]" />
-                Dados do Cliente
-              </h4>
-              <span className="text-[11px] text-zinc-500 font-mono">
-                {format(new Date(proposal.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-              </span>
-            </div>
+  const handleOpenPurchaseAgreement = async () => {
+    if (!proposal) return;
+    setIsLoadingPurchaseData(true);
+    const finalPrice =
+      customPurchaseAmount > 0
+        ? customPurchaseAmount
+        : proposal.motorcycle?.desiredPrice || proposal.motorcycle?.fipePrice || 0;
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 space-y-1">
-                <span className="text-zinc-500 text-[11px] block">Nome do Cliente</span>
-                <span className="font-bold text-white text-sm block truncate">{proposal.name}</span>
-              </div>
+    try {
+      const targetId =
+        (proposal.metadata as Record<string, unknown> | null)?.sell_request_id ||
+        proposal.sourceId ||
+        proposal.id;
+      const res = await preparePurchaseAgreementFromProposal(String(targetId));
+      if (res.success && res.data) {
+        setPurchaseInitialData({
+          ...res.data,
+          purchase_amount: finalPrice,
+          paid_amount: finalPrice,
+        });
+      } else {
+        setPurchaseInitialData({
+          seller_name: proposal.name,
+          seller_phone: proposal.phone,
+          seller_email: proposal.email || '',
+          brand: proposal.motorcycle?.brand || '',
+          model: proposal.motorcycle?.model || '',
+          version: proposal.motorcycle?.version || '',
+          year_manufacture:
+            proposal.motorcycle?.yearManufacture ||
+            proposal.motorcycle?.year ||
+            new Date().getFullYear(),
+          year_model:
+            proposal.motorcycle?.yearModel ||
+            proposal.motorcycle?.year ||
+            new Date().getFullYear(),
+          color: proposal.motorcycle?.color || '',
+          license_plate: proposal.motorcycle?.licensePlate || '',
+          mileage: proposal.motorcycle?.mileage || 0,
+          purchase_amount: finalPrice,
+          paid_amount: finalPrice,
+        });
+      }
+      setIsPurchaseModalOpen(true);
+    } catch {
+      setIsPurchaseModalOpen(true);
+    } finally {
+      setIsLoadingPurchaseData(false);
+    }
+  };
 
-              <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 space-y-1">
-                <span className="text-zinc-500 text-[11px] block">Telefone / WhatsApp</span>
-                <div className="flex items-center justify-between gap-1">
-                  <span className="font-bold font-mono text-zinc-100 text-sm">
-                    {formatPhoneForDisplay(proposal.phone) || proposal.phone}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleCopyPhone}
-                    className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                    title="Copiar telefone"
-                  >
-                    {copiedPhone ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
+  // Pipeline Status Steps
+  const statusSteps = [
+    { key: 'NEW', label: 'Novo Lead', shortLabel: 'Novo' },
+    { key: 'CONTACTED', label: 'Em Atendimento', shortLabel: 'Atendimento' },
+    { key: 'QUALIFIED', label: 'Qualificado / Oferta', shortLabel: 'Qualificado' },
+    { key: 'CONVERTED', label: 'Convertido / Fechado', shortLabel: 'Convertido' },
+    { key: 'LOST', label: 'Perdido / Recusado', shortLabel: 'Perdido' },
+    { key: 'CLOSED', label: 'Encerrado', shortLabel: 'Encerrado' },
+  ];
 
-              {proposal.email && (
-                <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 space-y-1">
-                  <span className="text-zinc-500 text-[11px] block">E-mail</span>
-                  <span className="font-semibold text-zinc-300 block truncate">
-                    {proposal.email}
-                  </span>
-                </div>
-              )}
+  // -------------------------------------------------------------
+  // Conteúdo das Abas
+  // -------------------------------------------------------------
 
-              {(proposal.city || proposal.state) && (
-                <div className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 space-y-1">
-                  <span className="text-zinc-500 text-[11px] block">Localização</span>
-                  <span className="font-semibold text-zinc-300 flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                    <span className="truncate">
-                      {proposal.city}
-                      {proposal.state ? ` - ${proposal.state}` : ''}
-                    </span>
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Link para CRM de Clientes */}
-            <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between">
-              <span className="text-[11px] text-zinc-400">Vínculo na Carteira de Clientes:</span>
-              <Link
-                href={`/admin/clientes?q=${encodeURIComponent(proposal.phone || proposal.name)}`}
-                target="_blank"
-                className="inline-flex items-center justify-center h-7 px-2.5 rounded-lg border border-zinc-800 bg-zinc-900 text-xs text-[#e3c56c] hover:bg-zinc-800 gap-1.5 transition-colors font-medium"
-              >
-                <User className="w-3 h-3" />
-                Ver Cliente no CRM
-                <ExternalLink className="w-3 h-3 ml-0.5" />
-              </Link>
-            </div>
+  // Aba 1: Atendimento & Negociação (Visual 2 Colunas 50/50)
+  const TabAtendimentoContent = (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      {/* Coluna Esquerda: Dados do Cliente, Veículo, Comparativo FIPE & Fotos */}
+      <div className="space-y-4">
+        {/* Card Cliente */}
+        <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 p-4 space-y-3 shadow-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-[#c9a44c]" />
+              Dados do Cliente
+            </h4>
+            <Link
+              href={`/admin/clientes?q=${encodeURIComponent(proposal.phone || proposal.name)}`}
+              target="_blank"
+              className="inline-flex items-center gap-1 text-[11px] text-[#e3c56c] hover:underline font-semibold"
+            >
+              <span>Ver no CRM</span>
+              <ArrowUpRight className="w-3 h-3" />
+            </Link>
           </div>
 
-          {/* Card: Dados de Aluguel (Se for proposta de aluguel) */}
-          {(proposal.rental || proposal.type === 'RENTAL') && (
-            <div className="bg-blue-950/30 rounded-2xl border border-blue-500/30 p-4.5 space-y-3.5 shadow-xs">
-              <div className="flex items-center justify-between pb-2.5 border-b border-blue-500/30">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-blue-400" />
-                  Detalhes do Aluguel
-                </h4>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] font-bold px-2 py-0.5 border-blue-500/40 bg-blue-500/10 text-blue-300"
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+            <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/60">
+              <span className="text-zinc-500 text-[10px] block uppercase font-semibold">Nome</span>
+              <span className="font-bold text-white text-sm block truncate mt-0.5">{proposal.name}</span>
+            </div>
+
+            <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/60">
+              <span className="text-zinc-500 text-[10px] block uppercase font-semibold">Telefone / WhatsApp</span>
+              <div className="flex items-center justify-between gap-1 mt-0.5">
+                <span className="font-bold font-mono text-zinc-100 text-sm">
+                  {formatPhoneForDisplay(proposal.phone) || proposal.phone}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopyPhone}
+                  className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                  title="Copiar telefone"
                 >
-                  Solicitação de Locação
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-                {proposal.rental?.desiredPlan && (
-                  <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
-                    <span className="text-zinc-500 text-[10px] block">Plano Desejado</span>
-                    <span className="font-bold text-blue-400 font-heading text-sm block">
-                      {proposal.rental.desiredPlan}
-                    </span>
-                  </div>
-                )}
-
-                {proposal.rental?.expectedStartDate && (
-                  <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
-                    <span className="text-zinc-500 text-[10px] block">Início Previsto</span>
-                    <span className="font-bold text-zinc-200 font-mono text-sm block">
-                      {proposal.rental.expectedStartDate.split('-').reverse().join('/')}
-                    </span>
-                  </div>
-                )}
-
-                {proposal.rental?.hasCnhA && (
-                  <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
-                    <span className="text-zinc-500 text-[10px] block">CNH Categoria A</span>
-                    <span className="font-bold text-white block">{proposal.rental.hasCnhA}</span>
-                  </div>
-                )}
-
-                {proposal.rental?.age != null && (
-                  <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
-                    <span className="text-zinc-500 text-[10px] block">Idade</span>
-                    <span className="font-bold text-zinc-200 block">
-                      {proposal.rental.age} anos
-                    </span>
-                  </div>
-                )}
-
-                {proposal.rental?.purposeOfUse && (
-                  <div className="col-span-2 sm:col-span-2 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/60 space-y-0.5">
-                    <span className="text-zinc-500 text-[10px] block">Finalidade de Uso</span>
-                    <span className="font-semibold text-zinc-200 block truncate">
-                      {proposal.rental.purposeOfUse}
-                    </span>
-                  </div>
-                )}
+                  {copiedPhone ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
               </div>
             </div>
-          )}
 
-          {/* Aviso caso não haja moto selecionada para o aluguel */}
-          {proposal.type === 'RENTAL' && !proposal.motorcycle?.brand && (
-            <div className="bg-zinc-900/40 p-4 rounded-2xl border border-zinc-800/60 text-xs text-zinc-400 flex items-center gap-2 italic">
-              <Bike className="w-4 h-4 text-zinc-500 shrink-0" />
-              <span>Cliente ainda não selecionou uma moto específica.</span>
-            </div>
-          )}
-
-          {/* Card 2: Dados da Moto & Análise Financeira */}
-          {proposal.motorcycle && (proposal.motorcycle.brand || proposal.motorcycle.model) && (
-            <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3.5 shadow-xs">
-              <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800/60">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <Bike className="w-3.5 h-3.5 text-[#c9a44c]" />
-                  Veículo Negociado
-                </h4>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] font-bold px-2 py-0.5 border-zinc-700 bg-zinc-800 text-zinc-300"
-                >
-                  {proposal.motorcycle.brand}
-                </Badge>
+            {proposal.email && (
+              <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/60 sm:col-span-2">
+                <span className="text-zinc-500 text-[10px] block uppercase font-semibold">E-mail</span>
+                <span className="font-semibold text-zinc-300 block truncate mt-0.5">{proposal.email}</span>
               </div>
+            )}
 
-              {/* Card Destaque: Moto Comprada -> Cadastrar no Estoque com 1 clique */}
-              {proposal.status === 'CONVERTED' && (
-                <div className="bg-gradient-to-br from-amber-500/20 via-zinc-900 to-zinc-950 p-4 rounded-2xl border border-amber-500/50 space-y-2.5 shadow-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-amber-500 text-zinc-950 flex items-center justify-center font-black">
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-                      <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
-                        Moto Pronta para o Estoque
-                      </span>
-                    </div>
-                    <Badge className="bg-amber-500 text-zinc-950 font-black text-[10px]">
-                      Ação Recomendada
-                    </Badge>
-                  </div>
-
-                  <p className="text-xs text-zinc-300 leading-relaxed">
-                    Esta moto foi adquirida pela loja! Os dados cadastrais (marca, modelo, anos, cor, km e fotos) já estão prontos para serem integrados ao catálogo.
-                  </p>
-
-                  <Link
-                    href={getStockRegistrationUrlFromProposal(proposal)}
-                    className="w-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-zinc-950 font-black rounded-xl h-10 shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2 text-xs transition-all cursor-pointer"
-                  >
-                    <PlusCircle className="w-4 h-4 text-zinc-950" />
-                    <span>Cadastrar Moto no Estoque</span>
-                  </Link>
-                </div>
-              )}
-
-
-              {/* Motorcycle Title */}
-              <div className="bg-zinc-950/60 p-3.5 rounded-xl border border-zinc-800/60 flex items-center justify-between">
-                <div>
-                  <span className="text-zinc-400 text-xs font-medium block">Modelo da Moto</span>
-                  <span className="text-base font-extrabold text-white block mt-0.5">
-                    {proposal.motorcycle.brand} {proposal.motorcycle.model}
+            {(proposal.city || proposal.state) && (
+              <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/60 sm:col-span-2">
+                <span className="text-zinc-500 text-[10px] block uppercase font-semibold">Localização</span>
+                <span className="font-semibold text-zinc-300 flex items-center gap-1 mt-0.5">
+                  <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                  <span className="truncate">
+                    {proposal.city}
+                    {proposal.state ? ` - ${proposal.state}` : ''}
                   </span>
-                </div>
-                {proposal.motorcycle.year && (
-                  <div className="text-right">
-                    <span className="text-zinc-500 text-[11px] block">Ano</span>
-                    <span className="font-mono font-bold text-zinc-200 text-sm">
-                      {proposal.motorcycle.year}
-                    </span>
-                  </div>
-                )}
+                </span>
               </div>
-
-              {/* Specs Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-                {proposal.motorcycle.mileage != null && (
-                  <div className="bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-800/50">
-                    <span className="text-zinc-500 text-[10px] block">KM Rodados</span>
-                    <span className="font-mono font-bold text-zinc-200">
-                      {new Intl.NumberFormat('pt-BR').format(proposal.motorcycle.mileage)} km
-                    </span>
-                  </div>
-                )}
-
-                {proposal.motorcycle.color && (
-                  <div className="bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-800/50">
-                    <span className="text-zinc-500 text-[10px] block">Cor</span>
-                    <span className="font-semibold text-zinc-200">{proposal.motorcycle.color}</span>
-                  </div>
-                )}
-
-                {proposal.motorcycle.version && (
-                  <div className="bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-800/50">
-                    <span className="text-zinc-500 text-[10px] block">Versão</span>
-                    <span className="font-semibold text-zinc-200 truncate block">
-                      {proposal.motorcycle.version}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Financial Box: Desired vs FIPE vs Simulation */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                {desiredPrice != null && (
-                  <div className="bg-[#c9a44c]/10 border border-[#c9a44c]/30 rounded-2xl p-3.5 space-y-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#e3c56c] block">
-                      Expectativa do Cliente
-                    </span>
-                    <span className="text-xl font-black text-[#e3c56c] font-mono block">
-                      {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      }).format(desiredPrice)}
-                    </span>
-                  </div>
-                )}
-
-                {fipePrice != null && (
-                  <div className="bg-blue-500/10 border border-blue-500/25 rounded-2xl p-3.5 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400 block">
-                        Tabela FIPE
-                      </span>
-                      {fipeDiffPercent !== null && (
-                        <span
-                          className={cn(
-                            'text-[10px] font-extrabold px-1.5 py-0.5 rounded-md flex items-center gap-0.5',
-                            fipeDiffPercent < 0
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : fipeDiffPercent > 0
-                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                : 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
-                          )}
-                        >
-                          {fipeDiffPercent < 0 ? (
-                            <>
-                              <TrendingDown className="w-3 h-3" />
-                              {Math.abs(fipeDiffPercent)}% abaixo
-                            </>
-                          ) : fipeDiffPercent > 0 ? (
-                            <>
-                              <TrendingUp className="w-3 h-3" />+{fipeDiffPercent}% acima
-                            </>
-                          ) : (
-                            'Na FIPE'
-                          )}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xl font-black text-blue-300 font-mono block">
-                      {new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      }).format(fipePrice)}
-                    </span>
-                  </div>
-                )}
-
-                {/* Simulador de Oferta da Loja (FIPE) para o Lojista */}
-                {proposal.type === 'SELL_MOTORCYCLE' &&
-                  proposal.status !== 'CONVERTED' &&
-                  fipePrice != null &&
-                  fipePrice > 0 && (
-                  <div className="sm:col-span-2 bg-gradient-to-br from-amber-500/15 via-zinc-900 to-zinc-950 p-4 rounded-2xl border border-amber-500/40 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-amber-400" />
-                        <span>Simulador de Proposta da {storeName}</span>
-                      </span>
-                      <span className="text-xs font-mono font-bold text-zinc-300">
-                        FIPE:{' '}
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        }).format(fipePrice)}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <span className="text-[11px] text-zinc-400 block font-semibold">
-                        Selecione a porcentagem para ofertar ao cliente:
-                      </span>
-                      <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
-                        {[70, 75, 80, 85, 90, 95, 100].map((pct) => (
-                          <button
-                            key={pct}
-                            type="button"
-                            onClick={() => {
-                              setAdminOfferPercent(pct);
-                              setAdminCustomOffer(null);
-                              setSelectedPreset('offer');
-                            }}
-                            className={cn(
-                              'py-1.5 px-1 rounded-lg text-xs font-bold transition-all border text-center cursor-pointer',
-                              adminOfferPercent === pct && adminCustomOffer === null
-                                ? 'bg-amber-500 text-zinc-950 border-amber-400 font-black shadow-sm scale-105'
-                                : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:border-amber-500/50 hover:text-white',
-                            )}
-                          >
-                            {pct}%
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-zinc-800/80">
-                      <div>
-                        <span className="text-[11px] text-zinc-400 block">
-                          Valor Calculado da Oferta
-                        </span>
-                        <span className="text-2xl font-black text-amber-400 font-mono">
-                          {effectiveAdminOffer != null
-                            ? new Intl.NumberFormat('pt-BR', {
-                                style: 'currency',
-                                currency: 'BRL',
-                              }).format(effectiveAdminOffer)
-                            : '—'}
-                        </span>
-                      </div>
-
-                      <a
-                        href={generateWhatsAppLink(proposal.phone, getWhatsAppMessageByPreset())}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => setSelectedPreset('offer')}
-                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all cursor-pointer shrink-0"
-                      >
-                        <WhatsAppIcon className="w-4 h-4 fill-zinc-950" />
-                        <span>Enviar Oferta ({adminOfferPercent}%) no WhatsApp</span>
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {isConsignmentProposal && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4.5 space-y-4 shadow-xs">
-              <div className="flex items-center justify-between pb-2.5 border-b border-emerald-500/30">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
-                  <Calculator className="w-3.5 h-3.5" />
-                  Contrato & Comissão de Anúncio
-                </h4>
-                <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5">
-                  {proposal.status === 'QUALIFIED' ? 'Anúncio aprovado' : 'Comissão de anúncio'}
-                </Badge>
-              </div>
-
-              <AgreementCommissionForm proposal={proposal} />
-            </div>
-          )}
-
-          {(proposal.type === 'SELL_MOTORCYCLE' || proposal.source === 'sell_request') && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4.5 space-y-3.5 shadow-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-amber-500/20">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-                  <FileSignature className="w-3.5 h-3.5" />
-                  Contrato de Compra de Motocicleta
-                </h4>
-                <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5">
-                  Estoque Próprio
-                </Badge>
-              </div>
-
-              <p className="text-xs text-zinc-300">
-                Formalize a aquisição da motocicleta para o estoque próprio da AF Motos, gerando o contrato com quitação, transferência e dados da vistoria.
-              </p>
-
-              <Button
-                type="button"
-                onClick={handleOpenPurchaseAgreement}
-                disabled={isLoadingPurchaseData}
-                className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs h-10 rounded-xl flex items-center justify-center gap-2 shadow-md"
-              >
-                <FileCheck className="size-4" />
-                {isLoadingPurchaseData ? 'Carregando dados...' : 'Gerar Contrato de Compra'}
-              </Button>
-            </div>
-          )}
-
-          {/* Card 3: Mensagem do Cliente */}
-          {proposal.message && (
-            <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-2 shadow-xs">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5 text-[#c9a44c]" />
-                Observações / Mensagem do Cliente
-              </h4>
-              <p className="text-xs text-zinc-300 italic bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60 leading-relaxed">
-                &quot;{proposal.message}&quot;
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Right Column (Status Switcher, WhatsApp Presets & Photos) - 5 cols on lg */}
-        <div className="lg:col-span-5 space-y-5">
-          {/* Status Control Card */}
-          <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3 shadow-xs">
+        {/* Card Veículo & Comparativo Financeiro */}
+        {proposal.motorcycle && (proposal.motorcycle.brand || proposal.motorcycle.model) && (
+          <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 p-4 space-y-3.5 shadow-xs">
             <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#c9a44c]" />
-                Status do Lead
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                <Bike className="w-3.5 h-3.5 text-[#c9a44c]" />
+                Veículo Negociado
               </h4>
-              <Badge
-                variant="outline"
-                className={cn(
-                  'text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1',
-                  currentStatusInfo.bg,
-                  currentStatusInfo.text,
-                  currentStatusInfo.border,
-                )}
-              >
-                <span className={cn('w-1.5 h-1.5 rounded-full', currentStatusInfo.dot)} />
-                {currentStatusInfo.label}
+              <Badge variant="outline" className="text-[10px] font-bold border-zinc-700 bg-zinc-800 text-zinc-300">
+                {proposal.motorcycle.brand}
               </Badge>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(proposalStatusLabels).map(([statusKey, statusName]) => {
-                const isSelected = proposal.status === statusKey;
-                const config = statusConfig[statusKey] || statusConfig.CLOSED;
-
-                return (
-                  <button
-                    key={statusKey}
-                    type="button"
-                    disabled={isUpdatingStatus}
-                    onClick={() => handleQuickStatusUpdate(statusKey)}
-                    className={cn(
-                      'p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 text-left cursor-pointer disabled:opacity-50',
-                      isSelected
-                        ? cn(
-                            'bg-zinc-800/90 text-white shadow-xs',
-                            config.border,
-                            'ring-1 ring-white/20',
-                          )
-                        : 'bg-zinc-950/50 text-zinc-400 border-zinc-800/80 hover:bg-zinc-900 hover:text-white',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'w-2.5 h-2.5 rounded-full shrink-0',
-                        config.dot,
-                        isSelected && 'ring-2 ring-white/40',
-                      )}
-                    />
-                    <span className="truncate">{config.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* WhatsApp Direct Action & Message Templates */}
-          <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3.5 shadow-xs">
-            <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <WhatsAppIcon className="w-3.5 h-3.5 fill-[#25D366]" />
-                {proposal.status === 'CONVERTED' ? 'Contato com o Vendedor' : 'Atendimento WhatsApp'}
-              </h4>
-              <span className="text-[10px] text-zinc-500">
-                {proposal.status === 'CONVERTED' ? 'Canal direto' : 'Respostas rápidas'}
-              </span>
-            </div>
-
-            {proposal.status === 'CONVERTED' ? (
-              <div className="space-y-3">
-                <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl flex items-center gap-2.5 text-xs text-emerald-300">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Moto comprada pela loja. O canal com o vendedor continua disponível para dúvidas ou comprovantes:</span>
-                </div>
-
-                <a
-                  href={generateWhatsAppLink(
-                    proposal.phone,
-                    `Olá ${proposal.name}, tudo bem? Aqui é da ${storeName}! Entrando em contato sobre a compra da sua moto.`,
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-[#25D366] hover:bg-[#20BD5A] active:scale-98 text-zinc-950 font-extrabold rounded-xl h-11 shadow-[0_0_20px_rgba(37,211,102,0.25)] flex items-center justify-center gap-2 text-sm transition-all cursor-pointer"
-                >
-                  <WhatsAppIcon className="w-5 h-5 fill-current" />
-                  <span>Falar no WhatsApp com o Vendedor</span>
-                </a>
+            {/* Informações da moto */}
+            <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800/60 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Modelo</span>
+                <span className="text-sm font-extrabold text-white block mt-0.5">
+                  {proposal.motorcycle.brand} {proposal.motorcycle.model}
+                </span>
               </div>
-            ) : (
-              <>
-                {/* Template Selector */}
-                <div className="space-y-1.5">
-                  <span className="text-[11px] text-zinc-400 block font-medium">
-                    Modelo da mensagem:
+              <div className="flex items-center gap-2 text-right">
+                {proposal.motorcycle.year && (
+                  <div className="bg-zinc-900 px-2 py-1 rounded-lg border border-zinc-800">
+                    <span className="text-[9px] text-zinc-500 uppercase block font-mono">Ano</span>
+                    <span className="font-mono font-bold text-zinc-200 text-xs">{proposal.motorcycle.year}</span>
+                  </div>
+                )}
+                {proposal.motorcycle.mileage != null && (
+                  <div className="bg-zinc-900 px-2 py-1 rounded-lg border border-zinc-800">
+                    <span className="text-[9px] text-zinc-500 uppercase block font-mono">KM</span>
+                    <span className="font-mono font-bold text-zinc-200 text-xs">
+                      {new Intl.NumberFormat('pt-BR').format(proposal.motorcycle.mileage)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Comparativo Visual Direto: Expectativa vs FIPE */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {desiredPrice != null && (
+                <div className="bg-[#c9a44c]/10 border border-[#c9a44c]/30 rounded-xl p-3 space-y-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#e3c56c] block">
+                    Expectativa do Cliente
                   </span>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {[
-                      { id: 'offer', label: '💰 Oferta FIPE' },
-                      { id: 'default', label: 'Padrão' },
-                      { id: 'photos', label: 'Pedir fotos/doc' },
-                      { id: 'visit', label: 'Agendar visita' },
-                      { id: 'counter', label: 'Contraproposta' },
-                    ].map((preset) => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => setSelectedPreset(preset.id)}
+                  <span className="text-lg font-black text-[#e3c56c] font-mono block">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(desiredPrice)}
+                  </span>
+                </div>
+              )}
+
+              {fipePrice != null && (
+                <div className="bg-blue-500/10 border border-blue-500/25 rounded-xl p-3 space-y-0.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 block">
+                      Tabela FIPE
+                    </span>
+                    {fipeDiffPercent !== null && (
+                      <span
                         className={cn(
-                          'px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all text-center cursor-pointer',
-                          selectedPreset === preset.id
-                            ? 'bg-zinc-800 text-white border-[#c9a44c]/60'
-                            : 'bg-zinc-950/60 text-zinc-400 border-zinc-800/60 hover:text-white',
+                          'text-[9px] font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5',
+                          fipeDiffPercent < 0
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : fipeDiffPercent > 0
+                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                              : 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
                         )}
                       >
-                        {preset.label}
+                        {fipeDiffPercent < 0 ? (
+                          <>
+                            <TrendingDown className="w-2.5 h-2.5" />
+                            {Math.abs(fipeDiffPercent)}% abaixo
+                          </>
+                        ) : fipeDiffPercent > 0 ? (
+                          <>
+                            <TrendingUp className="w-2.5 h-2.5" />+{fipeDiffPercent}% acima
+                          </>
+                        ) : (
+                          'Na FIPE'
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-lg font-black text-blue-300 font-mono block">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fipePrice)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Simulador de Oferta da Loja (% FIPE) */}
+            {proposal.type === 'SELL_MOTORCYCLE' &&
+              proposal.status !== 'CONVERTED' &&
+              fipePrice != null &&
+              fipePrice > 0 && (
+                <div className="bg-gradient-to-br from-amber-500/10 via-zinc-950 to-zinc-950 p-3.5 rounded-xl border border-amber-500/30 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Simulador de Oferta ({adminOfferPercent}% FIPE)</span>
+                    </span>
+                    <span className="text-xs font-mono font-black text-amber-300">
+                      {effectiveAdminOffer != null
+                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(effectiveAdminOffer)
+                        : '—'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-1">
+                    {[70, 75, 80, 85, 90, 95, 100].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => {
+                          setAdminOfferPercent(pct);
+                          setAdminCustomOffer(null);
+                          setSelectedPreset('offer');
+                        }}
+                        className={cn(
+                          'py-1 rounded-md text-[11px] font-bold transition-all border text-center cursor-pointer',
+                          adminOfferPercent === pct && adminCustomOffer === null
+                            ? 'bg-amber-500 text-zinc-950 border-amber-400 font-black shadow-xs'
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700',
+                        )}
+                      >
+                        {pct}%
                       </button>
                     ))}
                   </div>
                 </div>
+              )}
 
-                {/* Preview of message */}
-                <div className="bg-zinc-950/80 p-3 rounded-xl border border-zinc-800/60 text-[11px] text-zinc-400 line-clamp-3 leading-relaxed">
-                  &quot;{getWhatsAppMessageByPreset()}&quot;
+            {/* Miniatura de Fotos do Veículo */}
+            {proposal.images && proposal.images.length > 0 && (
+              <div className="pt-2 border-t border-zinc-800/60">
+                <div className="flex items-center justify-between pb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-[#c9a44c]" />
+                    Fotos do Veículo
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-mono border-zinc-800 text-zinc-400">
+                    {proposal.images.length} {proposal.images.length === 1 ? 'foto' : 'fotos'}
+                  </Badge>
                 </div>
 
-                {/* Big WhatsApp CTA */}
-                <a
-                  href={activeWhatsAppLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-[#25D366] hover:bg-[#20BD5A] active:scale-98 text-zinc-950 font-extrabold rounded-xl h-11 shadow-[0_0_20px_rgba(37,211,102,0.25)] flex items-center justify-center gap-2 text-sm transition-all cursor-pointer"
-                >
-                  <WhatsAppIcon className="w-5 h-5 fill-current" />
-                  <span>Abrir WhatsApp com Cliente</span>
-                </a>
-              </>
+                <div className="grid grid-cols-4 gap-2">
+                  {proposal.images.slice(0, 4).map((img, idx) => {
+                    const hasMore = idx === 3 && proposal.images.length > 4;
+
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setSelectedImageIndex(idx);
+                          setIsFullscreenOpen(true);
+                        }}
+                        className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-800/80 bg-zinc-950 cursor-zoom-in hover:border-[#c9a44c]/60 transition-all"
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.altText || `Foto ${idx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {hasMore ? (
+                          <div className="absolute inset-0 bg-black/75 flex items-center justify-center font-bold text-xs text-white">
+                            +{proposal.images.length - 3}
+                          </div>
+                        ) : (
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Eye className="w-4 h-4 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
+        )}
+      </div>
 
-          {/* Photo Gallery */}
-          {proposal.images && proposal.images.length > 0 && (
-            <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-4.5 space-y-3 shadow-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-[#c9a44c]" />
-                  Fotos do Veículo ({proposal.images.length})
-                </h4>
-                <span className="text-[10px] text-zinc-500">Clique para ampliar</span>
-              </div>
+      {/* Coluna Direita: Pipeline de Status & Atendimento WhatsApp */}
+      <div className="space-y-4">
+        {/* Status do Lead: Stepper de Etapas */}
+        <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 p-4 space-y-3 shadow-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#c9a44c]" />
+              Pipeline de Status do Lead
+            </h4>
+            <Badge
+              variant="outline"
+              className={cn(
+                'text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1',
+                currentStatusInfo.bg,
+                currentStatusInfo.text,
+                currentStatusInfo.border,
+              )}
+            >
+              <span className={cn('w-1.5 h-1.5 rounded-full', currentStatusInfo.dot)} />
+              {currentStatusInfo.label}
+            </Badge>
+          </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                {proposal.images.map((img, idx) => {
-                  const isLogoFallback = img.url.includes('/logo.') || img.provider === 'system';
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setSelectedImageIndex(idx);
-                        setIsFullscreenOpen(true);
-                      }}
-                      className={cn(
-                        "relative group aspect-square rounded-xl overflow-hidden border border-zinc-800/80 bg-zinc-950 cursor-zoom-in hover:border-[#c9a44c]/60 transition-all",
-                        isLogoFallback && "p-2 flex items-center justify-center"
-                      )}
-                    >
-                      <img
-                        src={img.url}
-                        alt={img.altText || `Foto ${idx + 1}`}
-                        className={cn(
-                          "transition-transform duration-300",
-                          isLogoFallback
-                            ? "w-full h-full object-contain opacity-90 group-hover:scale-105"
-                            : "w-full h-full object-cover group-hover:scale-110"
-                        )}
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <Eye className="w-5 h-5 text-white" />
-                      </div>
-                      {isLogoFallback && (
-                        <span className="absolute bottom-1 right-1 px-1 py-0.5 rounded bg-black/80 text-[8px] font-bold text-zinc-400">
-                          Padrão
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Stepper / Grid de seleção rápida */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+            {statusSteps.map((step) => {
+              const isSelected = proposal.status === step.key;
+              const config = statusConfig[step.key] || statusConfig.CLOSED;
+
+              return (
+                <button
+                  key={step.key}
+                  type="button"
+                  disabled={isUpdatingStatus}
+                  onClick={() => handleQuickStatusUpdate(step.key)}
+                  className={cn(
+                    'p-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 text-left cursor-pointer disabled:opacity-50',
+                    isSelected
+                      ? cn(
+                          'bg-zinc-800/90 text-white shadow-xs',
+                          config.border,
+                          'ring-1 ring-white/20',
+                        )
+                      : 'bg-zinc-950/60 text-zinc-400 border-zinc-800/80 hover:bg-zinc-900 hover:text-white',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'w-2 h-2 rounded-full shrink-0',
+                      config.dot,
+                      isSelected && 'ring-2 ring-white/40',
+                    )}
+                  />
+                  <span className="truncate text-[11px]">{config.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Atendimento WhatsApp & Chips de Respostas Rápidas */}
+        <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 p-4 space-y-3.5 shadow-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+              <WhatsAppIcon className="w-3.5 h-3.5 fill-[#25D366]" />
+              Atendimento WhatsApp
+            </h4>
+            <span className="text-[10px] text-zinc-500 font-medium">
+              Modelos Rápidos & Mensagem
+            </span>
+          </div>
+
+          {/* Chips de Modelos Rápidos */}
+          <div className="space-y-1.5">
+            <span className="text-[11px] text-zinc-400 font-medium block">
+              Selecione o modelo rápido:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { id: 'offer', label: '💰 Oferta FIPE' },
+                { id: 'default', label: '✨ Padrão' },
+                { id: 'photos', label: '📷 Pedir Fotos' },
+                { id: 'visit', label: '📍 Agendar Visita' },
+                { id: 'counter', label: '🤝 Contraproposta' },
+              ].map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => setSelectedPreset(preset.id)}
+                  className={cn(
+                    'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer',
+                    selectedPreset === preset.id
+                      ? 'bg-zinc-800 text-white border-[#c9a44c]/60 shadow-xs'
+                      : 'bg-zinc-950/60 text-zinc-400 border-zinc-800/60 hover:text-white hover:border-zinc-700',
+                  )}
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
+
+          {/* Preview da Mensagem Editável */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-zinc-400 font-medium">
+                Mensagem a ser enviada (editável):
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(customMessage);
+                  toast.success('Mensagem copiada para a área de transferência!');
+                }}
+                className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer"
+              >
+                <Copy className="w-3 h-3" />
+                Copiar
+              </button>
+            </div>
+            <Textarea
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              rows={4}
+              className="bg-zinc-950/80 border-zinc-800 text-xs text-zinc-200 resize-none focus:border-[#25D366]/50 rounded-xl leading-relaxed"
+              placeholder="Digite ou personalize a mensagem aqui..."
+            />
+          </div>
+
+          {/* ÚNICO BOTÃO DE AÇÃO PRIMÁRIO */}
+          <a
+            href={activeWhatsAppLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full bg-[#25D366] hover:bg-[#20BD5A] active:scale-[0.99] text-zinc-950 font-black rounded-xl h-11 shadow-[0_0_20px_rgba(37,211,102,0.25)] flex items-center justify-center gap-2 text-sm transition-all cursor-pointer"
+          >
+            <WhatsAppIcon className="w-5 h-5 fill-current" />
+            <span>Enviar Mensagem via WhatsApp</span>
+            <ArrowUpRight className="w-4 h-4" />
+          </a>
         </div>
       </div>
     </div>
   );
 
+  // Aba 2: Contratos & Fechamento
+  const TabContratosContent = (
+    <div className="space-y-5">
+      {proposal.type === 'CONSIGNMENT' ? (
+        /* Formulário de Consignação / Anúncio */
+        <div className="bg-zinc-900/70 border border-emerald-500/20 rounded-2xl p-5 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-emerald-500/10">
+            <div>
+              <h4 className="text-sm font-black text-emerald-300 flex items-center gap-2">
+                <Calculator className="size-4" />
+                Contrato de Intermediação & Anúncio
+              </h4>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Defina os dados do proprietário e as condições de comissão para gerar o contrato formal.
+              </p>
+            </div>
+            <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">
+              Consignação
+            </Badge>
+          </div>
+
+          <AgreementCommissionForm proposal={proposal} />
+        </div>
+      ) : (
+        /* Formulário de Compra para Estoque Próprio */
+        <div className="bg-zinc-900/70 border border-amber-500/20 rounded-2xl p-5 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-amber-500/10">
+            <div>
+              <h4 className="text-sm font-black text-amber-300 flex items-center gap-2">
+                <FileSignature className="size-4" />
+                Contrato de Compra e Aquisição pela Loja
+              </h4>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Formalize a compra direta para o estoque da AF Motos, gerando o instrumento com quitação e termos de transferência.
+              </p>
+            </div>
+            <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
+              Estoque Próprio
+            </Badge>
+          </div>
+
+          {/* Resumo da Moto e Vendedor */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800/60 space-y-1">
+              <span className="text-zinc-500 text-[10px] uppercase font-semibold">Vendedor</span>
+              <span className="font-bold text-white text-sm block truncate">{proposal.name}</span>
+              <span className="font-mono text-zinc-400 block">{formatPhoneForDisplay(proposal.phone) || proposal.phone}</span>
+            </div>
+
+            <div className="bg-zinc-950/70 p-3 rounded-xl border border-zinc-800/60 space-y-1">
+              <span className="text-zinc-500 text-[10px] uppercase font-semibold">Veículo Negociado</span>
+              <span className="font-bold text-white text-sm block truncate">
+                {proposal.motorcycle?.brand || ''} {proposal.motorcycle?.model || 'Não especificado'}
+              </span>
+              <div className="flex items-center gap-2 text-zinc-400 text-[11px]">
+                {proposal.motorcycle?.year && <span>Ano {proposal.motorcycle.year}</span>}
+                {proposal.motorcycle?.mileage != null && (
+                  <span>• {new Intl.NumberFormat('pt-BR').format(proposal.motorcycle.mileage)} km</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Campo Editável de Valor de Compra Negociado */}
+          <div className="space-y-2 bg-zinc-950/70 p-4 rounded-xl border border-zinc-800/80">
+            <Label htmlFor="custom-purchase-amount" className="flex items-center justify-between text-xs text-zinc-300 font-bold">
+              <span className="flex items-center gap-1.5 text-amber-300">
+                <CircleDollarSign className="size-4 text-amber-400" />
+                Valor de Compra Acordado (R$)
+              </span>
+              {desiredPrice != null && (
+                <span className="text-[11px] text-zinc-400 font-normal">
+                  Expectativa cliente: <strong className="text-zinc-200">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(desiredPrice)}</strong>
+                </span>
+              )}
+            </Label>
+            <div className="relative">
+              <Input
+                id="custom-purchase-amount"
+                type="number"
+                min={0}
+                step={0.01}
+                value={customPurchaseAmount || ''}
+                onChange={(e) => setCustomPurchaseAmount(Number(e.target.value || 0))}
+                className="h-11 pr-10 bg-zinc-900/90 border-zinc-700 font-mono font-black text-amber-300 text-lg focus:border-amber-500/50 rounded-xl"
+                placeholder="0,00"
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs font-bold text-zinc-400">
+                R$
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-500">
+              Você pode ajustar o valor final acordado nesta proposta antes de gerar o contrato oficial.
+            </p>
+          </div>
+
+          {/* Botão de Ação para Compra */}
+          <Button
+            type="button"
+            onClick={handleOpenPurchaseAgreement}
+            disabled={isLoadingPurchaseData || customPurchaseAmount <= 0}
+            className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs h-11 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.2)] transition-all cursor-pointer disabled:opacity-50"
+          >
+            <FileCheck className="size-4" />
+            {isLoadingPurchaseData ? 'Carregando dados...' : `Gerar Contrato de Compra (${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(customPurchaseAmount)})`}
+          </Button>
+
+          {/* Se a proposta já foi concluída/comprada, atalho para catálogo */}
+          {proposal.status === 'CONVERTED' && (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="size-4 text-emerald-400" />
+                  <span className="text-xs font-black text-emerald-300 uppercase tracking-wider">
+                    Moto Comprada & Concluída
+                  </span>
+                </div>
+                <Badge className="bg-emerald-500 text-zinc-950 font-black text-[10px]">
+                  Estoque Pronto
+                </Badge>
+              </div>
+              <p className="text-xs text-zinc-300">
+                Os dados cadastrais e fotos desta negociação estão prontos para inclusão imediata no catálogo de motos.
+              </p>
+              <Link
+                href={getStockRegistrationUrlFromProposal(proposal)}
+                className="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black rounded-xl h-10 flex items-center justify-center gap-2 text-xs transition-all cursor-pointer"
+              >
+                <PlusCircle className="size-4" />
+                <span>Cadastrar no Estoque da Loja</span>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // Aba 3: Mensagem & Histórico
+  const TabHistoricoContent = (
+    <div className="space-y-4">
+      {/* Mensagem Original Enviada pelo Cliente */}
+      {proposal.message ? (
+        <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 p-4 space-y-2.5 shadow-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5 text-[#c9a44c]" />
+              Mensagem Original do Cliente
+            </h4>
+            <button
+              type="button"
+              onClick={handleCopyMessage}
+              className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer"
+            >
+              {copiedMessage ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+              <span>{copiedMessage ? 'Copiada' : 'Copiar'}</span>
+            </button>
+          </div>
+          <p className="text-xs text-zinc-200 italic bg-zinc-950/70 p-3.5 rounded-xl border border-zinc-800/60 leading-relaxed">
+            &quot;{proposal.message}&quot;
+          </p>
+        </div>
+      ) : (
+        <div className="bg-zinc-900/40 p-4 rounded-2xl border border-zinc-800/60 text-xs text-zinc-400 italic flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-zinc-500" />
+          <span>Nenhuma mensagem adicional de texto foi incluída no formulário.</span>
+        </div>
+      )}
+
+      {/* Dados de Locação se aplicável */}
+      {(proposal.rental || proposal.type === 'RENTAL') && (
+        <div className="bg-blue-950/30 rounded-2xl border border-blue-500/30 p-4 space-y-3 shadow-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-blue-500/30">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-blue-400" />
+              Detalhes da Solicitação de Aluguel
+            </h4>
+            <Badge variant="outline" className="text-[10px] font-bold border-blue-500/40 bg-blue-500/10 text-blue-300">
+              Locação
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+            {proposal.rental?.desiredPlan && (
+              <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/60">
+                <span className="text-zinc-500 text-[10px] block uppercase font-semibold">Plano Desejado</span>
+                <span className="font-bold text-blue-400 text-sm block mt-0.5">{proposal.rental.desiredPlan}</span>
+              </div>
+            )}
+            {proposal.rental?.expectedStartDate && (
+              <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/60">
+                <span className="text-zinc-500 text-[10px] block uppercase font-semibold">Início Previsto</span>
+                <span className="font-bold text-zinc-200 font-mono text-sm block mt-0.5">
+                  {proposal.rental.expectedStartDate.split('-').reverse().join('/')}
+                </span>
+              </div>
+            )}
+            {proposal.rental?.hasCnhA && (
+              <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/60">
+                <span className="text-zinc-500 text-[10px] block uppercase font-semibold">CNH Categoria A</span>
+                <span className="font-bold text-white block mt-0.5">{proposal.rental.hasCnhA}</span>
+              </div>
+            )}
+            {proposal.rental?.age != null && (
+              <div className="bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/60">
+                <span className="text-zinc-500 text-[10px] block uppercase font-semibold">Idade</span>
+                <span className="font-bold text-zinc-200 block mt-0.5">{proposal.rental.age} anos</span>
+              </div>
+            )}
+            {proposal.rental?.purposeOfUse && (
+              <div className="col-span-2 bg-zinc-950/70 p-2.5 rounded-xl border border-zinc-800/60">
+                <span className="text-zinc-500 text-[10px] block uppercase font-semibold">Finalidade de Uso</span>
+                <span className="font-semibold text-zinc-200 block truncate mt-0.5">{proposal.rental.purposeOfUse}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Linha do Tempo & Histórico */}
+      <div className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 p-4 space-y-3.5 shadow-xs">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5 pb-2 border-b border-zinc-800/60">
+          <History className="w-3.5 h-3.5 text-[#c9a44c]" />
+          Linha do Tempo do Lead
+        </h4>
+
+        <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-zinc-800">
+          {/* Evento 1: Criação */}
+          <div className="relative">
+            <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-zinc-950" />
+            <div className="text-xs space-y-0.5">
+              <span className="font-bold text-white block">Proposta Criada no Site</span>
+              <span className="text-[11px] text-zinc-400 block font-mono">
+                {format(new Date(proposal.createdAt), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+              </span>
+              <span className="text-[11px] text-zinc-500 block">
+                Canal de Origem: {typeLabel} ({proposal.source})
+              </span>
+            </div>
+          </div>
+
+          {/* Evento 2: Status Atual */}
+          <div className="relative">
+            <div className={cn('absolute -left-6 top-1 w-2.5 h-2.5 rounded-full ring-4 ring-zinc-950', currentStatusInfo.dot)} />
+            <div className="text-xs space-y-0.5">
+              <span className="font-bold text-white block">Status Vigente: {currentStatusInfo.label}</span>
+              <span className="text-[11px] text-zinc-400 block">
+                Acompanhamento e registro em tempo real pelo painel CRM da AF Motos.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // -------------------------------------------------------------
+  // Render Desktop Dialog
+  // -------------------------------------------------------------
   if (isDesktop) {
     return (
       <>
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 bg-[#0d0d10] border border-zinc-800 text-zinc-100 shadow-[0_25px_60px_rgba(0,0,0,0.9)] rounded-3xl">
+          <DialogContent className="max-w-4xl lg:max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-0 bg-[#0d0d10] border border-zinc-800 text-zinc-100 shadow-[0_25px_60px_rgba(0,0,0,0.9)] rounded-3xl">
             {/* Top Accent Line */}
-            <div className={cn('h-1.5 w-full bg-gradient-to-r', currentStatusInfo.line)} />
+            <div className={cn('h-1.5 w-full bg-gradient-to-r shrink-0', currentStatusInfo.line)} />
 
-            {/* Modal Header */}
-            <DialogHeader className="px-6 py-4.5 border-b border-zinc-800/80 bg-zinc-950/80 shrink-0">
+            {/* Modal Header Fixo */}
+            <DialogHeader className="px-6 pt-4 pb-3 border-b border-zinc-800/80 bg-zinc-950/90 shrink-0">
               <div className="flex items-center justify-between gap-4 pr-8">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[#c9a44c] shrink-0 shadow-xs">
+                  <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[#c9a44c] shrink-0 shadow-xs">
                     <TypeIcon className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 space-y-0.5">
-                    <DialogTitle className="text-xl lg:text-2xl font-black text-white truncate">
+                    <DialogTitle className="text-xl font-black text-white truncate">
                       {proposal.name}
                     </DialogTitle>
                     <DialogDescription className="text-xs text-zinc-400 flex items-center gap-2">
-                      <span>Proposta #{proposal.id.slice(0, 8)}</span>
+                      <span className="font-mono text-zinc-300 font-bold">#{proposal.id.slice(0, 8)}</span>
                       <span>•</span>
                       <span>
                         Recebido em{' '}
-                        {format(new Date(proposal.createdAt), "dd 'de' MMMM 'às' HH:mm", {
+                        {format(new Date(proposal.createdAt), "dd/MM/yyyy 'às' HH:mm", {
                           locale: ptBR,
                         })}
                       </span>
@@ -1258,15 +1378,75 @@ export function ProposalDetail({
                   </Badge>
                 </div>
               </div>
+
+              {/* Sub-header de Abas Elegante */}
+              <div className="pt-3">
+                <div className="grid grid-cols-3 gap-2 p-1 rounded-2xl bg-zinc-900/90 border border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('atendimento')}
+                    className={cn(
+                      'flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer',
+                      activeTab === 'atendimento'
+                        ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-white/10'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40',
+                    )}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
+                    <span>1. Atendimento & Negociação</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('contratos')}
+                    className={cn(
+                      'flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer',
+                      activeTab === 'contratos'
+                        ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-white/10'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40',
+                    )}
+                  >
+                    {proposal.type === 'CONSIGNMENT' ? (
+                      <>
+                        <Calculator className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>2. Contrato & Comissão</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileSignature className="w-3.5 h-3.5 text-amber-400" />
+                        <span>2. Contrato de Compra</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('historico')}
+                    className={cn(
+                      'flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer',
+                      activeTab === 'historico'
+                        ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-white/10'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40',
+                    )}
+                  >
+                    <History className="w-3.5 h-3.5 text-blue-400" />
+                    <span>3. Mensagem & Histórico</span>
+                  </button>
+                </div>
+              </div>
             </DialogHeader>
 
-            {/* Modal Body */}
-            <div className="px-6 py-5 overflow-y-auto flex-1 scrollbar-thin">{MainContent}</div>
+            {/* Modal Body com Scroll Suave Contido */}
+            <div className="px-6 py-5 overflow-y-auto flex-1 scrollbar-thin">
+              {activeTab === 'atendimento' && TabAtendimentoContent}
+              {activeTab === 'contratos' && TabContratosContent}
+              {activeTab === 'historico' && TabHistoricoContent}
+            </div>
 
-            {/* Modal Footer */}
-            <div className="px-6 py-3.5 border-t border-zinc-800/80 bg-zinc-950/80 flex items-center justify-between shrink-0">
+            {/* Modal Footer Limpo */}
+            <div className="px-6 py-3.5 border-t border-zinc-800/80 bg-zinc-950/90 flex items-center justify-between shrink-0">
               <div className="text-xs text-zinc-500 font-mono">
-                {storeName} CRM • Atendimento ao Cliente
+                {storeName} CRM • Proposta #{proposal.id.slice(0, 8)}
               </div>
 
               <div className="flex items-center gap-3">
@@ -1274,19 +1454,10 @@ export function ProposalDetail({
                   variant="outline"
                   size="sm"
                   onClick={() => onOpenChange(false)}
-                  className="rounded-xl border-zinc-800 text-zinc-300 hover:text-white cursor-pointer px-4"
+                  className="rounded-xl border-zinc-800 text-zinc-300 hover:text-white cursor-pointer px-5 h-9 font-bold"
                 >
                   Fechar
                 </Button>
-                <a
-                  href={activeWhatsAppLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20BD5A] text-zinc-950 font-bold text-xs h-9 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(37,211,102,0.2)] cursor-pointer"
-                >
-                  <WhatsAppIcon className="w-4 h-4 fill-current" />
-                  <span>Falar no WhatsApp</span>
-                </a>
               </div>
             </div>
           </DialogContent>
@@ -1310,7 +1481,9 @@ export function ProposalDetail({
     );
   }
 
-  // Mobile Bottom Sheet
+  // -------------------------------------------------------------
+  // Render Mobile Bottom Sheet
+  // -------------------------------------------------------------
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -1318,18 +1491,17 @@ export function ProposalDetail({
         className="max-h-[92vh] rounded-t-3xl bg-[#0d0d10] border-t border-zinc-800 p-0 text-zinc-100 flex flex-col overflow-hidden"
       >
         {/* Top Accent Line */}
-        <div className={cn('h-1.5 w-full bg-gradient-to-r', currentStatusInfo.line)} />
+        <div className={cn('h-1.5 w-full bg-gradient-to-r shrink-0', currentStatusInfo.line)} />
 
-        {/* Mobile Header */}
-        <SheetHeader className="text-left border-b border-zinc-800/80 pb-3 p-4 pt-5 bg-zinc-950/80 shrink-0">
+        {/* Mobile Header Fixo */}
+        <SheetHeader className="text-left border-b border-zinc-800/80 pb-3 p-4 pt-4 bg-zinc-950/90 shrink-0">
           <div className="flex items-center justify-between gap-3 pr-8">
             <div className="min-w-0">
               <SheetTitle className="text-lg font-bold truncate text-white">
                 {proposal.name}
               </SheetTitle>
-              <SheetDescription className="text-xs text-zinc-400">
-                Recebido em{' '}
-                {format(new Date(proposal.createdAt), "dd/MM 'às' HH:mm", { locale: ptBR })}
+              <SheetDescription className="text-xs text-zinc-400 font-mono">
+                #{proposal.id.slice(0, 8)} • {format(new Date(proposal.createdAt), "dd/MM 'às' HH:mm", { locale: ptBR })}
               </SheetDescription>
             </div>
 
@@ -1345,28 +1517,69 @@ export function ProposalDetail({
               {currentStatusInfo.label}
             </Badge>
           </div>
+
+          {/* Abas Mobile */}
+          <div className="pt-2">
+            <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-zinc-900/90 border border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setActiveTab('atendimento')}
+                className={cn(
+                  'py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all text-center',
+                  activeTab === 'atendimento'
+                    ? 'bg-zinc-800 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200',
+                )}
+              >
+                1. Atendimento
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('contratos')}
+                className={cn(
+                  'py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all text-center',
+                  activeTab === 'contratos'
+                    ? 'bg-zinc-800 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200',
+                )}
+              >
+                {proposal.type === 'CONSIGNMENT' ? '2. Comissão' : '2. Compra'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('historico')}
+                className={cn(
+                  'py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all text-center',
+                  activeTab === 'historico'
+                    ? 'bg-zinc-800 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200',
+                )}
+              >
+                3. Mensagem
+              </button>
+            </div>
+          </div>
         </SheetHeader>
 
         {/* Mobile Body */}
-        <div className="px-4 py-4 overflow-y-auto flex-1 space-y-4">{MainContent}</div>
+        <div className="px-4 py-4 overflow-y-auto flex-1 space-y-4">
+          {activeTab === 'atendimento' && TabAtendimentoContent}
+          {activeTab === 'contratos' && TabContratosContent}
+          {activeTab === 'historico' && TabHistoricoContent}
+        </div>
 
-        {/* Mobile Sticky Footer */}
-        <SheetFooter className="border-t border-zinc-800/80 p-4 bg-zinc-950 shrink-0 flex flex-col gap-2">
-          <a
-            href={activeWhatsAppLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full bg-[#25D366] hover:bg-[#20BD5A] text-zinc-950 font-bold rounded-xl h-12 shadow-[0_0_15px_rgba(37,211,102,0.2)] flex items-center justify-center gap-2 text-sm transition-colors cursor-pointer"
-          >
-            <WhatsAppIcon className="w-5 h-5 fill-current" />
-            <span>Falar no WhatsApp</span>
-          </a>
-
+        {/* Mobile Footer Limpo */}
+        <SheetFooter className="border-t border-zinc-800/80 p-3 bg-zinc-950 shrink-0 flex items-center justify-between">
+          <div className="text-[11px] text-zinc-500 font-mono">
+            {storeName} CRM • #{proposal.id.slice(0, 8)}
+          </div>
           <SheetClose
             className={buttonVariants({
               variant: 'outline',
-              className:
-                'w-full h-10 rounded-xl font-semibold border-zinc-800 text-zinc-400 cursor-pointer',
+              size: 'sm',
+              className: 'rounded-xl border-zinc-800 text-zinc-400 hover:text-white px-4 h-8 text-xs font-semibold',
             })}
           >
             Fechar
