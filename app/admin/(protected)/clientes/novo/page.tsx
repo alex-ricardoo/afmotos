@@ -4,8 +4,8 @@ import { ArrowLeft, UserPlus } from 'lucide-react';
 import { CustomerForm } from '@/components/admin/customers/customer-form';
 
 export const metadata = {
-  title: 'Novo Cliente | AF Motos',
-  description: 'Cadastro em etapas de novos clientes na carteira AF Motos.',
+  title: 'Novo Cliente',
+  description: 'Cadastro em etapas de novos clientes na carteira comercial.',
 };
 
 export default function NewCustomerPage() {

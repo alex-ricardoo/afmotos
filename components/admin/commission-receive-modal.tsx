@@ -25,6 +25,7 @@ interface CommissionReceiveModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: (updated: ProposalCommissionRecord) => void;
+  storeName?: string;
 }
 
 export function CommissionReceiveModal({
@@ -32,6 +33,7 @@ export function CommissionReceiveModal({
   open,
   onOpenChange,
   onSuccess,
+  storeName = 'AF Motos',
 }: CommissionReceiveModalProps) {
   const initialValue =
     commission?.commission_confirmed_value ?? commission?.commission_expected_value ?? 0;
@@ -103,7 +105,7 @@ export function CommissionReceiveModal({
             Registrar Recebimento de Comissão
           </DialogTitle>
           <DialogDescription className="text-xs text-zinc-400">
-            Realiza a baixa financeira da comissão no caixa da AF Motos.
+            Realiza a baixa financeira da comissão no caixa da {storeName}.
           </DialogDescription>
         </DialogHeader>
 

@@ -7,10 +7,11 @@ import { CustomerList } from '@/components/admin/customers/customer-list';
 import { CustomerMobileCard } from '@/components/admin/customers/customer-mobile-card';
 import { CustomerFilters } from '@/components/admin/customers/customer-filters';
 import { CustomerSummaryKpis } from '@/components/admin/customers/customer-summary-kpis';
-import { CustomerSearchParams } from '@/lib/validations/customer';
+import { getSettings } from '@/lib/actions/settings';
+import { getSiteName } from '@/lib/site-settings';
 
 export const metadata = {
-  title: 'Carteira de Clientes & CRM | AF Motos',
+  title: 'Carteira de Clientes & CRM',
   description: 'Gestão da carteira de clientes, histórico de negociações e inteligência comercial.',
 };
 
@@ -41,11 +42,13 @@ export default async function ClientesPage({ searchParams }: ClientesPageProps) 
     date_range: resolvedParams.date_range,
   };
 
-  const [metrics, customersResult] = await Promise.all([
+  const [metrics, customersResult, settings] = await Promise.all([
     getCustomerMetrics(),
     getCustomers(params),
+    getSettings(),
   ]);
 
+  const storeName = getSiteName(settings);
   const { data: customers, totalCount, page, totalPages, limit } = customersResult;
 
   const hasFilters = Boolean(
@@ -96,13 +99,13 @@ export default async function ClientesPage({ searchParams }: ClientesPageProps) 
         <div className="space-y-4">
           {/* Desktop Table */}
           <div className="hidden lg:block">
-            <CustomerList customers={customers} />
+            <CustomerList customers={customers} storeName={storeName} />
           </div>
 
           {/* Mobile Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:hidden gap-3">
             {customers.map((c) => (
-              <CustomerMobileCard key={c.id} customer={c} />
+              <CustomerMobileCard key={c.id} customer={c} storeName={storeName} />
             ))}
           </div>
 

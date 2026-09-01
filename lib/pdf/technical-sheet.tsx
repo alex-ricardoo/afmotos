@@ -4,6 +4,7 @@ import type { MotorcycleTechnicalSheet } from '@/lib/technical-sheet/schema';
 import type { SiteSettings } from '@/types/database';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
+import { getSiteName } from '@/lib/site-settings';
 
 const styles = StyleSheet.create({
   page: {
@@ -167,7 +168,7 @@ export function TechnicalSheetPDF({ sheet, settings, logoSrc }: Props) {
     safety,
     equipment,
   } = sheet;
-  const storeName = settings?.site_name || 'AF Motos';
+  const storeName = getSiteName(settings);
   const phone = settings?.whatsapp_phone || '';
   const cnpj = formatCnpj(settings?.cnpj);
   const contact = [phone, cnpj ? `CNPJ: ${cnpj}` : null, settings?.address]
@@ -189,7 +190,7 @@ export function TechnicalSheetPDF({ sheet, settings, logoSrc }: Props) {
           : 'Ficha técnica';
   const versionLabel = identity.version
     ? `${identity.version}`
-    : 'Versão: Consulte a equipe AF Motos';
+    : `Versão: Consulte a equipe ${storeName}`;
   const hasConsumption = Boolean(
     consumption?.isVerified &&
     (consumption.cityKmPerLiter !== null ||
@@ -461,7 +462,7 @@ export function TechnicalSheetPDF({ sheet, settings, logoSrc }: Props) {
         )}
         {sheet.sources.length > 0 && (
           <Text style={styles.note}>
-            Informações técnicas consultadas em fonte de fabricante e revisadas pela AF Motos.
+            Informações técnicas consultadas em fonte de fabricante e revisadas pela equipe {storeName}.
           </Text>
         )}
         <Text style={styles.note}>

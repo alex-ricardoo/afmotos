@@ -8,6 +8,9 @@ import { CustomerDetailsHeader } from '@/components/admin/customers/customer-det
 import { CustomerSummaryCards } from '@/components/admin/customers/customer-summary-cards';
 import { CustomerRelationsTabs } from '@/components/admin/customers/customer-relations-tabs';
 
+import { getSettings } from '@/lib/actions/settings';
+import { getSiteName } from '@/lib/site-settings';
+
 interface CustomerDetailPageProps {
   params: Promise<{
     id: string;
@@ -18,17 +21,22 @@ export async function generateMetadata({ params }: CustomerDetailPageProps) {
   const { id } = await params;
   const customer = await getCustomerById(id);
   return {
-    title: customer ? `${customer.full_name} | Clientes AF Motos` : 'Cliente não encontrado',
+    title: customer ? customer.full_name : 'Cliente não encontrado',
   };
 }
 
 export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
   const { id } = await params;
-  const customer = await getCustomerById(id);
+  const [customer, settings] = await Promise.all([
+    getCustomerById(id),
+    getSettings(),
+  ]);
 
   if (!customer) {
     notFound();
   }
+
+  const storeName = getSiteName(settings);
 
   return (
     <div className="space-y-7 max-w-7xl mx-auto pb-12">
@@ -48,13 +56,13 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
       </div>
 
       {/* 1. Header do Perfil */}
-      <CustomerDetailsHeader customer={customer} />
+      <CustomerDetailsHeader customer={customer} storeName={storeName} />
 
       {/* 2. Cards de Resumo 360° */}
       <CustomerSummaryCards relationships={customer.relationships} />
 
       {/* 3. Abas de Relacionamentos & Histórico */}
-      <CustomerRelationsTabs customer={customer} />
+      <CustomerRelationsTabs customer={customer} storeName={storeName} />
     </div>
   );
 }

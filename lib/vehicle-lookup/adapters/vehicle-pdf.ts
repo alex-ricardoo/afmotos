@@ -5,7 +5,8 @@ import type {
 import type { ApiBrasilVehicleResponse } from '../schema.ts';
 
 export function toCustomerVehicleReportDto(
-  internalDto: InternalVehicleConsultationDto
+  internalDto: InternalVehicleConsultationDto,
+  settings?: any,
 ): CustomerVehicleReportDto {
   const sum = internalDto.summary;
   const vd = internalDto.vehicle_data;
@@ -246,11 +247,11 @@ export function toCustomerVehicleReportDto(
     disclaimer:
       'Dados consolidados via API Brasil com integração direta aos sistemas governamentais oficiais (SENATRAN, DETRAN Estaduais, Renajud, Sircaf e bases conveniadas de leilão e seguradoras). Documento para conferência cadastral e procedência veicular.',
     issuer: {
-      company_name: 'AF Motos Comércio e Locação Ltda',
-      trade_name: 'AF Motos',
-      cnpj: '58.742.981/0001-08',
-      city: 'Recife',
-      state: 'PE',
+      company_name: settings?.settings?.branding?.companyName || settings?.site_name || 'AF Motos Comércio e Locação Ltda',
+      trade_name: settings?.site_name || 'AF Motos',
+      cnpj: settings?.cnpj || '58.742.981/0001-08',
+      city: settings?.settings?.address?.city || 'Recife',
+      state: settings?.settings?.address?.state || 'PE',
     },
   };
 }

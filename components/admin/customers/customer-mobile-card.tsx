@@ -24,13 +24,17 @@ import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 
 interface CustomerMobileCardProps {
   customer: CustomerWithRelationshipCounts;
+  storeName?: string;
 }
 
-export function CustomerMobileCard({ customer }: CustomerMobileCardProps) {
+export function CustomerMobileCard({
+  customer,
+  storeName = 'AF Motos',
+}: CustomerMobileCardProps) {
   const rel = customer.relationships;
   const waLink = generateWhatsAppLink(
     customer.whatsapp || customer.phone,
-    `Olá ${customer.full_name}, tudo bem? Aqui é da AF Motos.`,
+    `Olá ${customer.full_name}, tudo bem? Aqui é da ${storeName}.`,
   );
 
   return (

@@ -5,7 +5,15 @@ import { RentalMotorcycleCard } from '@/components/motorcycles/rental-motorcycle
 import { RentalLeadForm } from '@/components/forms/rental-lead-form';
 import { Handshake } from 'lucide-react';
 
-export function RentalPageClient({ motorcycles, whatsappPhone }: { motorcycles: any[], whatsappPhone: string }) {
+export function RentalPageClient({
+  motorcycles,
+  whatsappPhone,
+  siteName,
+}: {
+  motorcycles: any[];
+  whatsappPhone: string;
+  siteName?: string;
+}) {
   const formRef = useRef<HTMLDivElement>(null);
   const [selectedMotorcycleId, setSelectedMotorcycleId] = useState<string | undefined>(undefined);
   const [visibleCount, setVisibleCount] = useState(6);
@@ -81,6 +89,7 @@ export function RentalPageClient({ motorcycles, whatsappPhone }: { motorcycles: 
               defaultMotorcycleId={selectedMotorcycleId}
               availableMotorcycles={motorcycles.map(m => ({ id: m.id, brand: m.brand, model: m.model, version: m.version }))}
               whatsappPhone={whatsappPhone}
+              siteName={siteName}
             />
           </div>
         </div>

@@ -14,11 +14,13 @@ import { toast } from 'sonner';
 interface ConsultationHistoryTableProps {
   initialConsultations: VehicleConsultationSummaryDto[];
   totalCount: number;
+  storeName?: string;
 }
 
 export function ConsultationHistoryTable({
   initialConsultations,
   totalCount,
+  storeName = 'AF Motos',
 }: ConsultationHistoryTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRisk, setSelectedRisk] = useState('ALL');
@@ -97,7 +99,7 @@ export function ConsultationHistoryTable({
               Histórico de Consultas ({totalCount})
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Snapshots veiculares salvos no banco local da AF Motos. Reutilização a custo zero.
+              Snapshots veiculares salvos no banco local da {storeName}. Reutilização a custo zero.
             </p>
           </div>
 

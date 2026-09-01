@@ -14,6 +14,7 @@ export interface ConsultationConfirmModalProps {
   cost?: string;
   isMockMode?: boolean;
   isExecuting: boolean;
+  storeName?: string;
 }
 
 export function ConsultationConfirmModal({
@@ -25,6 +26,7 @@ export function ConsultationConfirmModal({
   cost,
   isMockMode = false,
   isExecuting,
+  storeName = 'AF Motos',
 }: ConsultationConfirmModalProps) {
   const [confirmedCheckbox, setConfirmedCheckbox] = useState(false);
   const [isNoticeExpanded, setIsNoticeExpanded] = useState(false);
@@ -165,7 +167,7 @@ export function ConsultationConfirmModal({
                 <div className="flex items-start gap-1.5 text-muted-foreground pt-1 border-t border-amber-500/10">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                   <span>
-                    Após a emissão, o laudo fica armazenado na nuvem da AF Motos para consultas futuras instantâneas e sem custo.
+                    Após a emissão, o laudo fica armazenado na nuvem da {storeName} para consultas futuras instantâneas e sem custo.
                   </span>
                 </div>
               </div>

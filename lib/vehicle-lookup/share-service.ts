@@ -298,9 +298,15 @@ export async function getPublicReportByShareToken(
     }
   })();
 
-  // 6. Build and return sanitized public DTO
+  // 6. Build and return sanitized public DTO with dynamic site settings
+  const { data: settings } = await supabase
+    .from('site_settings')
+    .select('*')
+    .limit(1)
+    .maybeSingle();
+
   const internalDto = toInternalVehicleConsultationDto(consultation);
-  const publicDto = toPublicVehicleReportDto(internalDto, { shareId: share.id });
+  const publicDto = toPublicVehicleReportDto(internalDto, { shareId: share.id, settings });
 
   return {
     publicDto,

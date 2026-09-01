@@ -7,7 +7,7 @@ import { PaymentBrandsBreakdown } from '@/components/admin/dashboard/payment-bra
 import { DashboardActivityTabs } from '@/components/admin/dashboard/dashboard-activity-tabs';
 
 export const metadata = {
-  title: 'Dashboard Geral | AF Motos',
+  title: 'Dashboard Geral',
   description: 'Visão executiva de faturamento, estoque, vendas e propostas.',
 };
 

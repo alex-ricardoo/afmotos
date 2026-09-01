@@ -17,7 +17,7 @@ import {
 } from '@/lib/utils/formatters';
 import { Printer, ArrowLeft, Download, CheckCircle2, Clock, Pencil } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { getSiteLogo } from '@/lib/site-settings';
+import { getSiteLogo, getSiteInitials } from '@/lib/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';
 
 interface OfficialReceiptPrintProps {
@@ -42,7 +42,8 @@ export function OfficialReceiptPrint({
   const phone = formatPhone(rawPhone);
   const email = siteSettings?.contact_email || CONSTANTS.CONTACT_EMAIL;
 
-  const receiptCode = sale.receipt_number || `AFM-2026-${sale.id.slice(0, 4).toUpperCase()}`;
+  const currentYear = new Date().getFullYear();
+  const receiptCode = sale.receipt_number || `${getSiteInitials(storeName)}-${currentYear}-${sale.id.slice(0, 4).toUpperCase()}`;
   const emissionDate = formatDateTime(sale.created_at || new Date().toISOString());
 
   // Formas de pagamento legíveis

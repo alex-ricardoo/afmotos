@@ -17,6 +17,7 @@ interface MercosulPlateInputProps {
   className?: string;
   disabled?: boolean;
   autoFocus?: boolean;
+  siteName?: string;
 }
 
 export function MercosulPlateInput({
@@ -26,6 +27,7 @@ export function MercosulPlateInput({
   className,
   disabled = false,
   autoFocus = false,
+  siteName = 'AF Motos',
 }: MercosulPlateInputProps) {
   const [displayValue, setDisplayValue] = useState(formatBrazilianPlate(value));
   const [isFocused, setIsFocused] = useState(false);
@@ -112,7 +114,7 @@ export function MercosulPlateInput({
 
         {/* Plate Sub-bar with Type Indicator */}
         <div className="bg-zinc-200/90 border-t border-zinc-300/80 px-3 py-1 flex items-center justify-between text-[10px] text-zinc-600 font-medium">
-          <span>AF MOTOS • CONSULTA OFICIAL</span>
+          <span>{(siteName || 'AF Motos').toUpperCase()} • CONSULTA OFICIAL</span>
           <span className="font-bold uppercase tracking-wider text-zinc-700">
             {plateType === 'mercosul'
               ? 'Padrão Mercosul'

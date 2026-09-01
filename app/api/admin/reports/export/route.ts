@@ -24,6 +24,7 @@ import {
 import { generateExcelWorkbookXML } from '@/lib/reports/export-xlsx';
 import { ExecutiveReportPDF } from '@/lib/reports/pdf/executive-report';
 import { getSiteSettings } from '@/lib/queries/settings';
+import { getSiteName, getSiteShortName } from '@/lib/site-settings';
 import { ReportPeriodPreset } from '@/lib/reports/types';
 
 export const dynamic = 'force-dynamic';
@@ -66,6 +67,13 @@ export async function GET(request: NextRequest) {
     ]);
 
     const { overview, sales, financial, inventory, customers, stockMovement, consignments, vehicleResults, dataQualityIssues } = annualData;
+    const storeName = getSiteName(settings);
+    const slugPrefix = (getSiteShortName(settings) || 'relatorio')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
     const baseYear = yearParam || dateRange.startDate.substring(0, 4);
     const datePrefix = yearParam ? `${yearParam}` : `${dateRange.startDate}_a_${dateRange.endDate}`;
 
@@ -116,8 +124,8 @@ export async function GET(request: NextRequest) {
       const pdfBuffer = await renderToBuffer(element as any);
       const filename =
         type === 'informe-anual' || yearParam
-          ? `af-motos-resumo-gerencial_${baseYear}.pdf`
-          : `af-motos-relatorio-executivo_${datePrefix}.pdf`;
+          ? `${slugPrefix}-resumo-gerencial_${baseYear}.pdf`
+          : `${slugPrefix}-relatorio-executivo_${datePrefix}.pdf`;
 
       return new NextResponse(pdfBuffer as unknown as BodyInit, {
         headers: {
@@ -139,8 +147,9 @@ export async function GET(request: NextRequest) {
         stockMovement,
         consignments,
         includePII,
+        storeName,
       );
-      const filename = `af-motos-relatorio-contabil_${datePrefix}.xls`;
+      const filename = `${slugPrefix}-relatorio-contabil_${datePrefix}.xls`;
 
       return new NextResponse(xmlWorkbook, {
         headers: {
@@ -153,26 +162,26 @@ export async function GET(request: NextRequest) {
 
     // 6. Handle CSV Exports
     let csvData = '';
-    let filename = `af-motos-relatorio_${datePrefix}.csv`;
+    let filename = `${slugPrefix}-relatorio_${datePrefix}.csv`;
 
     if (type === 'vendas') {
-      csvData = generateSalesCSV(sales, includePII);
-      filename = `af-motos-vendas_${datePrefix}.csv`;
+      csvData = generateSalesCSV(sales, includePII, storeName);
+      filename = `${slugPrefix}-vendas_${datePrefix}.csv`;
     } else if (type === 'despesas') {
       csvData = generateExpensesCSV(financial);
-      filename = `af-motos-despesas_${datePrefix}.csv`;
+      filename = `${slugPrefix}-despesas_${datePrefix}.csv`;
     } else if (type === 'estoque') {
       csvData = generateInventoryCSV(inventory);
-      filename = `af-motos-estoque_${dateRange.endDate}.csv`;
+      filename = `${slugPrefix}-estoque_${dateRange.endDate}.csv`;
     } else if (type === 'movimentacao-estoque') {
-      csvData = generateStockMovementCSV(stockMovement, dateRange);
-      filename = `af-motos-movimentacao-estoque_${datePrefix}.csv`;
+      csvData = generateStockMovementCSV(stockMovement, dateRange, storeName);
+      filename = `${slugPrefix}-movimentacao-estoque_${datePrefix}.csv`;
     } else if (type === 'comissoes') {
       csvData = generateConsignmentsCSV(consignments);
-      filename = `af-motos-comissoes_${datePrefix}.csv`;
+      filename = `${slugPrefix}-comissoes_${datePrefix}.csv`;
     } else {
-      csvData = generateConsolidatedCSV(sales, financial, inventory);
-      filename = `af-motos-consolidado-gerencial_${datePrefix}.csv`;
+      csvData = generateConsolidatedCSV(sales, financial, inventory, storeName);
+      filename = `${slugPrefix}-consolidado-gerencial_${datePrefix}.csv`;
     }
 
     return new NextResponse(csvData, {

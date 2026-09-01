@@ -28,9 +28,13 @@ import {
 
 interface CustomerDetailsHeaderProps {
   customer: Customer;
+  storeName?: string;
 }
 
-export function CustomerDetailsHeader({ customer }: CustomerDetailsHeaderProps) {
+export function CustomerDetailsHeader({
+  customer,
+  storeName = 'AF Motos',
+}: CustomerDetailsHeaderProps) {
   const router = useRouter();
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
@@ -38,7 +42,7 @@ export function CustomerDetailsHeader({ customer }: CustomerDetailsHeaderProps) 
 
   const waLink = generateWhatsAppLink(
     customer.whatsapp || customer.phone,
-    `Olá ${customer.full_name}, tudo bem? Aqui é da AF Motos.`,
+    `Olá ${customer.full_name}, tudo bem? Aqui é da ${storeName}.`,
   );
 
   const handleCopy = (text: string, type: 'phone' | 'email') => {

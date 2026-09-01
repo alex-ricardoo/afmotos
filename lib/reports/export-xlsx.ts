@@ -30,7 +30,9 @@ export function generateExcelWorkbookXML(
   stockMovement?: StockMovementReportData,
   consignments?: ConsignmentReportItem[],
   includeSensitiveCadastralData = false,
+  storeName?: string,
 ): string {
+  const cleanStoreName = (storeName || 'AF Motos').trim();
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
@@ -65,7 +67,7 @@ export function generateExcelWorkbookXML(
    <Column ss:Width="240"/>
    <Column ss:Width="160"/>
    <Row ss:Height="25">
-    <Cell ss:StyleID="Title"><Data ss:Type="String">AF MOTOS — RESUMO GERENCIAL ANUAL</Data></Cell>
+    <Cell ss:StyleID="Title"><Data ss:Type="String">${escapeXml(cleanStoreName.toUpperCase())} — RESUMO GERENCIAL ANUAL</Data></Cell>
    </Row>
    <Row>
     <Cell><Data ss:Type="String">Período: ${sales.dateRange.startDate} a ${sales.dateRange.endDate}</Data></Cell>
@@ -151,7 +153,7 @@ export function generateExcelWorkbookXML(
      <Cell><Data ss:Type="String">Comprador</Data></Cell>
      <Cell><Data ss:Type="String">Forma Pgto</Data></Cell>
      <Cell><Data ss:Type="String">Valor Total Veículo (R$)</Data></Cell>
-     <Cell><Data ss:Type="String">Receita AF Motos (R$)</Data></Cell>
+     <Cell><Data ss:Type="String">Receita ${escapeXml(cleanStoreName)} (R$)</Data></Cell>
      <Cell><Data ss:Type="String">Comissão Loja (R$)</Data></Cell>
      <Cell><Data ss:Type="String">Repasse Proprietário (R$)</Data></Cell>
      <Cell><Data ss:Type="String">Nº Recibo</Data></Cell>

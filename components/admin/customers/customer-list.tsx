@@ -31,9 +31,10 @@ import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 
 interface CustomerListProps {
   customers: CustomerWithRelationshipCounts[];
+  storeName?: string;
 }
 
-export function CustomerList({ customers }: CustomerListProps) {
+export function CustomerList({ customers, storeName = 'AF Motos' }: CustomerListProps) {
   return (
     <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
       <Table>
@@ -55,7 +56,7 @@ export function CustomerList({ customers }: CustomerListProps) {
             const rel = customer.relationships;
             const waLink = generateWhatsAppLink(
               customer.whatsapp || customer.phone,
-              `Olá ${customer.full_name}, tudo bem? Aqui é da AF Motos.`,
+              `Olá ${customer.full_name}, tudo bem? Aqui é da ${storeName}.`,
             );
 
             return (

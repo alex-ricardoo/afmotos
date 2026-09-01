@@ -22,7 +22,11 @@ const STEPS = [
   },
 ];
 
-export function VehicleHistoryHowItWorks() {
+interface VehicleHistoryHowItWorksProps {
+  siteName?: string;
+}
+
+export function VehicleHistoryHowItWorks({ siteName = 'AF Motos' }: VehicleHistoryHowItWorksProps = {}) {
   return (
     <section className="py-10 sm:py-14 bg-[#080B11] border-t border-[#1F293D] relative">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,11 +65,11 @@ export function VehicleHistoryHowItWorks() {
           })}
         </div>
 
-        {/* Compact AF Motos Store Standard Reassurance */}
+        {/* Compact Store Standard Reassurance */}
         <div className="mt-4 p-3.5 rounded-xl bg-[#0D111A] border border-[#1F293D] flex items-center gap-3 text-xs text-zinc-400">
           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>
-            <strong className="text-zinc-200">Padrão AF Motos:</strong> 100% das motos do nosso estoque passam por este mesmo histórico veicular.
+            <strong className="text-zinc-200">Padrão {siteName || 'de Qualidade'}:</strong> 100% das motos do nosso estoque passam por este mesmo histórico veicular.
           </span>
         </div>
       </div>

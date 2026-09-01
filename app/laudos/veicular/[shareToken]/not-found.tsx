@@ -3,7 +3,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ShieldX, Home, AlertCircle } from 'lucide-react';
 
-export default function PublicVehicleReportNotFound() {
+import { getSiteSettings } from '@/lib/queries/settings';
+import { getSiteName } from '@/lib/site-settings';
+
+export default async function PublicVehicleReportNotFound() {
+  const settings = await getSiteSettings();
+  const storeName = getSiteName(settings);
+
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 space-y-6">
       <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
@@ -15,7 +21,7 @@ export default function PublicVehicleReportNotFound() {
           Laudo Não Encontrado ou Indisponível
         </h2>
         <p className="text-sm text-slate-400 leading-relaxed">
-          Este link de histórico veicular é inválido, expirou ou foi revogado pela administração da AF Motos.
+          Este link de histórico veicular é inválido, expirou ou foi revogado pela administração da {storeName}.
         </p>
       </div>
 

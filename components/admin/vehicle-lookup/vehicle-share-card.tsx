@@ -30,6 +30,7 @@ interface VehicleShareCardProps {
   plateDisplay: string;
   consultationStatus: string;
   initialShareDetails?: AdminVehicleShareDetailsDto;
+  storeName?: string;
 }
 
 export function VehicleShareCard({
@@ -37,6 +38,7 @@ export function VehicleShareCard({
   plateDisplay,
   consultationStatus,
   initialShareDetails,
+  storeName = 'AF Motos',
 }: VehicleShareCardProps) {
   const [details, setDetails] = useState<AdminVehicleShareDetailsDto>(
     initialShareDetails || { hasActiveShare: false }
@@ -238,7 +240,7 @@ export function VehicleShareCard({
               <div className="flex items-center justify-between gap-3 pt-1">
                 <p className="text-[11px] text-muted-foreground leading-tight">
                   {canShare
-                    ? 'O cliente receberá uma página limpa com a identidade da AF Motos sem ver custos internos ou dados brutos.'
+                    ? `O cliente receberá uma página limpa com a identidade da ${storeName} sem ver custos internos ou dados brutos.`
                     : 'Aguardando conclusão da consulta veicular para liberação de compartilhamento.'}
                 </p>
                 <Button

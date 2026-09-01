@@ -9,9 +9,10 @@ import { ReportChartCard } from '../report-chart-card';
 
 interface FinancialTabProps {
   data: FinancialReportData;
+  storeName?: string;
 }
 
-export function FinancialTab({ data }: FinancialTabProps) {
+export function FinancialTab({ data, storeName = 'AF Motos' }: FinancialTabProps) {
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       {/* 1. KPIs Financeiros */}
@@ -133,7 +134,7 @@ export function FinancialTab({ data }: FinancialTabProps) {
         <div>
           <span className="font-bold text-zinc-200 block">Demonstrativo Operacional Gerencial</span>
           <p className="mt-0.5 text-zinc-400">
-            Os valores acima refletem os registros de vendas e despesas lançados na plataforma AF Motos.
+            Os valores acima refletem os registros de vendas e despesas lançados na plataforma {storeName}.
             Este relatório não substitui a contabilidade oficial da empresa e deve ser validado pelo
             contador responsável.
           </p>

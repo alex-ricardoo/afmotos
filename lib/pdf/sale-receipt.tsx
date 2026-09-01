@@ -5,6 +5,7 @@ import { SiteSettings } from '@/types/database';
 import { formatPhone, formatCpf, formatRenavam, formatChassi } from '@/lib/utils/formatters';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
+import { getSiteInitials } from '@/lib/site-settings';
 
 const styles = StyleSheet.create({
   page: {
@@ -279,7 +280,7 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
 
   const moto = sale.motorcycle;
   const year = new Date().getFullYear();
-  const receiptCode = sale.receipt_number || `AFM-${year}-${sale.id.slice(0, 4).toUpperCase()}`;
+  const receiptCode = sale.receipt_number || `${getSiteInitials(storeName)}-${year}-${sale.id.slice(0, 4).toUpperCase()}`;
 
   const paymentLabels: Record<string, string> = {
     PIX: 'PIX (À Vista)',
@@ -301,8 +302,7 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
               <Image src={logoSrc} style={{ width: 44, height: 44, borderRadius: 7, objectFit: 'contain' }} />
             ) : (
               <View style={styles.logoBox}>
-                <Text style={styles.logoText}>AF</Text>
-                <Text style={styles.logoSub}>MOTOS</Text>
+                <Text style={styles.logoText}>{getSiteInitials(storeName)}</Text>
               </View>
             )}
             <View style={styles.storeInfo}>

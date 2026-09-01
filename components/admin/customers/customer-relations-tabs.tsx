@@ -55,9 +55,13 @@ const getStatusLabel = (status?: string | null) => {
 
 interface CustomerRelationsTabsProps {
   customer: CustomerFullDetails;
+  storeName?: string;
 }
 
-export function CustomerRelationsTabs({ customer }: CustomerRelationsTabsProps) {
+export function CustomerRelationsTabs({
+  customer,
+  storeName = 'AF Motos',
+}: CustomerRelationsTabsProps) {
   const sales = customer.sales || [];
   const sellRequests = customer.sell_requests || [];
   const leads = customer.leads || [];
@@ -339,7 +343,7 @@ export function CustomerRelationsTabs({ customer }: CustomerRelationsTabsProps) 
         ) : (
           <CustomerEmptyRelations
             title="Nenhuma venda associada"
-            description="Este cliente ainda não adquiriu nenhuma motocicleta na AF Motos."
+            description={`Este cliente ainda não adquiriu nenhuma motocicleta na ${storeName}.`}
             actionText="Registrar Nova Venda"
             actionHref="/admin/vendas/nova"
           />

@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: EditCustomerPageProps) {
   const { id } = await params;
   const customer = await getCustomerById(id);
   return {
-    title: customer ? `Editar ${customer.full_name} | AF Motos` : 'Cliente não encontrado',
+    title: customer ? `Editar ${customer.full_name}` : 'Cliente não encontrado',
   };
 }
 

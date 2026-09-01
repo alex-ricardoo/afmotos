@@ -23,9 +23,10 @@ import { ReportDateRange } from '@/lib/reports/types';
 
 interface AccountantTabProps {
   dateRange: ReportDateRange;
+  storeName?: string;
 }
 
-export function AccountantTab({ dateRange }: AccountantTabProps) {
+export function AccountantTab({ dateRange, storeName = 'AF Motos' }: AccountantTabProps) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<string>(currentYear.toString());
   const [includePII, setIncludePII] = useState(false);
@@ -138,7 +139,7 @@ export function AccountantTab({ dateRange }: AccountantTabProps) {
                 </span>
               </div>
               <p className="text-xs text-zinc-300 mt-1 max-w-2xl">
-                Demonstrativo em 10 seções padronizado com cabeçalho oficial da <strong>AF Motos</strong>,
+                Demonstrativo em 10 seções padronizado com cabeçalho oficial da <strong>{storeName}</strong>,
                 logotipo, CNPJ, endereço, apuração de vendas, despesas pagas/pendentes, estoque em 31/12
                 e auditoria cadastral.
               </p>
@@ -196,7 +197,7 @@ export function AccountantTab({ dateRange }: AccountantTabProps) {
           <div className="p-3 rounded-2xl bg-[#c9a44c]/15 border border-[#c9a44c]/40 flex items-center gap-3 animate-in fade-in duration-150">
             <Loader2 className="w-4 h-4 animate-spin text-[#e3c56c] shrink-0" />
             <span className="text-xs font-bold text-[#e3c56c]">
-              Processando e gerando o relatório anual em PDF no padrão AF Motos... O download iniciará
+              Processando e gerando o relatório anual em PDF no padrão {storeName}... O download iniciará
               automaticamente.
             </span>
           </div>
@@ -279,7 +280,7 @@ export function AccountantTab({ dateRange }: AccountantTabProps) {
             </span>
             <p>
               Este relatório é um demonstrativo gerencial de apoio, elaborado a partir dos dados
-              cadastrados no sistema AF Motos. Os valores devem ser conferidos com notas fiscais,
+              cadastrados no sistema {storeName}. Os valores devem ser conferidos com notas fiscais,
               contratos, comprovantes de pagamento e demais documentos. A validação contábil, fiscal e
               tributária é responsabilidade do contador responsável.
             </p>

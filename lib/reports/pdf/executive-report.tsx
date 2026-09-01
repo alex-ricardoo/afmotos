@@ -14,6 +14,7 @@ import { SiteSettings } from '@/types/database';
 import { formatCurrencyBRL, formatReportDate } from '../formatters';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { formatPhone } from '@/lib/utils/formatters';
+import { getSiteName, getSiteInitials } from '@/lib/site-settings';
 
 const styles = StyleSheet.create({
   page: {
@@ -306,7 +307,7 @@ export function ExecutiveReportPDF({
   reportTitle = 'RELATÓRIO GERENCIAL ANUAL DE APOIO CONTÁBIL',
   yearLabel,
 }: ExecutiveReportPDFProps) {
-  const storeName = settings?.site_name || 'AF Motos';
+  const storeName = getSiteName(settings);
   const rawCnpj = settings?.cnpj || '';
   const formattedCnpj = formatCnpj(rawCnpj) || rawCnpj || '';
   const storePhone = formatPhone(settings?.whatsapp_phone) || settings?.whatsapp_phone || '';
@@ -319,7 +320,7 @@ export function ExecutiveReportPDF({
     <Document title={`${reportTitle} — ${storeName}`} author={storeName}>
       <Page size="A4" style={styles.page}>
         {/* ========================================================= */}
-        {/* CABEÇALHO PADRÃO AF MOTOS */}
+        {/* CABEÇALHO PADRÃO LOJA */}
         {/* ========================================================= */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -328,8 +329,7 @@ export function ExecutiveReportPDF({
                 <Image src={logoSrc} style={styles.logoImg} />
               ) : (
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={styles.logoText}>AF</Text>
-                  <Text style={styles.logoSub}>MOTOS</Text>
+                  <Text style={styles.logoText}>{getSiteInitials(storeName)}</Text>
                 </View>
               )}
             </View>
@@ -407,7 +407,7 @@ export function ExecutiveReportPDF({
           <View style={styles.card}>
             <View style={styles.grid}>
               <View style={styles.col4}>
-                <Text style={styles.fieldLabel}>Receita Operacional (AF Motos)</Text>
+                <Text style={styles.fieldLabel}>Receita Operacional ({storeName})</Text>
                 <Text style={styles.fieldValuePositive}>{overview.grossRevenue.formattedValue}</Text>
                 <Text style={[styles.confidenceBadge, { backgroundColor: '#dcfce7', color: '#15803d' }]}>
                   Vendas Próprias + Comissões
@@ -514,7 +514,7 @@ export function ExecutiveReportPDF({
             )}
           </View>
           <Text style={{ fontSize: 5.4, color: '#64748b', fontStyle: 'italic', marginTop: 1 }}>
-            * Regra de Consignação: Nas motos de terceiros, o valor de venda é recebido diretamente pelo proprietário. A receita tributável da AF Motos compreende exclusivamente a comissão de intermediação.
+            * Regra de Consignação: Nas motos de terceiros, o valor de venda é recebido diretamente pelo proprietário. A receita tributável da {storeName} compreende exclusivamente a comissão de intermediação.
           </Text>
         </View>
 
@@ -640,7 +640,7 @@ export function ExecutiveReportPDF({
           <Text style={styles.legalTitle}>Declaração de Uso Gerencial & Limitação Fiscal</Text>
           <Text style={styles.legalText}>
             Este relatório é um demonstrativo gerencial de apoio, elaborado a partir dos dados cadastrados no
-            sistema AF Motos. Os valores devem ser conferidos com notas fiscais, contratos, comprovantes de
+            sistema {storeName}. Os valores devem ser conferidos com notas fiscais, contratos, comprovantes de
             pagamento e demais documentos. O sistema não apura impostos (DAS/Simples Nacional/IRPJ/CSLL/ICMS) nem
             substitui a escrituração contábil, livro caixa ou a validação contábil do contador responsável.
           </Text>
@@ -651,7 +651,7 @@ export function ExecutiveReportPDF({
         {/* ========================================================= */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Relatório gerado eletronicamente pelo sistema AF Motos em {new Date().toLocaleDateString('pt-BR')} às{' '}
+            Relatório gerado eletronicamente pelo sistema {storeName} em {new Date().toLocaleDateString('pt-BR')} às{' '}
             {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.
           </Text>
           <Text style={styles.footerText}>

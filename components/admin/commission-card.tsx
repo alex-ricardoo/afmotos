@@ -57,9 +57,14 @@ import { CommissionHistoryModal } from './commission-history-modal';
 interface CommissionCardProps {
   proposal: ProposalViewModel;
   onCommissionChange?: (commission: ProposalCommissionRecord) => void;
+  storeName?: string;
 }
 
-export function CommissionCard({ proposal, onCommissionChange }: CommissionCardProps) {
+export function CommissionCard({
+  proposal,
+  onCommissionChange,
+  storeName = 'AF Motos',
+}: CommissionCardProps) {
   const [commission, setCommission] = useState<ProposalCommissionRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -269,7 +274,8 @@ export function CommissionCard({ proposal, onCommissionChange }: CommissionCardP
       const link = document.createElement('a');
       link.href = blobUrl;
       const clientName = (proposal.name || 'cliente').toLowerCase().replace(/\s+/g, '-');
-      link.download = `contrato-consignacao-afmotos-${clientName}.pdf`;
+      const storeSlug = (storeName || 'loja').toLowerCase().replace(/\s+/g, '-');
+      link.download = `contrato-consignacao-${storeSlug}-${clientName}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -409,7 +415,7 @@ export function CommissionCard({ proposal, onCommissionChange }: CommissionCardP
 
           <div className="rounded-xl bg-amber-500/10 p-3.5 border border-amber-500/25">
             <div className="flex items-center justify-between text-[10px] uppercase font-bold text-amber-400/90">
-              <span>Comissão AF Motos</span>
+              <span>Comissão {storeName}</span>
               <span className="font-mono">
                 {commission?.commission_type === 'percentage'
                   ? `${commission.commission_percentage}%`
@@ -506,7 +512,7 @@ export function CommissionCard({ proposal, onCommissionChange }: CommissionCardP
             <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 text-emerald-400" />
-                <h5 className="text-xs font-bold text-white">Baixa de Recebimento no Caixa AF Motos</h5>
+                <h5 className="text-xs font-bold text-white">Baixa de Recebimento no Caixa {storeName}</h5>
               </div>
               <Button
                 type="button"
@@ -705,7 +711,7 @@ export function CommissionCard({ proposal, onCommissionChange }: CommissionCardP
             <p className="text-xs text-zinc-400 mt-0.5">
               {isEditing
                 ? 'Altere os valores ou documentos do proprietário e regere o contrato.'
-                : 'Defina a comissão da AF Motos e emita o contrato formal em PDF em um clique.'}
+                : `Defina a comissão da ${storeName} e emita o contrato formal em PDF em um clique.`}
             </p>
           </div>
         </div>
@@ -871,7 +877,7 @@ export function CommissionCard({ proposal, onCommissionChange }: CommissionCardP
           </div>
 
           <div className="rounded-xl bg-amber-500/10 p-3 border border-amber-500/25">
-            <span className="text-[10px] uppercase font-bold text-amber-400/90 block">Comissão AF Motos</span>
+            <span className="text-[10px] uppercase font-bold text-amber-400/90 block">Comissão {storeName}</span>
             <span className="mt-0.5 text-base font-black text-amber-300 font-mono block truncate">
               {formatCurrencyBRL(calculatedCommissionValue)}
             </span>

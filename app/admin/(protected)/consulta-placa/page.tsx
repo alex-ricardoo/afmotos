@@ -5,7 +5,7 @@ import { getVehicleLookupConfig } from '@/lib/vehicle-lookup/config';
 import { VehicleLookupTabsClient } from '@/components/admin/vehicle-lookup/vehicle-lookup-tabs-client';
 
 export const metadata: Metadata = {
-  title: 'Consulta de Placa & Laudos | Painel AF Motos',
+  title: 'Consulta de Placa & Laudos',
   description:
     'Diagnóstico veicular completo por placa com snapshot JSONB, prevenção de dupla cobrança, cache pago e emissão de laudo em PDF.',
   robots: {

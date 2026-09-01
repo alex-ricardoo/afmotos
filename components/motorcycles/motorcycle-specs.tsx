@@ -32,9 +32,10 @@ interface MotorcycleSpecsProps {
     differentials?: string[] | null;
     description?: string | null;
   };
+  siteName?: string;
 }
 
-export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
+export function MotorcycleSpecs({ motorcycle, siteName = 'AF Motos' }: MotorcycleSpecsProps) {
   const plateEndDigit =
     motorcycle.plate_end || (motorcycle.license_plate ? motorcycle.license_plate.slice(-1) : null);
   const fuelValue = motorcycle.fuel || motorcycle.fuel_type || 'Gasolina / Flex';
@@ -130,11 +131,11 @@ export function MotorcycleSpecs({ motorcycle }: MotorcycleSpecsProps) {
           <h4 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
             <span>Procedência & Histórico Veicular Verificados</span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold uppercase tracking-wider">
-              Padrão AF Motos
+              Padrão {siteName || 'Garantido'}
             </span>
           </h4>
           <p className="text-xs text-zinc-300 leading-relaxed">
-            Todas as motos da <strong>AF Motos</strong> passam por consulta oficial completa de histórico veicular (Nada Consta em Leilão, Roubo/Furto, Sinistro e Gravames). Compre com segurança e procedência garantida.
+            Todas as motos da <strong>{siteName || 'loja'}</strong> passam por consulta oficial completa de histórico veicular (Nada Consta em Leilão, Roubo/Furto, Sinistro e Gravames). Compre com segurança e procedência garantida.
           </p>
         </div>
       </div>

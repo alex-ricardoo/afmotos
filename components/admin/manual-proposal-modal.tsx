@@ -54,6 +54,7 @@ interface ManualProposalModalProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
   siteName?: string;
+  siteLogo?: string;
 }
 
 interface UploadedImageItem {
@@ -146,6 +147,7 @@ export function ManualProposalModal({
   onOpenChange,
   onSuccess,
   siteName = 'AF Motos',
+  siteLogo,
 }: ManualProposalModalProps) {
   // Step navigation state
   const [currentStep, setCurrentStep] = useState(1);
@@ -1415,8 +1417,8 @@ export function ManualProposalModal({
                     <div className="bg-zinc-900/60 p-4 rounded-xl border border-zinc-800/80 flex items-center gap-4">
                       <div className="w-14 h-14 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 p-1.5">
                         <img
-                          src="/logo.png"
-                          alt="Logo AF Motos"
+                          src={siteLogo || "/logo.png"}
+                          alt={`Logo ${siteName}`}
                           className="w-full h-full object-contain"
                         />
                       </div>

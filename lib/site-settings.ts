@@ -35,12 +35,28 @@ export function getSiteShortName(settings?: any): string {
 
 /**
  * Obtém as iniciais ou sigla da loja (ex: "AF Motos" -> "AF", "Auto Fácil" -> "AF").
+ * Aceita tanto o registro de configurações completo quanto strings diretas de nome/sigla.
  */
-export function getSiteInitials(siteName?: string | null, shortName?: string | null): string {
-  if (shortName && shortName.trim().length > 0 && shortName.trim().length <= 4) {
+export function getSiteInitials(
+  siteNameOrSettings?: any,
+  shortName?: string | null,
+): string {
+  if (siteNameOrSettings && typeof siteNameOrSettings === 'object') {
+    const rawShort =
+      siteNameOrSettings?.settings?.shortName ||
+      siteNameOrSettings?.settings?.short_name ||
+      siteNameOrSettings?.shortName;
+    const rawName =
+      siteNameOrSettings?.site_name ||
+      siteNameOrSettings?.siteName;
+    return getSiteInitials(rawName, rawShort);
+  }
+  if (shortName && typeof shortName === 'string' && shortName.trim().length > 0 && shortName.trim().length <= 4) {
     return shortName.trim().toUpperCase();
   }
-  const name = (siteName || CONSTANTS.STORE_NAME).trim();
+  const name = (typeof siteNameOrSettings === 'string' && siteNameOrSettings.trim()
+    ? siteNameOrSettings.trim()
+    : CONSTANTS.STORE_NAME);
   const words = name.split(/\s+/).filter(Boolean);
   if (words.length >= 2) {
     return (words[0][0] + words[1][0]).toUpperCase();

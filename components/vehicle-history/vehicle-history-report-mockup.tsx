@@ -46,7 +46,11 @@ const REPORT_SECTIONS = [
   },
 ];
 
-export function VehicleHistoryReportMockup() {
+interface VehicleHistoryReportMockupProps {
+  siteName?: string;
+}
+
+export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHistoryReportMockupProps = {}) {
   const [isZoomOpen, setIsZoomOpen] = useState(false);
 
   return (
@@ -76,7 +80,7 @@ export function VehicleHistoryReportMockup() {
             <div className="flex items-center gap-2 text-zinc-300 font-mono">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className="font-semibold text-xs sm:text-sm">
-                LAUDO DE HISTÓRICO VEICULAR • AF MOTOS
+                LAUDO DE HISTÓRICO VEICULAR • {(siteName || 'AF Motos').toUpperCase()}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -100,7 +104,7 @@ export function VehicleHistoryReportMockup() {
             <div className="relative w-full aspect-[9/11] sm:aspect-[4/5] md:aspect-[16/17]">
               <Image
                 src="/exemplo-laudo-historico.jpg"
-                alt="Exemplo do Laudo de Histórico Veicular Oficial emitido pela AF Motos"
+                alt={`Exemplo do Laudo de Histórico Veicular Oficial emitido pela ${siteName || 'AF Motos'}`}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 900px"
                 className="object-contain object-top transition-transform duration-300 group-hover:scale-[1.01]"

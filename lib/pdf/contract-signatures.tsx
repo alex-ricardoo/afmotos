@@ -79,7 +79,7 @@ interface ContractSignaturesProps {
 
 export function ContractSignatures({
   buyerName,
-  buyerRole = 'AF Motos • Compradora / Representante Legal',
+  buyerRole,
   buyerDocument,
   sellerName,
   sellerRole = 'Vendedor / Proprietário',
@@ -90,13 +90,15 @@ export function ContractSignatures({
   witness2Name = '2ª Testemunha',
   witness2Doc = 'CPF: ___________________',
 }: ContractSignaturesProps) {
+  const resolvedBuyerRole = buyerRole || `${buyerName} • Compradora / Representante Legal`;
+
   return (
     <View style={styles.signatureContainer}>
       <View style={styles.signatureRow}>
         <View style={styles.signatureBox}>
           <View style={styles.signatureLine} />
           <Text style={styles.signatureName}>{buyerName.toUpperCase()}</Text>
-          <Text style={styles.signatureRole}>{buyerRole}</Text>
+          <Text style={styles.signatureRole}>{resolvedBuyerRole}</Text>
           {buyerDocument ? <Text style={styles.signatureRole}>{buyerDocument}</Text> : null}
         </View>
 

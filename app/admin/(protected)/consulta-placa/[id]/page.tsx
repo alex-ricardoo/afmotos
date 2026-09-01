@@ -14,12 +14,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!dto) {
     return {
-      title: 'Laudo Veicular Não Encontrado | AF Motos',
+      title: 'Laudo Veicular Não Encontrado',
     };
   }
 
   return {
-    title: `Laudo ${dto.plate_display} (${dto.summary.brand} ${dto.summary.model}) | AF Motos`,
+    title: `Laudo ${dto.plate_display} (${dto.summary.brand} ${dto.summary.model})`,
     description: `Diagnóstico e histórico veicular da placa ${dto.plate_display}.`,
     robots: {
       index: false,

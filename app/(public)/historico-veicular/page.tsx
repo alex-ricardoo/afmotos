@@ -105,16 +105,16 @@ export default async function HistoricoVeicularPage() {
       />
 
       {/* B. Barra de Prova Social & Métricas de Alto Impacto */}
-      <VehicleHistoryStats />
+      <VehicleHistoryStats siteShortName={settings.shortName} />
 
       {/* C. O que o Laudo Revela (6 Pilares com Badges de Alerta) */}
       <VehicleHistoryBenefits />
 
       {/* D. Demonstração Visual do Produto (Preview Real com Zoom nos Alertas) */}
-      <VehicleHistoryReportMockup />
+      <VehicleHistoryReportMockup siteName={settings.siteName} />
 
       {/* E. Como Funciona (3 Passos Simples) */}
-      <VehicleHistoryHowItWorks />
+      <VehicleHistoryHowItWorks siteName={settings.siteName} />
 
       {/* F. Seção de Oferta & Checkout Transparente (Preço Ancorado + Oferta Limitada) */}
       <VehicleHistoryPricing

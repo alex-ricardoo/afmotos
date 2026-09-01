@@ -339,7 +339,7 @@ export function IdentityTab({ form }: IdentityTabProps) {
                 />
               </FormControl>
               <FormDescription className="text-[11px] text-zinc-500">
-                Se informado, será usado automaticamente em rodapés, contratos, recibos e demais documentos institucionais da AF Motos.
+                Se informado, será usado automaticamente em rodapés, contratos, recibos e demais documentos institucionais da loja.
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -21,7 +21,9 @@ function formatExcelNumber(val: number | null | undefined): string {
 export function generateSalesCSV(
   data: SalesReportData,
   includeSensitiveCadastralData = false,
+  storeName?: string,
 ): string {
+  const cleanStoreName = (storeName || 'Loja').trim();
   const headers = [
     'Data da Venda',
     'Motocicleta',
@@ -32,8 +34,8 @@ export function generateSalesCSV(
     'Documento / CPF',
     'Forma de Pagamento',
     'Valor do Veículo (R$)',
-    'Receita AF Motos (R$)',
-    'Comissão AF Motos (R$)',
+    `Receita ${cleanStoreName} (R$)`,
+    `Comissão ${cleanStoreName} (R$)`,
     'Repasse ao Proprietário (R$)',
     'Valor de Entrada (R$)',
     'Valor Financiado (R$)',
@@ -128,9 +130,11 @@ export function generateInventoryCSV(data: InventoryReportData): string {
 export function generateStockMovementCSV(
   stock: StockMovementReportData,
   dateRange: { startDate: string; endDate: string },
+  storeName?: string,
 ): string {
+  const cleanStoreName = (storeName || 'AF Motos').trim();
   const lines = [
-    `AF MOTOS — DEMONSTRATIVO DE MOVIMENTAÇÃO DE ESTOQUE`,
+    `${cleanStoreName.toUpperCase()} — DEMONSTRATIVO DE MOVIMENTAÇÃO DE ESTOQUE`,
     `Período: ${stock ? dateRange.startDate : ''} a ${stock ? dateRange.endDate : ''}`,
     `Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`,
     `Aviso: Documento de apoio gerencial. Conferência obrigatória pelo contador responsável.`,
@@ -191,9 +195,11 @@ export function generateConsolidatedCSV(
   sales: SalesReportData,
   financial: FinancialReportData,
   inventory: InventoryReportData,
+  storeName?: string,
 ): string {
+  const cleanStoreName = (storeName || 'AF Motos').trim();
   const lines = [
-    `AF MOTOS — RELATÓRIO GERENCIAL CONSOLIDADO`,
+    `${cleanStoreName.toUpperCase()} — RELATÓRIO GERENCIAL CONSOLIDADO`,
     `Período: ${sales.dateRange.startDate} a ${sales.dateRange.endDate}`,
     `Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`,
     `Aviso: Documento de apoio gerencial. Conferência obrigatória pelo contador responsável.`,

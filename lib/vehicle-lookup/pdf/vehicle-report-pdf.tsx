@@ -5,6 +5,7 @@ import type { SiteSettings } from '@/types/database';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { formatPhone } from '@/lib/utils/formatters';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
+import { getSiteInitials } from '@/lib/site-settings';
 
 const styles = StyleSheet.create({
   page: {
@@ -454,7 +455,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
     : [report.verdict_description || 'Relatório de procedência e integridade cadastral.'];
 
   return (
-    <Document title={`Laudo Veicular - ${report.plate_display} - AF Motos`}>
+    <Document title={`Laudo Veicular - ${report.plate_display} - ${storeName}`}>
       <Page size="A4" style={styles.page}>
         {/* ========================================================================= */}
         {/* CABEÇALHO INSTITUCIONAL & BADGE MERCOSUL */}
@@ -466,8 +467,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 <Image src={logoSrc} style={styles.logoImg} />
               ) : (
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={styles.logoText}>AF</Text>
-                  <Text style={styles.logoSub}>MOTOS</Text>
+                  <Text style={styles.logoText}>{getSiteInitials(storeName)}</Text>
                 </View>
               )}
             </View>

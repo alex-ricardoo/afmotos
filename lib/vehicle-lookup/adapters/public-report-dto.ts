@@ -12,12 +12,13 @@ import { maskCpf, maskCnpj } from '../sanitizers/index.ts';
  */
 export function toPublicVehicleReportDto(
   internalDtoOrRecord: InternalVehicleConsultationDto | (VehicleConsultationRecord & { summary?: any }),
-  shareContext?: { shareId?: string }
+  shareContext?: { shareId?: string; settings?: any }
 ): PublicVehicleReportDto {
+  const settings = shareContext?.settings;
   // If it's already an InternalVehicleConsultationDto with structured sub-objects
   const customerDto = 'summary' in internalDtoOrRecord && 'vehicle_data' in internalDtoOrRecord
-    ? toCustomerVehicleReportDto(internalDtoOrRecord as InternalVehicleConsultationDto)
-    : toCustomerVehicleReportDto(internalDtoOrRecord as any);
+    ? toCustomerVehicleReportDto(internalDtoOrRecord as InternalVehicleConsultationDto, settings)
+    : toCustomerVehicleReportDto(internalDtoOrRecord as any, settings);
 
   // Sanitize owner documents if any exist
   const sanitizedOwners = customerDto.owners_history?.records?.map((owner) => {
@@ -101,12 +102,12 @@ export function toPublicVehicleReportDto(
     is_mock: Boolean((internalDtoOrRecord as any).is_mock),
     disclaimer:
       'Este relatório foi elaborado com base nas informações disponibilizadas pelas bases governamentais e conveniadas consultadas na data indicada. A ausência de apontamentos não substitui vistoria mecânica presencial ou conferência física do veículo.',
-    issuer: {
-      company_name: 'AF Motos Comércio e Locação Ltda',
-      trade_name: 'AF Motos',
-      cnpj: '58.742.981/0001-08',
-      city: 'Recife',
-      state: 'PE',
+    issuer: customerDto.issuer || {
+      company_name: settings?.settings?.branding?.companyName || settings?.site_name || 'AF Motos Comércio e Locação Ltda',
+      trade_name: settings?.site_name || 'AF Motos',
+      cnpj: settings?.cnpj || '58.742.981/0001-08',
+      city: settings?.settings?.address?.city || 'Recife',
+      state: settings?.settings?.address?.state || 'PE',
     },
   };
 }

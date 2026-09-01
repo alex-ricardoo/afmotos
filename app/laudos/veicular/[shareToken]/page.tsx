@@ -8,6 +8,8 @@ import {
 import { getSiteSettings } from '@/lib/queries/settings';
 import { PublicVehicleReportView } from '@/components/public/vehicle-report/public-vehicle-report-view';
 
+import { getSiteName } from '@/lib/site-settings';
+
 interface PageProps {
   params: Promise<{ shareToken: string }>;
 }
@@ -16,9 +18,11 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { shareToken } = await params;
+  const settings = await getSiteSettings();
+  const storeName = getSiteName(settings);
 
   return {
-    title: 'Histórico e Procedência Veicular | AF Motos',
+    title: `Histórico e Procedência Veicular | ${storeName}`,
     description: 'Relatório institucional de procedência, débitos e histórico veicular.',
     robots: {
       index: false,

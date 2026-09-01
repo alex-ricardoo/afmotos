@@ -45,6 +45,7 @@ interface PurchaseAgreementModalProps {
   onOpenChange: (open: boolean) => void;
   initialData?: Partial<PurchaseAgreementPrepareInput>;
   onSuccess?: (result: { agreement_id: string; agreement_number: string; pdf_url: string }) => void;
+  storeName?: string;
 }
 
 export function PurchaseAgreementModal({
@@ -52,6 +53,7 @@ export function PurchaseAgreementModal({
   onOpenChange,
   initialData,
   onSuccess,
+  storeName = 'AF Motos',
 }: PurchaseAgreementModalProps) {
   const [formData, setFormData] = useState<Partial<PurchaseAgreementPrepareInput>>(() => ({
     brand: '',
@@ -210,7 +212,7 @@ export function PurchaseAgreementModal({
                   Emitir Contrato de Compra de Motocicleta
                 </DialogTitle>
                 <DialogDescription className="text-xs text-zinc-400 flex items-center gap-2">
-                  <span>Aquisição para estoque próprio da AF Motos</span>
+                  <span>Aquisição para estoque próprio da {storeName}</span>
                   <span>•</span>
                   <span>Cláusulas de posse, quitação e responsabilidade pré-entrega</span>
                 </DialogDescription>
@@ -555,7 +557,7 @@ export function PurchaseAgreementModal({
                           className="mt-0.5"
                         />
                         <span className="leading-relaxed">
-                          Confirmo a exatidão dos dados, o pagamento integral acordado e a tradição física do bem para posse e estoque próprio da AF Motos.
+                          Confirmo a exatidão dos dados, o pagamento integral acordado e a tradição física do bem para posse e estoque próprio da {storeName}.
                         </span>
                       </label>
                     </div>

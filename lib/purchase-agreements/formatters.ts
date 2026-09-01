@@ -27,10 +27,11 @@ export function formatPhoneNumber(phone?: string | null): string {
   return phone;
 }
 
-export function formatAgreementNumber(date: Date = new Date(), suffix: string = ''): string {
+export function formatAgreementNumber(date: Date = new Date(), suffix: string = '', prefix: string = 'AFM'): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const randomSuffix = (suffix || Math.random().toString(36).substring(2, 6)).toUpperCase();
-  return `AFM-COMPRA-${year}${month}${day}-${randomSuffix}`;
+  const cleanPrefix = (prefix || 'AFM').trim().toUpperCase();
+  return `${cleanPrefix}-COMPRA-${year}${month}${day}-${randomSuffix}`;
 }

@@ -801,7 +801,7 @@ export function ProposalDetail({
       {proposal.type === 'CONSIGNMENT' ? (
         /* Painel Unificado de Consignação: Comissão & Contrato PDF */
         <div className="bg-zinc-900/70 border border-emerald-500/20 rounded-2xl p-5 shadow-xs">
-          <CommissionCard proposal={proposal} />
+          <CommissionCard proposal={proposal} storeName={storeName} />
         </div>
       ) : (
         /* Formulário de Compra para Estoque Próprio */
@@ -813,7 +813,7 @@ export function ProposalDetail({
                 Contrato de Compra e Aquisição pela Loja
               </h4>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Formalize a compra direta para o estoque da AF Motos, gerando o instrumento com quitação e termos de transferência.
+                Formalize a compra direta para o estoque da {storeName}, gerando o instrumento com quitação e termos de transferência.
               </p>
             </div>
             <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
@@ -1031,7 +1031,7 @@ export function ProposalDetail({
             <div className="text-xs space-y-0.5">
               <span className="font-bold text-white block">Status Vigente: {currentStatusInfo.label}</span>
               <span className="text-[11px] text-zinc-400 block">
-                Acompanhamento e registro em tempo real pelo painel CRM da AF Motos.
+                Acompanhamento e registro em tempo real pelo painel CRM da {storeName}.
               </span>
             </div>
           </div>
@@ -1199,6 +1199,7 @@ export function ProposalDetail({
           open={isPurchaseModalOpen}
           onOpenChange={setIsPurchaseModalOpen}
           initialData={purchaseInitialData}
+          storeName={storeName}
         />
       </>
     );
@@ -1323,6 +1324,7 @@ export function ProposalDetail({
         open={isPurchaseModalOpen}
         onOpenChange={setIsPurchaseModalOpen}
         initialData={purchaseInitialData}
+        storeName={storeName}
       />
     </Sheet>
   );

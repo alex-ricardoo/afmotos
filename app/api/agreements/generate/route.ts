@@ -8,8 +8,7 @@ import { agreementGenerateSchema } from '@/lib/agreements/schema';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { AgreementSalePDF } from '@/lib/agreements/pdf';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { getSiteLogo } from '@/lib/site-settings';
+import { getSiteLogo, getSiteName } from '@/lib/site-settings';
 import { SiteSettingsRecord } from '@/types/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';
 
@@ -230,7 +229,7 @@ export async function POST(request: NextRequest) {
     }
 
     const settings = await getSiteSettings();
-    const storeName = settings?.site_name || 'AF Motos';
+    const storeName = getSiteName(settings);
     const address = settings?.address || 'Endereço a confirmar';
     const phone = settings?.whatsapp_phone || '(81) 0000-0000';
     const email = settings?.contact_email || null;
