@@ -275,15 +275,17 @@ export async function getPublicReportByShareToken(
   const ipHash = hashClientIp(clientIp);
   const userAgentCategory = categorizeUserAgent(userAgent);
 
-  supabase
-    .from('vehicle_report_shares')
-    .update({
-      access_count: (share.access_count || 0) + 1,
-      last_accessed_at: new Date().toISOString(),
-    })
-    .eq('id', share.id)
-    .then(() => {
-      supabase.from('vehicle_report_share_events').insert({
+  void (async () => {
+    try {
+      await supabase
+        .from('vehicle_report_shares')
+        .update({
+          access_count: (share.access_count || 0) + 1,
+          last_accessed_at: new Date().toISOString(),
+        })
+        .eq('id', share.id);
+
+      await supabase.from('vehicle_report_share_events').insert({
         share_id: share.id,
         consultation_id: consultation.id,
         event_type: 'SHARE_OPENED',
@@ -291,8 +293,10 @@ export async function getPublicReportByShareToken(
         user_agent_category: userAgentCategory,
         is_success: true,
       });
-    })
-    .catch((err) => console.warn('Could not update share access audit:', err));
+    } catch (err: unknown) {
+      console.warn('Could not update share access audit:', err);
+    }
+  })();
 
   // 6. Build and return sanitized public DTO
   const internalDto = toInternalVehicleConsultationDto(consultation);

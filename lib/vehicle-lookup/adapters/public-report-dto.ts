@@ -79,6 +79,10 @@ export function toPublicVehicleReportDto(
       debts_clear: customerDto.risk_summary.debts_clear,
     },
 
+    fipe_reference: customerDto.fipe_reference,
+    fipe_variations: customerDto.fipe_variations,
+    fipe_price_history: customerDto.fipe_price_history,
+
     debts_summary: customerDto.debts_summary,
     gravamen_details: customerDto.gravamen_details,
     auction_details: customerDto.auction_details,

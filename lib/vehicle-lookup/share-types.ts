@@ -101,6 +101,23 @@ export interface PublicVehicleReportDto {
     debts_clear: boolean;
   };
 
+  fipe_reference?: {
+    code: string;
+    model: string;
+    price: number;
+    reference_month: string;
+  };
+  fipe_variations?: Array<{
+    code?: string;
+    model?: string;
+    price?: number;
+    fuel?: string;
+  }>;
+  fipe_price_history?: Array<{
+    reference?: string;
+    price?: number;
+  }>;
+
   debts_summary?: {
     total_debts: number;
     ipva_pending: number;
