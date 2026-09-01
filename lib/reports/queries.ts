@@ -976,6 +976,7 @@ export async function getAnnualAccountantReportData(
     customers,
     { data: consignmentsRaw },
     { data: agreementsRaw },
+    { data: proposalCommissionsRaw },
     { data: allMotorcyclesRaw },
     { data: allExpensesRaw },
     { data: rawSalesWithoutJoin },
@@ -1007,6 +1008,26 @@ export async function getAnnualAccountantReportData(
     supabase
       .from('sale_agreements')
       .select('id, sale_id, commission_percentage, commission_value, expected_sale_value, status')
+      .gte('created_at', `${dateRange.startDate}T00:00:00Z`)
+      .lte('created_at', `${dateRange.endDate}T23:59:59Z`),
+    supabase
+      .from('proposal_commissions')
+      .select(
+        `
+        id,
+        commission_type,
+        commission_percentage,
+        commission_fixed_value,
+        commission_expected_value,
+        commission_confirmed_value,
+        commission_received_value,
+        status,
+        created_at,
+        confirmed_at,
+        received_at,
+        motorcycle:motorcycles(brand, model, license_plate)
+      `,
+      )
       .gte('created_at', `${dateRange.startDate}T00:00:00Z`)
       .lte('created_at', `${dateRange.endDate}T23:59:59Z`),
     supabase.from('motorcycles').select('id, brand, model, price, status, ownership_type, created_at'),
@@ -1042,30 +1063,52 @@ export async function getAnnualAccountantReportData(
   };
 
   // 2. Comissões e Consignações
-  const consignments: ConsignmentReportItem[] = (consignmentsRaw || []).map((c: any) => {
-    const moto = Array.isArray(c.motorcycle) ? c.motorcycle[0] : c.motorcycle;
-    const owner = Array.isArray(c.owner) ? c.owner[0] : c.owner;
-    const asking = Number(c.asking_price || 0);
-    const advertised = Number(c.advertised_price || 0);
-    const commAmount = c.commission_amount ? Number(c.commission_amount) : advertised - asking;
-    const payout = advertised > 0 && commAmount > 0 ? advertised - commAmount : asking;
+  const consignments: ConsignmentReportItem[] = [
+    ...(consignmentsRaw || []).map((c: any) => {
+      const moto = Array.isArray(c.motorcycle) ? c.motorcycle[0] : c.motorcycle;
+      const owner = Array.isArray(c.owner) ? c.owner[0] : c.owner;
+      const asking = Number(c.asking_price || 0);
+      const advertised = Number(c.advertised_price || 0);
+      const commAmount = c.commission_amount ? Number(c.commission_amount) : advertised - asking;
+      const payout = advertised > 0 && commAmount > 0 ? advertised - commAmount : asking;
 
-    return {
-      id: c.id,
-      motorcycleLabel: `${moto?.brand || ''} ${moto?.model || ''}`.trim() || 'Moto Consignada',
-      plate: moto?.license_plate || null,
-      ownerName: owner?.name || null,
-      askingPrice: asking,
-      advertisedPrice: advertised,
-      commissionType: c.commission_type || 'percentage',
-      commissionValue: Number(c.commission_value || 0),
-      commissionAmount: commAmount > 0 ? commAmount : null,
-      payoutToOwner: payout,
-      contractStatus: c.contract_status || 'DRAFT',
-      startDate: c.start_date,
-      endDate: c.end_date,
-    };
-  });
+      return {
+        id: c.id,
+        motorcycleLabel: `${moto?.brand || ''} ${moto?.model || ''}`.trim() || 'Moto Consignada',
+        plate: moto?.license_plate || null,
+        ownerName: owner?.name || null,
+        askingPrice: asking,
+        advertisedPrice: advertised,
+        commissionType: c.commission_type || 'percentage',
+        commissionValue: Number(c.commission_value || 0),
+        commissionAmount: commAmount > 0 ? commAmount : null,
+        payoutToOwner: payout,
+        contractStatus: c.contract_status || 'DRAFT',
+        startDate: c.start_date,
+        endDate: c.end_date,
+      };
+    }),
+    ...(proposalCommissionsRaw || []).map((pc: any) => {
+      const moto = Array.isArray(pc.motorcycle) ? pc.motorcycle[0] : pc.motorcycle;
+      const commVal = Number(pc.commission_received_value || pc.commission_confirmed_value || pc.commission_expected_value || 0);
+
+      return {
+        id: pc.id,
+        motorcycleLabel: `${moto?.brand || ''} ${moto?.model || ''}`.trim() || 'Intermediação / Proposta',
+        plate: moto?.license_plate || null,
+        ownerName: 'Intermediação de Proposta',
+        askingPrice: 0,
+        advertisedPrice: 0,
+        commissionType: pc.commission_type || 'percentage',
+        commissionValue: Number(pc.commission_percentage || pc.commission_fixed_value || 0),
+        commissionAmount: commVal,
+        payoutToOwner: 0,
+        contractStatus: pc.status === 'received' ? 'RECEIVED' : pc.status === 'confirmed' ? 'CONFIRMED' : 'PENDING',
+        startDate: pc.confirmed_at || pc.created_at,
+        endDate: pc.received_at || null,
+      };
+    }),
+  ];
 
   // 3. Resultado por Veículo (com tratamento estrito de custo ausente)
   const vehicleExpenseMap: Record<string, number> = {};

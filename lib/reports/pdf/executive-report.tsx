@@ -406,7 +406,7 @@ export function ExecutiveReportPDF({
           </View>
           <View style={styles.card}>
             <View style={styles.grid}>
-              <View style={styles.col4}>
+              <View style={styles.col3}>
                 <Text style={styles.fieldLabel}>Receita Operacional ({storeName})</Text>
                 <Text style={styles.fieldValuePositive}>{overview.grossRevenue.formattedValue}</Text>
                 <Text style={[styles.confidenceBadge, { backgroundColor: '#dcfce7', color: '#15803d' }]}>
@@ -414,15 +414,27 @@ export function ExecutiveReportPDF({
                 </Text>
               </View>
 
-              <View style={styles.col4}>
-                <Text style={styles.fieldLabel}>Motos Comercializadas</Text>
-                <Text style={styles.fieldValueBold}>{overview.salesCount.formattedValue}</Text>
-                <Text style={[styles.confidenceBadge, { backgroundColor: '#f1f5f9', color: '#475569' }]}>
-                  {overview.ownedSalesCount || 0} próprias, {overview.consignmentSalesCount || 0} consignadas
+              <View style={styles.col3}>
+                <Text style={styles.fieldLabel}>Comissões Confirmadas</Text>
+                <Text style={[styles.fieldValueBold, { color: '#b45309' }]}>
+                  {overview.confirmedCommissionsRevenue?.formattedValue || 'R$ 0,00'}
+                </Text>
+                <Text style={[styles.confidenceBadge, { backgroundColor: '#fef3c7', color: '#b45309' }]}>
+                  Regime de Competência
                 </Text>
               </View>
 
-              <View style={styles.col4}>
+              <View style={styles.col3}>
+                <Text style={styles.fieldLabel}>Comissões Recebidas (Caixa)</Text>
+                <Text style={[styles.fieldValueBold, { color: '#047857' }]}>
+                  {overview.receivedCommissionsRevenue?.formattedValue || 'R$ 0,00'}
+                </Text>
+                <Text style={[styles.confidenceBadge, { backgroundColor: '#dcfce7', color: '#15803d' }]}>
+                  Regime de Caixa
+                </Text>
+              </View>
+
+              <View style={styles.col3}>
                 <Text style={styles.fieldLabel}>Volume Intermediado (Terceiros)</Text>
                 <Text style={[styles.fieldValueBold, { color: '#0284c7' }]}>
                   {formatCurrencyBRL(overview.thirdPartyTransactedVolume?.value || 0)}
@@ -432,7 +444,15 @@ export function ExecutiveReportPDF({
                 </Text>
               </View>
 
-              <View style={styles.col4}>
+              <View style={styles.col3}>
+                <Text style={styles.fieldLabel}>Motos Comercializadas</Text>
+                <Text style={styles.fieldValueBold}>{overview.salesCount.formattedValue}</Text>
+                <Text style={[styles.confidenceBadge, { backgroundColor: '#f1f5f9', color: '#475569' }]}>
+                  {overview.ownedSalesCount || 0} próprias, {overview.consignmentSalesCount || 0} consignadas
+                </Text>
+              </View>
+
+              <View style={styles.col3}>
                 <Text style={styles.fieldLabel}>Despesas Pagas do Período</Text>
                 <Text style={[styles.fieldValueBold, { color: '#dc2626' }]}>
                   {formatCurrencyBRL(financial.totalExpensesPaid)}
@@ -442,8 +462,8 @@ export function ExecutiveReportPDF({
                 </Text>
               </View>
 
-              <View style={styles.col4}>
-                <Text style={styles.fieldLabel}>Despesas Pendentes de Pagamento</Text>
+              <View style={styles.col3}>
+                <Text style={styles.fieldLabel}>Despesas Pendentes</Text>
                 <Text style={[styles.fieldValueBold, { color: '#ea580c' }]}>
                   {formatCurrencyBRL(financial.totalExpensesPending)}
                 </Text>
@@ -452,7 +472,7 @@ export function ExecutiveReportPDF({
                 </Text>
               </View>
 
-              <View style={styles.col4}>
+              <View style={styles.col3}>
                 <Text style={styles.fieldLabel}>Resultado Operacional Estimado</Text>
                 <Text style={[styles.fieldValueBold, { color: '#047857' }]}>
                   {overview.estimatedOperatingResult.formattedValue}
@@ -513,6 +533,40 @@ export function ExecutiveReportPDF({
               })
             )}
           </View>
+
+          {consignments && consignments.length > 0 && (
+            <View style={{ marginTop: 3 }}>
+              <View style={styles.table}>
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.tableHeaderCell, { width: '15%' }]}>Data / Status</Text>
+                  <Text style={[styles.tableHeaderCell, { width: '35%' }]}>Origem / Veículo Intermediado</Text>
+                  <Text style={[styles.tableHeaderCell, { width: '22%' }]}>Tipo / Referência</Text>
+                  <Text style={[styles.tableHeaderCell, { width: '14%', textAlign: 'right' }]}>Base / Pedido</Text>
+                  <Text style={[styles.tableHeaderCell, { width: '14%', textAlign: 'right' }]}>Comissão Loja</Text>
+                </View>
+                {consignments.slice(0, 5).map((item, idx) => (
+                  <View key={item.id} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
+                    <Text style={[styles.tableCell, { width: '15%' }]}>
+                      {item.startDate ? formatReportDate(item.startDate) : '-'} ({item.contractStatus})
+                    </Text>
+                    <Text style={[styles.tableCellBold, { width: '35%' }]}>
+                      {item.motorcycleLabel} {item.plate ? `(${item.plate})` : ''}
+                    </Text>
+                    <Text style={[styles.tableCell, { width: '22%' }]}>
+                      {item.ownerName || 'Intermediação'}
+                    </Text>
+                    <Text style={[styles.tableCell, { width: '14%', textAlign: 'right', color: '#475569' }]}>
+                      {item.advertisedPrice > 0 ? formatCurrencyBRL(item.advertisedPrice) : '-'}
+                    </Text>
+                    <Text style={[styles.tableCellBold, { width: '14%', textAlign: 'right', color: '#b45309' }]}>
+                      {formatCurrencyBRL(item.commissionAmount || item.commissionValue || 0)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
           <Text style={{ fontSize: 5.4, color: '#64748b', fontStyle: 'italic', marginTop: 1 }}>
             * Regra de Consignação: Nas motos de terceiros, o valor de venda é recebido diretamente pelo proprietário. A receita tributável da {storeName} compreende exclusivamente a comissão de intermediação.
           </Text>
