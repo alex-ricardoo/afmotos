@@ -56,20 +56,38 @@ export function VehicleHistoryHero({
   };
 
   return (
-    <section className="relative overflow-hidden pt-8 pb-12 lg:pt-14 lg:pb-20 bg-[#080B11]">
-      {/* Glow Ambient Lights */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[450px] bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent blur-3xl -z-10 pointer-events-none" />
+    <section className="relative overflow-hidden pt-8 pb-14 lg:pt-16 lg:pb-24 bg-[#080B11]">
+      {/* 1. Responsive Background Image: Desktop (landscape) & Mobile (portrait) - Alta Visibilidade */}
+      <div
+        className="absolute inset-0 z-0 bg-[url('/historico-hero-mobile.png')] md:bg-[url('/historico-hero-desktop.png')] bg-cover bg-center bg-no-repeat opacity-95 md:opacity-90"
+        style={{ objectPosition: 'center top' }}
+      />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 2. Suave gradiente superior/inferior para integração perfeita */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#080B11]/60 via-transparent via-50% to-[#080B11] pointer-events-none" />
+
+      {/* 3. Leve vinheta central para garantir contraste perfeito no texto e input */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse at center, rgba(8,11,17,0.45) 0%, rgba(8,11,17,0.2) 60%, rgba(8,11,17,0.85) 100%)',
+        }}
+      />
+
+      {/* 4. Glow Ambient Lights */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[450px] bg-gradient-to-b from-amber-500/15 via-transparent to-transparent blur-3xl z-0 pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col items-center text-center space-y-5 sm:space-y-6">
           {/* Tag de Urgência & Segurança */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs sm:text-sm font-bold tracking-wide shadow-sm animate-in fade-in slide-in-from-top-3 duration-500">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-bold tracking-wide shadow-lg shadow-black/40 animate-in fade-in slide-in-from-top-3 duration-500">
             <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
             <span>Consulta Veicular Oficial • Carros & Motos</span>
           </div>
 
           {/* Headline Poderosa & Direta */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.15] max-w-4xl font-heading">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.15] max-w-4xl font-heading drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
             Não caia em golpes.{' '}
             <span className="bg-gradient-to-r from-[#fde68a] via-[#f59e0b] to-[#d97706] bg-clip-text text-transparent">
               Consulte o histórico completo antes de fechar negócio.
@@ -77,7 +95,7 @@ export function VehicleHistoryHero({
           </h1>
 
           {/* Sub-headline */}
-          <p className="text-base sm:text-lg lg:text-xl text-zinc-300 max-w-2xl leading-relaxed">
+          <p className="text-base sm:text-lg lg:text-xl text-zinc-200 max-w-2xl leading-relaxed font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
             Descubra leilão, gravame/financiamento, sinistro, multas e débitos com atendimento ágil e 100% humanizado apenas pela placa.
           </p>
 
