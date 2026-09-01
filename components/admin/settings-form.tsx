@@ -322,7 +322,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
   }
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-6 pb-6">
       {/* Barra de Abas / Navegação de Categorias */}
       <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-1.5 shadow-md backdrop-blur-md">
         <nav className="flex flex-wrap items-center gap-1.5">
@@ -365,8 +365,8 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
             {activeTab === 'seo' && <SeoTab form={form} />}
           </div>
 
-          {/* Barra Fixa / Inferior de Ações */}
-          <div className="sticky bottom-4 z-30 bg-zinc-950/90 border border-zinc-800 rounded-2xl p-4 shadow-2xl backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Barra Inferior de Ações */}
+          <div className="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-xs text-zinc-400">
               {isDirty ? (
                 <span className="flex items-center gap-1.5 text-amber-400 font-medium">

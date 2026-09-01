@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getVehicleConsultationById, getMotorcyclesForLinking } from '@/lib/queries/vehicle-lookup';
+import { getActiveShareByConsultationId } from '@/lib/queries/vehicle-share';
 import { VehicleDetailClient } from '@/components/admin/vehicle-lookup/vehicle-detail-client';
 
 interface PageProps {
@@ -31,14 +32,22 @@ export const dynamic = 'force-dynamic';
 
 export default async function VehicleConsultationDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const [dto, motorcycles] = await Promise.all([
+  const [dto, motorcycles, shareDetails] = await Promise.all([
     getVehicleConsultationById(id),
     getMotorcyclesForLinking(),
+    getActiveShareByConsultationId(id),
   ]);
 
   if (!dto) {
     notFound();
   }
 
-  return <VehicleDetailClient dto={dto} motorcycles={motorcycles} />;
+  return (
+    <VehicleDetailClient
+      dto={dto}
+      motorcycles={motorcycles}
+      initialShareDetails={shareDetails}
+    />
+  );
 }
+

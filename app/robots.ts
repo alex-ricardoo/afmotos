@@ -21,6 +21,7 @@ export default function robots(): MetadataRoute.Robots {
           '/contratos/',
           '/recibos/',
           '/propostas/',
+          '/laudos/',
           '/*?*sort=',
           '/*?*view=',
         ],

@@ -25,7 +25,12 @@ import {
   Filter,
   CheckCircle2,
   AlertTriangle,
+  Share2,
+  Loader2,
 } from 'lucide-react';
+import { createVehicleReportShareAction } from '@/lib/actions/vehicle-share';
+import { VehicleShareModal } from './vehicle-share-modal';
+import { toast } from 'sonner';
 
 interface VehicleLookupTabsClientProps {
   initialConsultations: VehicleConsultationSummaryDto[];
@@ -52,6 +57,53 @@ export function VehicleLookupTabsClient({
   const [selectedRisk, setSelectedRisk] = useState('ALL');
   const [selectedPointer, setSelectedPointer] = useState('ALL');
   const [selectedMode, setSelectedMode] = useState('ALL');
+  const [generatingShareId, setGeneratingShareId] = useState<string | null>(null);
+  const [modalShareUrl, setModalShareUrl] = useState<string | null>(null);
+  const [modalPlateDisplay, setModalPlateDisplay] = useState<string>('');
+
+  const handleShareFromTable = async (
+    consultationId: string,
+    plateDisplay: string,
+    status: string,
+    forceRevoke = false
+  ) => {
+    if (status !== 'COMPLETED') {
+      toast.error('Apenas consultas concluídas possuem laudo compartilhável.');
+      return;
+    }
+
+    try {
+      setGeneratingShareId(consultationId);
+      const res = await createVehicleReportShareAction({
+        consultationId,
+        forceRevokeExisting: forceRevoke,
+      });
+
+      if (!res.success) {
+        if (res.hasActiveShareConflict) {
+          const confirmRevoke = window.confirm(
+            'Esta consulta já possui um link público ativo. Deseja revogar o link anterior e gerar um novo link de 30 dias?'
+          );
+          if (confirmRevoke) {
+            await handleShareFromTable(consultationId, plateDisplay, status, true);
+          }
+          return;
+        }
+        toast.error(res.error || 'Erro ao gerar link de compartilhamento.');
+        return;
+      }
+
+      if (res.data?.share_url) {
+        setModalPlateDisplay(plateDisplay);
+        setModalShareUrl(res.data.share_url);
+        toast.success('Link do laudo gerado com sucesso!');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Falha ao processar solicitação.');
+    } finally {
+      setGeneratingShareId(null);
+    }
+  };
 
   const handleTabChange = (tab: TabType) => {
     startTransition(() => {
@@ -366,22 +418,43 @@ export function VehicleLookupTabsClient({
                     )}
 
                     {/* Footer Date & Direct Action Button */}
-                    <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
+                    <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs gap-2">
                       <div className="text-[11px] text-muted-foreground flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" />
                         {new Date(c.consulted_at).toLocaleDateString('pt-BR')}
                       </div>
 
-                      <Link
-                        href={`/admin/consulta-placa/${c.id}`}
-                        className={buttonVariants({
-                          size: 'sm',
-                          className: 'rounded-xl text-xs font-bold gap-1.5 h-8',
-                        })}
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        Ver Laudo
-                      </Link>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleShareFromTable(c.id, c.plate_display, c.status)
+                          }
+                          disabled={generatingShareId === c.id}
+                          className="rounded-xl text-xs font-bold gap-1.5 h-8 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30 px-2.5"
+                          title="Gerar ou Copiar Link Público"
+                        >
+                          {generatingShareId === c.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Share2 className="w-3.5 h-3.5" />
+                          )}
+                          <span>Link</span>
+                        </Button>
+
+                        <Link
+                          href={`/admin/consulta-placa/${c.id}`}
+                          className={buttonVariants({
+                            size: 'sm',
+                            className: 'rounded-xl text-xs font-bold gap-1.5 h-8 px-2.5',
+                          })}
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Ver Laudo</span>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );
@@ -499,16 +572,37 @@ export function VehicleLookupTabsClient({
 
                           {/* Acao */}
                           <td className="px-5 py-3.5 text-right">
-                            <Link
-                              href={`/admin/consulta-placa/${c.id}`}
-                              className={buttonVariants({
-                                size: 'sm',
-                                className: 'rounded-xl text-xs font-bold gap-1.5 h-8',
-                              })}
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              Ver Laudo
-                            </Link>
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleShareFromTable(c.id, c.plate_display, c.status)
+                                }
+                                disabled={generatingShareId === c.id}
+                                className="rounded-xl text-xs font-bold gap-1.5 h-8 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30"
+                                title="Gerar ou Copiar Link Público"
+                              >
+                                {generatingShareId === c.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Share2 className="w-3.5 h-3.5" />
+                                )}
+                                <span>Link</span>
+                              </Button>
+
+                              <Link
+                                href={`/admin/consulta-placa/${c.id}`}
+                                className={buttonVariants({
+                                  size: 'sm',
+                                  className: 'rounded-xl text-xs font-bold gap-1.5 h-8',
+                                })}
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Ver Laudo</span>
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -519,6 +613,16 @@ export function VehicleLookupTabsClient({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share Modal Dialog */}
+      {modalShareUrl && (
+        <VehicleShareModal
+          isOpen={!!modalShareUrl}
+          onClose={() => setModalShareUrl(null)}
+          shareUrl={modalShareUrl}
+          plateDisplay={modalPlateDisplay}
+        />
       )}
     </div>
   );

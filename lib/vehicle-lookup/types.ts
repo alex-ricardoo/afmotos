@@ -456,3 +456,6 @@ export interface CustomerVehicleReportDto {
     state: string;
   };
 }
+
+export * from './share-types.ts';
+

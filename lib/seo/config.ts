@@ -24,10 +24,22 @@ export const SEO_CONFIG = {
  */
 export function getBaseSiteUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
-  const rawUrl = envUrl && envUrl.trim() ? envUrl.trim() : SEO_CONFIG.defaultFallbackSiteUrl;
+  if (envUrl && envUrl.trim()) {
+    return envUrl.trim().replace(/\/+$/, '');
+  }
 
-  // Remove trailing slashes
-  return rawUrl.replace(/\/+$/, '');
+  // Em ambiente local de desenvolvimento, usa localhost por padrão
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:3000';
+  }
+
+  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  if (vercelUrl && vercelUrl.trim()) {
+    const cleanVercel = vercelUrl.trim().replace(/\/+$/, '');
+    return cleanVercel.startsWith('http') ? cleanVercel : `https://${cleanVercel}`;
+  }
+
+  return SEO_CONFIG.defaultFallbackSiteUrl.replace(/\/+$/, '');
 }
 
 /**

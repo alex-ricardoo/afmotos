@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import type { InternalVehicleConsultationDto } from '@/lib/vehicle-lookup/types';
+import type { AdminVehicleShareDetailsDto } from '@/lib/vehicle-lookup/share-types';
 import { VehicleDetailHeader } from './vehicle-detail-header';
 import { VehicleLinkModal } from './vehicle-link-modal';
+import { VehicleShareCard } from './vehicle-share-card';
 import { TabSummary } from './tabs/tab-summary';
 import { TabVehicleData } from './tabs/tab-vehicle-data';
 import { TabDebts } from './tabs/tab-debts';
@@ -34,6 +36,7 @@ interface VehicleDetailClientProps {
     year_model: number;
     license_plate: string | null;
   }>;
+  initialShareDetails?: AdminVehicleShareDetailsDto;
 }
 
 type TabKey =
@@ -47,7 +50,11 @@ type TabKey =
   | 'technical'
   | 'json';
 
-export function VehicleDetailClient({ dto, motorcycles }: VehicleDetailClientProps) {
+export function VehicleDetailClient({
+  dto,
+  motorcycles,
+  initialShareDetails = { hasActiveShare: false },
+}: VehicleDetailClientProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('summary');
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
 
@@ -67,6 +74,14 @@ export function VehicleDetailClient({ dto, motorcycles }: VehicleDetailClientPro
     <div className="space-y-6 pb-12">
       {/* Header */}
       <VehicleDetailHeader dto={dto} onOpenLinkModal={() => setIsLinkModalOpen(true)} />
+
+      {/* Share Management Card */}
+      <VehicleShareCard
+        consultationId={dto.id}
+        plateDisplay={dto.plate_display}
+        consultationStatus={dto.status}
+        initialShareDetails={initialShareDetails}
+      />
 
       {/* Tabs Navigation */}
       <div className="border-b border-border/80 overflow-x-auto scrollbar-none">
