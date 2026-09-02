@@ -152,16 +152,16 @@ export function getVehicleHistorySettings(raw?: SiteSettingsRecord | null): Vehi
     whatsappPhoneOverride: custom?.whatsappPhoneOverride || null,
     whatsappMessageTemplate:
       custom?.whatsappMessageTemplate ||
-      'Olá! Quero solicitar o Histórico Veicular da moto com placa {PLATE}. Vi a consulta por {PRICE} no site da {SITE_NAME} e gostaria de realizar o pagamento via WhatsApp para receber o laudo.',
+      'Olá! Quero solicitar o Histórico Veicular do veículo com placa {PLATE}. Vi a consulta por {PRICE} no site da {SITE_NAME} e gostaria de realizar o pagamento via WhatsApp para receber o laudo.',
     heroTitle:
       custom?.heroTitle ||
-      'Vai comprar, vender ou já tem uma moto? Consulte o histórico veicular.',
+      'Vai comprar, vender ou avaliar um veículo? Consulte o histórico veicular.',
     heroSubtitle:
       custom?.heroSubtitle ||
-      'Com apenas a placa, obtenha o laudo completo para negociar com segurança máxima, valorizar sua moto na venda ou checar pendências. Pagamento 100% no WhatsApp com atendimento ágil.',
+      'Com apenas a placa, obtenha o laudo oficial para motos, carros, caminhões e utilitários em todo o território nacional. Negocie com segurança máxima, valorize na venda ou cheque pendências. Pagamento 100% no WhatsApp com atendimento ágil.',
     disclaimerText:
       custom?.disclaimerText ||
-      'O relatório reúne informações disponibilizadas pelas bases consultadas na data da consulta. Ele ajuda na análise do veículo, mas não substitui vistoria mecânica, conferência de documentos ou avaliação física.',
+      'O relatório reúne informações disponibilizadas pelas bases consultadas na data da consulta. Válido para qualquer veículo registrado em território nacional. Ele ajuda na análise de procedência, mas não substitui vistoria mecânica presencial, conferência de documentos ou avaliação física.',
     isPublishedInNav: custom?.isPublishedInNav !== false,
     updatedAt: custom?.updatedAt,
   };

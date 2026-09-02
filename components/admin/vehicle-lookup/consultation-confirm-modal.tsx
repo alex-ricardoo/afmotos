@@ -92,10 +92,10 @@ export function ConsultationConfirmModal({
             </div>
             <div>
               <h3 id="modal-title" className="text-base sm:text-lg font-bold tracking-tight text-foreground leading-snug">
-                Confirmar Consulta Oficial
+                Confirmar Consulta Veicular Oficial
               </h3>
               <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-                Integração direta com bases oficiais da API Brasil.
+                Bases oficiais Senatran e Detran para qualquer veículo no Brasil.
               </p>
             </div>
           </div>
@@ -124,7 +124,7 @@ export function ConsultationConfirmModal({
             </div>
             <div className="flex items-center justify-between py-1 border-b border-border/40 gap-2">
               <span className="text-muted-foreground text-xs">Serviço:</span>
-              <span className="font-semibold text-foreground text-right text-xs">Veículos Total (API Oficial)</span>
+              <span className="font-semibold text-foreground text-right text-xs">Veículos Total (Bases Nacionais)</span>
             </div>
             <div className="flex items-center justify-between py-1 border-b border-border/40 gap-2">
               <span className="text-muted-foreground text-xs">Custo Requisição:</span>

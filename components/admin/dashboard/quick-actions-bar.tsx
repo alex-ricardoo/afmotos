@@ -33,8 +33,8 @@ export function QuickActionsBar() {
       badge: 'Estoque',
     },
     {
-      title: 'Consultar Placa',
-      subtitle: 'Laudo de procedência e débitos',
+      title: 'Consulta Veicular',
+      subtitle: 'Motos, carros e caminhões por placa',
       href: '/admin/consulta-placa',
       icon: FileSearch,
       iconBg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',

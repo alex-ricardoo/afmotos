@@ -170,16 +170,16 @@ export function VehicleLookupTabsClient({
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
             <span>Admin</span>
             <span>/</span>
-            <span className="text-foreground font-medium">Laudos Veiculares</span>
+            <span className="text-foreground font-medium">Consulta Veicular & Laudos</span>
           </div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-              Consulta de Placa & Laudos
+              Consulta Veicular por Placa & Laudos
             </h1>
             <ModeBadge mode={isMockMode ? 'mock' : 'live'} isMock={isMockMode} />
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Diagnóstico veicular de procedência, débitos, gravames e histórico de leilão com cache instantâneo.
+            Diagnóstico de procedência, débitos, gravames e leilão para qualquer tipo de veículo com placa no território nacional (motos, carros, caminhões e utilitários).
           </p>
         </div>
 

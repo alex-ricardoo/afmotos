@@ -24,13 +24,18 @@ const FAQS = [
   },
   {
     id: 'vehicle-types',
-    question: 'A consulta serve para moto e carro?',
-    answer: 'Sim! Você pode consultar qualquer motocicleta, ciclomotor, carro de passeio, SUV, caminhonete ou utilitário com placa brasileira (Mercosul ou antiga).',
+    question: 'A consulta serve para qualquer tipo de veículo com placa no Brasil?',
+    answer: 'Sim! A consulta atende 100% dos veículos emplacados em território nacional: motocicletas, ciclomotores, carros de passeio, SUVs, caminhonetes, picapes, vans, utilitários e caminhões — seja com placa Mercosul ou no padrão tradicional antigo de qualquer estado.',
   },
   {
     id: 'sale-proof',
-    question: 'O laudo é aceito para comprovar a procedência na venda?',
-    answer: 'Com certeza! O laudo é diagramado de forma profissional, com autenticação digital e dados claros. Apresentar o histórico limpo para o comprador gera confiança imediata, valoriza o veículo e acelera o fechamento da venda.',
+    question: 'Como o laudo me ajuda a valorizar o veículo na hora da venda?',
+    answer: 'Você receberá um link exclusivo interativo com o histórico completo e poderá baixar o laudo oficial em PDF. Ter esse laudo guardado e apresentá-lo na negociação elimina as desconfianças do comprador, comprova que não há leilão, sinistro nem débitos ocultos, evita pedidos abusivos de desconto e acelera o fechamento da venda pelo valor justo de mercado!',
+  },
+  {
+    id: 'packages-discount',
+    question: 'Pessoa física pode comprar pacotes com desconto para avaliar vários veículos?',
+    answer: 'Sim, com certeza! Se você está pesquisando várias opções antes de fechar a compra do seu veículo, ou se você negocia veículos com frequência, oferecemos pacotes com desconto progressivo por placa. Os créditos não expiram e você pode consultar placas de qualquer estado do Brasil no seu tempo. Chame nosso atendimento no WhatsApp para conhecer a tabela!',
   },
 ];
 

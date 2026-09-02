@@ -276,7 +276,7 @@ export function VehicleHistoryTab({ form }: VehicleHistoryTabProps) {
                 <FormControl>
                   <Textarea
                     rows={3}
-                    placeholder="Olá! Quero solicitar o Histórico Veicular da moto com placa {PLATE}. Vi a consulta por {PRICE} no site da {SITE_NAME} e gostaria de saber como pagar e receber o relatório."
+                    placeholder="Olá! Quero solicitar o Histórico Veicular do veículo com placa {PLATE}. Vi a consulta por {PRICE} no site da {SITE_NAME} e gostaria de saber como pagar e receber o relatório."
                     {...field}
                     value={field.value || ''}
                     className="bg-zinc-950 border-zinc-800 text-white"
@@ -308,7 +308,7 @@ export function VehicleHistoryTab({ form }: VehicleHistoryTabProps) {
                   <FormLabel className="text-white">Título Principal da Hero</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Antes de comprar uma moto, consulte o histórico veicular."
+                      placeholder="Vai comprar, vender ou avaliar um veículo? Consulte o histórico veicular."
                       {...field}
                       value={field.value || ''}
                       className="bg-zinc-950 border-zinc-800 text-white"
@@ -328,7 +328,7 @@ export function VehicleHistoryTab({ form }: VehicleHistoryTabProps) {
                   <FormControl>
                     <Textarea
                       rows={2}
-                      placeholder="Com apenas a placa, você recebe um relatório completo para analisar restrições, leilão, roubo/furto, gravames, débitos, recall e muito mais."
+                      placeholder="Com apenas a placa, obtenha o laudo oficial para motos, carros, caminhões e utilitários em todo o território nacional. Negocie com segurança máxima, valorize na venda ou cheque pendências."
                       {...field}
                       value={field.value || ''}
                       className="bg-zinc-950 border-zinc-800 text-white"
@@ -348,7 +348,7 @@ export function VehicleHistoryTab({ form }: VehicleHistoryTabProps) {
                   <FormControl>
                     <Textarea
                       rows={3}
-                      placeholder="O relatório reúne informações disponibilizadas pelas bases consultadas na data da consulta. Ele ajuda na análise do veículo, mas não substitui vistoria mecânica, conferência de documentos ou avaliação física."
+                      placeholder="O relatório reúne informações disponibilizadas pelas bases consultadas na data da consulta. Válido para qualquer veículo registrado em território nacional. Ele ajuda na análise de procedência, mas não substitui vistoria mecânica presencial, conferência de documentos ou avaliação física."
                       {...field}
                       value={field.value || ''}
                       className="bg-zinc-950 border-zinc-800 text-white"

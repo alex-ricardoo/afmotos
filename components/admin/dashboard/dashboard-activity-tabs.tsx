@@ -195,7 +195,7 @@ export function DashboardActivityTabs({
               href="/admin/consulta-placa"
               className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
             >
-              <span>Nova consulta de placa</span>
+              <span>Nova consulta veicular</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           )}
@@ -463,7 +463,7 @@ export function DashboardActivityTabs({
           {consultations.length === 0 ? (
             <div className="py-12 text-center text-zinc-500 space-y-3">
               <FileSearch className="w-8 h-8 mx-auto opacity-30" />
-              <p className="text-sm">Nenhuma consulta de placa realizada recentemente.</p>
+              <p className="text-sm">Nenhuma consulta veicular realizada recentemente.</p>
               <Link
                 href="/admin/consulta-placa"
                 className={buttonVariants({

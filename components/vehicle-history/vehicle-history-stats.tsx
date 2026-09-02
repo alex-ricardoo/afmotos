@@ -9,7 +9,7 @@ export function VehicleHistoryStats({ siteShortName = 'Loja' }: VehicleHistorySt
   const metrics = [
     {
       value: '100%',
-      label: `Motos da ${siteShortName} com Histórico`,
+      label: 'Veículos Nacionais Atendidos',
       icon: ShieldCheck,
       color: 'text-amber-400',
     },

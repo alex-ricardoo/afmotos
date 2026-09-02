@@ -8,6 +8,8 @@ import {
   Zap,
   DollarSign,
   FileCheck2,
+  FileDown,
+  Link2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -115,42 +117,42 @@ export function VehicleHistoryReasons() {
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-white">
-                    Valorize Seu Veículo na Venda
+                    Valorize Seu Bem & Venda Mais Rápido
                   </h3>
                   <p className="text-xs text-zinc-400">
-                    Passe credibilidade imediata ao comprador com um laudo oficial limpo.
+                    Passe credibilidade imediata ao comprador com link interativo e laudo oficial em PDF.
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
+                <div className="p-3.5 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Venda Mais Rápido</span>
+                    <Link2 className="w-3.5 h-3.5" />
+                    <span>Link Exclusivo no WhatsApp</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Elimine desconfianças enviando o PDF completo pelo WhatsApp.
+                    Envie o link do histórico para o comprador conferir tudo pelo celular sem burocracia.
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
+                <div className="p-3.5 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
                     <DollarSign className="w-3.5 h-3.5" />
-                    <span>Defenda o Preço</span>
+                    <span>Defenda Seu Preço Justo</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Comprove que seu veículo não tem restrições nem apontamentos.
+                    Comprove ausência de sinistro, leilão e débitos para cortar propostas abusivas de desconto.
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
+                <div className="p-3.5 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-blue-400">
-                    <FileCheck2 className="w-3.5 h-3.5" />
-                    <span>Laudo Autenticado</span>
+                    <FileDown className="w-3.5 h-3.5" />
+                    <span>PDF Oficial Guardado</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Documento profissional pronto para anexar ao anúncio.
+                    Baixe e guarde o laudo para anexar ao anúncio ou guardar como histórico do seu patrimônio.
                   </p>
                 </div>
               </div>

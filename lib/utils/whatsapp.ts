@@ -98,7 +98,7 @@ export function buildVehicleHistoryWhatsAppUrl({
         .replace(/{PRICE}/g, formattedPrice)
         .replace(/{SITE_NAME}/g, siteName);
     } else {
-      message = `Olá! Quero solicitar o Histórico Veicular da moto com placa ${formattedPlate}. Vi a consulta por ${formattedPrice} no site da ${siteName} e gostaria de saber como pagar e receber o relatório.`;
+      message = `Olá! Quero solicitar o Histórico Veicular do veículo com placa ${formattedPlate}. Vi a consulta por ${formattedPrice} no site da ${siteName} e gostaria de saber como pagar e receber o relatório.`;
     }
   } else {
     message = `Olá! Vi o serviço de Histórico Veicular no site da ${siteName} e gostaria de tirar algumas dúvidas antes de solicitar a consulta.`;
@@ -108,10 +108,10 @@ export function buildVehicleHistoryWhatsAppUrl({
 }
 
 /**
- * Monta o link wa.me para negociação B2B de pacotes e volume de consultas para lojistas/revendedores.
+ * Monta o link wa.me para negociação de pacotes e volume de consultas com desconto (pessoa física ou lojistas/revendedores).
  */
 export function buildVehicleHistoryB2BWhatsAppUrl(phone: string): string {
-  const message = 'Olá, gostaria de conhecer a tabela de preços e pacotes de consultas para loja/revenda.';
+  const message = 'Olá, gostaria de conhecer a tabela de preços e pacotes de consultas com desconto (para avaliar vários veículos ou para revenda).';
   return generateWhatsAppLink(phone, message);
 }
 

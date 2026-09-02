@@ -25,16 +25,19 @@ interface VehicleHistoryPricingProps {
 }
 
 const B2C_INCLUDED = [
-  'Histórico Completo de Leilão & Sinistro',
-  'Gravames, Alienação & Bloqueios Judiciais',
-  'Débitos Estaduais (IPVA, Licenciamento e Multas)',
-  'Download Imediato em PDF Oficial',
+  'Link Exclusivo com Histórico Interativo no Celular',
+  'Download Imediato em PDF Oficial para Guardar',
+  'Comprovante de Procedência para Valorizar seu Bem',
+  'Histórico Completo de Leilão, Sinistro & Débitos',
+  'Gravames, Alienação & Bloqueios Judiciais Renajud',
+  'Válido para Qualquer Veículo com Placa Nacional',
 ];
 
-const B2B_BENEFITS = [
-  'Saldo que não expira',
-  'Painel de gestão de laudos para equipe',
-  'Atendimento prioritário via WhatsApp',
+const VOLUME_BENEFITS = [
+  'Créditos que não expiram',
+  'Desconto progressivo por placa',
+  'Para pessoa física ou lojistas',
+  'Atendimento prioritário no WhatsApp',
 ];
 
 export function VehicleHistoryPricing({
@@ -91,7 +94,7 @@ export function VehicleHistoryPricing({
                 Consulta Individual por Placa
               </h3>
               <p className="text-xs text-zinc-400">
-                Para quem quer comprar ou vender com total segurança
+                Link online + PDF oficial guardado para valorizar seu veículo na revenda
               </p>
             </div>
 
@@ -138,25 +141,25 @@ export function VehicleHistoryPricing({
           </div>
         </div>
 
-        {/* Bloco B: Card Comercial de Pacotes para Lojas & Revendedores (B2B WhatsApp Lead) */}
+        {/* Bloco B: Card Comercial de Pacotes com Desconto (Pessoa Física & Lojas) */}
         <div className="relative rounded-3xl p-6 sm:p-7 bg-[#0D111A] border border-[#1F293D] hover:border-emerald-500/40 transition-all duration-300 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2.5 max-w-xl">
             <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-              <Building2 className="w-4 h-4" />
-              <span>Para Lojistas, Concessionárias & Corretores</span>
+              <Users className="w-4 h-4" />
+              <span>Pacotes Econômicos • Pessoa Física & Lojas</span>
             </div>
 
             <h3 className="text-lg sm:text-xl font-bold text-white leading-snug">
-              Precisa de consultas frequentes para sua loja ou revenda?
+              Vai avaliar vários veículos ou precisa de consultas frequentes?
             </h3>
 
             <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-              Condições comerciais diferenciadas, descontos progressivos por volume e tabela exclusiva de créditos para lojistas e corretores.
+              Garanta descontos progressivos comprando pacotes de consultas. Perfeito tanto para quem está comparando diferentes opções para comprar quanto para lojistas, corretores e autônomos.
             </p>
 
             {/* Micro Benefits Chips */}
             <div className="flex flex-wrap gap-2 pt-1">
-              {B2B_BENEFITS.map((benefit, idx) => (
+              {VOLUME_BENEFITS.map((benefit, idx) => (
                 <span
                   key={idx}
                   className="px-2.5 py-1 rounded-lg bg-[#131A26] border border-[#1F293D] text-[11px] text-zinc-300 flex items-center gap-1.5"
@@ -168,7 +171,7 @@ export function VehicleHistoryPricing({
             </div>
           </div>
 
-          {/* CTA B2B (WhatsApp Direct) */}
+          {/* CTA Volume (WhatsApp Direct) */}
           <div className="w-full md:w-auto shrink-0 pt-2 md:pt-0">
             <button
               type="button"
@@ -176,7 +179,7 @@ export function VehicleHistoryPricing({
               className="w-full md:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer"
             >
               <WhatsAppIcon className="w-5 h-5 fill-current shrink-0" />
-              <span>Ver Tabela de Pacotes</span>
+              <span>Ver Pacotes com Desconto</span>
             </button>
           </div>
         </div>

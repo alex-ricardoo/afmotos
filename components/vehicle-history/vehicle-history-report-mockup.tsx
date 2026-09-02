@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   X,
   Lock,
+  Sparkles,
 } from 'lucide-react';
 
 const REPORT_SECTIONS = [
@@ -68,8 +69,8 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
           <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight font-heading">
             Veja como você recebe seu laudo oficial
           </h2>
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto">
-            Relatório oficial diagramado, limpo e direto ao ponto. Pronto para imprimir ou compartilhar no WhatsApp.
+          <p className="text-xs sm:text-sm text-zinc-300 max-w-xl mx-auto leading-relaxed">
+            Você recebe um <strong className="text-amber-400">link exclusivo online</strong> e pode <strong className="text-amber-400">baixar o laudo em PDF</strong> para deixar guardado nos seus arquivos ou apresentar ao comprador para <strong className="text-white font-semibold">valorizar seu bem na venda</strong>.
           </p>
         </div>
 
@@ -143,11 +144,11 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
           <div className="mt-5 pt-3 border-t border-[#1F293D] flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-zinc-400">
             <span className="flex items-center gap-1.5 text-zinc-300 font-medium">
               <Share2 className="w-4 h-4 text-emerald-400" />
-              Enviado em PDF diretamente no seu WhatsApp após a confirmação.
+              Link interativo + PDF oficial enviados diretamente no WhatsApp após a confirmação.
             </span>
-            <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-              <Lock className="w-3 h-3 text-emerald-400" />
-              Conformidade total com LGPD & Senatran
+            <span className="flex items-center gap-1.5 text-[11px] text-amber-300 font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              Apresente na venda e valorize seu veículo
             </span>
           </div>
         </div>

@@ -1,24 +1,24 @@
 import React from 'react';
-import { Search, QrCode, FileText, ShieldCheck } from 'lucide-react';
+import { Search, QrCode, FileDown, TrendingUp } from 'lucide-react';
 
 const STEPS = [
   {
     num: '1',
     title: 'Digite a Placa',
-    desc: 'Insira os 7 dígitos da moto ou carro para iniciar.',
+    desc: 'Insira os 7 dígitos da placa de qualquer veículo (moto, carro, caminhão ou utilitário).',
     icon: Search,
   },
   {
     num: '2',
     title: 'Pagamento Pix Instantâneo',
-    desc: 'Confirmação rápida via WhatsApp sem cadastro demorado.',
+    desc: 'Confirmação rápida e liberação ágil das bases oficiais no WhatsApp.',
     icon: QrCode,
   },
   {
     num: '3',
-    title: 'Receba o Laudo em PDF',
-    desc: 'Relatório oficial direto na tela e no seu WhatsApp.',
-    icon: FileText,
+    title: 'Link Online & PDF Oficial',
+    desc: 'Abra o histórico completo pelo celular e baixe o laudo em PDF para guardar ou valorizar seu bem na venda.',
+    icon: FileDown,
   },
 ];
 
@@ -66,10 +66,10 @@ export function VehicleHistoryHowItWorks({ siteName = 'AF Motos' }: VehicleHisto
         </div>
 
         {/* Compact Store Standard Reassurance */}
-        <div className="mt-4 p-3.5 rounded-xl bg-[#0D111A] border border-[#1F293D] flex items-center gap-3 text-xs text-zinc-400">
-          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="mt-4 p-4 rounded-xl bg-[#0D111A] border border-[#1F293D] flex items-start sm:items-center gap-3 text-xs text-zinc-300">
+          <TrendingUp className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
           <span>
-            <strong className="text-zinc-200">Padrão {siteName || 'de Qualidade'}:</strong> 100% das motos do nosso estoque passam por este mesmo histórico veicular.
+            <strong className="text-white">Diferencial de Mercado:</strong> Ter o laudo oficial em PDF e o link interativo guardados comprova procedência, afasta compradores desconfiados e valoriza seu veículo para vender pelo preço justo!
           </span>
         </div>
       </div>

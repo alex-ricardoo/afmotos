@@ -582,7 +582,7 @@ export function PublicVehicleReportView({
             Compartilhar este Laudo
           </span>
           <p className="text-[11px] text-slate-400">
-            Envie este relatório oficial diretamente para o comprador ou vendedor.
+            Envie este link interativo ou baixe o laudo em PDF para comprovar procedência e valorizar o veículo na negociação.
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">

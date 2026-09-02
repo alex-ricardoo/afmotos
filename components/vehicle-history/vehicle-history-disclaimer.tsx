@@ -10,7 +10,7 @@ export function VehicleHistoryDisclaimer({
 }: VehicleHistoryDisclaimerProps) {
   const disclaimerText =
     customDisclaimer ||
-    'O relatório de histórico veicular reúne informações disponibilizadas por bases de dados integradas na data da consulta. Ele serve como ferramenta de auxílio e suporte à decisão, mas não substitui a vistoria mecânica presencial, conferência de documentos e avaliação física da motocicleta.';
+    'O relatório de histórico veicular reúne informações disponibilizadas por bases de dados integradas na data da consulta. Válido para qualquer veículo registrado em território nacional. Ele serve como ferramenta de auxílio e suporte à decisão, mas não substitui a vistoria mecânica presencial, conferência de documentos e avaliação física do veículo.';
 
   return (
     <section className="py-14 sm:py-16 bg-zinc-900/40 border-t border-white/5 relative">
@@ -37,7 +37,7 @@ export function VehicleHistoryDisclaimer({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs text-zinc-400">
             <div className="flex items-start gap-2">
               <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-              <span>Consulta vinculada estritamente à placa informada.</span>
+              <span>Válido para qualquer tipo de veículo registrado no Brasil.</span>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />

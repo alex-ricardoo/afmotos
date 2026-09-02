@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, Zap, MessageCircle, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Lock, Zap, MessageCircle, ArrowRight, FileDown, Link2, TrendingUp } from 'lucide-react';
 import { MercosulPlateInput } from './mercosul-plate-input';
 import { VehicleHistorySettings } from '@/types/site-settings';
 import { isValidBrazilianPlate } from '@/lib/vehicle-lookup/plate';
@@ -34,12 +34,12 @@ export function VehicleHistoryHero({
     e.preventDefault();
 
     if (!plate || plate.trim().length === 0) {
-      setErrorMessage('Digite a placa da moto ou carro para consultar.');
+      setErrorMessage('Digite a placa de qualquer veículo (moto, carro, caminhão ou utilitário) para consultar.');
       return;
     }
 
     if (!isValidBrazilianPlate(plate)) {
-      setErrorMessage('Informe uma placa válida no padrão Mercosul ou antigo (ex: ABC1D23 ou ABC-1234).');
+      setErrorMessage('Informe uma placa válida no padrão Mercosul ou tradicional (ex: ABC1D23 ou ABC-1234).');
       return;
     }
 
@@ -83,7 +83,7 @@ export function VehicleHistoryHero({
           {/* Tag de Urgência & Segurança */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-bold tracking-wide shadow-lg shadow-black/40 animate-in fade-in slide-in-from-top-3 duration-500">
             <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>Consulta Veicular Oficial • Carros & Motos</span>
+            <span>Consulta Veicular Nacional • Qualquer Veículo com Placa no Brasil</span>
           </div>
 
           {/* Headline Poderosa & Direta */}
@@ -94,9 +94,15 @@ export function VehicleHistoryHero({
             </span>
           </h1>
 
-          {/* Sub-headline */}
-          <p className="text-base sm:text-lg lg:text-xl text-zinc-200 max-w-2xl leading-relaxed font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-            Descubra leilão, gravame/financiamento, sinistro, multas e débitos com atendimento ágil e 100% humanizado apenas pela placa.
+          {/* Sub-headline com Copywriting Persuasivo */}
+          <p className="text-base sm:text-lg lg:text-xl text-zinc-200 max-w-3xl leading-relaxed font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+            Descubra leilão, gravame, sinistro e multas de qualquer veículo no Brasil. Receba um{' '}
+            <strong className="text-amber-300 font-bold">link exclusivo online</strong> e baixe o{' '}
+            <strong className="text-amber-300 font-bold">laudo oficial em PDF</strong> para deixar guardado ou apresentar na hora de vender e{' '}
+            <span className="text-white font-bold underline decoration-amber-400 decoration-2 underline-offset-4">
+              valorizar seu patrimônio na negociação
+            </span>
+            .
           </p>
 
           {/* Box de Input da Placa e CTA Primário */}
@@ -104,10 +110,10 @@ export function VehicleHistoryHero({
             <div className="bg-[#131A26] border border-[#1F293D] rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur-xl space-y-5">
               <div className="text-center space-y-1">
                 <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 block">
-                  Digite a placa do veículo:
+                  Digite a placa do veículo (qualquer modelo no Brasil):
                 </label>
                 <p className="text-[11px] text-zinc-400">
-                  Padrão Mercosul (<span className="text-amber-400 font-mono">BRA2E19</span>) ou Antigo (<span className="text-amber-400 font-mono">ABC-1234</span>)
+                  Padrão Mercosul (<span className="text-amber-400 font-mono">BRA2E19</span>) ou Antigo (<span className="text-amber-400 font-mono">ABC-1234</span>) • Válido para todo o território nacional
                 </p>
               </div>
 
@@ -131,20 +137,20 @@ export function VehicleHistoryHero({
             </div>
 
             {/* Gatilhos de Confiança Imediatos (Logo abaixo do botão) */}
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 text-xs font-medium text-zinc-400">
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-y-2 gap-x-3 sm:gap-x-4 text-xs font-medium text-zinc-400">
               <span className="flex items-center gap-1.5 text-zinc-300">
-                <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Bases Oficiais Senatran & Detran</span>
+                <Link2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Link Online Exclusivo</span>
               </span>
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
-                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>Atendimento 100% Humano</span>
+                <FileDown className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Laudo Oficial em PDF</span>
               </span>
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
-                <MessageCircle className="w-3.5 h-3.5 text-[#25D366] shrink-0" />
-                <span>Receba em PDF no WhatsApp</span>
+                <TrendingUp className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                <span>Valorize seu Bem</span>
               </span>
             </div>
           </div>

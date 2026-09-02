@@ -5,9 +5,9 @@ import { getVehicleLookupConfig } from '@/lib/vehicle-lookup/config';
 import { VehicleLookupTabsClient } from '@/components/admin/vehicle-lookup/vehicle-lookup-tabs-client';
 
 export const metadata: Metadata = {
-  title: 'Consulta de Placa & Laudos',
+  title: 'Consulta Veicular por Placa & Laudos',
   description:
-    'Diagnóstico veicular completo por placa com snapshot JSONB, prevenção de dupla cobrança, cache pago e emissão de laudo em PDF.',
+    'Diagnóstico veicular completo para qualquer tipo de veículo com placa no território nacional (motos, carros, caminhões e utilitários) com snapshot JSONB, prevenção de dupla cobrança, cache pago e emissão de laudo em PDF.',
   robots: {
     index: false,
     follow: false,

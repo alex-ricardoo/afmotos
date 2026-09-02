@@ -31,7 +31,7 @@ const navigation = [
   { name: 'Contatos & Propostas', href: '/admin/propostas', icon: MessageSquare },
   { name: 'Gastos', href: '/admin/gastos', icon: Wallet },
   { name: 'Relatórios', href: '/admin/relatorios', icon: BarChart3 },
-  { name: 'Consulta de Placa', href: '/admin/consulta-placa', icon: FileSearch },
+  { name: 'Consulta Veicular', href: '/admin/consulta-placa', icon: FileSearch },
   { name: 'Tabela FIPE', href: '/admin/fipe', icon: Scale },
   { name: 'Configurações', href: '/admin/configuracoes', icon: Settings },
 ];

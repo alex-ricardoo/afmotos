@@ -34,8 +34,8 @@ export async function generateMetadata(): Promise<Metadata> {
     currency: 'BRL',
   });
 
-  const title = `Histórico Veicular Oficial | Consulta por Placa | ${siteName}`;
-  const description = `Não caia em golpes. Consulte histórico completo de leilão, sinistro, gravames, multas e débitos por apenas ${priceFormatted} na ${siteName}. Laudo oficial imediato em PDF no WhatsApp.`;
+  const title = `Consulta Veicular Oficial | Qualquer Veículo por Placa | ${siteName}`;
+  const description = `Não caia em golpes. Consulte histórico completo de leilão, sinistro, gravames, multas e débitos para motos, carros, caminhões e utilitários em todo o Brasil por apenas ${priceFormatted} na ${siteName}. Laudo oficial imediato em PDF no WhatsApp.`;
 
   return buildPageMetadata({
     title,
@@ -82,12 +82,16 @@ export default async function HistoricoVeicularPage() {
         answer: 'O processo é ágil e 100% humanizado. Um especialista da equipe confere a placa, emite o laudo oficial e envia em PDF no seu WhatsApp em poucos minutos.',
       },
       {
-        question: 'A consulta serve para moto e carro?',
-        answer: 'Sim! Atende motos, carros de passeio, utilitários e caminhonetes.',
+        question: 'A consulta serve para qualquer tipo de veículo com placa no Brasil?',
+        answer: 'Sim! Atende 100% dos veículos com placa nacional: motos, ciclomotores, carros de passeio, utilitários, picapes e caminhões em todo o Brasil.',
       },
       {
-        question: 'O laudo é aceito para comprovar a procedência na venda?',
-        answer: 'Sim! Apresentar o histórico com autenticação digital gera credibilidade e acelera a venda do veículo.',
+        question: 'Como o laudo me ajuda a valorizar o veículo na hora da venda?',
+        answer: 'Você receberá um link exclusivo com todo o histórico e poderá baixar o laudo em PDF. Apresentar o laudo limpo elimina desconfianças, evita descontos abusivos e valoriza seu bem na negociação.',
+      },
+      {
+        question: 'Pessoa física pode comprar pacotes com desconto para avaliar vários veículos?',
+        answer: 'Sim! Oferecemos pacotes com descontos progressivos por consulta com créditos que não expiram, ideal para compradores avaliando opções e para lojistas ou revendedores.',
       },
     ],
   });

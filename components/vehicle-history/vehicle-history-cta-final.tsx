@@ -45,14 +45,13 @@ export function VehicleHistoryCtaFinal({
 
         <div className="space-y-3">
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight font-heading">
-            Não caia em golpes.{' '}
+            Proteja seu dinheiro.{' '}
             <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 bg-clip-text text-transparent">
-              Consulte antes de fechar negócio.
+              Valorize seu patrimônio na venda.
             </span>
           </h2>
-          <p className="text-sm sm:text-base text-zinc-300 max-w-xl mx-auto">
-            Envie a placa pelo WhatsApp, faça o pagamento direto via Pix e receba seu laudo completo em minutos por apenas{' '}
-            <strong className="text-amber-400">{formattedPrice}</strong>.
+          <p className="text-sm sm:text-base text-zinc-300 max-w-2xl mx-auto leading-relaxed">
+            Receba um <strong className="text-amber-400 font-semibold">link exclusivo interativo</strong> e baixe o <strong className="text-amber-400 font-semibold">laudo oficial em PDF</strong> em poucos minutos no WhatsApp por apenas <strong className="text-amber-400">{formattedPrice}</strong>. Guarde a prova de procedência ou mostre ao comprador para vender muito mais rápido!
           </p>
         </div>
 

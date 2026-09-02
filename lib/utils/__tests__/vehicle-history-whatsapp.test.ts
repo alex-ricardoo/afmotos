@@ -61,10 +61,10 @@ describe('Vehicle History WhatsApp helper and plate validation', () => {
     assert.ok(decoded.includes('Placa ABC-1234 na loja AF Motos por'));
   });
 
-  it('should build B2B packages WhatsApp link with pre-formatted message', () => {
+  it('should build packages WhatsApp link with pre-formatted message', () => {
     const url = buildVehicleHistoryB2BWhatsAppUrl('81985901175');
     assert.ok(url.includes('https://wa.me/5581985901175'));
     const decoded = decodeURIComponent(url);
-    assert.ok(decoded.includes('tabela de preços e pacotes de consultas para loja/revenda'));
+    assert.ok(decoded.includes('tabela de preços e pacotes de consultas com desconto'));
   });
 });

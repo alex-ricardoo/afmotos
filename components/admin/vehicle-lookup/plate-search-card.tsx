@@ -165,11 +165,14 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
         <div className="absolute -left-16 -bottom-16 w-56 h-56 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="text-center space-y-2 mb-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
+            <span>Bases Nacionais • Motos, Carros, Caminhões e Utilitários</span>
+          </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            Diagnóstico Veicular por Placa
+            Consulta Veicular por Placa
           </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
-            Digite a placa abaixo para consultar dados oficiais do Senatran, gravames, débitos estaduais, leilão e FIPE.
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto">
+            Válido para qualquer tipo de veículo com placa registrada em território nacional. Consulte dados oficiais do Senatran, gravames, débitos estaduais, leilão e FIPE.
           </p>
         </div>
 
@@ -185,7 +188,7 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
             />
 
             <p className="text-[11px] text-muted-foreground mt-3 text-center">
-              Pressione <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px] text-foreground font-semibold">Enter</kbd> para verificar ou clique no botão abaixo.
+              Padrão Mercosul ou antigo de qualquer estado do Brasil. Pressione <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-[10px] text-foreground font-semibold">Enter</kbd> para verificar ou clique no botão abaixo.
             </p>
           </div>
 
@@ -205,7 +208,7 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
               ) : (
                 <>
                   <Search className="w-5 h-5" />
-                  Verificar Placa & Diagnóstico
+                  Verificar Placa & Diagnóstico Nacional
                 </>
               )}
             </Button>
