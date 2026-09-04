@@ -12,24 +12,24 @@ export function PaymentMethods({ variant = 'compact', className }: PaymentMethod
   if (variant === 'compact') {
     return (
       <div className={cn('flex items-center flex-wrap gap-1.5', className)}>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-[10px] font-semibold text-zinc-300">
-          <Banknote className="w-3 h-3 text-emerald-400 shrink-0" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900/90 border border-zinc-800/80 text-[10px] font-medium text-zinc-400">
+          <Banknote className="w-3 h-3 text-zinc-500 shrink-0" />
           Dinheiro
         </span>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-[10px] font-semibold text-zinc-300">
-          <Smartphone className="w-3 h-3 text-sky-400 shrink-0" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900/90 border border-zinc-800/80 text-[10px] font-medium text-zinc-400">
+          <Smartphone className="w-3 h-3 text-zinc-500 shrink-0" />
           PIX
         </span>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-[10px] font-bold text-amber-300">
-          <CreditCard className="w-3 h-3 shrink-0" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900/90 border border-zinc-800/80 text-[10px] font-medium text-zinc-400">
+          <CreditCard className="w-3 h-3 text-zinc-500 shrink-0" />
           Cartão até 18x
         </span>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/25 text-[10px] font-bold text-sky-300">
-          <Landmark className="w-3 h-3 shrink-0" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900/90 border border-zinc-800/80 text-[10px] font-medium text-zinc-400">
+          <Landmark className="w-3 h-3 text-zinc-500 shrink-0" />
           Financiamento
         </span>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[10px] font-bold text-emerald-300">
-          <Bike className="w-3 h-3 shrink-0" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-900/90 border border-zinc-800/80 text-[10px] font-medium text-zinc-400">
+          <Bike className="w-3 h-3 text-zinc-500 shrink-0" />
           Moto na entrada
         </span>
       </div>

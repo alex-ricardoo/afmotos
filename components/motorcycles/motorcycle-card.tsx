@@ -4,10 +4,8 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bike, Calendar, Gauge, Zap, ArrowUpRight, Share2, Sparkles, ShieldCheck } from 'lucide-react';
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { MotorcycleStatusBadge } from './motorcycle-status-badge';
 import { formatCurrency } from '@/lib/utils/format';
-import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 import { cn } from '@/lib/utils';
 import { MotorcycleShareDialog } from './motorcycle-share-dialog';
 import { CONSTANTS } from '@/lib/utils/constants';
@@ -45,20 +43,16 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
   const storeName = siteName || CONSTANTS.STORE_NAME;
   const initials = getSiteInitials(storeName);
 
-  const whatsappMessage = `Olá! Tenho interesse na ${motorcycle.brand} ${motorcycle.model} ${motorcycle.year_model}${motorcycle.price ? ` (R$ ${motorcycle.price.toLocaleString('pt-BR')})` : ''} anunciada no site da ${storeName}. Poderia me passar mais detalhes?`;
-
-  const whatsappUrl = generateWhatsAppLink(whatsappPhone, whatsappMessage);
-
   return (
     <>
       <div
         className={cn(
-          'relative flex flex-col overflow-hidden rounded-2xl bg-[#151515] border shadow-sm w-full h-full transition-all duration-300',
+          'relative flex flex-col overflow-hidden rounded-2xl bg-zinc-950 border shadow-sm w-full h-full transition-all duration-300',
           isSold
             ? 'border-zinc-800/80 hover:border-zinc-700/80'
             : isFeatured
-              ? 'group border-amber-500/60 bg-gradient-to-b from-[#1c160c] via-[#151515] to-[#151515] shadow-[0_0_25px_rgba(245,158,11,0.15)] ring-1 ring-amber-500/30 hover:border-amber-400 hover:shadow-[0_0_35px_rgba(245,158,11,0.25)] active:scale-[0.98]'
-              : 'group border-[#c9a44c]/20 hover:border-[#e3c56c]/60 hover:shadow-[0_0_25px_rgba(201,164,76,0.15)] active:scale-[0.98]',
+              ? 'group border-amber-500/40 hover:border-amber-500/70 shadow-[0_0_20px_rgba(245,158,11,0.08)] active:scale-[0.98]'
+              : 'group border-zinc-800/80 hover:border-zinc-700 hover:shadow-lg hover:shadow-black/50 active:scale-[0.98]',
         )}
       >
         {/* Top Image Container */}
@@ -127,10 +121,12 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
                   <span>Destaque</span>
                 </div>
               )}
-              <MotorcycleStatusBadge
-                status={motorcycle.status}
-                className="backdrop-blur-md bg-black/75 border-zinc-700/60 text-white shadow-lg"
-              />
+              {motorcycle.status && motorcycle.status.toUpperCase() !== 'AVAILABLE' && (
+                <MotorcycleStatusBadge
+                  status={motorcycle.status}
+                  className="backdrop-blur-md bg-black/75 border-zinc-700/60 text-white shadow-lg"
+                />
+              )}
             </div>
 
             {/* Floating Share Button on Card Image */}
@@ -143,9 +139,9 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
               }}
               title="Compartilhar esta moto"
               aria-label="Compartilhar esta moto"
-              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-[#c9a44c] text-white hover:text-black border border-white/20 hover:border-[#c9a44c] flex items-center justify-center backdrop-blur-md transition-all shadow-md cursor-pointer"
+              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 flex items-center justify-center backdrop-blur-md transition-all shadow-md cursor-pointer"
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="w-3.5 h-3.5" />
             </button>
 
             {/* Gradiente escuro na base da imagem */}
@@ -161,12 +157,6 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
               <span className="block text-[11px] text-zinc-400 font-semibold tracking-wider uppercase">
                 {motorcycle.brand}
               </span>
-              {isFeatured && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-400">
-                  <Sparkles className="w-2.5 h-2.5" />
-                  <span>Seleção {initials}</span>
-                </span>
-              )}
             </div>
             {isSold ? (
               <h3 className="text-base font-bold text-white line-clamp-1 leading-tight flex items-center gap-1.5 flex-wrap">
@@ -249,27 +239,27 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
 
           {/* Preço e Call To Action */}
           <div className="pt-2 mt-auto flex flex-col gap-3">
-            {/* Mini badge de garantia e histórico (apenas para motos disponíveis) */}
+            {/* Mini badge de garantia e histórico harmonizados */}
             {!isSold && (
-              <div className="flex items-center justify-between gap-1 text-[10px] font-bold">
-                <span className="text-emerald-400 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+              <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-400 font-medium">
+                <span className="flex items-center gap-1.5 text-zinc-300">
+                  <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
                   <span>Histórico Verificado</span>
                 </span>
-                <span className="text-amber-400/90">Garantia 90 dias</span>
+                <span className="text-zinc-400">Garantia 90 dias</span>
               </div>
             )}
             {/* Preço */}
             {isSold ? (
               <div className="flex items-end gap-1.5">
-                <span className="text-lg font-extrabold text-zinc-300 tracking-tight leading-none">
+                <span className="text-xl font-extrabold text-zinc-300 tracking-tight leading-none">
                   {motorcycle.price ? formatCurrency(motorcycle.price) : 'Vendido'}
                 </span>
               </div>
             ) : (
               <Link href={`/motos/${motorcycle.slug}`} className="block cursor-pointer">
                 <div className="flex items-end gap-1.5">
-                  <span className="text-lg font-extrabold text-amber-400 tracking-tight leading-none">
+                  <span className="text-xl sm:text-2xl font-black text-amber-400 tracking-tight leading-none">
                     {motorcycle.price ? formatCurrency(motorcycle.price) : 'Consulte'}
                   </span>
                   {motorcycle.price && motorcycle.price < 500 && motorcycle.status === 'RENTED' && (
@@ -286,40 +276,30 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
               </div>
             ) : (
               <>
-                <PaymentMethods variant="compact" className="mb-1" />
-                <div className="flex items-center gap-2 w-full">
-                {/* Botão Secundário: Compartilhar */}
-                <button
-                  type="button"
-                  onClick={() => setShareOpen(true)}
-                  title="Compartilhar esta moto"
-                  aria-label={`Compartilhar ${motorcycle.brand} ${motorcycle.model}`}
-                  className="flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-xl bg-[#202020] border border-[#c9a44c]/20 hover:bg-[#c9a44c] hover:text-black active:scale-[0.98] text-[#e3c56c] transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e3c56c] cursor-pointer"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
+                <PaymentMethods variant="compact" className="mb-0.5" />
+                <div className="flex items-center gap-2 w-full pt-1">
+                  {/* Botão Secundário: Compartilhar */}
+                  <button
+                    type="button"
+                    onClick={() => setShareOpen(true)}
+                    title="Compartilhar esta moto"
+                    aria-label={`Compartilhar ${motorcycle.brand} ${motorcycle.model}`}
+                    className="flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 active:scale-[0.98] text-zinc-400 hover:text-white transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 cursor-pointer"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
 
-                {/* Botão Secundário: Detalhes */}
-                <Link
-                  href={`/motos/${motorcycle.slug}`}
-                  title="Ver detalhes da moto"
-                  aria-label={`Ver detalhes de ${motorcycle.brand} ${motorcycle.model}`}
-                  className="flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-xl bg-[#202020] border border-[#c9a44c]/20 hover:bg-[#c9a44c] hover:text-black active:scale-[0.98] text-[#e3c56c] transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e3c56c] cursor-pointer"
-                >
-                  <ArrowUpRight className="w-5 h-5" />
-                </Link>
-
-                {/* Botão Primário: WhatsApp */}
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm transition-all duration-100 sm:duration-200 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515] cursor-pointer"
-                >
-                  <WhatsAppIcon className="w-5 h-5 fill-current" />
-                  <span className="truncate">WhatsApp</span>
-                </a>
-              </div>
+                  {/* Botão Primário: Ver Detalhes */}
+                  <Link
+                    href={`/motos/${motorcycle.slug}`}
+                    title="Ver detalhes da moto"
+                    aria-label={`Ver detalhes de ${motorcycle.brand} ${motorcycle.model}`}
+                    className="flex-1 flex items-center justify-center gap-2 h-10 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-zinc-950 font-bold text-sm transition-all duration-200 shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 cursor-pointer group/btn"
+                  >
+                    <span>Ver Detalhes</span>
+                    <ArrowUpRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
+                  </Link>
+                </div>
               </>
             )}
           </div>

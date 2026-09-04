@@ -318,12 +318,13 @@ export function MobileFiltersDrawer({
         render={
           <Button
             variant="outline"
-            className="md:hidden flex items-center justify-center flex-1 gap-2 h-12 px-4 rounded-xl border-zinc-800 font-bold text-sm bg-zinc-900 text-white shadow-sm cursor-pointer"
+            size="sm"
+            className="flex items-center justify-center gap-1.5 h-7 sm:h-8 px-2.5 rounded-lg border-zinc-800 hover:border-amber-500/30 font-bold text-[11px] bg-zinc-900/90 text-zinc-200 hover:text-white shadow-xs cursor-pointer"
           >
-            <SlidersHorizontal className="w-4 h-4 text-amber-500" />
+            <SlidersHorizontal className="w-3 h-3 text-amber-400" />
             <span>Filtros</span>
             {activeCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-amber-500 text-zinc-950 text-[11px] font-bold flex items-center justify-center">
+              <span className="w-3.5 h-3.5 rounded-full bg-amber-500 text-zinc-950 text-[9px] font-extrabold flex items-center justify-center">
                 {activeCount}
               </span>
             )}
@@ -369,41 +370,53 @@ export function CatalogControls() {
   return (
     <div className="flex flex-col sm:flex-row items-center gap-3">
       <div className="hidden md:flex items-center gap-2">
-        <span className="text-sm font-bold text-zinc-400 whitespace-nowrap">Ordenar por:</span>
-        <Select value={currentSort} onValueChange={(val) => updateParam('sort', val)}>
-          <SelectTrigger className="w-[180px] h-11 bg-zinc-900 border-zinc-800 text-white font-semibold focus-visible:ring-amber-500">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 whitespace-nowrap">
+          Ordenar:
+        </span>
+        <Select value={currentSort} onValueChange={(val) => updateParam('sort', val ?? '')}>
+          <SelectTrigger className="w-[170px] h-10 bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-white text-xs font-bold rounded-xl focus-visible:ring-amber-500 cursor-pointer">
             <SelectValue placeholder="Mais recentes" />
           </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-            <SelectItem value="recent">Mais recentes</SelectItem>
-            <SelectItem value="price_asc">Menor Preço</SelectItem>
-            <SelectItem value="price_desc">Maior Preço</SelectItem>
-            <SelectItem value="year_desc">Ano Mais Recente</SelectItem>
-            <SelectItem value="km_asc">Menor KM</SelectItem>
+          <SelectContent className="bg-zinc-950 border-zinc-800 text-white rounded-xl shadow-xl">
+            <SelectItem value="recent" className="text-xs focus:bg-zinc-800 focus:text-white cursor-pointer">
+              Mais recentes
+            </SelectItem>
+            <SelectItem value="price_asc" className="text-xs focus:bg-zinc-800 focus:text-white cursor-pointer">
+              Menor Preço
+            </SelectItem>
+            <SelectItem value="price_desc" className="text-xs focus:bg-zinc-800 focus:text-white cursor-pointer">
+              Maior Preço
+            </SelectItem>
+            <SelectItem value="year_desc" className="text-xs focus:bg-zinc-800 focus:text-white cursor-pointer">
+              Ano Mais Recente
+            </SelectItem>
+            <SelectItem value="km_asc" className="text-xs focus:bg-zinc-800 focus:text-white cursor-pointer">
+              Menor KM
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="hidden md:flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-1">
+      <div className="hidden md:flex items-center bg-zinc-950 border border-zinc-800 rounded-xl p-1 shadow-xs">
         <button
           onClick={() => updateParam('view', 'grid')}
           className={cn(
-            'p-1.5 rounded-md transition-colors',
-            currentView === 'grid' ? 'bg-amber-500 text-zinc-950' : 'text-zinc-400 hover:text-white',
+            'p-1.5 rounded-lg transition-all cursor-pointer',
+            currentView === 'grid' ? 'bg-amber-500 text-zinc-950 shadow-xs' : 'text-zinc-400 hover:text-white',
           )}
           aria-label="Visualização em Grade"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
         </button>
         <button
           onClick={() => updateParam('view', 'list')}
           className={cn(
-            'p-1.5 rounded-md transition-colors',
-            currentView === 'list' ? 'bg-amber-500 text-zinc-950' : 'text-zinc-400 hover:text-white',
+            'p-1.5 rounded-lg transition-all cursor-pointer',
+            currentView === 'list' ? 'bg-amber-500 text-zinc-950 shadow-xs' : 'text-zinc-400 hover:text-white',
           )}
           aria-label="Visualização em Lista"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
         </button>
       </div>
     </div>

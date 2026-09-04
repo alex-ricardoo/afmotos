@@ -1,5 +1,14 @@
 import React from 'react';
-import { SlidersHorizontal, ShieldCheck, Wrench, FileCheck } from 'lucide-react';
+import {
+  ShieldCheck,
+  Wrench,
+  FileCheck,
+  CreditCard,
+  Sparkles,
+  CheckCircle2,
+  Bike,
+} from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { MotorcycleGrid } from '@/components/motorcycles/motorcycle-grid';
 import {
   MotorcycleFilters,
@@ -9,8 +18,17 @@ import {
 import { getAllMotorcycles, getMotorcycleFilterFacets } from '@/lib/queries/motorcycles';
 import { getSettings } from '@/lib/actions/settings';
 import { CONSTANTS } from '@/lib/utils/constants';
+import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Metadata } from 'next';
-import { buildPageMetadata, JsonLd, buildBreadcrumbsSchema, SEO_CONFIG } from '@/lib/seo';
+import {
+  buildPageMetadata,
+  JsonLd,
+  buildBreadcrumbsSchema,
+  buildFaqSchema,
+  SEO_CONFIG,
+} from '@/lib/seo';
 
 interface CatalogProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -52,71 +70,92 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
   ]);
 
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
-  const activeBrand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand : undefined;
-  const activeSearch =
-    typeof (resolvedParams.search || resolvedParams.q) === 'string'
-      ? ((resolvedParams.search || resolvedParams.q) as string)
-      : undefined;
 
   const currentView =
     typeof resolvedParams.view === 'string' && resolvedParams.view === 'list' ? 'list' : 'grid';
+
+  const customOrderWhatsappUrl = generateWhatsAppLink(
+    settings?.whatsapp_phone,
+    `Olá! Estou buscando uma moto específica no estoque da ${siteName} e gostaria de saber se vocês têm ou conseguem para mim.`,
+  );
 
   const breadcrumbsSchema = buildBreadcrumbsSchema([
     { name: 'Início', path: '/' },
     { name: 'Motos Disponíveis', path: '/motos' },
   ]);
 
+  const faqSchema = buildFaqSchema([
+    {
+      question: `As motos do estoque da ${siteName} possuem garantia?`,
+      answer:
+        'Sim! Todas as motocicletas comercializadas pela nossa loja contam com garantia legal de 90 dias para motor e câmbio, além de rigorosa revisão mecânica pré-entrega.',
+    },
+    {
+      question: `As motos têm laudo cautelar aprovado?`,
+      answer:
+        'Sim, 100% das motos do nosso estoque possuem consulta veicular e laudo cautelar aprovado, garantindo procedência limpa, sem sinistro ou passagem por leilão.',
+    },
+    {
+      question: 'A AF Motos aceita moto usada na troca?',
+      answer:
+        'Sim! Aceitamos sua moto usada como parte do pagamento com avaliação justa e transparente baseada na Tabela FIPE e no estado real de conservação.',
+    },
+    {
+      question: 'Quais as formas de pagamento disponíveis?',
+      answer:
+        'Trabalhamos com pagamento à vista via PIX ou transferência, financiamento bancário com as melhores taxas do mercado e parcelamento facilitado no cartão de crédito em até 21x.',
+    },
+  ]);
+
   return (
-    <div className="bg-zinc-950 min-h-screen pb-12 text-zinc-100">
+    <div className="bg-zinc-950 min-h-screen pb-20 text-zinc-100">
       <JsonLd data={breadcrumbsSchema} id="catalog-breadcrumbs-schema" />
-      {/* Header Banner */}
-      <div className="bg-zinc-950 text-white pt-10 pb-5 md:py-14 border-b border-zinc-900">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="max-w-2xl space-y-3">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-500">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Estoque Garantido {siteName}</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white">
+      <JsonLd data={faqSchema} id="catalog-faq-schema" />
+
+      {/* Ultra-Compact Top Bar: Title, Count, Mobile Filter Trigger & Desktop Controls */}
+      <div className="border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md sticky top-20 z-30 shadow-xs">
+        <div className="container mx-auto px-3 sm:px-6 max-w-7xl py-2 sm:py-2.5">
+          <div className="flex items-center justify-between gap-2.5">
+            {/* Title & Live Count */}
+            <div className="flex items-center gap-2 min-w-0">
+              <h1 className="text-sm sm:text-base md:text-xl font-black text-white font-heading tracking-tight whitespace-nowrap">
                 Motos Disponíveis
               </h1>
-              <p className="text-sm md:text-base text-zinc-400 leading-relaxed">
-                As melhores motos revisadas, com laudo cautelar aprovado e prontas para rodar.
-              </p>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="hidden xs:inline">
+                  {motos.length} {motos.length === 1 ? 'moto' : 'motos'}
+                </span>
+                <span className="xs:hidden">{motos.length}</span>
+              </span>
             </div>
 
-            <div className="flex-shrink-0">
-              <CatalogControls />
+            {/* Actions: Mobile Filters Drawer Button & Desktop Controls */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="md:hidden">
+                <MobileFiltersDrawer totalResults={motos.length} facets={facets} />
+              </div>
+              <div className="hidden md:flex items-center gap-2">
+                <CatalogControls />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="container mx-auto px-4 md:px-6 py-8">
-        {/* Results & Mobile Filter Trigger Bar */}
-        <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-zinc-900 md:hidden">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-extrabold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md">
-              {motos.length}
-            </span>
-            <span className="text-sm text-zinc-400 font-semibold">
-              {motos.length === 1 ? 'moto' : 'motos'}
-            </span>
-          </div>
-
-          <MobileFiltersDrawer totalResults={motos.length} facets={facets} />
-        </div>
-
+      <div className="container mx-auto px-3 sm:px-6 pt-2.5 pb-8 md:py-8 max-w-7xl">
         {/* Catalog Grid + Desktop Sidebar */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start relative">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 items-start relative">
           {/* Desktop Filter Sidebar */}
-          <aside className="hidden md:block md:col-span-1 sticky top-24 self-start">
-            <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-900">
-                <span className="text-sm font-extrabold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md">
-                  {motos.length} motos
+          <aside className="hidden md:block md:col-span-1 sticky top-36 self-start">
+            <div className="bg-zinc-900/60 backdrop-blur-xl p-5 rounded-2xl border border-zinc-800/80 shadow-lg space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  Filtros
+                </span>
+                <span className="text-xs font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                  {motos.length} resultados
                 </span>
               </div>
               <MotorcycleFilters facets={facets} />
@@ -127,79 +166,115 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
           <main className="md:col-span-3">
             <MotorcycleGrid
               motorcycles={motos}
-              emptyMessage="Nenhuma moto encontrada com os filtros atuais. Tente ajustar a busca ou limpar os filtros."
+              emptyMessage="Nenhuma moto encontrada com os filtros selecionados. Tente ajustar os termos ou limpar os filtros."
               viewMode={currentView}
               whatsappPhone={settings?.whatsapp_phone}
               siteName={siteName}
             />
           </main>
         </div>
-      </div>
 
-      {/* Trust Bar Pre-Footer */}
-      <div className="container mx-auto px-4 md:px-6 mt-16 mb-8 max-w-7xl">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {/* Card 1 */}
-          <div className="bg-zinc-900/40 border border-zinc-800/60 hover:border-amber-500/30 transition-colors rounded-2xl p-6 flex flex-col gap-4 text-left">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5 text-amber-500" />
+        {/* Custom Order Callout Box VIP */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900/90 via-zinc-900/60 to-zinc-950 p-8 sm:p-10 rounded-3xl border border-amber-500/30 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-black/70 mt-16">
+          {/* Subtle Top Gold Bar */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+
+          {/* Ambient Glow */}
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="space-y-3 text-center md:text-left max-w-xl relative z-10">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-400">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Não encontrou seu modelo ideal?</span>
             </div>
-            <div>
-              <h4 className="text-white font-bold text-base mb-1.5">Negociação Transparente</h4>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                Combinamos valores e condições de forma clara antes de qualquer decisão, sem
-                surpresas.
-              </p>
-            </div>
+            <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-heading">
+              Nós encontramos a moto certa para você!
+            </h3>
+            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+              Fale com a nossa equipe pelo WhatsApp. Diga o modelo, ano ou faixa de valor que você
+              procura. Avisamos você em primeira mão assim que uma unidade do seu interesse entrar no estoque.
+            </p>
           </div>
 
-          {/* Card 2 */}
-          <div className="bg-zinc-900/40 border border-zinc-800/60 hover:border-amber-500/30 transition-colors rounded-2xl p-6 flex flex-col gap-4 text-left">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-              <Wrench className="w-5 h-5 text-amber-500" />
-            </div>
-            <div>
-              <h4 className="text-white font-bold text-base mb-1.5">Revisão</h4>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                As motos passam por verificação prévia antes do anúncio, conforme a necessidade de
-                cada veículo.
-              </p>
-            </div>
+          <a
+            href={customOrderWhatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              buttonVariants({ size: 'lg' }),
+              'w-full md:w-auto bg-[#25D366] hover:bg-[#20BD5A] text-white font-extrabold rounded-2xl px-7 h-14 shadow-[0_0_25px_rgba(37,211,102,0.3)] hover:shadow-[0_0_35px_rgba(37,211,102,0.45)] hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2.5 shrink-0 transition-all cursor-pointer relative z-10',
+            )}
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+            </span>
+            <WhatsAppIcon className="w-5 h-5 fill-current" />
+            <span>Encomendar Minha Moto</span>
+          </a>
+        </div>
+
+        {/* Institutional Trust Pillars Bar */}
+        <div className="pt-10 border-t border-zinc-800/80">
+          <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+            <h3 className="text-xl sm:text-2xl font-bold text-white font-heading">
+              Por que comprar na {siteName}?
+            </h3>
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+              Procedência garantida, revisão minuciosa e atendimento transparente para você realizar seu sonho com total segurança.
+            </p>
           </div>
 
-          {/* Card 3 */}
-          <div className="bg-zinc-900/40 border border-zinc-800/60 hover:border-amber-500/30 transition-colors rounded-2xl p-6 flex flex-col gap-4 text-left">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-              <FileCheck className="w-5 h-5 text-amber-500" />
-            </div>
-            <div>
-              <h4 className="text-white font-bold text-base mb-1.5">Documentação Clara</h4>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                Orientação e transparência quanto aos documentos da moto para uma transferência
-                tranquila.
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
+            {/* Pillar 1 */}
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-emerald-500/40 hover:bg-zinc-900/70 transition-all duration-200 group">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h4 className="font-extrabold text-sm text-white group-hover:text-emerald-300 transition-colors">
+                Laudo & Procedência 100%
+              </h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Todas as motos possuem consulta cautelar rigorosa, assegurando procedência limpa, sem sinistro ou passagem por leilão.
               </p>
             </div>
-          </div>
 
-          {/* Card 4 */}
-          <div className="bg-zinc-900/40 border border-zinc-800/60 hover:border-[#25D366]/30 transition-colors rounded-2xl p-6 flex flex-col gap-4 text-left">
-            <div className="w-10 h-10 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 flex items-center justify-center shrink-0">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="text-[#25D366]"
-              >
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-              </svg>
+            {/* Pillar 2 */}
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/40 hover:bg-zinc-900/70 transition-all duration-200 group">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                <Wrench className="w-6 h-6" />
+              </div>
+              <h4 className="font-extrabold text-sm text-white group-hover:text-amber-300 transition-colors">
+                Revisão Mecânica & Garantia
+              </h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Mecânica, parte elétrica, freios e pneus inspecionados com garantia de 90 dias para você rodar com total segurança.
+              </p>
             </div>
-            <div>
-              <h4 className="text-white font-bold text-base mb-1.5">Atendimento Direto</h4>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                Fale diretamente pelo WhatsApp para tirar dúvidas, agendar visita ou negociar sua
-                moto.
+
+            {/* Pillar 3 */}
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/40 hover:bg-zinc-900/70 transition-all duration-200 group">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                <FileCheck className="w-6 h-6" />
+              </div>
+              <h4 className="font-extrabold text-sm text-white group-hover:text-amber-300 transition-colors">
+                Transferência sem Burocracia
+              </h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Cuidamos de toda a documentação no DETRAN para que a transferência de propriedade ocorra com total tranquilidade.
+              </p>
+            </div>
+
+            {/* Pillar 4 */}
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/40 hover:bg-zinc-900/70 transition-all duration-200 group">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                <CreditCard className="w-6 h-6" />
+              </div>
+              <h4 className="font-extrabold text-sm text-white group-hover:text-amber-300 transition-colors">
+                Financiamento & Troca Justa
+              </h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Parcelamento em até 21x no cartão, opções de financiamento bancário e a melhor avaliação na troca da sua moto seminova.
               </p>
             </div>
           </div>
