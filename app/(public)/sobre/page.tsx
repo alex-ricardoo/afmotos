@@ -69,7 +69,7 @@ export default async function SobrePage() {
   ]);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-zinc-950 text-zinc-100">
       <JsonLd data={autoDealerSchema} id="about-autodealer-schema" />
       <JsonLd data={breadcrumbsSchema} id="about-breadcrumbs-schema" />
       <AboutHero
@@ -97,6 +97,7 @@ export default async function SobrePage() {
         email={settings.email}
         socialLinks={settings.socialLinks}
         businessHours={settings.businessHours}
+        siteName={settings.siteName}
       />
     </div>
   );
