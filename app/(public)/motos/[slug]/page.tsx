@@ -13,7 +13,7 @@ import {
   MotorcycleStatusBadge,
   MotorcycleStatus,
 } from '@/components/motorcycles/motorcycle-status-badge';
-import { MotorcycleGrid } from '@/components/motorcycles/motorcycle-grid';
+import { MotorcycleGrid, MotorcycleGridSkeleton } from '@/components/motorcycles/motorcycle-grid';
 import { formatCurrency } from '@/lib/utils/format';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink, generateMotorcycleInterestMessage } from '@/lib/utils/whatsapp';
@@ -321,11 +321,13 @@ export default async function MotorcycleDetailPage({ params }: Props) {
               </Link>
             </div>
 
-            <MotorcycleGrid
-              motorcycles={relatedMotos}
-              whatsappPhone={whatsappPhone}
-              siteName={siteName}
-            />
+            <React.Suspense fallback={<MotorcycleGridSkeleton count={3} />}>
+              <MotorcycleGrid
+                motorcycles={relatedMotos}
+                whatsappPhone={whatsappPhone}
+                siteName={siteName}
+              />
+            </React.Suspense>
           </div>
         )}
       </div>

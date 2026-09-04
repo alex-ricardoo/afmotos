@@ -4,7 +4,6 @@ import { SearchX } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { MotorcycleCard, MotorcycleCardData } from './motorcycle-card';
 import { buttonVariants } from '@/components/ui/button';
-import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 import { cn } from '@/lib/utils';
 
@@ -67,7 +66,8 @@ export function MotorcycleGrid({
     );
   }
 
-  const needsLeadMagnet = viewMode === 'grid' && motorcycles.length > 0 && motorcycles.length % 3 !== 0;
+  const needsLeadMagnet =
+    viewMode === 'grid' && motorcycles.length > 0 && motorcycles.length % 3 !== 0;
 
   return (
     <div
@@ -83,7 +83,7 @@ export function MotorcycleGrid({
           <MotorcycleCard motorcycle={moto} whatsappPhone={whatsappPhone} siteName={siteName} />
         </div>
       ))}
-      
+
       {needsLeadMagnet && (
         <div className="rounded-2xl border-2 border-dashed border-amber-500/40 bg-zinc-900/40 p-5 flex flex-col justify-center items-center text-center space-y-3 min-h-[240px] hover:border-amber-500/60 transition-colors">
           <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
@@ -110,29 +110,28 @@ export function MotorcycleGrid({
   );
 }
 
-export function MotorcycleGridSkeleton({ count = 6 }: { count?: number }) {
+import { MotorcycleCardSkeleton } from './motorcycle-card-skeleton';
+
+export function MotorcycleGridSkeleton({
+  count = 6,
+  className,
+}: {
+  count?: number;
+  className?: string;
+}) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label="Carregando estoque de motos..."
+      className={cn('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6', className)}
+    >
       {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="rounded-2xl bg-card border border-border/60 overflow-hidden shadow-xs animate-pulse"
-        >
-          <div className="aspect-[16/10] bg-muted/80" />
-          <div className="p-5 space-y-4">
-            <div className="space-y-2">
-              <div className="h-3 w-16 bg-muted rounded" />
-              <div className="h-5 w-40 bg-muted rounded" />
-              <div className="h-3 w-28 bg-muted rounded" />
-            </div>
-            <div className="h-10 bg-muted/60 rounded-xl" />
-            <div className="pt-2 flex items-center justify-between border-t border-border/40">
-              <div className="h-6 w-24 bg-muted rounded" />
-              <div className="w-8 h-8 rounded-full bg-muted" />
-            </div>
-          </div>
+        <div key={i} className="w-full">
+          <MotorcycleCardSkeleton />
         </div>
       ))}
+      <span className="sr-only">Carregando catálogo de motocicletas...</span>
     </div>
   );
 }

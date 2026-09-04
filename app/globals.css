@@ -209,3 +209,37 @@
   }
 }
 
+/* Shimmer Animation for Skeleton Screens */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    #18181b 0%,
+    #27272a 35%,
+    #3f3f46 50%,
+    #27272a 65%,
+    #18181b 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Suporte a Acessibilidade: Prefers Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer,
+  [data-slot='skeleton'],
+  .skeleton-shimmer {
+    animation: none !important;
+    background-image: none !important;
+    background-color: #27272a !important;
+  }
+}
+
