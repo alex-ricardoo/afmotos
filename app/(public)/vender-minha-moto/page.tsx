@@ -35,6 +35,11 @@ export default async function VenderMinhaMotoPage() {
 
   const faqSchema = buildFaqSchema([
     {
+      question: `Por que é mais seguro vender para a ${siteName} do que em sites de terceiros?`,
+      answer:
+        `Vender para desconhecidos em sites de classificados traz riscos frequentes de golpes de falso comprovante, intermediários duvidosos e atrasos na transferência no DETRAN. Na ${siteName}, você negocia com uma loja física estabelecida, com total credibilidade no mercado, pagamento à vista na hora e segurança jurídica.`,
+    },
+    {
       question: `Como a ${siteName} avalia minha moto?`,
       answer:
         'Utilizamos a Tabela FIPE oficial atualizada como referência de mercado e avaliamos o estado de conservação, quilometragem e documentação do veículo para fazer uma proposta justa.',
@@ -42,7 +47,7 @@ export default async function VenderMinhaMotoPage() {
     {
       question: 'Como e quando recebo o pagamento da moto?',
       answer:
-        'Após a vistoria presencial e conferência do laudo cautelar e documentação de transferência, o pagamento é realizado integralmente à vista via transferência bancária ou PIX.',
+        'Após a vistoria presencial e conferência da documentação de transferência, o pagamento é realizado integralmente à vista via transferência bancária ou PIX.',
     },
   ]);
 
@@ -66,23 +71,23 @@ export default async function VenderMinhaMotoPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-zinc-300 leading-relaxed max-w-2xl mx-auto font-normal">
-            Receba uma avaliação transparente baseada na Tabela FIPE e uma proposta rápida para
-            vender sua moto com segurança e sem intermediários.
+            Receba uma avaliação transparente baseada na Tabela FIPE e venda sua moto com total segurança,
+            evitando golpes de sites de terceiros e contando com a credibilidade da {siteName}.
           </p>
 
           {/* Quick Value Pillars */}
           <div className="pt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs font-semibold text-zinc-300">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Zero risco de golpes & 100% seguro</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
               <Scale className="w-3.5 h-3.5 text-amber-400" />
               <span>Avaliação de mercado baseada na FIPE</span>
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Histórico Veicular & Procedência Verificados</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
               <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>Pagamento seguro e ágil</span>
+              <span>Pagamento à vista e sem enrolação</span>
             </span>
           </div>
         </div>
@@ -94,48 +99,66 @@ export default async function VenderMinhaMotoPage() {
 
         {/* Institutional Trust Bar */}
         <div className="pt-6 border-t border-zinc-800/80">
-          <div className="text-center max-w-md mx-auto mb-8 space-y-1.5">
-            <h3 className="text-xl font-bold text-white font-heading">
+          <div className="text-center max-w-2xl mx-auto mb-8 space-y-1.5">
+            <h3 className="text-xl sm:text-2xl font-bold text-white font-heading">
               Por que vender sua moto para a {siteName}?
             </h3>
-            <p className="text-xs text-zinc-400">
-              Compromisso com honestidade, agilidade e segurança jurídica em cada negociação.
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+              Livre-se dos riscos de golpes em sites de terceiros e classificados. Aqui você negocia direto com loja física, segurança jurídica e credibilidade comprovada no mercado.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/30 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
-                <Scale className="w-6 h-6" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
+            {/* Benefício 1: Proteção Contra Golpes */}
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-emerald-500/40 hover:bg-zinc-900/70 transition-all duration-200 group">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-6 h-6" />
               </div>
-              <h4 className="font-extrabold text-sm text-white">Avaliação Baseada no Mercado</h4>
+              <h4 className="font-extrabold text-sm text-white group-hover:text-emerald-300 transition-colors">
+                Zero Risco de Golpes
+              </h4>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Utilizamos a Tabela FIPE como referência oficial e avaliamos o estado real de
-                conservação da sua moto com total clareza.
+                Evite falsos comprovantes, compradores desconhecidos e golpes comuns de sites de classificados. Negocie com credibilidade e segurança total.
               </p>
             </div>
 
-            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/30 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+            {/* Benefício 2: Avaliação Justa na FIPE */}
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/40 hover:bg-zinc-900/70 transition-all duration-200 group">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                <Scale className="w-6 h-6" />
+              </div>
+              <h4 className="font-extrabold text-sm text-white group-hover:text-amber-300 transition-colors">
+                Avaliação Baseada no Mercado
+              </h4>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Utilizamos a Tabela FIPE como referência oficial e avaliamos o estado real de
+                conservação da sua moto com total transparência e justiça.
+              </p>
+            </div>
+
+            {/* Benefício 3: Pagamento Direto & Rápido */}
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/40 hover:bg-zinc-900/70 transition-all duration-200 group">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
                 <Banknote className="w-6 h-6" />
               </div>
-              <h4 className="font-extrabold text-sm text-white">
+              <h4 className="font-extrabold text-sm text-white group-hover:text-amber-300 transition-colors">
                 Pagamento Direto & Sem Enrolação
               </h4>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Sem esperar terceiros ou compradores indecisos. Aprovada a moto, o pagamento é feito
-                diretamente na sua conta.
+                Sem esperar intermediários ou compradores indecisos. Aprovada a moto, o pagamento via PIX é feito diretamente na sua conta na hora.
               </p>
             </div>
 
-            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/30 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+            {/* Benefício 4: Transferência Segura no DETRAN */}
+            <div className="bg-zinc-900/50 backdrop-blur-md p-6 rounded-2xl border border-zinc-800/80 text-center space-y-3 hover:border-amber-500/40 hover:bg-zinc-900/70 transition-all duration-200 group">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
                 <FileCheck className="w-6 h-6" />
               </div>
-              <h4 className="font-extrabold text-sm text-white">Transferência Segura no DETRAN</h4>
+              <h4 className="font-extrabold text-sm text-white group-hover:text-amber-300 transition-colors">
+                Transferência Segura no DETRAN
+              </h4>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Cuidamos dos procedimentos documentais para que a transferência de propriedade
-                ocorra com total tranquilidade jurídica.
+                Cuidamos dos procedimentos documentais e comunicação de venda para que você tenha tranquilidade jurídica total e zero dores de cabeça futuras.
               </p>
             </div>
           </div>
