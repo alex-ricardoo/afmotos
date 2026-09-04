@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { buttonVariants } from '@/components/ui/button';
 import { generateWhatsAppLink, generateMotorcycleInterestMessage } from '@/lib/utils/whatsapp';
@@ -35,6 +36,13 @@ export function WhatsAppButton({
   size = 'default',
   isFloating = true,
 }: WhatsAppButtonProps) {
+  const pathname = usePathname();
+
+  // If floating on /historico-veicular, avoid duplicate button (the page has its own dedicated context-aware WhatsApp button)
+  if (isFloating && pathname?.startsWith('/historico-veicular')) {
+    return null;
+  }
+
   const contactPhone = phone || settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
 
@@ -43,6 +51,7 @@ export function WhatsAppButton({
     (motorcycle
       ? `Olá! Vim pelo site da ${siteName} e gostaria de saber mais sobre a ${motorcycle.brand} ${motorcycle.model}${motorcycle.year_model ? `, ano ${motorcycle.year_model}` : ""}.`
       : `Olá! Vim pelo site da ${siteName} e gostaria de saber mais sobre as motos disponíveis.`);
+
 
   const link = generateWhatsAppLink(contactPhone, finalMessage);
 

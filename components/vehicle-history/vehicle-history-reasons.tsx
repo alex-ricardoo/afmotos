@@ -5,9 +5,7 @@ import {
   ShieldCheck,
   TrendingUp,
   BadgeCheck,
-  Zap,
   DollarSign,
-  FileCheck2,
   FileDown,
   Link2,
 } from 'lucide-react';
@@ -28,34 +26,36 @@ export function VehicleHistoryReasons() {
           </h2>
         </div>
 
-        {/* Interactive Segmented Switcher (Tabs) */}
+        {/* Interactive Segmented Switcher (Tabs with min 44px touch target) */}
         <div className="max-w-md mx-auto mb-5 p-1 rounded-2xl bg-[#080B11] border border-[#1F293D] grid grid-cols-2 gap-1">
           <button
             type="button"
+            id="tab-reasons-buyer"
             onClick={() => setActiveTab('buyer')}
             className={cn(
-              'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer',
+              'min-h-[44px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50',
               activeTab === 'buyer'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                 : 'text-zinc-400 hover:text-white',
             )}
           >
-            <ShieldCheck className="w-4 h-4" />
+            <ShieldCheck className="w-4 h-4 shrink-0" />
             <span>Para Compradores</span>
           </button>
 
           <button
             type="button"
+            id="tab-reasons-seller"
             onClick={() => setActiveTab('seller')}
             className={cn(
-              'py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer',
+              'min-h-[44px] py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50',
               activeTab === 'seller'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                 : 'text-zinc-400 hover:text-white',
             )}
           >
-            <TrendingUp className="w-4 h-4" />
-            <span>Para Vendedores & Lojas</span>
+            <TrendingUp className="w-4 h-4 shrink-0" />
+            <span>Para Vendedores</span>
           </button>
         </div>
 
@@ -69,10 +69,10 @@ export function VehicleHistoryReasons() {
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-white">
-                    Compre Sem Medo de Golpes
+                    Compre com Segurança e Sem Surpresas
                   </h3>
                   <p className="text-xs text-zinc-400">
-                    Saiba o passado real do veículo antes de dar sinal ou assinar o recibo.
+                    Descubra o histórico real antes de pagar sinal ou assinar qualquer recibo.
                   </p>
                 </div>
               </div>
@@ -80,31 +80,31 @@ export function VehicleHistoryReasons() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                 <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
-                    <BadgeCheck className="w-3.5 h-3.5" />
-                    <span>Roubo & Sinistro</span>
+                    <BadgeCheck className="w-3.5 h-3.5 shrink-0" />
+                    <span>Roubo & Batidas</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Verifique se há queixa policial ativa ou registro de sinistro.
+                    Verifique se há queixa de furto ativa ou histórico grave de colisão.
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                    <BadgeCheck className="w-3.5 h-3.5" />
-                    <span>Leilão & Gravame</span>
+                    <BadgeCheck className="w-3.5 h-3.5 shrink-0" />
+                    <span>Leilão & Dívida</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Descubra alienação fiduciária e passagem em leilões.
+                    Evite veículos com financiamento em atraso ou passagem em leilão.
                   </p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-purple-400">
-                    <BadgeCheck className="w-3.5 h-3.5" />
+                    <BadgeCheck className="w-3.5 h-3.5 shrink-0" />
                     <span>IPVA & Multas</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Identifique débitos estaduais para abater no valor negociado.
+                    Descubra débitos do antigo dono para descontar direto no preço.
                   </p>
                 </div>
               </div>
@@ -117,10 +117,10 @@ export function VehicleHistoryReasons() {
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-white">
-                    Valorize Seu Bem & Venda Mais Rápido
+                    Valorize Seu Veículo e Venda Mais Rápido
                   </h3>
                   <p className="text-xs text-zinc-400">
-                    Passe credibilidade imediata ao comprador com link interativo e laudo oficial em PDF.
+                    Passe confiança total ao comprador com o laudo oficial em PDF anexado.
                   </p>
                 </div>
               </div>
@@ -128,31 +128,31 @@ export function VehicleHistoryReasons() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                 <div className="p-3.5 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                    <Link2 className="w-3.5 h-3.5" />
-                    <span>Link Exclusivo no WhatsApp</span>
+                    <Link2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Link no WhatsApp</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Envie o link do histórico para o comprador conferir tudo pelo celular sem burocracia.
+                    Envie o histórico para o interessado abrir no celular sem burocracia.
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
-                    <DollarSign className="w-3.5 h-3.5" />
-                    <span>Defenda Seu Preço Justo</span>
+                    <DollarSign className="w-3.5 h-3.5 shrink-0" />
+                    <span>Defenda Seu Preço</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Comprove ausência de sinistro, leilão e débitos para cortar propostas abusivas de desconto.
+                    Prove ausência de leilão e débitos para cortar ofertas desonestas.
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-blue-400">
-                    <FileDown className="w-3.5 h-3.5" />
-                    <span>PDF Oficial Guardado</span>
+                    <FileDown className="w-3.5 h-3.5 shrink-0" />
+                    <span>PDF Oficial</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Baixe e guarde o laudo para anexar ao anúncio ou guardar como histórico do seu patrimônio.
+                    Guarde o laudo para comprovar a procedência no fechamento do contrato.
                   </p>
                 </div>
               </div>
@@ -163,3 +163,4 @@ export function VehicleHistoryReasons() {
     </section>
   );
 }
+

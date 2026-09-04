@@ -3,13 +3,15 @@
 import React from 'react';
 import {
   Check,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
-  Building2,
-  CheckCircle2,
-  Clock,
+  AlertTriangle,
   Users,
+  Zap,
+  Lock,
+  Sparkles,
+  TrendingDown,
+  FileCheck2,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { VehicleHistorySettings } from '@/types/site-settings';
@@ -17,6 +19,7 @@ import {
   buildVehicleHistoryWhatsAppUrl,
   buildVehicleHistoryB2BWhatsAppUrl,
 } from '@/lib/utils/whatsapp';
+import { useVehicleHistory } from './vehicle-history-context';
 
 interface VehicleHistoryPricingProps {
   settings: VehicleHistorySettings;
@@ -24,20 +27,13 @@ interface VehicleHistoryPricingProps {
   defaultPhone: string;
 }
 
-const B2C_INCLUDED = [
-  'Link Exclusivo com Histórico Interativo no Celular',
-  'Download Imediato em PDF Oficial para Guardar',
-  'Comprovante de Procedência para Valorizar seu Bem',
-  'Histórico Completo de Leilão, Sinistro & Débitos',
-  'Gravames, Alienação & Bloqueios Judiciais Renajud',
-  'Válido para Qualquer Veículo com Placa Nacional',
-];
-
-const VOLUME_BENEFITS = [
-  'Créditos que não expiram',
-  'Desconto progressivo por placa',
-  'Para pessoa física ou lojistas',
-  'Atendimento prioritário no WhatsApp',
+const CHECKLIST_ITEMS = [
+  'Histórico de Leilão, Batidas Graves & Sinistro',
+  'Alienação Fiduciária (Dívidas ativas com Bancos)',
+  'Bloqueios na Justiça (Renajud) & Alerta de Furto',
+  'Débitos Estaduais, IPVA e Multas em aberto',
+  'Laudo Oficial em PDF + Link interativo no WhatsApp',
+  'Suporte humano com especialista para tirar dúvidas',
 ];
 
 export function VehicleHistoryPricing({
@@ -45,17 +41,23 @@ export function VehicleHistoryPricing({
   siteName,
   defaultPhone,
 }: VehicleHistoryPricingProps) {
+  const { plate, isValid, formattedPlate, scrollToSection } = useVehicleHistory();
   const phone = settings.whatsappPhoneOverride || defaultPhone;
-  const formattedPrice = settings.price.toLocaleString('pt-BR', {
+  const rawPrice = settings.price || 39.90;
+  const formattedPrice = rawPrice.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
 
   const handleB2CClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!plate || !isValid) {
+      scrollToSection('consulta-placa');
+      return;
+    }
     const url = buildVehicleHistoryWhatsAppUrl({
       phone,
-      plate: null,
+      plate,
       price: settings.price,
       siteName,
     });
@@ -69,119 +71,191 @@ export function VehicleHistoryPricing({
   };
 
   return (
-    <section className="py-12 sm:py-20 bg-[#080B11] border-t border-[#1F293D] relative overflow-hidden">
-      {/* Glow Ambient */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl h-80 bg-amber-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+    <section id="precos-historico" className="py-12 sm:py-20 bg-[#080B11] border-t border-[#1F293D] relative overflow-hidden">
+      {/* Subtle Glow Background */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-80 bg-amber-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center max-w-xl mx-auto space-y-1.5">
-          <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
-            Tabela Transparente
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-heading">
-            Escolha a opção ideal para você
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
+        {/* Section Header */}
+        <div className="text-center max-w-xl mx-auto space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-bold uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Investimento Inteligente</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight font-heading">
+            O menor custo para evitar a maior dor de cabeça
           </h2>
+
+          <p className="text-xs sm:text-sm text-zinc-300 max-w-md mx-auto leading-relaxed">
+            Blindar sua compra antes de transferir dinheiro custa menos de uma troca de óleo.
+          </p>
         </div>
 
-        {/* Bloco A: Card Principal de Compra Avulsa (B2C) */}
-        <div className="relative rounded-3xl p-6 sm:p-8 bg-[#131A26] border-2 border-amber-500/40 shadow-2xl shadow-amber-500/10 backdrop-blur-xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-[#1F293D]">
-            <div className="space-y-1">
-              <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-[11px] uppercase tracking-wider inline-block">
-                CONSULTA AVULSA OFICIAL
+        {/* Compact Loss Aversion & Competitor Comparison Bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-1 rounded-2xl bg-[#0F1420] border border-[#1F293D]">
+          {/* Risk Pill */}
+          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-red-950/25 border border-red-500/20">
+            <div className="w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-4 h-4 text-red-400" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider block">
+                Risco sem o Laudo
               </span>
-              <h3 className="text-xl sm:text-2xl font-black text-white font-heading">
-                Consulta Individual por Placa
+              <p className="text-xs text-zinc-300 leading-snug">
+                Prejuízo de <strong className="text-red-300">R$ 5.000 a R$ 25.000</strong> com leilão maquiado, processo ou golpe.
+              </p>
+            </div>
+          </div>
+
+          {/* Solution & Competitor Price Anchor Pill */}
+          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-950/25 border border-emerald-500/25">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                  Aqui na {siteName}
+                </span>
+                <span className="text-[10px] text-zinc-400 line-through">
+                  Outros: R$ 64,90
+                </span>
+              </div>
+              <p className="text-xs text-zinc-200 leading-snug">
+                Mesmo laudo oficial por apenas <strong className="text-amber-400 font-mono text-sm">{formattedPrice}</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Master Plan Checkout Card */}
+        <div className="relative rounded-3xl p-5 sm:p-8 bg-gradient-to-b from-[#131A26] to-[#0D121D] border-2 border-amber-500/40 shadow-2xl shadow-black/80 backdrop-blur-xl">
+          {/* Card Header & Price Display */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#1F293D]">
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-extrabold text-[10px] uppercase tracking-wider">
+                  100% Oficial Senatran
+                </span>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  Economize R$ 25,00
+                </span>
+              </div>
+
+              <h3 className="text-lg sm:text-2xl font-black text-white font-heading">
+                {isValid && formattedPlate ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Laudo do Veículo Placa {formattedPlate}
+                  </span>
+                ) : (
+                  'Laudo Oficial de Histórico Veicular'
+                )}
               </h3>
+
               <p className="text-xs text-zinc-400">
-                Link online + PDF oficial guardado para valorizar seu veículo na revenda
+                Válido para qualquer carro, moto ou caminhão em todo o Brasil.
               </p>
             </div>
 
-            <div className="flex flex-col md:items-end">
-              <span className="text-xs text-zinc-500 line-through font-bold">
-                De R$ 59,90
-              </span>
+            {/* Price Box */}
+            <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center p-3 sm:p-0 rounded-xl bg-slate-950/60 sm:bg-transparent border border-slate-800/80 sm:border-0">
+              <div className="text-left sm:text-right">
+                <span className="text-[11px] text-zinc-400 block sm:inline">
+                  Em outros sites: <span className="line-through font-semibold text-zinc-500">R$ 64,90</span>
+                </span>
+                <span className="text-[10px] font-bold text-emerald-400 block sm:hidden">
+                  Preço exclusivo AF Motos
+                </span>
+              </div>
+
               <div className="flex items-baseline gap-1">
-                <span className="text-xs text-zinc-400 font-semibold uppercase">Por apenas</span>
+                <span className="text-xs font-bold text-amber-300 uppercase sm:hidden">Por</span>
                 <span className="text-3xl sm:text-4xl font-black text-amber-400 font-mono tracking-tight">
                   {formattedPrice}
                 </span>
               </div>
-              <span className="text-[11px] text-emerald-400 font-medium mt-0.5">
-                ⚡ Pix com liberação instantânea
-              </span>
             </div>
           </div>
 
-          {/* Checklist */}
-          <div className="py-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {B2C_INCLUDED.map((item, idx) => (
-                <div key={idx} className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+          {/* Included Features List */}
+          <div className="py-5">
+            <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-3">
+              O que você recebe no laudo oficial:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+              {CHECKLIST_ITEMS.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
                     <Check className="w-3.5 h-3.5 stroke-[3]" />
                   </div>
-                  <span className="text-xs sm:text-sm text-zinc-200">{item}</span>
+                  <span className="text-xs sm:text-sm text-zinc-200 font-medium">
+                    {item}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* CTA Primário da Consulta Avulsa */}
-          <div className="pt-2">
+          {/* Action CTA & Micro-Guarantees */}
+          <div className="pt-2 space-y-3">
             <button
               type="button"
+              id="btn-pricing-consultar-avulso"
               onClick={handleB2CClick}
-              className="w-full py-4 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base sm:text-lg shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98] cursor-pointer"
+              className="w-full min-h-[52px] py-3.5 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base sm:text-lg shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/50"
             >
-              <span>Consultar Veículo Agora por {formattedPrice}</span>
-              <ArrowRight className="w-5 h-5 stroke-[3]" />
+              <span className="whitespace-nowrap">
+                {isValid ? `Consultar Placa ${formattedPlate} Agora` : 'Consultar Minha Placa Agora'}
+              </span>
+              <ArrowRight className="w-5 h-5 stroke-[3] shrink-0" />
             </button>
+
+            {/* Micro-Trust Badges */}
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-400 pt-1">
+              <span className="flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                Pagamento seguro Pix ou Cartão
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                Envio em minutos no WhatsApp
+              </span>
+              <span className="flex items-center gap-1.5">
+                <FileCheck2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                PDF para salvar e imprimir
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Bloco B: Card Comercial de Pacotes com Desconto (Pessoa Física & Lojas) */}
-        <div className="relative rounded-3xl p-6 sm:p-7 bg-[#0D111A] border border-[#1F293D] hover:border-emerald-500/40 transition-all duration-300 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2.5 max-w-xl">
-            <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-              <Users className="w-4 h-4" />
-              <span>Pacotes Econômicos • Pessoa Física & Lojas</span>
+        {/* Discreet B2B / Volume Option */}
+        <div className="p-4 rounded-2xl bg-[#0D111A] border border-[#1F293D] flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 text-emerald-400" />
             </div>
-
-            <h3 className="text-lg sm:text-xl font-bold text-white leading-snug">
-              Vai avaliar vários veículos ou precisa de consultas frequentes?
-            </h3>
-
-            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-              Garanta descontos progressivos comprando pacotes de consultas. Perfeito tanto para quem está comparando diferentes opções para comprar quanto para lojistas, corretores e autônomos.
-            </p>
-
-            {/* Micro Benefits Chips */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              {VOLUME_BENEFITS.map((benefit, idx) => (
-                <span
-                  key={idx}
-                  className="px-2.5 py-1 rounded-lg bg-[#131A26] border border-[#1F293D] text-[11px] text-zinc-300 flex items-center gap-1.5"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span>{benefit}</span>
-                </span>
-              ))}
+            <div>
+              <p className="text-xs font-bold text-white">
+                Procura várias opções ou é lojista?
+              </p>
+              <p className="text-[11px] text-zinc-400">
+                Temos pacotes de consultas com desconto progressivo por lote.
+              </p>
             </div>
           </div>
 
-          {/* CTA Volume (WhatsApp Direct) */}
-          <div className="w-full md:w-auto shrink-0 pt-2 md:pt-0">
-            <button
-              type="button"
-              onClick={handleB2BClick}
-              className="w-full md:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer"
-            >
-              <WhatsAppIcon className="w-5 h-5 fill-current shrink-0" />
-              <span>Ver Pacotes com Desconto</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleB2BClick}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-zinc-200 hover:text-white text-xs font-bold transition-colors cursor-pointer shrink-0 border border-slate-700"
+          >
+            <WhatsAppIcon className="w-4 h-4 fill-current text-emerald-400" />
+            <span>Consultar Pacotes</span>
+          </button>
         </div>
       </div>
     </section>

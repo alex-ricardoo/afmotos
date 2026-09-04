@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPublicSiteSettings } from '@/lib/settings/server-queries';
+import { VehicleHistoryProvider } from '@/components/vehicle-history/vehicle-history-context';
+import { VehicleHistoryStickyWhatsApp } from '@/components/vehicle-history/vehicle-history-sticky-whatsapp';
 import { VehicleHistoryHero } from '@/components/vehicle-history/vehicle-history-hero';
 import { VehicleHistoryStats } from '@/components/vehicle-history/vehicle-history-stats';
 import { VehicleHistoryBenefits } from '@/components/vehicle-history/vehicle-history-benefits';
@@ -10,6 +12,7 @@ import { VehicleHistoryPricing } from '@/components/vehicle-history/vehicle-hist
 import { VehicleHistoryReasons } from '@/components/vehicle-history/vehicle-history-reasons';
 import { VehicleHistoryDisclaimer } from '@/components/vehicle-history/vehicle-history-disclaimer';
 import { VehicleHistoryFaq } from '@/components/vehicle-history/vehicle-history-faq';
+import { VEHICLE_HISTORY_FAQS } from '@/components/vehicle-history/vehicle-history-faq-data';
 import { VehicleHistoryCtaFinal } from '@/components/vehicle-history/vehicle-history-cta-final';
 import { buildPageMetadata, JsonLd, SEO_CONFIG } from '@/lib/seo';
 import { buildVehicleHistoryServiceSchema } from '@/lib/seo/schemas/vehicle-history';
@@ -72,80 +75,68 @@ export default async function HistoricoVeicularPage() {
     price: vehicleHistory.price,
     currency: vehicleHistory.currency,
     description: vehicleHistory.heroSubtitle,
-    faqs: [
-      {
-        question: 'A consulta funciona para qualquer estado do Brasil?',
-        answer: 'Sim! O laudo consulta diretamente as bases nacionais integradas do Senatran, Renajud e Detrans de todos os estados.',
-      },
-      {
-        question: 'Em quanto tempo recebo o laudo após o pagamento?',
-        answer: 'O processo é ágil e 100% humanizado. Um especialista da equipe confere a placa, emite o laudo oficial e envia em PDF no seu WhatsApp em poucos minutos.',
-      },
-      {
-        question: 'A consulta serve para qualquer tipo de veículo com placa no Brasil?',
-        answer: 'Sim! Atende 100% dos veículos com placa nacional: motos, ciclomotores, carros de passeio, utilitários, picapes e caminhões em todo o Brasil.',
-      },
-      {
-        question: 'Como o laudo me ajuda a valorizar o veículo na hora da venda?',
-        answer: 'Você receberá um link exclusivo com todo o histórico e poderá baixar o laudo em PDF. Apresentar o laudo limpo elimina desconfianças, evita descontos abusivos e valoriza seu bem na negociação.',
-      },
-      {
-        question: 'Pessoa física pode comprar pacotes com desconto para avaliar vários veículos?',
-        answer: 'Sim! Oferecemos pacotes com descontos progressivos por consulta com créditos que não expiram, ideal para compradores avaliando opções e para lojistas ou revendedores.',
-      },
-    ],
+    faqs: VEHICLE_HISTORY_FAQS.map((f) => ({
+      question: f.question,
+      answer: f.answer,
+    })),
   });
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#080B11] text-zinc-100 selection:bg-amber-400 selection:text-slate-950 font-sans">
-      {/* Structured Data (Schema.org) */}
-      <JsonLd data={schemas} id="vehicle-history-schemas" />
+    <VehicleHistoryProvider>
+      <div className="flex flex-col min-h-screen bg-[#080B11] text-zinc-100 selection:bg-amber-400 selection:text-slate-950 font-sans relative">
+        {/* Structured Data (Schema.org) */}
+        <JsonLd data={schemas} id="vehicle-history-schemas" />
 
-      {/* A. Hero Section com Headline Direta, Input de Placa e CTA Dourado */}
-      <VehicleHistoryHero
-        settings={vehicleHistory}
-        siteName={settings.siteName}
-        defaultPhone={settings.phone}
-      />
+        {/* Dedicated High-Conversion Floating Sticky WhatsApp Button */}
+        <VehicleHistoryStickyWhatsApp />
 
-      {/* B. Barra de Prova Social & Métricas de Alto Impacto */}
-      <VehicleHistoryStats siteShortName={settings.shortName} />
+        {/* A. Hero Section com Headline Direta, Input de Placa e CTA Dourado */}
+        <VehicleHistoryHero
+          settings={vehicleHistory}
+          siteName={settings.siteName}
+          defaultPhone={settings.phone}
+        />
 
-      {/* C. O que o Laudo Revela (6 Pilares com Badges de Alerta) */}
-      <VehicleHistoryBenefits />
+        {/* B. Barra de Prova Social & Métricas de Alto Impacto */}
+        <VehicleHistoryStats siteShortName={settings.shortName} />
 
-      {/* D. Demonstração Visual do Produto (Preview Real com Zoom nos Alertas) */}
-      <VehicleHistoryReportMockup siteName={settings.siteName} />
+        {/* C. O que o Laudo Revela (6 Pilares com Badges de Alerta) */}
+        <VehicleHistoryBenefits />
 
-      {/* E. Como Funciona (3 Passos Simples) */}
-      <VehicleHistoryHowItWorks siteName={settings.siteName} />
+        {/* D. Demonstração Visual do Produto (Preview Real com Zoom nos Alertas) */}
+        <VehicleHistoryReportMockup siteName={settings.siteName} />
 
-      {/* F. Seção de Oferta & Checkout Transparente (Preço Ancorado + Oferta Limitada) */}
-      <VehicleHistoryPricing
-        settings={vehicleHistory}
-        siteName={settings.siteName}
-        defaultPhone={settings.phone}
-      />
+        {/* E. Como Funciona (3 Passos Simples) */}
+        <VehicleHistoryHowItWorks siteName={settings.siteName} />
 
-      {/* G. Vantagens na Negociação (Compra e Venda) */}
-      <VehicleHistoryReasons />
+        {/* F. Seção de Oferta & Checkout Transparente (Preço Ancorado + Oferta Limitada) */}
+        <VehicleHistoryPricing
+          settings={vehicleHistory}
+          siteName={settings.siteName}
+          defaultPhone={settings.phone}
+        />
 
-      {/* H. Transparência & Limitações do Serviço */}
-      <VehicleHistoryDisclaimer customDisclaimer={vehicleHistory.disclaimerText} />
+        {/* G. Vantagens na Negociação (Compra e Venda) */}
+        <VehicleHistoryReasons />
 
-      {/* I. Perguntas Frequentes (FAQ Limpo) */}
-      <VehicleHistoryFaq
-        siteName={settings.siteName}
-        phone={vehicleHistory.whatsappPhoneOverride || settings.phone}
-        price={vehicleHistory.price}
-      />
+        {/* H. Transparência & Limitações do Serviço */}
+        <VehicleHistoryDisclaimer customDisclaimer={vehicleHistory.disclaimerText} />
 
-      {/* J. CTA Final de Fechamento */}
-      <VehicleHistoryCtaFinal
-        settings={vehicleHistory}
-        siteName={settings.siteName}
-        defaultPhone={settings.phone}
-      />
-    </div>
+        {/* I. Perguntas Frequentes (FAQ Limpo e Focado) */}
+        <VehicleHistoryFaq
+          siteName={settings.siteName}
+          phone={vehicleHistory.whatsappPhoneOverride || settings.phone}
+          price={vehicleHistory.price}
+        />
+
+        {/* J. CTA Final de Fechamento */}
+        <VehicleHistoryCtaFinal
+          settings={vehicleHistory}
+          siteName={settings.siteName}
+          defaultPhone={settings.phone}
+        />
+      </div>
+    </VehicleHistoryProvider>
   );
 }
+

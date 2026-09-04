@@ -4,6 +4,7 @@ import React from 'react';
 import { ShieldCheck, MessageCircle, ArrowRight, Lock } from 'lucide-react';
 import { VehicleHistorySettings } from '@/types/site-settings';
 import { buildVehicleHistoryWhatsAppUrl } from '@/lib/utils/whatsapp';
+import { useVehicleHistory } from './vehicle-history-context';
 
 interface VehicleHistoryCtaFinalProps {
   settings: VehicleHistorySettings;
@@ -16,6 +17,7 @@ export function VehicleHistoryCtaFinal({
   siteName,
   defaultPhone,
 }: VehicleHistoryCtaFinalProps) {
+  const { plate, isValid, formattedPlate, scrollToSection } = useVehicleHistory();
   const phone = settings.whatsappPhoneOverride || defaultPhone;
   const formattedPrice = settings.price.toLocaleString('pt-BR', {
     style: 'currency',
@@ -24,12 +26,25 @@ export function VehicleHistoryCtaFinal({
 
   const handleSolicitarClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!plate) {
+      scrollToSection('btn-hero-consultar-placa');
+      return;
+    }
     const url = buildVehicleHistoryWhatsAppUrl({
       phone,
-      plate: null,
+      plate: isValid ? plate : null,
       price: settings.price,
       siteName,
     });
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDuvidasClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const message = isValid
+      ? `Olá! Gostaria de tirar uma dúvida sobre a consulta da placa ${formattedPlate} antes de fechar.`
+      : 'Olá! Gostaria de tirar uma dúvida sobre a consulta veicular antes de fechar.';
+    const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -47,29 +62,33 @@ export function VehicleHistoryCtaFinal({
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight font-heading">
             Proteja seu dinheiro.{' '}
             <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 bg-clip-text text-transparent">
-              Valorize seu patrimônio na venda.
+              Compre e venda sem surpresas.
             </span>
           </h2>
-          <p className="text-sm sm:text-base text-zinc-300 max-w-2xl mx-auto leading-relaxed">
-            Receba um <strong className="text-amber-400 font-semibold">link exclusivo interativo</strong> e baixe o <strong className="text-amber-400 font-semibold">laudo oficial em PDF</strong> em poucos minutos no WhatsApp por apenas <strong className="text-amber-400">{formattedPrice}</strong>. Guarde a prova de procedência ou mostre ao comprador para vender muito mais rápido!
+          {/* Strict max 3 lines paragraph */}
+          <p className="text-sm sm:text-base text-zinc-300 max-w-xl mx-auto leading-relaxed">
+            Receba o link online e baixe o laudo oficial em PDF em minutos por apenas <strong className="text-amber-400 font-bold">{formattedPrice}</strong>.
+            Evite prejuízos irreversíveis e feche seu negócio com total tranquilidade.
           </p>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons (min 48px touch targets) */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
           <button
             type="button"
+            id="btn-cta-final-consultar"
             onClick={handleSolicitarClick}
-            className="w-full sm:w-auto px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer"
+            className="w-full sm:w-auto min-h-[52px] px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/50"
           >
-            <span>Consultar Histórico Agora</span>
+            <span>{isValid ? `Consultar Placa ${formattedPlate}` : 'Consultar Histórico Agora'}</span>
             <ArrowRight className="w-5 h-5 stroke-[3]" />
           </button>
 
           <button
             type="button"
-            onClick={handleSolicitarClick}
-            className="w-full sm:w-auto px-6 py-4 rounded-xl bg-[#131A26] hover:bg-[#1A2333] border border-[#1F293D] text-zinc-300 hover:text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+            id="btn-cta-final-duvidas"
+            onClick={handleDuvidasClick}
+            className="w-full sm:w-auto min-h-[52px] px-6 py-4 rounded-xl bg-[#131A26] hover:bg-[#1A2333] border border-[#1F293D] text-zinc-300 hover:text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50"
           >
             <MessageCircle className="w-4 h-4 text-emerald-400" />
             <span>Tirar dúvidas no WhatsApp</span>
@@ -84,3 +103,4 @@ export function VehicleHistoryCtaFinal({
     </section>
   );
 }
+

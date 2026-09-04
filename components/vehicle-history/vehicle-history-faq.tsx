@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { ChevronDown, HelpCircle, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buildVehicleHistoryWhatsAppUrl } from '@/lib/utils/whatsapp';
+import { VEHICLE_HISTORY_FAQS } from './vehicle-history-faq-data';
+
+export { VEHICLE_HISTORY_FAQS };
 
 interface VehicleHistoryFaqProps {
   siteName: string;
@@ -11,40 +14,13 @@ interface VehicleHistoryFaqProps {
   price: number;
 }
 
-const FAQS = [
-  {
-    id: 'states',
-    question: 'A consulta funciona para qualquer estado do Brasil?',
-    answer: 'Sim! O laudo consulta diretamente as bases nacionais integradas do Senatran, Renajud e Detrans de todos os 26 estados e do Distrito Federal.',
-  },
-  {
-    id: 'delivery-time',
-    question: 'Em quanto tempo recebo o laudo após o pagamento?',
-    answer: 'O processo é ágil e 100% humanizado. Assim que o Pix é confirmado no WhatsApp, um consultor da nossa equipe confere a placa, processa a consulta oficial nas bases e envia o arquivo PDF completo no seu chat em poucos minutos.',
-  },
-  {
-    id: 'vehicle-types',
-    question: 'A consulta serve para qualquer tipo de veículo com placa no Brasil?',
-    answer: 'Sim! A consulta atende 100% dos veículos emplacados em território nacional: motocicletas, ciclomotores, carros de passeio, SUVs, caminhonetes, picapes, vans, utilitários e caminhões — seja com placa Mercosul ou no padrão tradicional antigo de qualquer estado.',
-  },
-  {
-    id: 'sale-proof',
-    question: 'Como o laudo me ajuda a valorizar o veículo na hora da venda?',
-    answer: 'Você receberá um link exclusivo interativo com o histórico completo e poderá baixar o laudo oficial em PDF. Ter esse laudo guardado e apresentá-lo na negociação elimina as desconfianças do comprador, comprova que não há leilão, sinistro nem débitos ocultos, evita pedidos abusivos de desconto e acelera o fechamento da venda pelo valor justo de mercado!',
-  },
-  {
-    id: 'packages-discount',
-    question: 'Pessoa física pode comprar pacotes com desconto para avaliar vários veículos?',
-    answer: 'Sim, com certeza! Se você está pesquisando várias opções antes de fechar a compra do seu veículo, ou se você negocia veículos com frequência, oferecemos pacotes com desconto progressivo por placa. Os créditos não expiram e você pode consultar placas de qualquer estado do Brasil no seu tempo. Chame nosso atendimento no WhatsApp para conhecer a tabela!',
-  },
-];
 
 export function VehicleHistoryFaq({
   siteName,
   phone,
   price,
 }: VehicleHistoryFaqProps) {
-  const [openId, setOpenId] = useState<string | null>(FAQS[0].id);
+  const [openId, setOpenId] = useState<string | null>(VEHICLE_HISTORY_FAQS[0].id);
 
   const toggleFaq = (id: string) => {
     setOpenId((prev) => (prev === id ? null : id));
@@ -77,9 +53,9 @@ export function VehicleHistoryFaq({
           </p>
         </div>
 
-        {/* Accordion List */}
+        {/* Accordion List with min 48px touch targets */}
         <div className="space-y-3">
-          {FAQS.map((faq) => {
+          {VEHICLE_HISTORY_FAQS.map((faq) => {
             const isOpen = openId === faq.id;
             return (
               <div
@@ -93,10 +69,11 @@ export function VehicleHistoryFaq({
               >
                 <button
                   type="button"
+                  id={`faq-btn-${faq.id}`}
                   onClick={() => toggleFaq(faq.id)}
                   aria-expanded={isOpen}
                   aria-controls={`faq-answer-${faq.id}`}
-                  className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer"
+                  className="w-full min-h-[52px] p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
                 >
                   <span className="text-sm sm:text-base font-bold text-white">
                     {faq.question}
@@ -132,8 +109,9 @@ export function VehicleHistoryFaq({
           </p>
           <button
             type="button"
+            id="btn-faq-whatsapp-suporte"
             onClick={handleDuvidasClick}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer"
+            className="min-h-[48px] inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50"
           >
             <MessageCircle className="w-4 h-4 text-emerald-400" />
             <span>Falar com nosso time no WhatsApp</span>
@@ -143,3 +121,4 @@ export function VehicleHistoryFaq({
     </section>
   );
 }
+
