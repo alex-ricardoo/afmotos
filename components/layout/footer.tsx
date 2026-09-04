@@ -10,6 +10,9 @@ import {
   Clock,
   MapPin,
   ExternalLink,
+  FileSearch,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import {
@@ -63,50 +66,84 @@ export function Footer({ settings }: { settings?: any }) {
 
   return (
     <footer className="bg-[#050505] text-[#b8bcc2] border-t border-[#c9a44c]/20">
-      {/* Trust Seals Bar */}
-      <div className="border-b border-[#c9a44c]/20 bg-[#0d0d0d]">
-        <div className="container mx-auto px-4 md:px-6 py-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
-            <div className="flex items-center justify-start gap-3.5">
-              <div className="w-10 h-10 rounded-full bg-[#c9a44c]/10 border border-[#c9a44c]/30 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-5 h-5 text-[#e3c56c]" />
+      {/* Trust Seals & Value Proposition Bar */}
+      {/* Trust Seals Bar - Compact & Sleek */}
+      <section
+        aria-label="Diferenciais e Garantias AF Motos"
+        className="border-b border-[#c9a44c]/20 bg-[#0d0d0d] py-4 sm:py-4.5 relative"
+      >
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+            {/* Item 1: Todas as Motos com Histórico Veicular */}
+            <Link
+              href="/historico-veicular"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-zinc-900/60 to-zinc-900/40 border border-amber-500/35 hover:border-amber-400/60 transition-all duration-200 group cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_15px_rgba(201,164,76,0.12)]"
+            >
+              <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/35 flex items-center justify-center shrink-0 text-amber-400 group-hover:scale-105 transition-transform shadow-[0_0_10px_rgba(201,164,76,0.15)]">
+                <FileSearch className="w-4 h-4 text-amber-400" />
               </div>
-              <div className="text-left">
-                <h4 className="text-white text-sm font-bold leading-tight">Atendimento Direto</h4>
-                <p className="text-xs text-[#a6a6a1] mt-0.5">
-                  Fale com a gente no WhatsApp sem intermediários
-                </p>
+              <div className="flex flex-col min-w-0">
+                <span className="text-white text-xs sm:text-sm font-bold tracking-tight group-hover:text-amber-300 transition-colors leading-tight">
+                  Todas com Histórico Veicular
+                </span>
+                <span className="text-[10px] text-amber-400/80 font-medium">
+                  Procedência 100% garantida
+                </span>
+              </div>
+            </Link>
+
+            {/* Item 2: Atendimento Direto */}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-zinc-900/40 hover:bg-zinc-900/70 border border-zinc-800/80 hover:border-emerald-500/40 transition-all duration-200 group cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.3)]"
+            >
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center shrink-0 text-emerald-400 group-hover:scale-105 transition-transform shadow-[0_0_8px_rgba(16,185,129,0.1)]">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-white text-xs sm:text-sm font-bold tracking-tight group-hover:text-amber-300 transition-colors leading-tight">
+                  Atendimento Direto no WhatsApp
+                </span>
+                <span className="text-[10px] text-zinc-400 font-medium">
+                  Sem intermediários
+                </span>
+              </div>
+            </a>
+
+            {/* Item 3: Documentação Clara */}
+            <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-zinc-900/40 border border-zinc-800/80 group shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
+              <div className="w-8 h-8 rounded-lg bg-[#c9a44c]/10 border border-[#c9a44c]/25 flex items-center justify-center shrink-0 text-[#e3c56c] group-hover:scale-105 transition-transform shadow-[0_0_8px_rgba(201,164,76,0.1)]">
+                <FileCheck className="w-4 h-4 text-[#e3c56c]" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-white text-xs sm:text-sm font-bold tracking-tight group-hover:text-amber-300 transition-colors leading-tight">
+                  Documentação 100% Clara
+                </span>
+                <span className="text-[10px] text-zinc-400 font-medium">
+                  Transferência orientada
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-start gap-3.5">
-              <div className="w-10 h-10 rounded-full bg-[#c9a44c]/10 border border-[#c9a44c]/30 flex items-center justify-center shrink-0">
-                <FileCheck className="w-5 h-5 text-[#e3c56c]" />
+            {/* Item 4: Negociação Transparente */}
+            <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-zinc-900/40 border border-zinc-800/80 group shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
+              <div className="w-8 h-8 rounded-lg bg-[#c9a44c]/10 border border-[#c9a44c]/25 flex items-center justify-center shrink-0 text-[#e3c56c] group-hover:scale-105 transition-transform shadow-[0_0_8px_rgba(201,164,76,0.1)]">
+                <Award className="w-4 h-4 text-[#e3c56c]" />
               </div>
-              <div className="text-left">
-                <h4 className="text-white text-sm font-bold leading-tight">Documentação Clara</h4>
-                <p className="text-xs text-[#a6a6a1] mt-0.5">
-                  Orientação e transparência na transferência da moto
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-start gap-3.5">
-              <div className="w-10 h-10 rounded-full bg-[#c9a44c]/10 border border-[#c9a44c]/30 flex items-center justify-center shrink-0">
-                <Award className="w-5 h-5 text-[#e3c56c]" />
-              </div>
-              <div className="text-left">
-                <h4 className="text-white text-sm font-bold leading-tight">
+              <div className="flex flex-col min-w-0">
+                <span className="text-white text-xs sm:text-sm font-bold tracking-tight group-hover:text-amber-300 transition-colors leading-tight">
                   Negociação Transparente
-                </h4>
-                <p className="text-xs text-[#a6a6a1] mt-0.5">
-                  Preço e condições combinados com clareza
-                </p>
+                </span>
+                <span className="text-[10px] text-zinc-400 font-medium">
+                  Preço justo & troca
+                </span>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Main Footer Links */}
       <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
