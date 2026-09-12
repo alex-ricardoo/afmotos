@@ -153,9 +153,16 @@ export function PaymentSimulation({ consultation }: PaymentSimulationProps) {
                 </span>
               </div>
 
-              <div className="text-right">
-                <span className="text-[10px] text-zinc-500 line-through block">R$ 59,90</span>
-                <span className="text-2xl font-black text-white font-mono leading-none">
+              <div className="text-right flex flex-col items-end justify-center">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-red-500 font-semibold line-through decoration-red-500/80">
+                    R$ 59,90
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                    -33% OFF
+                  </span>
+                </div>
+                <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono leading-none mt-1">
                   R$ {CONSULTATION_PRICE_BRL.toFixed(2).replace('.', ',')}
                 </span>
               </div>
