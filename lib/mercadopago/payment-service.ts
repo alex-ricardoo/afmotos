@@ -6,7 +6,6 @@ import { getVehicleLookupConfig } from '@/lib/vehicle-lookup/config';
 import {
   getPaymentClient,
   getRefundClient,
-  getPreferenceClient,
   getMercadoPagoPublicKey,
   getMercadoPagoWebhookSecret,
   getMercadoPagoWebhookUrl,
@@ -354,45 +353,10 @@ export async function createPaymentPreference(
   // Canonical price authoritative from database
   const canonicalPrice = await getVehicleConsultationPrice();
 
-  let mpPreferenceId: string | undefined;
-  try {
-    const preferenceClient = getPreferenceClient();
-    const prefResult = await preferenceClient.create({
-      body: {
-        items: [
-          {
-            id: consultation.id,
-            title: `Consulta Veicular Placa ${consultation.plate}`,
-            quantity: 1,
-            unit_price: canonicalPrice,
-            currency_id: 'BRL',
-          },
-        ],
-        payer: {
-          email: user.email || '',
-        },
-        external_reference: consultation.id,
-        metadata: {
-          consultation_id: consultation.id,
-          user_id: user.id,
-        },
-      },
-    });
-    if (prefResult?.id) {
-      mpPreferenceId = prefResult.id;
-    }
-  } catch (prefErr) {
-    paymentLogWarn('preference.create_skipped', {
-      consultationId: consultation.id,
-      error: extractSafeError(prefErr),
-    });
-  }
-
   return {
     success: true,
     data: {
       consultationId: consultation.id,
-      preferenceId: mpPreferenceId,
       plate: consultation.plate,
       amount: canonicalPrice,
       publicKey,
@@ -945,7 +909,7 @@ export async function processBrickPayment(
   // Confirmar se issuer_id é retornado pelo Brick, não usar default/hardcoded nem converter silenciosamente
   const rawIssuer = formData.issuer_id;
   let validIssuerId: number | undefined;
-  let issuerSource: 'brick' | 'none' = 'none';
+  let issuerSource: 'brick' | 'omitted' = 'omitted';
 
   if (rawIssuer !== undefined && rawIssuer !== null && rawIssuer !== '') {
     const parsed = Number(rawIssuer);
@@ -1077,6 +1041,8 @@ export async function processBrickPayment(
       consultationId: consultation.id,
       tokenCreatedAt: telemetry?.tokenCreatedAt,
       submitAttemptNumber: telemetry?.submitAttemptNumber,
+      issuerProvidedByBrick: issuerSource === 'brick',
+      issuerSource,
     },
   );
 

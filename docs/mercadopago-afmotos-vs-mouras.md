@@ -63,10 +63,32 @@ Este documento apresenta uma análise técnica estrutural e factual comparando a
 
 ---
 
-## 3. Conclusão Factual
+---
+
+## 4. Resolução dos Warnings do Browser no Payment Brick
+
+Durante a auditoria da integração do Payment Brick no AF Motos, três advertências técnicas reais no console do navegador foram identificadas e resolvidas:
+
+### Warning 1: `Bricks Customize Texts: property 'fontFamily' is not valid.`
+- **Causa Raiz:** A propriedade `fontFamily` estava sendo informada dentro de `customization.visual.style.customVariables`. O SDK JS v2 do Mercado Pago valida tokens de estilo (`baseColor`, `borderRadiusSmall`, etc.) e rejeita `fontFamily` por meio do validador de textos/estilos.
+- **Solução Aplicada:** `fontFamily` foi completamente removido do objeto entregue ao SDK. A tipografia da aplicação (`font-sans`) é aplicada no elemento contêiner pai via CSS/Tailwind, herdando naturalmente sem intervenção ou avisos do SDK.
+
+### Warning 2: `[BRICKS] [Payment Brick] parameters preferenceId and mercadoPago must be provided together.`
+- **Causa Raiz:** O componente Payment Brick continha `mercadoPago: 'all'` em `customization.paymentMethods` e repassava `preferenceId` condicionalmente. No SDK do Mercado Pago, a opção de pagamento via carteira digital da conta Mercado Pago (`mercadoPago`) exige estritamente a coexistência de uma preferência pré-criada (`preferenceId`). Como o AF Motos utiliza checkout transparente direto com tokenização server-side (Cartão de Crédito, Débito, Boleto, Pix) sem carteira Mercado Pago, a ausência da preferência disparava a inconsistência.
+- **Solução Aplicada:** `mercadoPago` foi removido de `paymentMethods` e qualquer menção a `preferenceId` foi purgada do fluxo de cartão transparente, isolando a tokenização nativa direta.
+
+### Warning 3: `Bricks Payment: entityType only receives the value individual or association.`
+- **Causa Raiz:** No Brasil, o Payment Brick exige a definição do tipo de entidade do pagador (`payer.entityType`). Quando omitido ou indefinido, o validador interno do SDK emite o aviso.
+- **Solução Aplicada:** Foi criado o módulo `lib/mercadopago/brick-config.ts` com a função `normalizeEntityType`, que fixa estritamente `entityType: 'individual'` para pessoa física (CPF), impedindo valores nulos, vazios ou informais (`PF`, `PJ`, `person`).
+
+---
+
+## 5. Conclusão Factual
 
 1. **Hipótese de "usuário Buyer Mercado Pago cadastrado no Supabase":**
    **DESMENTIDA**. Moura’s Pizzas não possuía nenhum cadastro de comprador prévio ou vínculo de usuário MP no Supabase. O pagamento com cartão em sandbox utilizava apenas os dados do formulário do Brick.
 2. **Diferença comprovada 1:** Moura’s Pizzas sempre usava `preferenceId` pré-gerado para inicializar o Payment Brick no frontend.
 3. **Diferença comprovada 2:** Moura's Pizzas não enviava `description` customizado longo nem `notification_url` para cobranças síncronas de cartão de crédito.
 4. **Diferença comprovada 3:** O ciclo de vida do token: no Moura's, cada clique gerava uma tentativa com loading bloqueante impedindo novo submit com o mesmo token já invalidado.
+5. **Diferença comprovada 4:** Inconsistências de configuração no frontend (`fontFamily`, `mercadoPago` sem preferência e `entityType` ausente) geravam avisos e instabilidades no ciclo de inicialização do Brick. A centralização via `buildPaymentBrickConfig` sanou todas as ocorrências.
+

@@ -89,6 +89,7 @@ export interface SnapshotContext {
   submitAttemptNumber?: number;
   paymentTypeId?: string;
   issuerProvidedByBrick?: boolean;
+  issuerSource?: 'brick' | 'omitted' | 'unknown';
   rawUncleanedBody?: Record<string, unknown>;
 }
 
@@ -278,7 +279,9 @@ export function createMercadoPagoPaymentRequestSnapshot(
         present: hasIssuer,
         type: typeof body.issuer_id,
         maskedValue: maskedIssuer,
-        origin: hasIssuer ? (context.issuerProvidedByBrick ? 'brick' : 'unknown') : 'omitted',
+        origin: hasIssuer
+          ? context.issuerSource || (context.issuerProvidedByBrick ? 'brick' : 'unknown')
+          : 'omitted',
       },
       payer: {
         email: {

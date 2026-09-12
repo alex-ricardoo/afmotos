@@ -97,7 +97,6 @@ export interface BrickPayerAddress {
 
 export interface PaymentPreferenceData {
   consultationId: string;
-  preferenceId?: string;
   plate: string;
   amount: number;
   publicKey: string;

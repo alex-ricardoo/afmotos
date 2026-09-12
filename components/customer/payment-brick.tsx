@@ -16,6 +16,10 @@ import {
   type BrickPayerAddress,
 } from '@/lib/mercadopago/types';
 import { PaymentSecurityNotice } from './payment-security-notice';
+import {
+  buildPaymentBrickConfig,
+  isValidMercadoPagoPublicKey,
+} from '@/lib/mercadopago/brick-config';
 
 interface MercadoPagoBrickController {
   unmount?: () => void;
@@ -163,11 +167,47 @@ export function PaymentBrick({
       try {
         if (!window.MercadoPago) return;
 
+        if (!isValidMercadoPagoPublicKey(preference.publicKey)) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[MP Brick]', {
+              event: 'payment.brick_error',
+              environment: process.env.NODE_ENV || 'development',
+              consultationId: preference.consultationId,
+              errorCause: 'invalid_public_key',
+            });
+          }
+          setBrickError('Configuração de chave de pagamento inválida.');
+          return;
+        }
+
+        if (
+          typeof preference.amount !== 'number' ||
+          preference.amount <= 0 ||
+          !preference.consultationId
+        ) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[MP Brick]', {
+              event: 'payment.brick_error',
+              environment: process.env.NODE_ENV || 'development',
+              consultationId: preference.consultationId,
+              errorCause: 'invalid_amount_or_consultation',
+            });
+          }
+          setBrickError('Dados da consulta inválidos para pagamento.');
+          return;
+        }
+
+        const keyPrefix = preference.publicKey.startsWith('TEST-') ? 'TEST' : 'APP_USR';
+
         if (process.env.NODE_ENV === 'development') {
           console.info('[MP Brick]', {
-            event: 'brick.initialization_started',
+            event: 'payment.brick_initialization_started',
+            environment: process.env.NODE_ENV || 'development',
+            keyPrefix,
+            amount: preference.amount,
             consultationId: preference.consultationId,
-            hasPublicKey: Boolean(preference.publicKey),
+            preferenceIdPresent: false,
+            mercadoPagoPresent: false,
           });
         }
 
@@ -183,60 +223,25 @@ export function PaymentBrick({
           container.innerHTML = '';
         }
 
+        // Tarefas B, C, D: Configuração determinística sem fontFamily, sem preferenceId, sem mercadoPago e com entityType: individual
+        const brickOptions = buildPaymentBrickConfig({
+          amount: preference.amount,
+          payerEmail: preference.payerEmail,
+          payerAddress: preference.payerAddress,
+          entityType: 'individual',
+        });
+
         const controller = await bricksBuilder.create('payment', containerId, {
-          initialization: {
-            amount: preference.amount,
-            ...(preference.preferenceId ? { preferenceId: preference.preferenceId } : {}),
-            payer: {
-              email: preference.payerEmail,
-              ...(preference.payerAddress
-                ? {
-                    address: {
-                      zipCode: preference.payerAddress.zipCode,
-                      streetName: preference.payerAddress.streetName,
-                      streetNumber: preference.payerAddress.streetNumber,
-                      neighborhood: preference.payerAddress.neighborhood,
-                      city: preference.payerAddress.city,
-                      federalUnit: preference.payerAddress.federalUnit,
-                      complement: preference.payerAddress.complement,
-                    },
-                  }
-                : {}),
-            },
-          },
-          customization: {
-            paymentMethods: {
-              creditCard: 'all',
-              debitCard: 'all',
-              ticket: 'all',
-              bankTransfer: 'all',
-              mercadoPago: 'all',
-              maxInstallments: 1,
-            },
-            visual: {
-              style: {
-                theme: 'dark',
-                customVariables: {
-                  fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-                  formBackgroundColor: 'transparent',
-                  baseColor: '#c9a44c',
-                  baseColorFirstVariant: '#b38e3a',
-                  baseColorSecondVariant: '#8f6d25',
-                  borderRadiusSmall: '8px',
-                  borderRadiusMedium: '10px',
-                  borderRadiusLarge: '12px',
-                },
-              },
-              hidePaymentButton: false,
-              hideFormTitle: true,
-            },
-          },
+          ...brickOptions,
           callbacks: {
             onReady: () => {
               isBrickReadyRef.current = true;
               if (process.env.NODE_ENV === 'development') {
                 console.info('[MP Brick]', {
-                  event: 'brick.ready',
+                  event: 'payment.brick_ready',
+                  environment: process.env.NODE_ENV || 'development',
+                  keyPrefix,
+                  amount: preference.amount,
                   consultationId: preference.consultationId,
                 });
               }
@@ -247,7 +252,7 @@ export function PaymentBrick({
               if (isSubmittingRef.current || isProcessing) {
                 if (process.env.NODE_ENV === 'development') {
                   console.warn('[MP Brick]', {
-                    event: 'brick.submit_blocked_concurrent',
+                    event: 'payment.brick_submit_blocked_concurrent',
                     consultationId: preference.consultationId,
                   });
                 }
@@ -272,15 +277,20 @@ export function PaymentBrick({
                     // Tarefa E: Registrar observabilidade segura no frontend
                     if (process.env.NODE_ENV === 'development') {
                       console.info('[MP Brick]', {
-                        event: 'brick.submit_started',
+                        event: 'payment.brick_submit_started',
+                        environment: process.env.NODE_ENV || 'development',
                         consultationId: preference.consultationId,
-                        tokenCreatedAt,
-                        tokenLength: token ? token.length : 0,
-                        tokenHashTruncado: tokenHashTruncated,
+                        amount: preference.amount,
                         paymentMethodId: formData?.payment_method_id,
                         issuerPresent: Boolean(formData?.issuer_id),
                         installments: formData?.installments || 1,
+                        entityType: 'individual',
+                        preferenceIdPresent: false,
+                        mercadoPagoPresent: false,
                         submitAttemptNumber: submitAttemptNumberRef.current,
+                        tokenLength: token ? token.length : 0,
+                        tokenHashTruncado: tokenHashTruncated,
+                        tokenAge: 0,
                       });
                     }
 
@@ -346,10 +356,12 @@ export function PaymentBrick({
 
                     if (process.env.NODE_ENV === 'development') {
                       console.info('[MP Brick]', {
-                        event: 'brick.submit_received',
+                        event: 'payment.brick_submit_payload_received',
+                        environment: process.env.NODE_ENV || 'development',
                         consultationId: preference.consultationId,
                         success: result.success,
                         status: result.status,
+                        submitAttemptNumber: submitAttemptNumberRef.current,
                       });
                     }
 
@@ -408,23 +420,15 @@ export function PaymentBrick({
                 err?.cause === 'missing_payment_information';
 
               if (process.env.NODE_ENV === 'development') {
-                if (isNonCritical) {
-                  console.info('[MP Brick]', {
-                    event: 'brick.non_critical_error',
-                    consultationId: preference.consultationId,
-                    errorCause: err?.cause,
-                    errorType: err?.type,
-                    errorMessage: err?.message,
-                  });
-                } else {
-                  console.warn('[MP Brick]', {
-                    event: 'brick.critical_error',
-                    consultationId: preference.consultationId,
-                    errorCause: err?.cause,
-                    errorType: err?.type,
-                    errorMessage: err?.message,
-                  });
-                }
+                console.warn('[MP Brick]', {
+                  event: 'payment.brick_error',
+                  environment: process.env.NODE_ENV || 'development',
+                  consultationId: preference.consultationId,
+                  errorCause: err?.cause,
+                  errorType: err?.type,
+                  errorMessage: err?.message,
+                  isNonCritical,
+                });
               }
 
               // Non-critical events like get_address_data_failed must NOT tear down the Brick
@@ -447,6 +451,14 @@ export function PaymentBrick({
 
         if (isMounted) {
           brickControllerRef.current = controller;
+          if (process.env.NODE_ENV === 'development') {
+            console.info('[MP Brick]', {
+              event: 'payment.brick_initialized',
+              environment: process.env.NODE_ENV || 'development',
+              keyPrefix,
+              consultationId: preference.consultationId,
+            });
+          }
         }
       } catch (err: unknown) {
         console.error('[initBrick] Error instantiating Brick:', err);
@@ -480,7 +492,6 @@ export function PaymentBrick({
     preference.publicKey,
     preference.amount,
     preference.consultationId,
-    preference.preferenceId,
     preference.payerEmail,
     preference.payerAddress,
     router,
@@ -719,11 +730,11 @@ export function PaymentBrick({
         </div>
       )}
 
-      {/* Official Mercado Pago Payment Brick Container - No restrictive overflow or height */}
+      {/* Official Mercado Pago Payment Brick Container - No restrictive overflow or height, styled externally */}
       <div
         key={mountKey}
         id={containerId}
-        className={!isBrickReady || brickError ? 'hidden' : 'w-full min-w-0 py-2'}
+        className={!isBrickReady || brickError ? 'hidden' : 'w-full min-w-0 py-2 font-sans'}
       />
 
       {/* Security Note Footer */}
