@@ -104,41 +104,57 @@ export function CommissionCard({
   const [receiptReference, setReceiptReference] = useState<string>('');
   const [receiptNotes, setReceiptNotes] = useState<string>('');
 
-  const loadCommission = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await getCommissionByProposalId(proposal.id);
-      if (res.success && res.commission) {
-        const c = res.commission;
-        setCommission(c);
-        setCommissionType(c.commission_type);
-        if (c.commission_percentage !== null) setPercentage(c.commission_percentage);
-        if (c.commission_fixed_value !== null) setFixedValue(c.commission_fixed_value);
-        if (c.expected_sale_value !== null && c.expected_sale_value > 0) {
-          setExpectedSaleValue(c.expected_sale_value);
-        }
-        if (c.notes) setNotes(c.notes);
-
-        if (res.agreementUrl) {
-          setAgreementUrl(res.agreementUrl);
-        }
-        if (res.agreementOwnerData) {
-          if (res.agreementOwnerData.owner_cpf && !cpf) setCpf(res.agreementOwnerData.owner_cpf);
-          if (res.agreementOwnerData.owner_rg && !rg) setRg(res.agreementOwnerData.owner_rg);
-        }
-      } else {
-        const defVal = proposal.motorcycle?.desiredPrice ?? proposal.motorcycle?.fipePrice ?? 0;
-        setExpectedSaleValue(defVal);
+  const loadCommission = useCallback(
+    async (showLoader = false) => {
+      if (showLoader) {
+        setLoading(true);
       }
-    } catch (err) {
-      console.warn('Could not load commission for proposal:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [proposal.id, proposal.motorcycle?.desiredPrice, proposal.motorcycle?.fipePrice, cpf, rg]);
+      try {
+        const res = await getCommissionByProposalId(proposal.id);
+        if (res.success && res.commission) {
+          const c = res.commission;
+          setCommission(c);
+          setCommissionType(c.commission_type);
+          if (c.commission_percentage !== null) setPercentage(c.commission_percentage);
+          if (c.commission_fixed_value !== null) setFixedValue(c.commission_fixed_value);
+          if (c.expected_sale_value !== null && c.expected_sale_value > 0) {
+            setExpectedSaleValue(c.expected_sale_value);
+          }
+          if (c.notes) setNotes(c.notes);
+
+          if (res.agreementUrl) {
+            setAgreementUrl(res.agreementUrl);
+          }
+          if (res.agreementOwnerData) {
+            if (res.agreementOwnerData.owner_cpf) {
+              setCpf((prev) => prev || res.agreementOwnerData?.owner_cpf || '');
+            }
+            if (res.agreementOwnerData.owner_rg) {
+              setRg((prev) => prev || res.agreementOwnerData?.owner_rg || '');
+            }
+          }
+        } else {
+          const defVal = proposal.motorcycle?.desiredPrice ?? proposal.motorcycle?.fipePrice ?? 0;
+          setExpectedSaleValue(defVal);
+        }
+      } catch (err) {
+        console.warn('Could not load commission for proposal:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [proposal.id, proposal.motorcycle?.desiredPrice, proposal.motorcycle?.fipePrice],
+  );
+
+  // Sincronizar CPF e RG se a proposta mudar
+  useEffect(() => {
+    setCpf(typeof proposal.metadata?.owner_cpf === 'string' ? proposal.metadata.owner_cpf : '');
+    setRg(typeof proposal.metadata?.owner_rg === 'string' ? proposal.metadata.owner_rg : '');
+    setIsEditing(false);
+  }, [proposal.id]);
 
   useEffect(() => {
-    loadCommission();
+    loadCommission(true);
   }, [loadCommission]);
 
   // Atualizar valor inicial do formulário de recebimento
