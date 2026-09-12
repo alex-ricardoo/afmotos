@@ -39,6 +39,9 @@ export interface CustomerPlateConsultation {
   payment_date: string | null;
   processed_at: string | null;
   source_consultation_id: string | null;
+  latest_payment_transaction_id?: string | null;
+  auto_refund_attempted?: boolean | null;
+  lookup_error_message?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -114,6 +117,9 @@ export interface ConsultationDetail {
   processed_at: string | null;
   created_at: string;
   vehicle_data: Record<string, unknown> | null;
+  latest_payment_transaction_id?: string | null;
+  auto_refund_attempted?: boolean | null;
+  lookup_error_message?: string | null;
 }
 
 export interface ActionResult<T = unknown> {

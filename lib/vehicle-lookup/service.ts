@@ -323,6 +323,12 @@ export async function executeVehiclePlateLookup(
     isMock = true;
     isChargeable = false;
     chargedAmount = 0.0;
+
+    // Simulated test plate to verify automatic refund flow without cost
+    if (normalizedPlate === 'ERR9999' || normalizedPlate.startsWith('ERR')) {
+      throw new Error('Falha simulada em modo de teste para validação de estorno automático.');
+    }
+
     rawPayload = loadMockFixture(normalizedPlate);
   }
 

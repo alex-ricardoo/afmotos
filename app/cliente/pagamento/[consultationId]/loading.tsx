@@ -2,30 +2,45 @@ import React from 'react';
 
 export default function PaymentLoading() {
   return (
-    <div className="max-w-xl mx-auto space-y-6 animate-pulse">
-      <div className="h-4 w-28 bg-zinc-800 rounded" />
+    <div className="mx-auto max-w-5xl space-y-6 animate-pulse py-4 sm:py-8 px-4 sm:px-6">
+      <div className="h-4 w-28 bg-zinc-800/80 rounded" />
 
-      {/* Main card skeleton */}
-      <div className="rounded-3xl bg-gradient-to-b from-[#0e121a] via-[#090c13] to-[#07090f] border border-zinc-800/90 p-6 sm:p-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="h-3 w-24 bg-zinc-800 rounded" />
-            <div className="h-6 w-48 bg-zinc-800 rounded-lg" />
+      <div className="space-y-1">
+        <div className="h-7 w-56 bg-zinc-800/80 rounded" />
+        <div className="h-4 w-72 bg-zinc-800/50 rounded" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        {/* Left Column Skeleton */}
+        <div className="lg:col-span-5 space-y-5">
+          <div className="rounded-2xl bg-zinc-900/40 p-5 sm:p-6 border border-zinc-800/40 space-y-4">
+            <div className="h-4 w-32 bg-zinc-800/70 rounded" />
+            <div className="h-16 w-full bg-zinc-800/40 rounded-xl" />
+            <div className="h-8 w-full bg-zinc-800/30 rounded" />
           </div>
-          <div className="h-10 w-32 bg-zinc-800 rounded-lg" />
+
+          <div className="rounded-2xl bg-zinc-900/40 p-5 sm:p-6 border border-zinc-800/40 space-y-3">
+            <div className="h-4 w-28 bg-zinc-800/70 rounded" />
+            <div className="h-5 w-full bg-zinc-800/30 rounded" />
+            <div className="h-5 w-full bg-zinc-800/30 rounded" />
+            <div className="h-5 w-full bg-zinc-800/30 rounded" />
+            <div className="h-5 w-full bg-zinc-800/30 rounded" />
+          </div>
         </div>
 
-        <div className="h-24 bg-zinc-900/60 rounded-2xl" />
-
-        <div className="space-y-3 pt-2">
-          <div className="h-4 w-36 bg-zinc-800 rounded" />
-          <div className="h-16 bg-zinc-900/50 rounded-2xl" />
-          <div className="h-16 bg-zinc-900/50 rounded-2xl" />
-          <div className="h-16 bg-zinc-900/50 rounded-2xl" />
+        {/* Right Column Skeleton */}
+        <div className="lg:col-span-7">
+          <div className="rounded-2xl bg-zinc-900/40 p-5 sm:p-6 border border-zinc-800/40 space-y-4">
+            <div className="flex justify-between items-center pb-4 border-b border-zinc-800/60">
+              <div className="h-5 w-36 bg-zinc-800/70 rounded" />
+              <div className="h-6 w-24 bg-zinc-800/70 rounded" />
+            </div>
+            <div className="h-12 w-full bg-zinc-800/50 rounded-xl" />
+            <div className="h-12 w-full bg-zinc-800/30 rounded-xl" />
+            <div className="h-12 w-full bg-zinc-800/30 rounded-xl" />
+            <div className="h-12 w-full bg-zinc-800/50 rounded-xl" />
+          </div>
         </div>
-
-        <div className="h-10 bg-zinc-900/40 rounded-xl" />
-        <div className="h-13 bg-zinc-800 rounded-xl" />
       </div>
     </div>
   );

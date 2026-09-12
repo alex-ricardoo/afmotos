@@ -18,6 +18,7 @@ import {
   Users,
   BarChart3,
   FileSearch,
+  CreditCard,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -32,6 +33,7 @@ const navigation = [
   { name: 'Gastos', href: '/admin/gastos', icon: Wallet },
   { name: 'Relatórios', href: '/admin/relatorios', icon: BarChart3 },
   { name: 'Consulta Veicular', href: '/admin/consulta-placa', icon: FileSearch },
+  { name: 'Transações de Consultas', href: '/admin/transacoes-consultas', icon: CreditCard },
   { name: 'Tabela FIPE', href: '/admin/fipe', icon: Scale },
   { name: 'Configurações', href: '/admin/configuracoes', icon: Settings },
 ];

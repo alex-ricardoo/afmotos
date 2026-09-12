@@ -264,6 +264,9 @@ export async function getConsultationDetail(
     processed_at: data.processed_at,
     created_at: data.created_at,
     vehicle_data: (data.vehicle_data as Record<string, unknown>) || null,
+    auto_refund_attempted: data.auto_refund_attempted,
+    lookup_error_message: data.lookup_error_message,
+    latest_payment_transaction_id: data.latest_payment_transaction_id,
   };
 }
 
@@ -301,6 +304,9 @@ export async function getCustomerConsultationWithDto(consultationId: string): Pr
     processed_at: data.processed_at,
     created_at: data.created_at,
     vehicle_data: (data.vehicle_data as Record<string, unknown>) || null,
+    auto_refund_attempted: data.auto_refund_attempted,
+    lookup_error_message: data.lookup_error_message,
+    latest_payment_transaction_id: data.latest_payment_transaction_id,
   };
 
   let dto: import('@/lib/vehicle-lookup/types').InternalVehicleConsultationDto | null = null;
