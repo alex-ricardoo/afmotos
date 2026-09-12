@@ -9,7 +9,7 @@
 
 export interface PaymentLogContext {
   flowId?: string;
-  requestId?: string;
+  requestId?: string | null;
   consultationId?: string;
   transactionId?: string;
   externalReference?: string;
@@ -193,31 +193,57 @@ export function sanitizeContext(data: Record<string, unknown>): Record<string, u
  * Normalizes Mercado Pago SDK / provider error into a safe diagnostic object.
  */
 export function extractSafeError(error: unknown): {
+  errorName: string;
+  errorMessageSanitized: string;
   providerStatus: number | null;
   providerMessage: string;
   providerError: string | null;
   causeCount: number | null;
   causesSummary?: string[];
   errorCode?: string | null;
+  requestId?: string | null;
 } {
   if (!error) {
     return {
+      errorName: 'UnknownError',
+      errorMessageSanitized: 'unknown_error',
       providerStatus: null,
       providerMessage: 'unknown_error',
       providerError: null,
       causeCount: null,
+      requestId: null,
     };
   }
 
+  let errorName = 'UnknownError';
   let providerStatus: number | null = null;
   let providerMessage = 'unknown_error';
   let providerError: string | null = null;
   let causeCount: number | null = null;
   const causesSummary: string[] = [];
   let errorCode: string | null = null;
+  let requestId: string | null = null;
+
+  const sanitizeErrorText = (text: string): string => {
+    // Remove tokens, card numbers, or CPFs that might appear in raw error messages
+    return text
+      .replace(/\b\d{11}\b/g, '***********')
+      .replace(/\b\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{4}\b/g, '**** **** **** ****')
+      .replace(/TEST-[a-zA-Z0-9_-]+/g, 'TEST-***')
+      .replace(/APP_USR-[a-zA-Z0-9_-]+/g, 'APP_USR-***');
+  };
+
+  const extractRequestIdFromHeaders = (headers: unknown): string | null => {
+    if (!headers || typeof headers !== 'object') return null;
+    const h = headers as Record<string, unknown>;
+    const raw =
+      h['x-request-id'] || h['x-correlation-id'] || h['X-Request-Id'] || h['X-Correlation-Id'];
+    return typeof raw === 'string' && raw.length <= 100 ? raw : null;
+  };
 
   if (error instanceof Error) {
-    providerMessage = error.message;
+    errorName = error.name || 'Error';
+    providerMessage = sanitizeErrorText(error.message);
     errorCode = error.name;
 
     const anyErr = error as unknown as Record<string, unknown>;
@@ -227,52 +253,75 @@ export function extractSafeError(error: unknown): {
     if ('error' in anyErr && anyErr.error) {
       providerError = String(anyErr.error);
     }
+
+    // Try extracting requestId from SDK apiResponse or error headers
+    const apiResponse = anyErr.apiResponse as Record<string, unknown> | undefined;
+    requestId =
+      extractRequestIdFromHeaders(apiResponse?.headers) ||
+      extractRequestIdFromHeaders(anyErr.headers) ||
+      (typeof anyErr.requestId === 'string' ? anyErr.requestId : null);
+
     if ('causes' in anyErr && Array.isArray(anyErr.causes)) {
       causeCount = anyErr.causes.length;
       anyErr.causes.forEach((c: unknown) => {
         if (typeof c === 'string') {
-          causesSummary.push(c);
+          causesSummary.push(sanitizeErrorText(c));
         } else if (c && typeof c === 'object') {
           const item = c as Record<string, unknown>;
           const code = item.code ? `code:${String(item.code)}` : '';
-          const desc = item.description ? `desc:${String(item.description)}` : '';
+          const desc = item.description
+            ? `desc:${sanitizeErrorText(String(item.description))}`
+            : '';
           causesSummary.push([code, desc].filter(Boolean).join(' ') || 'unknown_cause');
         }
       });
     }
   } else if (typeof error === 'object' && error !== null) {
     const anyObj = error as Record<string, unknown>;
-    providerMessage = typeof anyObj.message === 'string' ? anyObj.message : 'non_error_object';
+    errorName = typeof anyObj.name === 'string' ? anyObj.name : 'ObjectError';
+    providerMessage =
+      typeof anyObj.message === 'string' ? sanitizeErrorText(anyObj.message) : 'non_error_object';
     if (anyObj.status && !isNaN(Number(anyObj.status))) {
       providerStatus = Number(anyObj.status);
     }
     if (anyObj.error) {
       providerError = String(anyObj.error);
     }
+    const apiResponse = anyObj.apiResponse as Record<string, unknown> | undefined;
+    requestId =
+      extractRequestIdFromHeaders(apiResponse?.headers) ||
+      extractRequestIdFromHeaders(anyObj.headers) ||
+      (typeof anyObj.requestId === 'string' ? anyObj.requestId : null);
+
     if (Array.isArray(anyObj.causes)) {
       causeCount = anyObj.causes.length;
       anyObj.causes.forEach((c: unknown) => {
         if (typeof c === 'string') {
-          causesSummary.push(c);
+          causesSummary.push(sanitizeErrorText(c));
         } else if (c && typeof c === 'object') {
           const item = c as Record<string, unknown>;
           const code = item.code ? `code:${String(item.code)}` : '';
-          const desc = item.description ? `desc:${String(item.description)}` : '';
+          const desc = item.description
+            ? `desc:${sanitizeErrorText(String(item.description))}`
+            : '';
           causesSummary.push([code, desc].filter(Boolean).join(' ') || 'unknown_cause');
         }
       });
     }
   } else {
-    providerMessage = String(error);
+    providerMessage = sanitizeErrorText(String(error));
   }
 
   return {
+    errorName,
+    errorMessageSanitized: providerMessage,
     providerStatus,
     providerMessage,
     providerError,
     causeCount,
     causesSummary: causesSummary.length > 0 ? causesSummary : undefined,
     errorCode,
+    requestId,
   };
 }
 
