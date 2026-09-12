@@ -237,9 +237,22 @@
   .animate-shimmer,
   [data-slot='skeleton'],
   .skeleton-shimmer {
-    animation: none !important;
-    background-image: none !important;
     background-color: #27272a !important;
   }
 }
+
+/* Laser scan animation for vehicle consultation scanning */
+@keyframes plate-laser {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.animate-plate-laser {
+  animation: plate-laser 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 

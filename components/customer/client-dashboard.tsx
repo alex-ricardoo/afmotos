@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { DashboardData, ConsultationStatus } from '@/lib/customer/types';
 import { formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
+import { CustomerPlateBadge } from './customer-plate-badge';
 import { Button } from '@/components/ui/button';
 
 interface ClientDashboardProps {
@@ -237,9 +238,9 @@ export function ClientDashboard({ data }: ClientDashboardProps) {
                   className="rounded-xl sm:rounded-2xl bg-zinc-900/40 hover:bg-zinc-900/70 border border-zinc-800/70 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors group"
                 >
                   <div className="flex items-center gap-3">
-                    {/* Plate Pill */}
-                    <div className="px-2.5 py-1.5 rounded-lg bg-zinc-950 border border-zinc-800 font-mono font-black text-xs text-[#c9a44c] tracking-wider uppercase shrink-0">
-                      {formatBrazilianPlate(item.plate)}
+                    {/* Plate Badge with Mercosul / Gray distinction */}
+                    <div className="shrink-0">
+                      <CustomerPlateBadge plate={item.plate} size="sm" />
                     </div>
 
                     <div className="min-w-0">

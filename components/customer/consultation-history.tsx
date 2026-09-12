@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { ConsultationHistoryResult, ConsultationStatus } from '@/lib/customer/types';
 import { formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
+import { CustomerPlateBadge } from './customer-plate-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -219,10 +220,8 @@ export function ConsultationHistory({
 
                     return (
                       <tr key={item.id} className="hover:bg-zinc-900/30 transition-colors group">
-                        <td className="py-4 px-6 font-mono font-bold text-white">
-                          <span className="px-2.5 py-1 rounded bg-zinc-900 border border-zinc-700 text-xs">
-                            {formatBrazilianPlate(item.plate)}
-                          </span>
+                        <td className="py-3 px-6">
+                          <CustomerPlateBadge plate={item.plate} size="sm" />
                         </td>
                         <td className="py-4 px-6 text-zinc-200">
                           {item.vehicle_data?.brand || item.vehicle_data?.model ? (
@@ -299,10 +298,8 @@ export function ConsultationHistory({
 
                 return (
                   <div key={item.id} className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded bg-zinc-900 border border-zinc-700 font-mono font-bold text-xs text-white">
-                        {formatBrazilianPlate(item.plate)}
-                      </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <CustomerPlateBadge plate={item.plate} size="sm" />
                       {getStatusBadge(item.status)}
                     </div>
 

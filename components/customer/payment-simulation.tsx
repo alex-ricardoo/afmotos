@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { ConsultationProcessingModal } from './consultation-processing-modal';
 
 interface PaymentSimulationProps {
   consultation: {
@@ -42,6 +43,18 @@ export function PaymentSimulation({ consultation, price }: PaymentSimulationProp
   const [showAllPerks, setShowAllPerks] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // High-End Animated Processing Modal states
+  const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
+  const [isApiDone, setIsApiDone] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  // If already completed prior to opening page (e.g. reload or direct link), redirect
+  useEffect(() => {
+    if (consultation.status === 'completed' && !isProcessingModalOpen) {
+      router.replace(`/cliente/consultas/${consultation.id}`);
+    }
+  }, [consultation.status, consultation.id, isProcessingModalOpen, router]);
 
   const formattedPlate = formatBrazilianPlate(consultation.plate);
 
@@ -103,19 +116,40 @@ export function PaymentSimulation({ consultation, price }: PaymentSimulationProp
 
   const handleConfirm = () => {
     setErrorMessage(null);
+    setApiError(null);
+    setIsApiDone(false);
+    setIsProcessingModalOpen(true);
 
     startTransition(async () => {
-      const res = await confirmPayment(consultation.id, selectedMethod);
+      try {
+        const res = await confirmPayment(consultation.id, selectedMethod);
 
-      if (res.error) {
-        setErrorMessage(res.error);
-        toast.error(res.error);
-      } else {
-        toast.success('Pagamento confirmado! Abrindo laudo veicular...');
-        router.push(`/cliente/consultas/${consultation.id}`);
-        router.refresh();
+        if (res.error) {
+          setApiError(res.error);
+          setErrorMessage(res.error);
+          toast.error(res.error);
+        } else {
+          setIsApiDone(true);
+        }
+      } catch (err) {
+        console.error('[handleConfirm] payment error:', err);
+        const fallbackMsg = 'Erro inesperado ao confirmar pagamento. Tente novamente.';
+        setApiError(fallbackMsg);
+        setErrorMessage(fallbackMsg);
+        toast.error(fallbackMsg);
       }
     });
+  };
+
+  const handleProcessingFinished = () => {
+    toast.success('Laudo veicular gerado com sucesso!');
+    router.push(`/cliente/consultas/${consultation.id}`);
+    router.refresh();
+  };
+
+  const handleProcessingRetry = () => {
+    setIsProcessingModalOpen(false);
+    setApiError(null);
   };
 
   return (
@@ -345,6 +379,16 @@ export function PaymentSimulation({ consultation, price }: PaymentSimulationProp
           </div>
         </div>
       </div>
+
+      {/* Senior Fullscreen Processing Animation Modal */}
+      <ConsultationProcessingModal
+        isOpen={isProcessingModalOpen}
+        plate={consultation.plate}
+        isApiDone={isApiDone}
+        apiError={apiError}
+        onFinished={handleProcessingFinished}
+        onRetry={handleProcessingRetry}
+      />
     </div>
   );
 }

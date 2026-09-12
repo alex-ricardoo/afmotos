@@ -40,10 +40,7 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     notFound();
   }
 
-  // If already completed, redirect straight to the result view
-  if (consultation.status === 'completed') {
-    redirect(`/cliente/consultas/${consultation.id}`);
-  }
+  // We do not redirect here so that Next.js Server Action revalidation does not interrupt the client-side progress animation.
 
   return (
     <div className="py-6 sm:py-10">

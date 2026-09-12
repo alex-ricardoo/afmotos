@@ -30,6 +30,7 @@ import {
   FileText,
   Printer,
 } from 'lucide-react';
+import { CustomerPlateBadge } from './customer-plate-badge';
 import type { InternalVehicleConsultationDto } from '@/lib/vehicle-lookup/types';
 import type { ConsultationDetail } from '@/lib/customer/types';
 import { Button } from '@/components/ui/button';
@@ -187,7 +188,7 @@ export function CustomerVehicleDetail({
   return (
     <div className="space-y-6 pb-16 animate-in fade-in duration-300">
       {/* Executive Vehicle Header Card */}
-      <div className="rounded-3xl border border-zinc-800/80 bg-gradient-to-br from-[#0e121a] via-[#0a0d14] to-[#07090f] backdrop-blur-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-6">
+      <div className="rounded-3xl border border-zinc-800/80 bg-gradient-to-br from-[#0e121a] via-[#0a0d14] to-[#07090f] backdrop-blur-2xl p-4 sm:p-7 shadow-2xl relative overflow-hidden space-y-5 sm:space-y-6">
         {/* Subtle Ambient Gold Gradient Line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#c9a44c] to-transparent opacity-80" />
 
@@ -216,29 +217,12 @@ export function CustomerVehicleDetail({
         {/* Main Identity Row: Plate, Title & Download Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            {/* Authentic Mercosul License Plate Graphic */}
-            <div className="w-48 rounded-xl overflow-hidden shadow-xl border-2 border-zinc-600 bg-white select-none shrink-0">
-              <div className="bg-[#003399] px-3 py-1 flex items-center justify-between text-white">
-                <div className="flex items-center gap-1">
-                  <span className="text-[8px] font-black">★</span>
-                  <span className="text-[9px] font-black tracking-wider uppercase">MERCOSUL</span>
-                </div>
-                <span className="text-[10px] font-black tracking-widest">BRASIL</span>
-                <div className="w-3.5 h-2 bg-[#009b3a] rounded-xs relative flex items-center justify-center overflow-hidden">
-                  <div className="w-2 h-1.5 bg-[#fedf00] rotate-45" />
-                  <div className="absolute w-1 h-1 bg-[#002776] rounded-full" />
-                </div>
-              </div>
-
-              <div className="bg-white py-1.5 px-3 flex items-center justify-center relative">
-                <span className="font-mono font-black text-2xl text-zinc-950 tracking-[0.22em] drop-shadow-xs">
-                  {dto.plate_display || formattedPlate}
-                </span>
-                <span className="absolute bottom-0.5 right-2 text-[8px] font-bold text-zinc-400 font-mono">
-                  BR
-                </span>
-              </div>
-            </div>
+            {/* Authentic Mercosul or Legacy Plate Graphic */}
+            <CustomerPlateBadge
+              plate={dto.plate_display || formattedPlate}
+              size="lg"
+              className="shrink-0 shadow-xl"
+            />
 
             {/* Vehicle Title & Badges */}
             <div className="space-y-1.5">
@@ -352,7 +336,7 @@ export function CustomerVehicleDetail({
       {activeTab === 'summary' && (
         <div className="space-y-6 animate-in fade-in duration-200">
           {/* Main Diagnostic & Risk Index Hero */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#0e131d] via-[#090c13] to-[#07090f] border border-zinc-800/80 shadow-2xl relative overflow-hidden">
+          <div className="p-4 sm:p-7 rounded-3xl bg-gradient-to-br from-[#0e131d] via-[#090c13] to-[#07090f] border border-zinc-800/80 shadow-2xl relative overflow-hidden">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="space-y-3 max-w-xl">
                 <div className="flex items-center gap-2">
