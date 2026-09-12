@@ -4,12 +4,80 @@ import { createClient } from '@/lib/supabase/server';
 import { normalizeBrazilianPlate, isValidBrazilianPlate } from '@/lib/vehicle-lookup/plate';
 import type { ActionResult } from './types';
 
+export interface ExistingConsultationInfo {
+  id: string;
+  plate: string;
+  status: string;
+  payment_status: string;
+  created_at: string;
+  brand?: string;
+  model?: string;
+}
+
+/**
+ * Checks if the authenticated customer has already consulted this plate in the past.
+ */
+export async function checkExistingCustomerConsultation(
+  plate: string
+): Promise<ActionResult<{
+  exists: boolean;
+  consultation?: ExistingConsultationInfo;
+}>> {
+  const normalized = normalizeBrazilianPlate(plate);
+
+  if (!isValidBrazilianPlate(normalized)) {
+    return { success: true, data: { exists: false } };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'Usuário não autenticado.' };
+  }
+
+  const { data: existing, error } = await supabase
+    .from('customer_plate_consultations')
+    .select('id, plate, status, payment_status, created_at, vehicle_data')
+    .eq('user_id', user.id)
+    .eq('plate_normalized', normalized)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !existing) {
+    return { success: true, data: { exists: false } };
+  }
+
+  const vehicleData = existing.vehicle_data as Record<string, unknown> | null;
+
+  return {
+    success: true,
+    data: {
+      exists: true,
+      consultation: {
+        id: existing.id,
+        plate: existing.plate,
+        status: existing.status,
+        payment_status: existing.payment_status,
+        created_at: existing.created_at,
+        brand: (vehicleData?.brand as string) || undefined,
+        model: (vehicleData?.model as string) || undefined,
+      },
+    },
+  };
+}
+
 /**
  * Initiates a plate consultation for an authenticated customer.
- * Reuses existing consultation if already created.
+ * If forceNew is true, creates a fresh consultation record even if a previous one exists,
+ * keeping the historical consultation untouched.
  */
 export async function initiateConsultation(
-  plate: string
+  plate: string,
+  options?: { forceNew?: boolean }
 ): Promise<ActionResult<{ consultationId: string }>> {
   const normalized = normalizeBrazilianPlate(plate);
 
@@ -48,33 +116,25 @@ export async function initiateConsultation(
     console.warn('[initiateConsultation] profile sync warning:', syncErr);
   }
 
-  // Check if customer already has a consultation record for this plate
-  const { data: existing, error: findError } = await supabase
-    .from('customer_plate_consultations')
-    .select('id, status, payment_status')
-    .eq('user_id', user.id)
-    .eq('plate_normalized', normalized)
-    .maybeSingle();
+  // If NOT forcing new, check if there's an active unpaid/pending consultation to reuse
+  if (!options?.forceNew) {
+    const { data: existing } = await supabase
+      .from('customer_plate_consultations')
+      .select('id, status, payment_status')
+      .eq('user_id', user.id)
+      .eq('plate_normalized', normalized)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (existing) {
-    // If it was failed, allow retrying by resetting to pending
-    if (existing.status === 'failed') {
-      await supabase
-        .from('customer_plate_consultations')
-        .update({
-          status: 'pending',
-          payment_status: 'unpaid',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existing.id);
+    if (existing && (existing.status === 'pending' || existing.payment_status === 'unpaid')) {
+      return {
+        success: true,
+        existing: true,
+        consultationId: existing.id,
+        data: { consultationId: existing.id },
+      };
     }
-
-    return {
-      success: true,
-      existing: true,
-      consultationId: existing.id,
-      data: { consultationId: existing.id },
-    };
   }
 
   // Create new consultation record

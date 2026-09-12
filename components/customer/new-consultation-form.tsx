@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -11,12 +11,18 @@ import {
   AlertCircle,
   Loader2,
   Car,
-  CheckCircle2,
   ShieldCheck,
+  History,
+  ExternalLink,
+  AlertTriangle,
 } from 'lucide-react';
 import { MercosulPlateInput } from '@/components/vehicle-history/mercosul-plate-input';
 import { isValidBrazilianPlate, formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
-import { initiateConsultation } from '@/lib/customer/consultation-service';
+import {
+  initiateConsultation,
+  checkExistingCustomerConsultation,
+  type ExistingConsultationInfo,
+} from '@/lib/customer/consultation-service';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -24,15 +30,50 @@ export function NewConsultationForm() {
   const router = useRouter();
   const [plate, setPlate] = useState('');
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [wantReconsultation, setWantReconsultation] = useState(false);
+  const [existingConsultation, setExistingConsultation] = useState<ExistingConsultationInfo | null>(null);
+  const [isCheckingExisting, setIsCheckingExisting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const isPlateValid = isValidBrazilianPlate(plate);
   const formattedPlate = isPlateValid ? formatBrazilianPlate(plate) : plate;
 
+  // Whenever a valid plate is typed, check if it was previously consulted
+  useEffect(() => {
+    if (!isPlateValid) {
+      setExistingConsultation(null);
+      setWantReconsultation(false);
+      return;
+    }
+
+    let active = true;
+    setIsCheckingExisting(true);
+
+    checkExistingCustomerConsultation(plate).then((res) => {
+      if (!active) return;
+      setIsCheckingExisting(false);
+
+      if (res.data?.exists && res.data.consultation) {
+        setExistingConsultation(res.data.consultation);
+        setWantReconsultation(false);
+      } else {
+        setExistingConsultation(null);
+        setWantReconsultation(false);
+      }
+    }).catch(() => {
+      if (active) setIsCheckingExisting(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [plate, isPlateValid]);
+
   const handlePlateChange = (newPlate: string) => {
     setPlate(newPlate);
     setIsConfirmed(false);
+    setWantReconsultation(false);
     if (errorMsg) {
       setErrorMsg(null);
     }
@@ -51,7 +92,12 @@ export function NewConsultationForm() {
       return;
     }
 
-    if (!isConfirmed) {
+    if (existingConsultation) {
+      if (!wantReconsultation) {
+        setErrorMsg('Confirme que deseja gerar uma nova consulta para esta placa já consultada anteriormente.');
+        return;
+      }
+    } else if (!isConfirmed) {
       setErrorMsg('Confirme que a placa informada está correta antes de prosseguir.');
       return;
     }
@@ -60,7 +106,9 @@ export function NewConsultationForm() {
 
     startTransition(async () => {
       try {
-        const res = await initiateConsultation(plate);
+        const res = await initiateConsultation(plate, {
+          forceNew: !!existingConsultation,
+        });
 
         if (res.error) {
           setErrorMsg(res.error);
@@ -81,6 +129,16 @@ export function NewConsultationForm() {
       }
     });
   };
+
+  const existingDateFormatted = existingConsultation
+    ? new Date(existingConsultation.created_at).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+    : '';
+
+  const canSubmit = isPlateValid && (existingConsultation ? wantReconsultation : isConfirmed);
 
   return (
     <div className="max-w-xl mx-auto space-y-4 sm:space-y-6 animate-in fade-in duration-300 px-1 sm:px-0">
@@ -137,6 +195,14 @@ export function NewConsultationForm() {
             />
           </div>
 
+          {/* Loading Indicator while verifying past history */}
+          {isCheckingExisting && (
+            <div className="flex items-center justify-center gap-2 text-xs text-zinc-400 py-1">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#c9a44c]" />
+              <span>Verificando histórico...</span>
+            </div>
+          )}
+
           {/* Error Message Box */}
           {errorMsg && (
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2 animate-in fade-in duration-200">
@@ -145,8 +211,75 @@ export function NewConsultationForm() {
             </div>
           )}
 
-          {/* Confirmation Checkbox Box (Visible and highlighted when plate is valid) */}
-          {isPlateValid ? (
+          {/* Notice: Plate already consulted in the past */}
+          {existingConsultation && (
+            <div className="p-4 rounded-2xl bg-amber-500/[0.08] border border-amber-500/30 space-y-3.5 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+                  <History className="w-4 h-4" />
+                </div>
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-amber-300">
+                      Placa já consultada anteriormente
+                    </span>
+                    <span className="text-[10px] text-zinc-400">
+                      {existingDateFormatted}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    Você já realizou uma consulta para a placa <strong className="text-white font-mono">{formattedPlate}</strong> em {existingDateFormatted}.
+                    A sua consulta anterior <strong>permanecerá salva no histórico</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons to View Past Report or Reconsult */}
+              <div className="pt-2 border-t border-amber-500/20 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-zinc-400 font-medium">
+                    Já possui laudo anterior?
+                  </span>
+                  <Link
+                    href={
+                      existingConsultation.status === 'completed'
+                        ? `/cliente/consultas/${existingConsultation.id}`
+                        : `/cliente/pagamento/${existingConsultation.id}`
+                    }
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors shrink-0"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>
+                      {existingConsultation.status === 'completed'
+                        ? 'Ver Laudo Anterior'
+                        : 'Concluir Pagamento'}
+                    </span>
+                    <ExternalLink className="w-3 h-3 opacity-60" />
+                  </Link>
+                </div>
+
+                {/* Checkbox: User explicitly confirms wanting a new updated consultation */}
+                <label className="flex items-start gap-2.5 p-3 rounded-xl bg-zinc-950/80 border border-amber-500/30 cursor-pointer select-none group hover:border-amber-500/50 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={wantReconsultation}
+                    onChange={(e) => {
+                      setWantReconsultation(e.target.checked);
+                      if (errorMsg) setErrorMsg(null);
+                    }}
+                    className="mt-0.5 w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-[#c9a44c] focus:ring-[#c9a44c] accent-[#c9a44c] cursor-pointer shrink-0"
+                  />
+                  <span className="text-xs text-zinc-200 leading-snug group-hover:text-white transition-colors">
+                    Estou ciente e desejo gerar uma <strong>nova consulta atualizada</strong> para a placa <strong className="text-amber-400 font-mono">{formattedPlate}</strong>.
+                  </span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Confirmation Checkbox Box (Only visible for new plates that were NOT previously consulted) */}
+          {isPlateValid && !existingConsultation && !isCheckingExisting ? (
             <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#c9a44c]/[0.07] border border-[#c9a44c]/30 space-y-3 animate-in fade-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between gap-2 border-b border-[#c9a44c]/20 pb-2">
                 <span className="text-xs text-zinc-300 font-medium">
@@ -172,20 +305,20 @@ export function NewConsultationForm() {
                 </span>
               </label>
             </div>
-          ) : (
+          ) : !isPlateValid ? (
             <div className="text-center py-1">
               <span className="text-[11px] text-zinc-500">
                 Padrão Mercosul (ABC1D23) ou Tradicional (ABC-1234)
               </span>
             </div>
-          )}
+          ) : null}
 
           {/* Action Button */}
           <Button
             type="submit"
-            disabled={isPending || !isPlateValid || !isConfirmed}
+            disabled={isPending || !canSubmit}
             className={`w-full h-12 text-sm sm:text-base font-bold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-lg ${
-              isPlateValid && isConfirmed
+              canSubmit
                 ? 'bg-gradient-to-r from-[#c9a44c] via-[#d4b35e] to-[#b38e3a] hover:brightness-110 text-zinc-950 shadow-[#c9a44c]/20 active:scale-[0.99]'
                 : 'bg-zinc-800/80 text-zinc-500 border border-zinc-700/60 cursor-not-allowed opacity-60'
             }`}
@@ -193,11 +326,15 @@ export function NewConsultationForm() {
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-                <span>Confirmando Placa...</span>
+                <span>Iniciando Consulta...</span>
               </>
             ) : (
               <>
-                <span>Continuar para Pagamento</span>
+                <span>
+                  {existingConsultation
+                    ? 'Avançar para Nova Consulta'
+                    : 'Continuar para Pagamento'}
+                </span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

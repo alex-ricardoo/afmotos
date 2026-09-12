@@ -81,9 +81,7 @@ CREATE TABLE IF NOT EXISTS public.customer_plate_consultations (
   processed_at TIMESTAMPTZ,
   source_consultation_id UUID REFERENCES public.vehicle_plate_consultations(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-
-  CONSTRAINT unique_customer_plate UNIQUE (user_id, plate_normalized)
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_cpc_user_id

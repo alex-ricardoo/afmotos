@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
-  Search,
   PlusCircle,
   FileCheck2,
   Clock,
@@ -15,12 +13,10 @@ import {
   CreditCard,
   Download,
   Car,
-  FileText,
 } from 'lucide-react';
 import type { DashboardData, ConsultationStatus } from '@/lib/customer/types';
-import { formatBrazilianPlate, isValidBrazilianPlate } from '@/lib/vehicle-lookup/plate';
+import { formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 interface ClientDashboardProps {
   data: DashboardData;
@@ -79,24 +75,7 @@ function getStatusBadge(status: ConsultationStatus) {
 }
 
 export function ClientDashboard({ data }: ClientDashboardProps) {
-  const router = useRouter();
   const firstName = data.profile.full_name.split(' ')[0] || 'Cliente';
-  const [quickPlate, setQuickPlate] = useState('');
-
-  const handleQuickLookup = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanPlate = quickPlate.trim().toUpperCase();
-    if (!cleanPlate) {
-      toast.error('Digite uma placa para consultar.');
-      return;
-    }
-    if (!isValidBrazilianPlate(cleanPlate)) {
-      toast.error('Informe uma placa válida no formato Mercosul (ABC1D23) ou antigo (ABC-1234).');
-      return;
-    }
-
-    router.push(`/cliente/pagamento/nova?placa=${encodeURIComponent(cleanPlate)}`);
-  };
 
   return (
     <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-300">
@@ -120,37 +99,12 @@ export function ClientDashboard({ data }: ClientDashboardProps) {
         </div>
 
         <Link href="/cliente/consultas/nova" className="shrink-0">
-          <Button className="w-full sm:w-auto h-11 px-5 bg-gradient-to-r from-[#c9a44c] via-[#d4b35e] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#c9a44c]/15 transition-all flex items-center justify-center gap-2">
+          <Button className="w-full sm:w-auto h-11 px-5 bg-gradient-to-r from-[#c9a44c] via-[#d4b35e] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#c9a44c]/15 transition-all flex items-center justify-center gap-2 cursor-pointer">
             <PlusCircle className="w-4 h-4" />
             <span>Nova Consulta Veicular</span>
           </Button>
         </Link>
       </div>
-
-      {/* Quick Search Strip (Compact & Mobile-first) */}
-      <form
-        onSubmit={handleQuickLookup}
-        className="flex items-center gap-2 p-2 sm:p-2.5 rounded-2xl bg-zinc-950/80 border border-zinc-800/90 shadow-md backdrop-blur-xl"
-      >
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={quickPlate}
-            onChange={(e) => setQuickPlate(e.target.value.toUpperCase())}
-            placeholder="Digite a placa (ex: ABC1D23)"
-            maxLength={8}
-            className="w-full h-10 px-3.5 bg-zinc-900/90 border border-zinc-800 rounded-xl text-white font-mono font-bold text-sm tracking-wider placeholder:font-sans placeholder:text-zinc-500 placeholder:tracking-normal placeholder:text-xs uppercase focus:outline-none focus:border-[#c9a44c] transition-colors"
-          />
-        </div>
-
-        <Button
-          type="submit"
-          className="h-10 px-4 sm:px-5 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs rounded-xl border border-zinc-700/80 flex items-center gap-1.5 shrink-0 transition-colors"
-        >
-          <Search className="w-3.5 h-3.5 text-[#c9a44c]" />
-          <span>Consultar</span>
-        </Button>
-      </form>
 
       {/* Metrics Strip (Compact 2/3 Column Grid) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
