@@ -54,6 +54,7 @@ export async function getCommissionByProposalId(
   commission?: ProposalCommissionRecord | null;
   agreementUrl?: string | null;
   agreementOwnerData?: { owner_cpf?: string; owner_rg?: string } | null;
+  agreementVehicleData?: { plate?: string; renavam?: string; chassi?: string } | null;
   error?: string;
 }> {
   try {
@@ -115,11 +116,50 @@ export async function getCommissionByProposalId(
       }
     }
 
+    let agreementVehicleData: { plate?: string; renavam?: string; chassi?: string } | null = null;
+    const targetSellReqId = data?.sell_request_id;
+    if (targetSellReqId) {
+      const { data: sr } = await supabase
+        .from('sell_requests')
+        .select('license_plate, motorcycle_data, metadata')
+        .eq('id', targetSellReqId)
+        .maybeSingle();
+
+      if (sr) {
+        const md = (sr.motorcycle_data as Record<string, unknown>) || {};
+        const meta = (sr.metadata as Record<string, unknown>) || {};
+        agreementVehicleData = {
+          plate: (sr.license_plate || md.license_plate || md.plate || meta.license_plate || meta.plate || '') as string,
+          renavam: (md.renavam || meta.renavam || '') as string,
+          chassi: (md.chassi || meta.chassi || '') as string,
+        };
+      }
+    }
+
+    if (!agreementVehicleData?.plate && !agreementVehicleData?.renavam && !agreementVehicleData?.chassi) {
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('metadata')
+        .eq('id', proposalId)
+        .maybeSingle();
+
+      if (lead?.metadata) {
+        const meta = lead.metadata as Record<string, unknown>;
+        const moto = (meta.motorcycle as Record<string, unknown>) || {};
+        agreementVehicleData = {
+          plate: (meta.license_plate || meta.plate || moto.license_plate || moto.plate || '') as string,
+          renavam: (meta.renavam || moto.renavam || '') as string,
+          chassi: (meta.chassi || moto.chassi || '') as string,
+        };
+      }
+    }
+
     return {
       success: true,
       commission: data,
       agreementUrl,
       agreementOwnerData,
+      agreementVehicleData,
     };
   } catch (err: unknown) {
     console.error('Unexpected error fetching commission:', err);

@@ -13,4 +13,8 @@ export const agreementGenerateSchema = z.object({
     .number()
     .positive('O valor esperado de venda deve ser maior que zero.')
     .refine((value) => Number.isFinite(value), 'O valor esperado de venda deve ser válido.'),
+  vehicle_plate: z.string().trim().optional().nullable(),
+  vehicle_renavam: z.string().trim().optional().nullable(),
+  vehicle_chassi: z.string().trim().optional().nullable(),
 });
+

@@ -165,7 +165,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { sell_request_id, owner_cpf, owner_rg, commission_percentage, expected_sale_value } = parsed.data;
+    const {
+      sell_request_id,
+      owner_cpf,
+      owner_rg,
+      commission_percentage,
+      expected_sale_value,
+      vehicle_plate,
+      vehicle_renavam,
+      vehicle_chassi,
+    } = parsed.data;
     const commissionValue = Number((expected_sale_value * (commission_percentage / 100)).toFixed(2));
 
     let { data: sellRequest, error: sellRequestError } = await supabase
@@ -248,6 +257,75 @@ export async function POST(request: NextRequest) {
 
     const agreementDate = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
+    const finalPlate =
+      vehicle_plate ||
+      sellRequest.license_plate ||
+      sellRequest.motorcycle_data?.license_plate ||
+      sellRequest.motorcycle_data?.plate ||
+      ((sellRequest.metadata as Record<string, unknown> | null)?.license_plate as string) ||
+      ((sellRequest.metadata as Record<string, unknown> | null)?.plate as string) ||
+      null;
+
+    const finalRenavam =
+      vehicle_renavam ||
+      sellRequest.motorcycle_data?.renavam ||
+      ((sellRequest.metadata as Record<string, unknown> | null)?.renavam as string) ||
+      null;
+
+    const finalChassi =
+      vehicle_chassi ||
+      sellRequest.motorcycle_data?.chassi ||
+      ((sellRequest.metadata as Record<string, unknown> | null)?.chassi as string) ||
+      null;
+
+    // Atualizar sell_requests e leads se novos dados de veículo foram fornecidos
+    try {
+      if (sellRequest && (vehicle_plate || vehicle_renavam || vehicle_chassi)) {
+        const currentMotoData = (sellRequest.motorcycle_data as Record<string, unknown>) || {};
+        const updatedMotoData = {
+          ...currentMotoData,
+          ...(finalPlate ? { license_plate: finalPlate, plate: finalPlate } : {}),
+          ...(finalRenavam ? { renavam: finalRenavam } : {}),
+          ...(finalChassi ? { chassi: finalChassi } : {}),
+        };
+        await supabase
+          .from('sell_requests')
+          .update({
+            ...(finalPlate ? { license_plate: finalPlate } : {}),
+            motorcycle_data: updatedMotoData,
+          })
+          .eq('id', sellRequest.id);
+      }
+
+      const targetLeadId = sellRequest.lead_id || sellRequest.id;
+      if (targetLeadId) {
+        const { data: lead } = await supabase.from('leads').select('metadata').eq('id', targetLeadId).maybeSingle();
+        if (lead) {
+          const currentMeta = (lead.metadata as Record<string, unknown>) || {};
+          const currentMoto = (currentMeta.motorcycle as Record<string, unknown>) || {};
+          await supabase
+            .from('leads')
+            .update({
+              metadata: {
+                ...currentMeta,
+                ...(finalPlate ? { plate: finalPlate, license_plate: finalPlate } : {}),
+                ...(finalRenavam ? { renavam: finalRenavam } : {}),
+                ...(finalChassi ? { chassi: finalChassi } : {}),
+                motorcycle: {
+                  ...currentMoto,
+                  ...(finalPlate ? { license_plate: finalPlate, plate: finalPlate } : {}),
+                  ...(finalRenavam ? { renavam: finalRenavam } : {}),
+                  ...(finalChassi ? { chassi: finalChassi } : {}),
+                },
+              },
+            })
+            .eq('id', targetLeadId);
+        }
+      }
+    } catch (saveVehicleErr) {
+      console.warn('[agreements.generate] could not persist vehicle data to proposal/sell_request:', saveVehicleErr);
+    }
+
     const pdfBuffer = await renderToBuffer(
       React.createElement(AgreementSalePDF, {
         saleId: sellRequest.id,
@@ -268,14 +346,9 @@ export async function POST(request: NextRequest) {
         vehicleManufactureYear: sellRequest.year_manufacture,
         vehicleModelYear: sellRequest.year_model,
         vehicleVersion: sellRequest.motorcycle_data?.version || sellRequest.fipe_model_name,
-        vehiclePlate:
-          sellRequest.license_plate ||
-          sellRequest.motorcycle_data?.license_plate ||
-          sellRequest.motorcycle_data?.plate ||
-          ((sellRequest.metadata as Record<string, unknown> | null)?.license_plate as string) ||
-          ((sellRequest.metadata as Record<string, unknown> | null)?.plate as string) ||
-          null,
-        vehicleRenavam: sellRequest.motorcycle_data?.renavam || null,
+        vehiclePlate: finalPlate,
+        vehicleRenavam: finalRenavam,
+        vehicleChassi: finalChassi,
         vehicleMileage: sellRequest.mileage,
         vehicleFuel: sellRequest.fipe_fuel_name || sellRequest.motorcycle_data?.fuel_name || null,
         vehicleFipeCode: sellRequest.fipe_code,

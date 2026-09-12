@@ -34,6 +34,9 @@ import {
   History,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
+  Check,
+  Bike,
   XCircle,
   Loader2,
   Save,
@@ -95,6 +98,33 @@ export function CommissionCard({
   const [rg, setRg] = useState<string>(
     typeof proposal.metadata?.owner_rg === 'string' ? proposal.metadata.owner_rg : '',
   );
+
+  // Form states do veículo para constar no contrato PDF
+  const [plate, setPlate] = useState<string>(() => {
+    return (
+      (proposal.motorcycle?.licensePlate as string) ||
+      (proposal.metadata?.license_plate as string) ||
+      (proposal.metadata?.plate as string) ||
+      ((proposal.metadata?.motorcycle as Record<string, unknown>)?.license_plate as string) ||
+      ((proposal.metadata?.motorcycle as Record<string, unknown>)?.plate as string) ||
+      ''
+    );
+  });
+  const [renavam, setRenavam] = useState<string>(() => {
+    return (
+      (proposal.metadata?.renavam as string) ||
+      ((proposal.metadata?.motorcycle as Record<string, unknown>)?.renavam as string) ||
+      ''
+    );
+  });
+  const [chassi, setChassi] = useState<string>(() => {
+    return (
+      (proposal.metadata?.chassi as string) ||
+      ((proposal.metadata?.motorcycle as Record<string, unknown>)?.chassi as string) ||
+      ''
+    );
+  });
+
   const [agreementUrl, setAgreementUrl] = useState<string | null>(null);
 
   // Form states de Baixa / Recebimento Inline
@@ -133,6 +163,17 @@ export function CommissionCard({
               setRg((prev) => prev || res.agreementOwnerData?.owner_rg || '');
             }
           }
+          if (res.agreementVehicleData) {
+            if (res.agreementVehicleData.plate) {
+              setPlate((prev) => prev || res.agreementVehicleData?.plate || '');
+            }
+            if (res.agreementVehicleData.renavam) {
+              setRenavam((prev) => prev || res.agreementVehicleData?.renavam || '');
+            }
+            if (res.agreementVehicleData.chassi) {
+              setChassi((prev) => prev || res.agreementVehicleData?.chassi || '');
+            }
+          }
         } else {
           const defVal = proposal.motorcycle?.desiredPrice ?? proposal.motorcycle?.fipePrice ?? 0;
           setExpectedSaleValue(defVal);
@@ -146,10 +187,28 @@ export function CommissionCard({
     [proposal.id, proposal.motorcycle?.desiredPrice, proposal.motorcycle?.fipePrice],
   );
 
-  // Sincronizar CPF e RG se a proposta mudar
+  // Sincronizar CPF, RG e dados do veículo se a proposta mudar
   useEffect(() => {
     setCpf(typeof proposal.metadata?.owner_cpf === 'string' ? proposal.metadata.owner_cpf : '');
     setRg(typeof proposal.metadata?.owner_rg === 'string' ? proposal.metadata.owner_rg : '');
+    setPlate(
+      (proposal.motorcycle?.licensePlate as string) ||
+        (proposal.metadata?.license_plate as string) ||
+        (proposal.metadata?.plate as string) ||
+        ((proposal.metadata?.motorcycle as Record<string, unknown>)?.license_plate as string) ||
+        ((proposal.metadata?.motorcycle as Record<string, unknown>)?.plate as string) ||
+        '',
+    );
+    setRenavam(
+      (proposal.metadata?.renavam as string) ||
+        ((proposal.metadata?.motorcycle as Record<string, unknown>)?.renavam as string) ||
+        '',
+    );
+    setChassi(
+      (proposal.metadata?.chassi as string) ||
+        ((proposal.metadata?.motorcycle as Record<string, unknown>)?.chassi as string) ||
+        '',
+    );
     setIsEditing(false);
   }, [proposal.id]);
 
@@ -168,7 +227,7 @@ export function CommissionCard({
     }
   }, [commission, commissionType, percentage, fixedValue, expectedSaleValue]);
 
-  // Máscaras de CPF e RG
+  // Máscaras e manipuladores
   const handleCpfChange = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
     setCpf(
@@ -188,6 +247,21 @@ export function CommissionCard({
     setRg(masked);
   };
 
+  const handlePlateChange = (value: string) => {
+    const clean = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+    setPlate(clean);
+  };
+
+  const handleRenavamChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    setRenavam(digits);
+  };
+
+  const handleChassiChange = (value: string) => {
+    const clean = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 17);
+    setChassi(clean);
+  };
+
   // Cálculos dinâmicos
   const calculatedCommissionValue = calculateCommission(
     commissionType,
@@ -198,8 +272,33 @@ export function CommissionCard({
   const netClientValue = getNetClientValue(expectedSaleValue, calculatedCommissionValue);
 
   const formattedCpf = cpf.replace(/\D/g, '');
+  const cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const cleanRenavam = renavam.replace(/\D/g, '');
+  const cleanChassi = chassi.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  const hasValidCpf = formattedCpf.length === 11;
+  const hasValidRg = rg.trim().length >= 2;
+  const hasValidPlate = cleanPlate.length === 7;
+  const hasValidRenavam = cleanRenavam.length >= 9 && cleanRenavam.length <= 11;
+  const hasValidChassi = cleanChassi.length === 17;
+  const hasValidPrice = expectedSaleValue > 0;
+
   const isAgreementDataValid =
-    formattedCpf.length === 11 && rg.trim().length >= 2 && expectedSaleValue > 0;
+    hasValidCpf &&
+    hasValidRg &&
+    hasValidPlate &&
+    hasValidRenavam &&
+    hasValidChassi &&
+    hasValidPrice;
+
+  // Lista dos campos faltantes para formalização
+  const missingContractFields: string[] = [];
+  if (!hasValidCpf) missingContractFields.push('CPF do Proprietário');
+  if (!hasValidRg) missingContractFields.push('RG do Proprietário');
+  if (!hasValidPlate) missingContractFields.push('Placa (7 caracteres)');
+  if (!hasValidRenavam) missingContractFields.push('Renavam (9 a 11 dígitos)');
+  if (!hasValidChassi) missingContractFields.push('Chassi (17 caracteres)');
+  if (!hasValidPrice) missingContractFields.push('Valor de Venda Previsto');
 
   const currentStatus: CommissionStatus = commission?.status || 'draft';
   const hasGeneratedAgreement = Boolean(agreementUrl || commission?.sale_agreement_id);
@@ -245,6 +344,9 @@ export function CommissionCard({
             sell_request_id: targetSellRequestId || proposal.sourceId || proposal.id,
             owner_cpf: formattedCpf,
             owner_rg: rg.trim(),
+            vehicle_plate: cleanPlate || null,
+            vehicle_renavam: cleanRenavam || null,
+            vehicle_chassi: cleanChassi || null,
             commission_percentage:
               commissionType === 'percentage'
                 ? Number(percentage)
@@ -267,7 +369,9 @@ export function CommissionCard({
         setIsEditing(false);
         toast.success('Comissão salva com sucesso!');
       } else {
-        toast.success('Comissão salva com sucesso! Preencha o CPF e RG para emitir o PDF do contrato.');
+        toast.info(
+          `Comissão salva com sucesso! Pendente para emissão do contrato: ${missingContractFields.join(', ')}.`,
+        );
       }
     } catch (err: unknown) {
       toast.error((err as Error)?.message || 'Erro ao processar comissão e contrato.');
@@ -477,6 +581,12 @@ export function CommissionCard({
                   Proprietário: <span className="text-zinc-200 font-semibold">{proposal.name || 'Cliente'}</span>
                   {cpf ? ` • CPF: ${cpf}` : ''}
                   {rg ? ` • RG: ${rg}` : ''}
+                </p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Motocicleta: <span className="text-zinc-200 font-semibold">{proposal.motorcycle?.brand || ''} {proposal.motorcycle?.model || ''}</span>
+                  {plate ? ` • Placa: ${plate}` : ''}
+                  {renavam ? ` • Renavam: ${renavam}` : ''}
+                  {chassi ? ` • Chassi: ${chassi}` : ''}
                 </p>
               </div>
             </div>
@@ -759,13 +869,32 @@ export function CommissionCard({
         </div>
       </div>
 
-      {/* 1. SEÇÃO FINANCEIRA: Modalidade e Valores */}
-      <div className="space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* 1. SEÇÃO FINANCEIRA: Modalidade e Valores da Comissão */}
+      <div className="bg-zinc-950/60 p-4 rounded-2xl border border-zinc-800/80 space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+          <div className="flex items-center gap-2">
+            <div className="size-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <CircleDollarSign className="size-3.5" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                1. Condições Comerciais & Valor da Comissão
+              </span>
+              <span className="text-[11px] text-zinc-400">
+                Defina a margem de remuneração da {storeName} e o valor de anúncio
+              </span>
+            </div>
+          </div>
+          <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400 bg-amber-500/10 font-mono">
+            {commissionType === 'percentage' ? `${percentage}%` : formatCurrencyBRL(fixedValue)}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {/* Modalidade */}
           <div className="space-y-1.5">
             <Label className="text-xs text-zinc-300">Modalidade de Comissão</Label>
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-zinc-950/80 rounded-xl border border-zinc-800">
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-zinc-900 rounded-xl border border-zinc-800">
               <button
                 type="button"
                 onClick={() => setCommissionType('percentage')}
@@ -797,12 +926,12 @@ export function CommissionCard({
               {commissionType === 'percentage' ? (
                 <>
                   <Percent className="size-3.5 text-amber-400" />
-                  Percentual de Comissão
+                  Taxa de Comissão (%)
                 </>
               ) : (
                 <>
                   <CircleDollarSign className="size-3.5 text-amber-400" />
-                  Valor Fixo de Comissão
+                  Valor Fixo de Comissão (R$)
                 </>
               )}
             </Label>
@@ -817,7 +946,7 @@ export function CommissionCard({
                     step={0.1}
                     value={percentage}
                     onChange={(e) => setPercentage(Number(e.target.value.replace(/^0+(?=\d)/, '') || 0))}
-                    className="h-10 pr-9 bg-zinc-950/70 border-zinc-800 font-mono font-bold text-amber-300 focus:border-amber-500/50 rounded-xl"
+                    className="h-10 pr-9 bg-zinc-900 border-zinc-800 font-mono font-bold text-amber-300 focus:border-amber-500/50 rounded-xl"
                   />
                   <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-zinc-500">
                     %
@@ -832,7 +961,7 @@ export function CommissionCard({
                     step={10}
                     value={fixedValue}
                     onChange={(e) => setFixedValue(Number(e.target.value.replace(/^0+(?=\d)/, '') || 0))}
-                    className="h-10 pr-10 bg-zinc-950/70 border-zinc-800 font-mono font-bold text-amber-300 focus:border-amber-500/50 rounded-xl"
+                    className="h-10 pr-10 bg-zinc-900 border-zinc-800 font-mono font-bold text-amber-300 focus:border-amber-500/50 rounded-xl"
                   />
                   <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-zinc-500">
                     R$
@@ -851,7 +980,7 @@ export function CommissionCard({
               </Label>
               {proposal.motorcycle?.desiredPrice && (
                 <span className="text-[11px] text-zinc-500">
-                  Expectativa cliente: {formatCurrencyBRL(proposal.motorcycle.desiredPrice)}
+                  Expectativa informada pelo cliente: {formatCurrencyBRL(proposal.motorcycle.desiredPrice)}
                 </span>
               )}
             </div>
@@ -862,22 +991,22 @@ export function CommissionCard({
               step={100}
               value={expectedSaleValue}
               onChange={(e) => setExpectedSaleValue(Number(e.target.value || 0))}
-              className="h-10 bg-zinc-950/70 border-zinc-800 font-mono font-bold text-emerald-400 focus:border-emerald-500/50 rounded-xl"
+              className="h-10 bg-zinc-900 border-zinc-800 font-mono font-bold text-emerald-400 focus:border-emerald-500/50 rounded-xl"
             />
           </div>
 
-          {/* Motivo da Alteração (Exibido quando editando) */}
+          {/* Motivo da Alteração (quando já existe comissão salva) */}
           {commission?.id && (
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="edit-reason" className="text-xs text-zinc-400">
-                Motivo da Alteração (Obrigatório para registrar no histórico)
+                Motivo da Alteração Comercial (Opcional - registrado na auditoria)
               </Label>
               <Input
                 id="edit-reason"
-                placeholder="Ex.: Renegociação de margem / desconto concedido pelo vendedor"
+                placeholder="Ex.: Renegociação de margem acordada com o vendedor"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="h-9 bg-zinc-900/80 border-zinc-800 text-xs focus:border-zinc-700 rounded-xl"
+                className="h-9 bg-zinc-900 border-zinc-800 text-xs focus:border-zinc-700 rounded-xl"
               />
             </div>
           )}
@@ -908,41 +1037,171 @@ export function CommissionCard({
         </div>
       </div>
 
-      {/* 2. SEÇÃO CONTRATUAL: Documentos do Proprietário para Gerar PDF */}
-      <div className="bg-zinc-950/70 p-4 rounded-2xl border border-zinc-800/80 space-y-3">
-        <div className="flex items-center justify-between pb-1">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-            <FileSignature className="size-3.5 text-emerald-400" />
-            Formalização Legal do Contrato (PDF)
+      {/* 2. SEÇÃO CONTRATUAL: Identificação da Motocicleta (Dados do Contrato) */}
+      <div className="bg-zinc-950/60 p-4 rounded-2xl border border-zinc-800/80 space-y-3.5">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+          <div className="flex items-center gap-2">
+            <div className="size-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Bike className="size-3.5" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                2. Identificação da Motocicleta (Contrato)
+              </span>
+              <span className="text-[11px] text-zinc-400">
+                Placa, Renavam e Chassi são exigidos para não ficarem em branco no PDF do contrato
+              </span>
+            </div>
+          </div>
+          {proposal.motorcycle?.brand && (
+            <span className="text-xs font-semibold text-zinc-300 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-lg hidden sm:inline-block">
+              {proposal.motorcycle.brand} {proposal.motorcycle.model || ''}
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Placa */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="vehicle-plate" className="text-xs text-zinc-300">
+                Placa do Veículo *
+              </Label>
+              {hasValidPlate ? (
+                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                  <Check className="size-3" /> OK
+                </span>
+              ) : (
+                <span className="text-[10px] text-amber-400/90 font-medium">7 caracteres</span>
+              )}
+            </div>
+            <Input
+              id="vehicle-plate"
+              placeholder="Ex: ABC1D23"
+              maxLength={8}
+              value={plate}
+              onChange={(e) => handlePlateChange(e.target.value)}
+              className="h-10 bg-zinc-900 border-zinc-800 font-mono font-bold uppercase focus:border-emerald-500/50 rounded-xl"
+            />
+          </div>
+
+          {/* Renavam */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="vehicle-renavam" className="text-xs text-zinc-300">
+                Renavam *
+              </Label>
+              {hasValidRenavam ? (
+                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                  <Check className="size-3" /> OK
+                </span>
+              ) : (
+                <span className="text-[10px] text-amber-400/90 font-medium">9 a 11 dígitos</span>
+              )}
+            </div>
+            <Input
+              id="vehicle-renavam"
+              inputMode="numeric"
+              placeholder="Ex: 00123456789"
+              maxLength={11}
+              value={renavam}
+              onChange={(e) => handleRenavamChange(e.target.value)}
+              className="h-10 bg-zinc-900 border-zinc-800 font-mono font-bold focus:border-emerald-500/50 rounded-xl"
+            />
+          </div>
+
+          {/* Chassi (VIN) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="vehicle-chassi" className="text-xs text-zinc-300">
+                Número do Chassi *
+              </Label>
+              {hasValidChassi ? (
+                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                  <Check className="size-3" /> 17/17
+                </span>
+              ) : (
+                <span className="text-[10px] text-amber-400/90 font-mono">
+                  {cleanChassi.length}/17
+                </span>
+              )}
+            </div>
+            <Input
+              id="vehicle-chassi"
+              placeholder="Ex: 9BWZZZ377VT004251"
+              maxLength={17}
+              value={chassi}
+              onChange={(e) => handleChassiChange(e.target.value)}
+              className="h-10 bg-zinc-900 border-zinc-800 font-mono font-bold uppercase text-xs focus:border-emerald-500/50 rounded-xl"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. SEÇÃO CONTRATUAL: Qualificação do Proprietário */}
+      <div className="bg-zinc-950/60 p-4 rounded-2xl border border-zinc-800/80 space-y-3.5">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+          <div className="flex items-center gap-2">
+            <div className="size-6 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+              <User className="size-3.5" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                3. Qualificação do Proprietário (Vendedor)
+              </span>
+              <span className="text-[11px] text-zinc-400">
+                Documentação legal do cliente para validação do termo de consignação
+              </span>
+            </div>
+          </div>
+          <span className="text-xs font-semibold text-zinc-300 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-lg">
+            {proposal.name || 'Cliente'}
           </span>
-          <span className="text-[11px] text-zinc-500">Identificação das partes</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* CPF */}
           <div className="space-y-1.5">
-            <Label htmlFor="owner-cpf" className="flex items-center gap-1.5 text-xs text-zinc-300">
-              <User className="size-3.5 text-emerald-400" />
-              CPF do Proprietário
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="owner-cpf" className="text-xs text-zinc-300">
+                CPF do Proprietário *
+              </Label>
+              {hasValidCpf ? (
+                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                  <Check className="size-3" /> OK
+                </span>
+              ) : (
+                <span className="text-[10px] text-amber-400/90 font-medium">11 dígitos</span>
+              )}
+            </div>
             <Input
               id="owner-cpf"
               inputMode="numeric"
               placeholder="000.000.000-00"
               value={cpf}
               onChange={(e) => handleCpfChange(e.target.value)}
-              className="h-10 bg-zinc-900 border-zinc-800 font-mono focus:border-emerald-500/50 rounded-xl"
+              className="h-10 bg-zinc-900 border-zinc-800 font-mono font-bold focus:border-emerald-500/50 rounded-xl"
             />
           </div>
 
+          {/* RG */}
           <div className="space-y-1.5">
-            <Label htmlFor="owner-rg" className="flex items-center gap-1.5 text-xs text-zinc-300">
-              <FileSignature className="size-3.5 text-emerald-400" />
-              RG do Proprietário
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="owner-rg" className="text-xs text-zinc-300">
+                RG / Órgão Emissor *
+              </Label>
+              {hasValidRg ? (
+                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                  <Check className="size-3" /> OK
+                </span>
+              ) : (
+                <span className="text-[10px] text-amber-400/90 font-medium">Obrigatório</span>
+              )}
+            </div>
             <Input
               id="owner-rg"
-              placeholder="00.000.000-0"
-              maxLength={13}
+              placeholder="Ex: 00.000.000-0 SDS/PE"
+              maxLength={20}
               value={rg}
               onChange={(e) => handleRgChange(e.target.value)}
               className="h-10 bg-zinc-900 border-zinc-800 font-mono focus:border-emerald-500/50 rounded-xl"
@@ -951,30 +1210,77 @@ export function CommissionCard({
         </div>
       </div>
 
-      {/* 3. BARRA DE AÇÃO UNIFICADA */}
+      {/* 4. PAINEL DE FORMALIZAÇÃO DO CONTRATO: STATUS & CHECKLIST */}
+      {isAgreementDataValid ? (
+        <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 p-3.5 flex items-start gap-3">
+          <ShieldCheck className="size-5 text-emerald-400 shrink-0 mt-0.5" />
+          <div className="space-y-0.5 text-xs">
+            <span className="font-bold text-emerald-300 block">
+              Pronto para formalização do contrato!
+            </span>
+            <p className="text-zinc-300 text-[11px]">
+              Todos os dados comerciais, da motocicleta (Placa, Renavam, Chassi) e do proprietário (CPF, RG) estão completos. O contrato PDF será emitido com todas as qualificações.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl bg-amber-500/10 border border-amber-500/25 p-3.5 space-y-2">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="size-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1 flex-1">
+              <span className="text-xs font-bold text-amber-300 block">
+                Pendente para a formalização do contrato PDF:
+              </span>
+              <p className="text-[11px] text-zinc-400">
+                A comissão pode ser salva a qualquer momento. Porém, para formalizar o contrato PDF completo, preencha:
+              </p>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {missingContractFields.map((field) => (
+                  <span
+                    key={field}
+                    className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                  >
+                    <AlertTriangle className="size-2.5" />
+                    {field}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. BARRA DE AÇÃO UNIFICADA */}
       <div className="flex flex-wrap items-center gap-2.5 pt-1">
         {commission?.status !== 'received' && (
           <Button
             type="button"
             onClick={handleSaveAndGenerate}
             disabled={isSaving || isGeneratingAgreement}
-            className="h-11 flex-1 min-w-[220px] text-xs bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black rounded-xl gap-2 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.25)] transition-all disabled:opacity-50"
+            className={`h-12 flex-1 min-w-[240px] text-xs font-black rounded-xl gap-2 cursor-pointer transition-all disabled:opacity-50 ${
+              isAgreementDataValid
+                ? 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700'
+            }`}
           >
             {isSaving || isGeneratingAgreement ? (
               <>
-                <Loader2 className="size-4 animate-spin text-zinc-950" />
+                <Loader2 className="size-4 animate-spin" />
                 <span>Processando e Emitindo Contrato...</span>
               </>
-            ) : (
+            ) : isAgreementDataValid ? (
               <>
                 <FileSignature className="size-4" />
                 <span>
                   {agreementUrl
-                    ? 'Salvar e Atualizar Contrato PDF'
-                    : isAgreementDataValid
-                    ? 'Salvar e Gerar Contrato PDF'
-                    : 'Salvar Comissão & Gerar Contrato'}
+                    ? 'Salvar Comissão & Atualizar Contrato PDF'
+                    : 'Salvar Comissão & Emitir Contrato PDF'}
                 </span>
+              </>
+            ) : (
+              <>
+                <Save className="size-4 text-amber-400" />
+                <span>Salvar Comissão (Pendente Dados do Contrato)</span>
               </>
             )}
           </Button>
@@ -986,7 +1292,7 @@ export function CommissionCard({
             type="button"
             variant="outline"
             onClick={() => setIsEditing(false)}
-            className="h-11 text-xs border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl"
+            className="h-12 text-xs border-zinc-700 text-zinc-300 hover:bg-zinc-800 rounded-xl"
           >
             Voltar para Visão do Contrato
           </Button>
