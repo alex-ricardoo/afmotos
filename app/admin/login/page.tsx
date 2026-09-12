@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ShieldCheck, ShieldAlert, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { getSiteLogo } from '@/lib/site-settings';
 
 export default function AdminLoginPage() {
@@ -20,8 +20,20 @@ export default function AdminLoginPage() {
   const [logoSrc, setLogoSrc] = useState<string>('/logo.jpg');
   const [siteName, setSiteName] = useState<string>('AF Motos');
   const [isCustomLogo, setIsCustomLogo] = useState(false);
+  const [unauthorizedError, setUnauthorizedError] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    // Check if redirected with unauthorized error
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('error') === 'unauthorized') {
+        setUnauthorizedError(true);
+        toast.error('Acesso restrito. Esta conta não possui privilégios de administrador.');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     async function loadBranding() {
@@ -48,9 +60,10 @@ export default function AdminLoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setUnauthorizedError(false);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -62,11 +75,36 @@ export default function AdminLoginPage() {
             : error.message || 'Erro ao realizar login',
         );
         setLoading(false);
-      } else {
-        toast.success('Autenticado com sucesso! Redirecionando...');
-        router.push('/admin');
-        router.refresh();
+        return;
       }
+
+      if (!authData?.user) {
+        toast.error('Erro na autenticação. Tente novamente.');
+        setLoading(false);
+        return;
+      }
+
+      // Validação estrita de permissão administrativa
+      const { data: adminProfile, error: profileError } = await supabase
+        .from('admin_profiles')
+        .select('id, role, is_active')
+        .eq('auth_user_id', authData.user.id)
+        .eq('is_active', true)
+        .in('role', ['admin', 'super_admin'])
+        .maybeSingle();
+
+      if (profileError || !adminProfile) {
+        // Encerra imediatamente a sessão de usuário não-admin
+        await supabase.auth.signOut();
+        setUnauthorizedError(true);
+        toast.error('Acesso negado: Esta conta não possui privilégios de administrador.');
+        setLoading(false);
+        return;
+      }
+
+      toast.success('Autenticado com sucesso! Redirecionando...');
+      router.push('/admin');
+      router.refresh();
     } catch (err) {
       console.error('Login error:', err);
       toast.error('Ocorreu um erro inesperado ao autenticar.');
@@ -129,8 +167,21 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
+        {/* Unauthorized alert box */}
+        {unauthorizedError && (
+          <div className="mt-4 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-left">
+            <ShieldAlert className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-red-200">Acesso Não Autorizado</p>
+              <p className="text-[11px] text-red-300/80 leading-relaxed">
+                Esta conta não possui perfil de administrador. O acesso ao painel de gestão é restrito.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Form Fields */}
-        <form onSubmit={handleLogin} className="space-y-4 pt-6">
+        <form onSubmit={handleLogin} className="space-y-4 pt-4">
           <div className="space-y-1.5">
             <Label
               htmlFor="email"

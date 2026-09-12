@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Menu,
   X,
@@ -15,7 +15,10 @@ import {
   Handshake,
   FileSearch,
   Store,
+  UserCircle,
+  LogOut,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -46,8 +49,73 @@ interface NavGroup {
 
 export function Header({ settings }: { settings?: any }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+
+  const [customerUser, setCustomerUser] = useState<{
+    id: string;
+    email: string;
+    fullName: string;
+    avatarUrl?: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    async function checkAuth() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const metadata = user.user_metadata || {};
+        setCustomerUser({
+          id: user.id,
+          email: user.email || '',
+          fullName:
+            metadata.full_name ||
+            metadata.name ||
+            user.email?.split('@')[0] ||
+            'Cliente',
+          avatarUrl: metadata.avatar_url || metadata.picture || null,
+        });
+      } else {
+        setCustomerUser(null);
+      }
+    }
+    checkAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const metadata = session.user.user_metadata || {};
+        setCustomerUser({
+          id: session.user.id,
+          email: session.user.email || '',
+          fullName:
+            metadata.full_name ||
+            metadata.name ||
+            session.user.email?.split('@')[0] ||
+            'Cliente',
+          avatarUrl: metadata.avatar_url || metadata.picture || null,
+        });
+      } else {
+        setCustomerUser(null);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setCustomerUser(null);
+    setIsOpen(false);
+    router.push('/');
+    router.refresh();
+  };
 
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
   const slogan = settings?.settings?.slogan || 'Compra e Venda de Motos';
@@ -118,6 +186,44 @@ export function Header({ settings }: { settings?: any }) {
           description: 'Venda rápida por consignação',
         },
       ],
+    },
+    {
+      title: 'Área do Cliente',
+      items: customerUser
+        ? [
+            {
+              href: '/cliente',
+              label: `Painel (${customerUser.fullName.split(' ')[0]})`,
+              icon: UserCircle,
+              description: 'Resumo e consultas ativas',
+            },
+            {
+              href: '/cliente/consultas',
+              label: 'Minhas Consultas',
+              icon: FileSearch,
+              description: 'Histórico de laudos veiculares',
+            },
+            {
+              href: '/cliente/perfil',
+              label: 'Meu Perfil',
+              icon: UserCircle,
+              description: 'Meus dados cadastrais',
+            },
+          ]
+        : [
+            {
+              href: '/cliente/login',
+              label: 'Entrar na Conta',
+              icon: UserCircle,
+              description: 'Acesse suas consultas e laudos',
+            },
+            {
+              href: '/cliente/cadastro',
+              label: 'Cadastre-se Grátis',
+              icon: Sparkles,
+              description: 'Crie sua conta para consultar placas',
+            },
+          ],
     },
     ...(isAboutPublished
       ? [
@@ -221,6 +327,51 @@ export function Header({ settings }: { settings?: any }) {
             );
           })}
         </nav>
+
+        {/* Desktop Customer Area Button */}
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
+          {customerUser ? (
+            <div className="flex items-center gap-2 p-1.5 pl-3 rounded-full bg-zinc-900/80 border border-[#c9a44c]/30 shadow-sm">
+              <Link
+                href="/cliente"
+                className="flex items-center gap-2 text-xs font-semibold text-zinc-200 hover:text-[#c9a44c] transition-colors"
+              >
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#c9a44c] to-[#997628] flex items-center justify-center text-zinc-950 font-bold text-[11px] overflow-hidden">
+                  {customerUser.avatarUrl ? (
+                    <Image
+                      src={customerUser.avatarUrl}
+                      alt="Perfil"
+                      width={24}
+                      height={24}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    customerUser.fullName.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <span className="max-w-[100px] truncate">{customerUser.fullName.split(' ')[0]}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="px-2 py-1 rounded-full text-[11px] text-zinc-400 hover:text-red-400 hover:bg-zinc-800 transition-colors"
+                title="Sair da conta"
+              >
+                Sair
+              </button>
+            </div>
+          ) : (
+            <Link href="/cliente/login">
+              <Button
+                size="sm"
+                className="h-9 px-4 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/80 hover:border-[#c9a44c]/50 text-zinc-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <UserCircle className="w-4 h-4 text-[#c9a44c]" />
+                <span>Área do Cliente</span>
+              </Button>
+            </Link>
+          )}
+        </div>
 
         {/* Mobile Hamburger */}
         <div className="lg:hidden shrink-0">
@@ -349,6 +500,19 @@ export function Header({ settings }: { settings?: any }) {
                   </div>
                 ))}
               </div>
+
+              {customerUser && (
+                <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/60 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sair da minha conta</span>
+                  </button>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
         </div>

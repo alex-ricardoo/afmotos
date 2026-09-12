@@ -55,12 +55,19 @@ const REPORT_HIGHLIGHTS = [
 
 interface VehicleHistoryReportMockupProps {
   siteName?: string;
+  price?: number;
 }
 
-export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHistoryReportMockupProps = {}) {
+export function VehicleHistoryReportMockup({ siteName = 'AF Motos', price }: VehicleHistoryReportMockupProps = {}) {
   const { scrollToSection } = useVehicleHistory();
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
+
+  const rawPrice = typeof price === 'number' && price > 0 ? price : 39.90;
+  const formattedPrice = rawPrice.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 
   // Close modal on ESC key and lock body scroll
   useEffect(() => {
@@ -117,8 +124,8 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
           </h2>
 
           <p className="text-xs sm:text-sm text-zinc-300 max-w-xl mx-auto leading-relaxed">
-            Você recebe um <strong className="text-amber-400">link no WhatsApp</strong> e pode{' '}
-            <strong className="text-amber-400">baixar o laudo em PDF</strong> para guardar ou apresentar ao comprador na hora de negociar.
+            Você acessa o laudo interativo na sua <strong className="text-amber-400">Área do Cliente</strong> e pode{' '}
+            <strong className="text-amber-400">baixar o laudo em PDF oficial</strong> para guardar ou apresentar ao comprador na hora de negociar.
           </p>
         </div>
 
@@ -222,8 +229,8 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
                 <div>
                   <div className="flex items-center justify-between gap-1">
                     <span className="text-xs font-bold text-amber-300">Economia Real</span>
-                    <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                      R$ 39,90
+                    <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono">
+                      {formattedPrice}
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-300 leading-snug mt-1">
@@ -246,7 +253,7 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
           <div className="mt-5 pt-3.5 border-t border-[#1F293D] flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-zinc-400">
             <div className="flex items-center gap-2 text-zinc-300 font-medium">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Receba o PDF oficial e link seguro direto no seu WhatsApp após a confirmação.</span>
+              <span>Acesse o laudo completo na sua conta e baixe o PDF oficial autenticado a qualquer momento.</span>
             </div>
             <div className="flex items-center gap-1.5 text-amber-300/90 text-[11px] font-semibold">
               <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -352,7 +359,7 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
           >
             <div className="flex items-center gap-2 text-xs text-zinc-300 text-center sm:text-left">
               <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Consulte qualquer veículo por apenas <strong>R$ 39,90</strong> com suporte de nossa equipe.</span>
+              <span>Consulte qualquer veículo por apenas <strong>{formattedPrice}</strong> com suporte de nossa equipe.</span>
             </div>
 
             <button

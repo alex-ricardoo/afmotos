@@ -39,7 +39,19 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return new NextResponse('Não autorizado', { status: 401 });
+      return new NextResponse('Não autenticado', { status: 401 });
+    }
+
+    const { data: adminProfile } = await supabase
+      .from('admin_profiles')
+      .select('id, role, is_active')
+      .eq('auth_user_id', user.id)
+      .eq('is_active', true)
+      .in('role', ['admin', 'super_admin'])
+      .maybeSingle();
+
+    if (!adminProfile) {
+      return new NextResponse('Acesso restrito a administradores', { status: 403 });
     }
 
     // 2. Parse Query Params

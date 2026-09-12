@@ -32,8 +32,8 @@ const CHECKLIST_ITEMS = [
   'Alienação Fiduciária (Dívidas ativas com Bancos)',
   'Bloqueios na Justiça (Renajud) & Alerta de Furto',
   'Débitos Estaduais, IPVA e Multas em aberto',
-  'Laudo Oficial em PDF + Link interativo no WhatsApp',
-  'Suporte humano com especialista para tirar dúvidas',
+  'Laudo Oficial em PDF + Acesso vitalício na Área do Cliente',
+  'Suporte especializado com consultores para tirar dúvidas',
 ];
 
 export function VehicleHistoryPricing({
@@ -48,20 +48,16 @@ export function VehicleHistoryPricing({
     style: 'currency',
     currency: 'BRL',
   });
+  const competitorPrice = 64.90;
+  const savings = Math.max(0, competitorPrice - rawPrice);
+  const formattedSavings = savings.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 
   const handleB2CClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!plate || !isValid) {
-      scrollToSection('consulta-placa');
-      return;
-    }
-    const url = buildVehicleHistoryWhatsAppUrl({
-      phone,
-      plate,
-      price: settings.price,
-      siteName,
-    });
-    window.open(url, '_blank', 'noopener,noreferrer');
+    scrollToSection('consulta-placa');
   };
 
   const handleB2BClick = (e: React.MouseEvent) => {
@@ -139,9 +135,11 @@ export function VehicleHistoryPricing({
                 <span className="px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-extrabold text-[10px] uppercase tracking-wider">
                   100% Oficial Senatran
                 </span>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  Economize R$ 25,00
-                </span>
+                {savings > 0 && (
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    Economize {formattedSavings}
+                  </span>
+                )}
               </div>
 
               <h3 className="text-lg sm:text-2xl font-black text-white font-heading">
@@ -218,15 +216,15 @@ export function VehicleHistoryPricing({
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-400 pt-1">
               <span className="flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                Pagamento seguro Pix ou Cartão
+                Pagamento 100% online seguro
               </span>
               <span className="flex items-center gap-1.5">
                 <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                Envio em minutos no WhatsApp
+                Liberação instantânea no seu painel
               </span>
               <span className="flex items-center gap-1.5">
                 <FileCheck2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                PDF para salvar e imprimir
+                PDF oficial para salvar e imprimir
               </span>
             </div>
           </div>

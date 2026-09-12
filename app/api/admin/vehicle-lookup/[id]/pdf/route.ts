@@ -27,8 +27,23 @@ export async function GET(
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: 'Acesso não autorizado. Faça login como administrador.' },
+        { error: 'Acesso não autenticado. Faça login.' },
         { status: 401 }
+      );
+    }
+
+    const { data: adminProfile } = await supabase
+      .from('admin_profiles')
+      .select('id, role, is_active')
+      .eq('auth_user_id', user.id)
+      .eq('is_active', true)
+      .in('role', ['admin', 'super_admin'])
+      .maybeSingle();
+
+    if (!adminProfile) {
+      return NextResponse.json(
+        { error: 'Acesso negado. Apenas administradores podem acessar este laudo interno.' },
+        { status: 403 }
       );
     }
 

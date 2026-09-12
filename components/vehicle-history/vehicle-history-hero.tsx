@@ -1,12 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShieldCheck, ArrowRight, FileDown, Link2, AlertTriangle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ShieldCheck, ArrowRight, FileDown, Link2, AlertTriangle, Loader2, MessageCircle } from 'lucide-react';
 import { MercosulPlateInput } from './mercosul-plate-input';
 import { VehicleHistorySettings } from '@/types/site-settings';
 import { isValidBrazilianPlate } from '@/lib/vehicle-lookup/plate';
 import { buildVehicleHistoryWhatsAppUrl } from '@/lib/utils/whatsapp';
 import { useVehicleHistory } from './vehicle-history-context';
+import { createClient } from '@/lib/supabase/client';
+import { initiateConsultation } from '@/lib/customer/consultation-service';
+import { AuthModal } from '@/components/customer/auth-modal';
+import { toast } from 'sonner';
 
 interface VehicleHistoryHeroProps {
   settings: VehicleHistorySettings;
@@ -19,8 +24,11 @@ export function VehicleHistoryHero({
   siteName,
   defaultPhone,
 }: VehicleHistoryHeroProps) {
+  const router = useRouter();
   const { plate, setPlateInput, scrollToSection } = useVehicleHistory();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const phone = settings.whatsappPhoneOverride || defaultPhone;
 
@@ -31,7 +39,31 @@ export function VehicleHistoryHero({
     }
   };
 
-  const handleConsultarClick = (e: React.MouseEvent) => {
+  const processConsultation = async (targetPlate: string) => {
+    setIsSubmitting(true);
+    try {
+      const res = await initiateConsultation(targetPlate);
+      if (res.error) {
+        setErrorMessage(res.error);
+        toast.error(res.error);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (res.consultationId) {
+        toast.success('Consulta iniciada! Redirecionando...');
+        router.push(`/cliente/pagamento/${res.consultationId}`);
+      } else {
+        router.push('/cliente');
+      }
+    } catch (err) {
+      console.error('Error starting consultation:', err);
+      toast.error('Erro ao iniciar consulta.');
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConsultarClick = async (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (!plate || plate.trim().length === 0) {
@@ -45,6 +77,27 @@ export function VehicleHistoryHero({
     }
 
     setErrorMessage(null);
+
+    // Check user authentication
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+
+    await processConsultation(plate);
+  };
+
+  const handleWhatsAppClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!plate || !isValidBrazilianPlate(plate)) {
+      setErrorMessage('Digite uma placa válida antes de chamar no WhatsApp.');
+      return;
+    }
 
     const url = buildVehicleHistoryWhatsAppUrl({
       phone,
@@ -94,7 +147,7 @@ export function VehicleHistoryHero({
           {/* Sub-headline: strictly max 3 lines */}
           <p className="text-base sm:text-lg lg:text-xl text-zinc-200 max-w-2xl leading-relaxed font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
             Descubra leilão escondido, dívidas bancárias e bloqueios judiciais em segundos.
-            Receba o laudo oficial em PDF direto no seu WhatsApp e compre com total segurança.
+            Consulte 100% online com liberação imediata, painel interativo e download do laudo oficial em PDF.
           </p>
 
           {/* Plate Input Box & Primary CTA */}
@@ -124,20 +177,40 @@ export function VehicleHistoryHero({
                 type="button"
                 id="btn-hero-consultar-placa"
                 onClick={handleConsultarClick}
-                className="w-full min-h-[52px] py-3.5 px-4 sm:px-6 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base sm:text-lg shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/50"
+                disabled={isSubmitting}
+                className="w-full min-h-[52px] py-3.5 px-4 sm:px-6 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base sm:text-lg shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/50 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <span className="whitespace-nowrap">Consultar Placa Agora</span>
-                <ArrowRight className="w-5 h-5 stroke-[3] shrink-0" />
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="whitespace-nowrap">Iniciando Consulta...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="whitespace-nowrap">Consultar Placa Agora</span>
+                    <ArrowRight className="w-5 h-5 stroke-[3] shrink-0" />
+                  </>
+                )}
               </button>
 
+              <div className="flex flex-col items-center gap-1.5 pt-1">
+                <button
+                  type="button"
+                  onClick={handleWhatsAppClick}
+                  className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-emerald-400 transition-colors py-1"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Dúvidas sobre a placa? Fale com nosso suporte no WhatsApp</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => scrollToSection('precos-historico')}
-                className="w-full text-xs font-semibold text-zinc-400 hover:text-amber-400 underline underline-offset-2 py-1 transition-colors"
-              >
-                Ver tabela de preços e o que está incluso no laudo ↓
-              </button>
+                <button
+                  type="button"
+                  onClick={() => scrollToSection('precos-historico')}
+                  className="w-full text-xs font-semibold text-zinc-400 hover:text-amber-400 underline underline-offset-2 py-1 transition-colors"
+                >
+                  Ver tabela de preços e o que está incluso no laudo ↓
+                </button>
+              </div>
             </div>
 
             {/* Trust Triggers */}
@@ -149,12 +222,12 @@ export function VehicleHistoryHero({
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <Link2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>Link Online Imediato</span>
+                <span>Painel 100% Online</span>
               </span>
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <FileDown className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>PDF Oficial</span>
+                <span>Download em PDF</span>
               </span>
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
@@ -166,6 +239,13 @@ export function VehicleHistoryHero({
           </div>
         </div>
       </div>
+
+      <AuthModal
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        plate={plate}
+        onSuccess={() => processConsultation(plate)}
+      />
     </section>
   );
 }

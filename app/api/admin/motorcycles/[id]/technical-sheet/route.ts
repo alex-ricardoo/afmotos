@@ -13,7 +13,20 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return new NextResponse('Não autorizado', { status: 401 });
+  if (!auth.user) return new NextResponse('Não autenticado', { status: 401 });
+
+  const { data: adminProfile } = await supabase
+    .from('admin_profiles')
+    .select('id, role, is_active')
+    .eq('auth_user_id', auth.user.id)
+    .eq('is_active', true)
+    .in('role', ['admin', 'super_admin'])
+    .maybeSingle();
+
+  if (!adminProfile) {
+    return new NextResponse('Acesso restrito a administradores', { status: 403 });
+  }
+
   const { id } = await params;
   const { data, error } = await (supabase as SupabaseClient)
     .from('motorcycle_technical_sheets')

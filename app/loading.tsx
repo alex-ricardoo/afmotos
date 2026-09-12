@@ -15,7 +15,7 @@ export default function RootLoading() {
         {/* Logo Container with Shimmer Border */}
         <div className="relative h-20 w-20 overflow-hidden rounded-full border border-amber-400/40 bg-zinc-950 shadow-[0_0_28px_rgba(201,164,76,0.25)]">
           <Image
-            src="/aflogo.jpg"
+            src="/logo.jpg"
             alt="AF Motos"
             fill
             sizes="80px"

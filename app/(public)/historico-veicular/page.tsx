@@ -38,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 
   const title = `Consulta Veicular Oficial | Qualquer Veículo por Placa | ${siteName}`;
-  const description = `Não caia em golpes. Consulte histórico completo de leilão, sinistro, gravames, multas e débitos para motos, carros, caminhões e utilitários em todo o Brasil por apenas ${priceFormatted} na ${siteName}. Laudo oficial imediato em PDF no WhatsApp.`;
+  const description = `Não caia em golpes. Consulte histórico completo de leilão, sinistro, gravames, multas e débitos para motos, carros, caminhões e utilitários em todo o Brasil por apenas ${priceFormatted} na ${siteName}. Consulta 100% online com liberação imediata na Área do Cliente e laudo oficial em PDF.`;
 
   return buildPageMetadata({
     title,
@@ -104,7 +104,7 @@ export default async function HistoricoVeicularPage() {
         <VehicleHistoryBenefits />
 
         {/* D. Demonstração Visual do Produto (Preview Real com Zoom nos Alertas) */}
-        <VehicleHistoryReportMockup siteName={settings.siteName} />
+        <VehicleHistoryReportMockup siteName={settings.siteName} price={vehicleHistory.price} />
 
         {/* E. Como Funciona (3 Passos Simples) */}
         <VehicleHistoryHowItWorks siteName={settings.siteName} />

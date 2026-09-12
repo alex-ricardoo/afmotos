@@ -25,19 +25,19 @@ export function VehicleHistoryStats({ siteShortName = 'Loja' }: VehicleHistorySt
     },
     {
       value: 'Suporte',
-      highlight: 'Humano',
-      label: 'Especialista real conferindo sua placa no WhatsApp',
+      highlight: 'Dedicado',
+      label: 'Atendimento humanizado para dúvidas sobre o seu laudo',
       icon: UserCheck,
       iconBg: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-      badge: 'Sem Robôs',
+      badge: 'Tire Dúvidas',
     },
     {
-      value: 'Em Poucos',
-      highlight: 'Minutos',
-      label: 'Link online interativo e PDF enviados na conversa',
+      value: 'Liberação',
+      highlight: 'Imediata',
+      label: 'Laudo gerado instantaneamente no seu painel com PDF oficial',
       icon: Clock,
       iconBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-      badge: 'Envio Ágil',
+      badge: '100% Online',
     },
   ];
 

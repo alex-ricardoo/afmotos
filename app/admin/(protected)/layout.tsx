@@ -3,6 +3,7 @@ import { AdminHeader } from '@/components/admin/admin-header';
 import { AdminBottomNav } from '@/components/admin/admin-bottom-nav';
 import { getSettings } from '@/lib/actions/settings';
 import { CONSTANTS } from '@/lib/utils/constants';
+import { requireAdminUser } from '@/lib/auth/admin-guard';
 
 export async function generateMetadata() {
   const settings = await getSettings();
@@ -16,6 +17,7 @@ export async function generateMetadata() {
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await requireAdminUser();
   const settings = await getSettings();
 
   return (
