@@ -11,7 +11,6 @@ import {
   Tag,
   Gauge,
   Cpu,
-  Code2,
   ArrowLeft,
   Download,
   CreditCard,
@@ -30,7 +29,6 @@ import {
   Palette,
   FileText,
   Printer,
-  Share2,
 } from 'lucide-react';
 import type { InternalVehicleConsultationDto } from '@/lib/vehicle-lookup/types';
 import type { ConsultationDetail } from '@/lib/customer/types';
@@ -43,8 +41,6 @@ import { TabHistory } from '@/components/admin/vehicle-lookup/tabs/tab-history';
 import { TabFipePricing } from '@/components/admin/vehicle-lookup/tabs/tab-fipe-pricing';
 import { TabAdsMileage } from '@/components/admin/vehicle-lookup/tabs/tab-ads-mileage';
 import { TabTechnicalSpecs } from '@/components/admin/vehicle-lookup/tabs/tab-technical-specs';
-import { TabRawJson } from '@/components/admin/vehicle-lookup/tabs/tab-raw-json';
-import { toast } from 'sonner';
 
 interface CustomerVehicleDetailProps {
   consultation: ConsultationDetail;
@@ -59,8 +55,7 @@ type TabKey =
   | 'history'
   | 'fipe'
   | 'ads'
-  | 'technical'
-  | 'json';
+  | 'technical';
 
 export function CustomerVehicleDetail({
   consultation,
@@ -81,7 +76,6 @@ export function CustomerVehicleDetail({
     { key: 'fipe', label: 'Preço & FIPE', icon: Tag },
     { key: 'ads', label: 'Anúncios & Km', icon: Gauge },
     { key: 'technical', label: 'Dados Técnicos', icon: Cpu },
-    { key: 'json', label: 'JSON Técnico', icon: Code2 },
   ];
 
   const formattedDate = new Date(
@@ -97,13 +91,6 @@ export function CustomerVehicleDetail({
   const pdfDownloadUrl = `/api/cliente/consultas/${consultation.id}/pdf`;
   const pdfFilename = `laudo-veicular_${consultation.plate_normalized}_${consultation.id.slice(0, 8)}.pdf`;
   const formattedPlate = formatBrazilianPlate(consultation.plate);
-
-  const handleShare = () => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Link do laudo copiado para a área de transferência!');
-    }
-  };
 
   if (!dto) {
     return (
@@ -284,17 +271,8 @@ export function CustomerVehicleDetail({
             </div>
           </div>
 
-          {/* Action CTAs: Download PDF & Share */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0 pt-2 lg:pt-0">
-            <button
-              onClick={handleShare}
-              title="Compartilhar laudo"
-              className="h-12 px-4 rounded-xl border border-zinc-700/80 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-bold inline-flex items-center gap-2 transition-all shadow-sm active:scale-95"
-            >
-              <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Compartilhar</span>
-            </button>
-
+          {/* Action CTAs: Download PDF */}
+          <div className="flex items-center gap-2.5 shrink-0 pt-2 lg:pt-0">
             <a
               href={pdfDownloadUrl}
               target="_blank"
@@ -659,11 +637,6 @@ export function CustomerVehicleDetail({
         {activeTab === 'technical' && (
           <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950/70 p-6 sm:p-8 backdrop-blur-xl shadow-xl">
             <TabTechnicalSpecs dto={dto} />
-          </div>
-        )}
-        {activeTab === 'json' && (
-          <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950/70 p-6 sm:p-8 backdrop-blur-xl shadow-xl">
-            <TabRawJson dto={dto} />
           </div>
         )}
       </div>
