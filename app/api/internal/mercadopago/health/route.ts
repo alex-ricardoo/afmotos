@@ -107,6 +107,8 @@ export async function GET(request: NextRequest) {
     },
     sdk: {
       name: 'mercadopago',
+      activeAdapter: process.env.MERCADO_PAGO_PROVIDER_ADAPTER?.trim().toLowerCase() === 'v2' ? 'v2' : 'v3',
+      activeVersion: process.env.MERCADO_PAGO_PROVIDER_ADAPTER?.trim().toLowerCase() === 'v2' ? '2.12.0' : envValidation.sdkVersion,
       version: envValidation.sdkVersion,
       clientInstantiated: localClientInstantiated,
       instantiationError: clientInstantiationError,

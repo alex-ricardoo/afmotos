@@ -144,3 +144,40 @@ export const adminRefundRetrySchema = z.object({
 export const adminReconcileSchema = z.object({
   mpPaymentId: z.string().min(1, 'ID do pagamento Mercado Pago é obrigatório'),
 });
+
+export const processPaymentRouteSchema = z.object({
+  consultationId: z.string().uuid('ID de consulta inválido'),
+  token: z.string().min(1, 'Token do cartão ausente'),
+  paymentMethodId: z.string().min(1, 'Método de pagamento é obrigatório'),
+  issuerId: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((v) => {
+      if (v === undefined || v === null || String(v).trim() === '') return undefined;
+      const num = Number(v);
+      return Number.isInteger(num) && num > 0 ? num : undefined;
+    }),
+  installments: z.coerce.number().int().min(1).max(24).default(1),
+  payer: z.object({
+    identification: z.object({
+      type: z
+        .string()
+        .optional()
+        .default('CPF')
+        .transform(() => 'CPF' as const),
+      number: z
+        .string()
+        .transform(normalizeCpf)
+        .refine((val) => val.length === 11, 'Informe um CPF válido com 11 dígitos'),
+    }),
+  }),
+  clientObservability: z
+    .object({
+      tokenCreatedAt: z.number().optional(),
+      tokenHashTruncated: z.string().optional(),
+      submitAttemptNumber: z.number().optional(),
+    })
+    .optional(),
+});
+
+export type ProcessPaymentRouteInput = z.infer<typeof processPaymentRouteSchema>;

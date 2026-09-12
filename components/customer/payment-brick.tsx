@@ -347,58 +347,125 @@ export function PaymentBrick({
                       submitAttemptNumber: submitAttemptNumberRef.current,
                     };
 
-                    const result = await processBrickPaymentAction(
-                      preference.consultationId,
-                      formData,
-                      undefined,
-                      clientTelemetry,
-                    );
-
-                    if (process.env.NODE_ENV === 'development') {
-                      console.info('[MP Brick]', {
-                        event: 'payment.brick_submit_payload_received',
-                        environment: process.env.NODE_ENV || 'development',
-                        consultationId: preference.consultationId,
-                        success: result.success,
-                        status: result.status,
-                        submitAttemptNumber: submitAttemptNumberRef.current,
+                    if (token) {
+                      // Transmissão explícita para o Route Handler HTTP padrão Moura's Pizzas
+                      const response = await fetch('/api/mp/process-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          consultationId: preference.consultationId,
+                          token,
+                          paymentMethodId: formData.payment_method_id,
+                          issuerId: formData.issuer_id ? Number(formData.issuer_id) : undefined,
+                          installments: formData.installments || 1,
+                          payer: {
+                            identification: {
+                              type: 'CPF',
+                              number: formData.payer?.identification?.number || '',
+                            },
+                          },
+                          clientObservability: {
+                            tokenCreatedAt,
+                            tokenHashTruncated,
+                            submitAttemptNumber: submitAttemptNumberRef.current,
+                          },
+                        }),
                       });
-                    }
 
-                    if (!result.success) {
-                      // Tarefa E: Ao receber provider_error ou falha com token de cartão,
-                      // desmontar/remontar o Brick para forçar novo token antes de novo submit
-                      if (result.status === 'provider_error' || Boolean(formData?.token)) {
+                      const data = await response.json();
+
+                      if (process.env.NODE_ENV === 'development') {
+                        console.info('[MP Brick]', {
+                          event: 'payment.brick_route_response_received',
+                          environment: process.env.NODE_ENV || 'development',
+                          consultationId: preference.consultationId,
+                          status: response.status,
+                          data,
+                        });
+                      }
+
+                      if (!response.ok || !data.success) {
                         toast.error(
-                          result.error ||
-                            'Instabilidade técnica temporária. O formulário foi atualizado. Por favor, confirme os dados e tente novamente.',
+                          data.error ||
+                            data.message ||
+                            'Instabilidade temporária com a operadora. O formulário foi atualizado para gerar um novo token. Tente novamente.',
                         );
+                        // Invalida e remonta o Brick exigindo novo token
                         setIsBrickReady(false);
                         setMountKey((prev) => prev + 1);
-                      } else {
+                        reject();
+                        return;
+                      }
+
+                      if (data.status === 'approved') {
+                        toast.success('Pagamento aprovado! Preparando seu histórico veicular...');
+                        onPaymentSuccess?.({
+                          success: true,
+                          status: 'approved',
+                          statusDetail: data.statusDetail,
+                          paymentId: data.paymentId,
+                          consultationId: preference.consultationId,
+                        });
+                        router.push(`/cliente/consultas/${preference.consultationId}`);
+                        resolve();
+                        return;
+                      }
+
+                      if (data.pending) {
+                        toast.info('Pagamento gerado! Aguardando confirmação.');
+                        onAsyncPaymentCreated?.({
+                          success: false,
+                          status: data.status || 'pending',
+                          statusDetail: data.statusDetail,
+                          paymentId: data.paymentId,
+                          consultationId: preference.consultationId,
+                        });
+                        resolve();
+                        return;
+                      }
+                    } else {
+                      // Métodos sem token (Boleto bancário / Pix sem token direto)
+                      const result = await processBrickPaymentAction(
+                        preference.consultationId,
+                        formData,
+                        undefined,
+                        clientTelemetry,
+                      );
+
+                      if (process.env.NODE_ENV === 'development') {
+                        console.info('[MP Brick]', {
+                          event: 'payment.brick_submit_payload_received',
+                          environment: process.env.NODE_ENV || 'development',
+                          consultationId: preference.consultationId,
+                          success: result.success,
+                          status: result.status,
+                          submitAttemptNumber: submitAttemptNumberRef.current,
+                        });
+                      }
+
+                      if (!result.success) {
                         toast.error(
                           result.error ||
                             'Não foi possível processar o pagamento agora. Revise os dados informados e tente novamente.',
                         );
+                        if (result.status === 'lookup_failed_refunded') {
+                          onLookupFailedRefunded?.(result.error);
+                        }
+                        reject();
+                        return;
                       }
 
-                      if (result.status === 'lookup_failed_refunded') {
-                        onLookupFailedRefunded?.(result.error);
+                      if (result.status === 'approved') {
+                        toast.success('Pagamento aprovado! Preparando seu histórico veicular...');
+                        onPaymentSuccess?.(result);
+                        router.push(`/cliente/consultas/${preference.consultationId}`);
+                      } else if (result.status === 'pending' || result.status === 'in_process') {
+                        toast.info('Pagamento gerado! Aguardando confirmação.');
+                        onAsyncPaymentCreated?.(result);
                       }
-                      reject();
-                      return;
-                    }
 
-                    if (result.status === 'approved') {
-                      toast.success('Pagamento aprovado! Preparando seu histórico veicular...');
-                      onPaymentSuccess?.(result);
-                      router.push(`/cliente/consultas/${preference.consultationId}`);
-                    } else if (result.status === 'pending' || result.status === 'in_process') {
-                      toast.info('Pagamento gerado! Aguardando confirmação.');
-                      onAsyncPaymentCreated?.(result);
+                      resolve();
                     }
-
-                    resolve();
                   } catch (err: unknown) {
                     const errorMsg =
                       err instanceof Error

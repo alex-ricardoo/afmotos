@@ -5,6 +5,8 @@ export interface MercadoPagoPaymentRequestSnapshot {
   snapshotId: string;
   timestamp: string;
   flowId?: string;
+  route?: string;
+  providerAdapter?: 'v2' | 'v3';
   sdkVersion: string;
   environment: {
     nodeEnv: string;
@@ -90,6 +92,8 @@ export interface SnapshotContext {
   paymentTypeId?: string;
   issuerProvidedByBrick?: boolean;
   issuerSource?: 'brick' | 'omitted' | 'unknown';
+  providerAdapter?: 'v2' | 'v3';
+  route?: string;
   rawUncleanedBody?: Record<string, unknown>;
 }
 
@@ -243,11 +247,18 @@ export function createMercadoPagoPaymentRequestSnapshot(
   const pkFp = pk ? getSafeCredentialFingerprint(pk).fingerprint : null;
   const atFp = at ? getSafeCredentialFingerprint(at).fingerprint : null;
 
+  const activeAdapter =
+    context.providerAdapter ||
+    (process.env.MERCADO_PAGO_PROVIDER_ADAPTER?.trim().toLowerCase() === 'v2' ? 'v2' : 'v3');
+  const activeSdkVersion = activeAdapter === 'v2' ? '2.12.0' : '3.6.1';
+
   return {
     snapshotId,
     timestamp: now.toISOString(),
     flowId: context.flowId,
-    sdkVersion: '3.6.1',
+    route: context.route,
+    providerAdapter: activeAdapter,
+    sdkVersion: activeSdkVersion,
     environment: {
       nodeEnv: process.env.NODE_ENV || 'development',
       vercelEnv: process.env.VERCEL_ENV || 'local',
