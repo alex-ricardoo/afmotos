@@ -152,20 +152,27 @@ export function CustomerPaymentFlow({
         </div>
       </nav>
 
+      {/* Page Title & Subtitle */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+          Finalize sua consulta
+        </h1>
+        <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+          Confirme os detalhes e realize o pagamento seguro para liberar o histórico veicular.
+        </p>
+      </div>
+
       {/* 2-column layout on desktop (lg+), 1-column on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-        {/* Coluna Esquerda: Placa e Benefícios (Desktop) */}
+        {/* Coluna Esquerda (Desktop) / Topo (Mobile): Resumo e Benefícios */}
         <div className="lg:col-span-5 space-y-5">
-          <VehicleConsultationOrderSummary plate={preference.plate} />
+          <VehicleConsultationOrderSummary plate={preference.plate} amount={preference.amount} />
 
-          {/* Benefícios no Desktop (lado esquerdo) */}
-          <div className="hidden lg:block">
-            <VehicleConsultationBenefits supportPhone={supportPhone} plate={preference.plate} />
-          </div>
+          <VehicleConsultationBenefits supportPhone={supportPhone} plate={preference.plate} />
         </div>
 
-        {/* Coluna Direita: Formas de Pagamento (Desktop) / Abaixo da Placa (Mobile) */}
-        <div className="lg:col-span-7 space-y-5">
+        {/* Coluna Direita (Desktop) / Abaixo (Mobile): Payment Brick */}
+        <div className="lg:col-span-7 space-y-5 min-w-0">
           {/* Status banner if async payment is pending */}
           {asyncPixData && (
             <PaymentStatusBanner
@@ -203,15 +210,10 @@ export function CustomerPaymentFlow({
               }}
             />
           )}
-
-          {/* Benefícios no Mobile (fica em baixo das formas de pagamento) */}
-          <div className="block lg:hidden">
-            <VehicleConsultationBenefits supportPhone={supportPhone} plate={preference.plate} />
-          </div>
         </div>
       </div>
 
-      {/* Optional Development Simulation Accordion (US6) */}
+      {/* Optional Development Simulation Accordion */}
       {allowDevSimulation && (
         <div className="pt-6 border-t border-zinc-900 mt-8">
           <button

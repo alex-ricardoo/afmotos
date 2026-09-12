@@ -121,9 +121,12 @@ export function PaymentBrick({
           },
           customization: {
             paymentMethods: {
+              creditCard: 'all',
+              debitCard: 'all',
+              prepaidCard: 'all',
               ticket: 'all',
               bankTransfer: 'all',
-              creditCard: 'all',
+              mercadoPago: 'all',
               maxInstallments: 1,
             },
             visual: {
@@ -136,14 +139,14 @@ export function PaymentBrick({
                   baseColorFirstVariant: '#B45309',
                   baseColorSecondVariant: '#92400E',
                   outlinePrimaryColor: '#F59E0B',
-                  fontSizeSmall: '11px',
+                  fontSizeSmall: '12px',
                   fontSizeMedium: '13px',
                   fontSizeLarge: '15px',
                   formPadding: '0px',
                   borderRadiusSmall: '8px',
                   borderRadiusMedium: '10px',
                   borderRadiusLarge: '12px',
-                  inputBackgroundColor: '#121215',
+                  inputBackgroundColor: '#141417',
                 },
               },
               hidePaymentButton: false,
@@ -234,23 +237,17 @@ export function PaymentBrick({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-b from-zinc-900/95 via-zinc-900/90 to-zinc-950 p-4 sm:p-7 shadow-2xl shadow-black/80 backdrop-blur-md ${className}`}
+      className={`relative w-full rounded-2xl border border-zinc-800/90 bg-zinc-900/80 p-4 sm:p-6 shadow-xl backdrop-blur-md ${className}`}
     >
-      {/* Subtle brand glow in background */}
-      <div
-        className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-500/10 blur-3xl"
-        aria-hidden="true"
-      />
-
-      {/* Card Header */}
+      {/* Card Header: Title & Total */}
       <div className="mb-5 border-b border-zinc-800/80 pb-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-400">
                 <Lock className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
                 Pagamento Seguro
               </h2>
             </div>
@@ -259,11 +256,11 @@ export function PaymentBrick({
             </p>
           </div>
 
-          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 px-3.5 py-2 text-right shadow-sm">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3.5 py-1.5 text-right shadow-sm">
             <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold block">
               Total
             </span>
-            <span className="text-lg sm:text-xl font-black text-amber-400">{formattedTotal}</span>
+            <span className="text-base sm:text-lg font-black text-amber-400">{formattedTotal}</span>
           </div>
         </div>
       </div>
@@ -271,26 +268,25 @@ export function PaymentBrick({
       {/* Loading Skeleton state to prevent layout shift */}
       {(!isSdkLoaded || !isBrickReady) && !brickError && (
         <div
-          className="space-y-4 py-8 animate-pulse"
+          className="space-y-3.5 py-6 animate-pulse"
           aria-live="polite"
           aria-label="Carregando opções de pagamento"
         >
-          <div className="flex items-center justify-center gap-2 text-zinc-400 text-sm py-4">
-            <Loader2 className="h-5 w-5 animate-spin text-amber-400" />
+          <div className="flex items-center justify-center gap-2 text-zinc-400 text-xs py-3">
+            <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
             <span>Carregando ambiente seguro de pagamento...</span>
           </div>
-          {/* Skeleton lines representing tabs and inputs */}
-          <div className="h-12 w-full rounded-xl bg-zinc-800/60" />
-          <div className="h-14 w-full rounded-xl bg-zinc-800/40" />
-          <div className="h-14 w-full rounded-xl bg-zinc-800/40" />
-          <div className="h-12 w-full rounded-xl bg-amber-500/20" />
+          <div className="h-11 w-full rounded-xl bg-zinc-800/60" />
+          <div className="h-12 w-full rounded-xl bg-zinc-800/40" />
+          <div className="h-12 w-full rounded-xl bg-zinc-800/40" />
+          <div className="h-11 w-full rounded-xl bg-amber-500/20" />
         </div>
       )}
 
       {/* Error state */}
       {brickError && (
-        <div className="my-6 rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-center">
-          <AlertTriangle className="h-7 w-7 text-red-400 mx-auto mb-2" aria-hidden="true" />
+        <div className="my-5 rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-center">
+          <AlertTriangle className="h-6 w-6 text-red-400 mx-auto mb-2" aria-hidden="true" />
           <p className="text-sm font-medium text-red-200">{brickError}</p>
           <p className="text-xs text-zinc-400 mt-1">
             Verifique sua conexão ou tente recarregar as opções de pagamento.
@@ -308,18 +304,17 @@ export function PaymentBrick({
       {/* Processing overlay blocking duplicate interaction */}
       {isProcessing && (
         <div
-          className="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-2xl bg-zinc-950/85 backdrop-blur-sm p-6 text-center"
+          className="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-2xl bg-zinc-950/90 backdrop-blur-sm p-6 text-center"
           aria-live="assertive"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mb-4">
-            <Loader2 className="h-8 w-8 animate-spin" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mb-3">
+            <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-          <p className="text-base font-bold text-white">
+          <p className="text-sm sm:text-base font-bold text-white">
             Processando pagamento com o Mercado Pago...
           </p>
-          <p className="text-xs text-zinc-400 mt-2 max-w-xs leading-relaxed">
-            Por favor, não feche nem recarregue a página enquanto sua transação é confirmada com
-            segurança.
+          <p className="text-xs text-zinc-400 mt-1.5 max-w-xs leading-relaxed">
+            Por favor, não feche nem recarregue a página enquanto sua transação é confirmada.
           </p>
         </div>
       )}
@@ -327,150 +322,64 @@ export function PaymentBrick({
       {/* Mercado Pago Payment Brick Container */}
       <div
         id={containerId}
-        className={!isBrickReady || brickError ? 'hidden' : 'block min-h-[420px]'}
+        className={!isBrickReady || brickError ? 'hidden' : 'block min-h-[380px] w-full min-w-0'}
       />
 
-      {/* Targeted CSS overrides to make the Payment Brick match AF Motos luxury standard */}
+      {/* Harmonized CSS for Mercado Pago Payment Brick */}
       <style>{`
         #${containerId} {
           width: 100% !important;
           max-width: 100% !important;
-          font-family: var(--font-sans, Inter), system-ui, -apple-system, sans-serif !important;
-          -webkit-font-smoothing: antialiased !important;
+          min-width: 0 !important;
+          font-family: inherit !important;
         }
         #${containerId} * {
           box-sizing: border-box !important;
-          font-family: inherit !important;
         }
-        /* Hide Mercado Pago's duplicate generic header */
+        /* Hide duplicate form title */
         #${containerId} h3,
         #${containerId} h2,
         #${containerId} [class*="form-title"],
         #${containerId} [class*="title-container"] {
           display: none !important;
         }
-        /* Fix the radio button: prevent tall stretched capsules, force perfect 18px circle */
-        #${containerId} input[type="radio"] {
-          appearance: none !important;
-          -webkit-appearance: none !important;
-          width: 18px !important;
-          height: 18px !important;
-          min-width: 18px !important;
-          min-height: 18px !important;
-          max-width: 18px !important;
-          max-height: 18px !important;
-          border-radius: 50% !important;
-          border: 2px solid #52525b !important;
-          background: transparent !important;
-          margin: 0 10px 0 0 !important;
-          cursor: pointer !important;
-          align-self: center !important;
-          flex-shrink: 0 !important;
-          display: inline-block !important;
-          vertical-align: middle !important;
-        }
-        #${containerId} input[type="radio"]:checked {
-          border-color: #d97706 !important;
-          background: radial-gradient(circle, #d97706 45%, transparent 50%) !important;
-        }
-        /* Reset any wrapper span around the radio button */
-        #${containerId} [class*="radio"] {
-          align-self: center !important;
-          display: inline-flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          max-height: 22px !important;
-          height: auto !important;
-          min-height: unset !important;
-          padding: 0 !important;
-          flex-shrink: 0 !important;
-        }
-        /* Hide the awkward green "Parcelamento disponível" badge since vehicle consultation is single payment */
-        #${containerId} [class*="installment"],
-        #${containerId} [class*="badge"],
-        #${containerId} [class*="tag"],
-        #${containerId} [class*="discount"] {
-          display: none !important;
-        }
-        /* Payment method list items: sleek dark card items with subtle gold hover */
-        #${containerId} [class*="payment-method-item"],
-        #${containerId} [class*="accordion-item"],
-        #${containerId} [class*="payment-method-header"],
-        #${containerId} li[class*="payment"] {
-          border-radius: 12px !important;
-          background: #141417 !important;
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
-          margin-bottom: 8px !important;
-          padding: 12px 14px !important;
-          transition: all 0.2s ease !important;
-          display: flex !important;
-          align-items: center !important;
-        }
-        #${containerId} [class*="payment-method-item"]:hover,
-        #${containerId} [class*="accordion-item"]:hover {
-          border-color: rgba(217, 119, 6, 0.4) !important;
-          background: #18181c !important;
-        }
-        #${containerId} [class*="selected"],
-        #${containerId} [aria-expanded="true"] {
-          border-color: #d97706 !important;
-          background: #18181c !important;
-          box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.25) !important;
-        }
-        /* Payment method label typography */
-        #${containerId} label,
-        #${containerId} [class*="method-name"],
-        #${containerId} [class*="label"] {
-          color: #f4f4f5 !important;
-          font-size: 14px !important;
-          font-weight: 600 !important;
-          letter-spacing: -0.01em !important;
-          cursor: pointer !important;
-          margin: 0 !important;
-        }
-        /* Inputs inside card form: dark surfaces with gold focus outline */
+        /* Sleek input styling */
         #${containerId} input,
         #${containerId} select {
           font-size: 14px !important;
-          min-height: 46px !important;
           border-radius: 10px !important;
-          background-color: #121215 !important;
+          background-color: #141417 !important;
           border: 1px solid #27272a !important;
           color: #f4f4f5 !important;
-          padding: 10px 14px !important;
-          transition: border-color 0.2s, box-shadow 0.2s !important;
         }
         #${containerId} input:focus,
         #${containerId} select:focus {
           border-color: #d97706 !important;
-          box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25) !important;
+          box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2) !important;
           outline: none !important;
         }
-        /* Primary confirm button inside Brick */
+        /* Confirm action button inside Brick */
         #${containerId} button[type="submit"],
         #${containerId} [class*="submit-button"],
         #${containerId} [class*="button--primary"] {
-          min-height: 48px !important;
-          font-size: 15px !important;
+          min-height: 46px !important;
+          font-size: 14px !important;
           font-weight: 700 !important;
-          letter-spacing: 0.02em !important;
-          border-radius: 12px !important;
-          background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+          border-radius: 10px !important;
+          background: #d97706 !important;
           color: #ffffff !important;
           border: none !important;
-          box-shadow: 0 4px 16px rgba(217, 119, 6, 0.35) !important;
+          box-shadow: 0 4px 14px rgba(217, 119, 6, 0.3) !important;
           cursor: pointer !important;
-          transition: all 0.2s ease !important;
+          transition: background-color 0.2s ease !important;
         }
         #${containerId} button[type="submit"]:hover,
         #${containerId} [class*="submit-button"]:hover {
-          background: linear-gradient(135deg, #b45309 0%, #92400e 100%) !important;
-          box-shadow: 0 6px 20px rgba(217, 119, 6, 0.5) !important;
-          transform: translateY(-1px) !important;
+          background: #b45309 !important;
         }
       `}</style>
 
-      {/* Trust Notice footer inside or immediately below the payment card */}
+      {/* Trust Notice footer */}
       <div className="mt-5 border-t border-zinc-800/80 pt-4">
         <PaymentSecurityNotice />
       </div>

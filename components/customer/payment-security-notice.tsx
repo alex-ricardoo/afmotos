@@ -25,7 +25,7 @@ function MercadoPagoBadge({ className = 'h-10 w-10 sm:h-11 sm:w-11' }: { classNa
       </svg>
       <span
         className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-zinc-900 shadow"
-        title="Ambiente Criptografado"
+        title="Ambiente Seguro"
       >
         <Lock className="h-2.5 w-2.5 text-white stroke-[3]" />
       </span>
@@ -36,34 +36,31 @@ function MercadoPagoBadge({ className = 'h-10 w-10 sm:h-11 sm:w-11' }: { classNa
 export function PaymentSecurityNotice({ className = '' }: PaymentSecurityNoticeProps) {
   return (
     <div
-      className={`rounded-xl border border-zinc-800/90 bg-gradient-to-br from-zinc-900/90 via-zinc-900/60 to-zinc-950/80 p-4 text-xs text-zinc-400 backdrop-blur-sm shadow-sm ${className}`}
+      className={`rounded-xl border border-zinc-800/90 bg-zinc-900/60 p-4 text-xs text-zinc-400 backdrop-blur-sm shadow-sm ${className}`}
       aria-label="Informações de segurança do pagamento processado pelo Mercado Pago"
     >
       <div className="flex items-start gap-3.5">
-        {/* Mercado Pago Badge with solid White background for crystal clear contrast */}
+        {/* Mercado Pago Badge with solid White background for high contrast */}
         <MercadoPagoBadge />
 
-        <div className="flex-1 min-w-0 space-y-2">
-          {/* Header & Badges - Formatted for responsive stability */}
-          <div>
+        <div className="flex-1 min-w-0 space-y-1.5">
+          {/* Header & Badges */}
+          <div className="flex flex-wrap items-center justify-between gap-1.5">
             <h4 className="text-xs sm:text-sm font-semibold text-zinc-100 leading-snug">
               Pagamento processado pelo{' '}
               <span className="text-[#009EE3] font-bold">Mercado Pago</span>
             </h4>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#009EE3]/15 px-2 py-0.5 text-[10px] font-semibold text-[#009EE3] border border-[#009EE3]/30">
-                <ShieldCheck className="h-3 w-3 shrink-0" />
-                Ambiente Seguro
-              </span>
-              <span className="text-[10px] text-zinc-400">Criptografia de ponta a ponta</span>
-            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#009EE3]/15 px-2 py-0.5 text-[10px] font-semibold text-[#009EE3] border border-[#009EE3]/30">
+              <ShieldCheck className="h-3 w-3 shrink-0" />
+              Ambiente Seguro
+            </span>
           </div>
 
           {/* Reassuring description */}
           <p className="text-[11px] sm:text-xs leading-relaxed text-zinc-400">
             A AF Motos não armazena os dados do seu cartão. Todas as informações sensíveis de
-            cobrança são criptografadas e processadas diretamente no ambiente protegido e
-            certificado do <strong className="font-medium text-zinc-300">Mercado Pago</strong>.
+            cobrança são preenchidas e processadas diretamente no ambiente seguro e certificado do{' '}
+            <strong className="font-medium text-zinc-300">Mercado Pago</strong>.
           </p>
         </div>
       </div>
