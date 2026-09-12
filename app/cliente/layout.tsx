@@ -34,6 +34,14 @@ export default async function CustomerLayout({
   const email = user.email || '';
   const avatarUrl = profile?.avatar_url || metadata.avatar_url || metadata.picture || null;
 
+  const isGoogleAccount = Boolean(
+    user.app_metadata?.provider === 'google' ||
+    (Array.isArray(user.app_metadata?.providers) && user.app_metadata.providers.includes('google')) ||
+    user.identities?.some((id) => id.provider === 'google') ||
+    metadata.iss?.includes('google.com') ||
+    (typeof metadata.picture === 'string' && metadata.picture.includes('googleusercontent.com'))
+  );
+
   return (
     <div className="min-h-screen bg-[#070709] text-zinc-100 flex flex-col lg:flex-row selection:bg-[#c9a44c]/30 selection:text-white">
       {/* Ambient background glow */}
@@ -45,6 +53,7 @@ export default async function CustomerLayout({
           fullName,
           email,
           avatarUrl,
+          isGoogleAccount,
         }}
       />
 

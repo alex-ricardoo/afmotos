@@ -26,7 +26,31 @@ interface CustomerNavProps {
     fullName: string;
     email: string;
     avatarUrl?: string | null;
+    isGoogleAccount?: boolean;
   };
+}
+
+function GoogleIcon({ className = 'w-3 h-3' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M12 5c1.56 0 2.96.54 4.07 1.6l3.05-3.05C17.27 1.8 14.81 1 12 1 7.37 1 3.48 3.65 1.63 7.51l3.66 2.84C6.18 7.35 8.84 5 12 5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.48-1.12 2.73-2.39 3.58l3.71 2.88c2.17-2 3.7-4.95 3.7-8.7z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.29 14.65c-.23-.69-.36-1.42-.36-2.18s.13-1.49.36-2.18L1.63 7.51C.59 9.58 0 11.95 0 14.43s.59 4.85 1.63 6.92l3.66-2.84z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23.86c3.24 0 5.96-1.08 7.95-2.92l-3.71-2.88c-1.08.72-2.45 1.16-4.24 1.16-3.16 0-5.82-2.35-6.71-5.35L1.63 16.7C3.48 20.57 7.37 23.86 12 23.86z"
+      />
+    </svg>
+  );
 }
 
 export function CustomerNav({ user }: CustomerNavProps) {
@@ -108,6 +132,7 @@ export function CustomerNav({ user }: CustomerNavProps) {
                   width={44}
                   height={44}
                   className="object-cover w-full h-full"
+                  unoptimized
                 />
               ) : (
                 userInitial
@@ -116,7 +141,19 @@ export function CustomerNav({ user }: CustomerNavProps) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-white truncate">{user.fullName}</p>
-              <p className="text-xs text-zinc-400 truncate">{user.email}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                {user.isGoogleAccount ? (
+                  <>
+                    <GoogleIcon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="text-[11px] text-zinc-300 font-medium">Conta Google</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="text-[11px] text-emerald-400 font-medium">Conta Verificada</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -218,6 +255,7 @@ export function CustomerNav({ user }: CustomerNavProps) {
                   width={40}
                   height={40}
                   className="object-cover w-full h-full"
+                  unoptimized
                 />
               ) : (
                 userInitial
@@ -227,8 +265,17 @@ export function CustomerNav({ user }: CustomerNavProps) {
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold text-white truncate">{user.fullName}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                <span className="text-[10px] text-emerald-400 font-medium">Conta Verificada</span>
+                {user.isGoogleAccount ? (
+                  <>
+                    <GoogleIcon className="w-3 h-3 shrink-0" />
+                    <span className="text-[10px] text-zinc-300 font-medium">Conta Google</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+                    <span className="text-[10px] text-emerald-400 font-medium">Conta Verificada</span>
+                  </>
+                )}
               </div>
             </div>
           </div>

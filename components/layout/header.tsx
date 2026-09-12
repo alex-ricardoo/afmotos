@@ -344,6 +344,7 @@ export function Header({ settings }: { settings?: any }) {
                       width={24}
                       height={24}
                       className="object-cover w-full h-full"
+                      unoptimized
                     />
                   ) : (
                     customerUser.fullName.charAt(0).toUpperCase()

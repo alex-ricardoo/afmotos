@@ -139,6 +139,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                   width={96}
                   height={96}
                   className="w-full h-full object-cover"
+                  unoptimized
                 />
               ) : (
                 userInitial
