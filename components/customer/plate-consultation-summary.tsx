@@ -8,16 +8,19 @@ import { CONSULTATION_PRICE_BRL } from '@/lib/customer/types';
 
 interface PlateConsultationSummaryProps {
   plate: string;
+  price?: number;
   onProceed?: () => void;
   isProcessing?: boolean;
 }
 
 export function PlateConsultationSummary({
   plate,
+  price,
   onProceed,
   isProcessing = false,
 }: PlateConsultationSummaryProps) {
   const formattedPlate = formatBrazilianPlate(plate);
+  const displayPrice = typeof price === 'number' && price > 0 ? price : CONSULTATION_PRICE_BRL;
 
   const includedItems = [
     'Dados cadastrais e Renavam oficial',
@@ -70,7 +73,7 @@ export function PlateConsultationSummary({
           <div>
             <span className="text-xs text-zinc-400">Valor da consulta:</span>
             <p className="text-2xl font-black text-white">
-              R$ {CONSULTATION_PRICE_BRL.toFixed(2).replace('.', ',')}
+              R$ {displayPrice.toFixed(2).replace('.', ',')}
             </p>
           </div>
 

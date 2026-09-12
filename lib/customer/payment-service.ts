@@ -7,6 +7,7 @@ import {
   findExistingConsultation,
   executeVehiclePlateLookup,
 } from '@/lib/vehicle-lookup/service';
+import { getVehicleConsultationPrice } from '@/lib/settings/server-queries';
 import { type ActionResult, type PaymentMethod, CONSULTATION_PRICE_BRL } from './types';
 import { paymentConfirmationSchema } from './schemas';
 
@@ -55,12 +56,13 @@ export async function confirmPayment(
   }
 
   const nowIso = new Date().toISOString();
+  const consultationPrice = await getVehicleConsultationPrice();
 
   // 2. Insert payment simulation audit record
   const { error: paymentError } = await supabase.from('payment_simulations').insert({
     consultation_id: consultation.id,
     user_id: user.id,
-    amount: CONSULTATION_PRICE_BRL,
+    amount: consultationPrice,
     payment_method: paymentMethod,
     status: 'confirmed',
     simulated_at: nowIso,

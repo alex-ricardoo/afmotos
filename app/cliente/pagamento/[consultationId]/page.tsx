@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { PaymentSimulation } from '@/components/customer/payment-simulation';
+import { getVehicleConsultationPrice } from '@/lib/settings/server-queries';
 
 interface PaymentPageProps {
   params: Promise<{
@@ -25,12 +26,15 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     redirect(`/cliente/login?returnUrl=/cliente/pagamento/${consultationId}`);
   }
 
-  const { data: consultation, error } = await supabase
-    .from('customer_plate_consultations')
-    .select('id, plate, status, payment_status')
-    .eq('id', consultationId)
-    .eq('user_id', user.id)
-    .maybeSingle();
+  const [{ data: consultation, error }, price] = await Promise.all([
+    supabase
+      .from('customer_plate_consultations')
+      .select('id, plate, status, payment_status')
+      .eq('id', consultationId)
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    getVehicleConsultationPrice(),
+  ]);
 
   if (error || !consultation) {
     notFound();
@@ -43,7 +47,7 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
 
   return (
     <div className="py-6 sm:py-10">
-      <PaymentSimulation consultation={consultation} />
+      <PaymentSimulation consultation={consultation} price={price} />
     </div>
   );
 }

@@ -48,6 +48,12 @@ export function VehicleHistoryPricing({
     style: 'currency',
     currency: 'BRL',
   });
+  const competitorPrice = 64.90;
+  const savings = Math.max(0, competitorPrice - rawPrice);
+  const formattedSavings = savings.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 
   const handleB2CClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -129,9 +135,11 @@ export function VehicleHistoryPricing({
                 <span className="px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-extrabold text-[10px] uppercase tracking-wider">
                   100% Oficial Senatran
                 </span>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  Economize R$ 25,00
-                </span>
+                {savings > 0 && (
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    Economize {formattedSavings}
+                  </span>
+                )}
               </div>
 
               <h3 className="text-lg sm:text-2xl font-black text-white font-heading">

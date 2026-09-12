@@ -104,7 +104,7 @@ export default async function HistoricoVeicularPage() {
         <VehicleHistoryBenefits />
 
         {/* D. Demonstração Visual do Produto (Preview Real com Zoom nos Alertas) */}
-        <VehicleHistoryReportMockup siteName={settings.siteName} />
+        <VehicleHistoryReportMockup siteName={settings.siteName} price={vehicleHistory.price} />
 
         {/* E. Como Funciona (3 Passos Simples) */}
         <VehicleHistoryHowItWorks siteName={settings.siteName} />

@@ -23,3 +23,20 @@ export async function getPublicSiteSettings() {
   // Sanitizes the raw data, exposing only what is needed for public consumption
   return resolvePublicSiteSettings(data);
 }
+
+/**
+ * Retorna o preço oficial da consulta veicular configurado em site_settings.
+ * Fallback seguro: 39.90.
+ */
+export async function getVehicleConsultationPrice(): Promise<number> {
+  try {
+    const settings = await getPublicSiteSettings();
+    if (settings?.vehicleHistory?.price && settings.vehicleHistory.price > 0) {
+      return settings.vehicleHistory.price;
+    }
+  } catch (error) {
+    console.error('Error fetching vehicle consultation price:', error);
+  }
+  return 39.90;
+}
+

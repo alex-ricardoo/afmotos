@@ -55,12 +55,19 @@ const REPORT_HIGHLIGHTS = [
 
 interface VehicleHistoryReportMockupProps {
   siteName?: string;
+  price?: number;
 }
 
-export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHistoryReportMockupProps = {}) {
+export function VehicleHistoryReportMockup({ siteName = 'AF Motos', price }: VehicleHistoryReportMockupProps = {}) {
   const { scrollToSection } = useVehicleHistory();
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
+
+  const rawPrice = typeof price === 'number' && price > 0 ? price : 39.90;
+  const formattedPrice = rawPrice.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 
   // Close modal on ESC key and lock body scroll
   useEffect(() => {
@@ -222,8 +229,8 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
                 <div>
                   <div className="flex items-center justify-between gap-1">
                     <span className="text-xs font-bold text-amber-300">Economia Real</span>
-                    <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                      R$ 39,90
+                    <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono">
+                      {formattedPrice}
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-300 leading-snug mt-1">
@@ -352,7 +359,7 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
           >
             <div className="flex items-center gap-2 text-xs text-zinc-300 text-center sm:text-left">
               <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Consulte qualquer veículo por apenas <strong>R$ 39,90</strong> com suporte de nossa equipe.</span>
+              <span>Consulte qualquer veículo por apenas <strong>{formattedPrice}</strong> com suporte de nossa equipe.</span>
             </div>
 
             <button

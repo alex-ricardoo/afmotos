@@ -96,6 +96,7 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
 
   revalidatePath('/', 'layout');
   revalidatePath('/historico-veicular');
+  revalidatePath('/cliente', 'layout');
   revalidatePath('/admin/configuracoes');
   return { success: true };
 }
