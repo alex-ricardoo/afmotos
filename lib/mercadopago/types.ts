@@ -11,7 +11,9 @@ export type MercadoPagoPaymentStatus =
   | 'rejected'
   | 'cancelled'
   | 'refunded'
-  | 'charged_back';
+  | 'charged_back'
+  | 'provider_error'
+  | 'pending_reconciliation';
 
 export type RefundStatus = 'none' | 'pending' | 'refunded' | 'failed';
 
@@ -95,6 +97,7 @@ export interface BrickPayerAddress {
 
 export interface PaymentPreferenceData {
   consultationId: string;
+  preferenceId?: string;
   plate: string;
   amount: number;
   publicKey: string;

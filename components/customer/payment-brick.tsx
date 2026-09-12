@@ -168,6 +168,7 @@ export function PaymentBrick({
         const controller = await bricksBuilder.create('payment', containerId, {
           initialization: {
             amount: preference.amount,
+            ...(preference.preferenceId ? { preferenceId: preference.preferenceId } : {}),
             payer: {
               email: preference.payerEmail,
               ...(preference.payerAddress
@@ -412,6 +413,7 @@ export function PaymentBrick({
     preference.publicKey,
     preference.amount,
     preference.consultationId,
+    preference.preferenceId,
     preference.payerEmail,
     preference.payerAddress,
     router,

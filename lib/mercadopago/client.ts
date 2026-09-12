@@ -36,7 +36,6 @@ export function getMercadoPagoClient(): MercadoPagoConfig {
       accessToken: token,
       options: {
         timeout: 10000,
-        idempotencyKey: undefined,
       },
     });
   }
