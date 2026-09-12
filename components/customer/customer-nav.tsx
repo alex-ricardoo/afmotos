@@ -17,6 +17,7 @@ import {
   Headphones,
   ChevronRight,
   Sparkles,
+  Globe,
 } from 'lucide-react';
 import { logoutCustomer } from '@/lib/customer/actions';
 import { Button } from '@/components/ui/button';
@@ -186,7 +187,7 @@ export function CustomerNav({ user }: CustomerNavProps) {
 
             <div className="pt-4">
               <Link
-                href="/historico-veicular"
+                href="/cliente/consultas/nova"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl text-sm font-bold text-zinc-950 bg-gradient-to-r from-[#c9a44c] to-[#b38e3a] hover:brightness-110 shadow-lg shadow-[#c9a44c]/20 transition-all"
               >
@@ -196,20 +197,24 @@ export function CustomerNav({ user }: CustomerNavProps) {
             </div>
           </div>
 
-          <div className="pt-6 border-t border-zinc-800/80 space-y-2">
+          {/* Bottom Actions Cards */}
+          <div className="pt-6 pb-6 border-t border-zinc-800/80 space-y-2.5">
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between px-3.5 py-2.5 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors"
+              className="flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold text-zinc-300 bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800/90 hover:border-zinc-700 transition-all group shadow-sm active:scale-[0.99]"
             >
-              <span>Voltar ao site público</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2.5">
+                <Globe className="w-4 h-4 text-zinc-400 group-hover:text-[#c9a44c] transition-colors" />
+                <span>Voltar ao site público</span>
+              </div>
+              <ExternalLink className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
             </Link>
 
             <form action={logoutCustomer}>
               <button
                 type="submit"
-                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/[0.08] hover:bg-red-500/[0.15] border border-red-500/20 hover:border-red-500/40 rounded-xl transition-all shadow-xs cursor-pointer active:scale-[0.99]"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sair da conta</span>
@@ -317,7 +322,7 @@ export function CustomerNav({ user }: CustomerNavProps) {
           {/* Quick Action Button */}
           <div className="pt-2">
             <Link
-              href="/historico-veicular"
+              href="/cliente/consultas/nova"
               className="flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold text-zinc-950 bg-gradient-to-r from-[#c9a44c] via-[#d4b35e] to-[#b38e3a] hover:brightness-105 shadow-md shadow-[#c9a44c]/15 group transition-all"
             >
               <div className="flex items-center gap-2">
@@ -350,21 +355,24 @@ export function CustomerNav({ user }: CustomerNavProps) {
         </div>
 
         {/* Bottom Actions */}
-        <div className="p-4 border-t border-zinc-800/70 bg-[#07090F] space-y-1.5 relative z-10">
+        <div className="p-4 border-t border-zinc-800/70 bg-[#07090F] space-y-2 relative z-10">
           <Link
             href="/"
-            className="flex items-center justify-between px-3 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 rounded-xl transition-colors"
+            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-zinc-300 bg-zinc-900/60 hover:bg-zinc-900 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-all group shadow-xs"
           >
-            <span>Voltar ao site público</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-[#c9a44c] transition-colors" />
+              <span>Voltar ao site público</span>
+            </div>
+            <ExternalLink className="w-3 h-3 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
           </Link>
 
           <form action={logoutCustomer}>
             <button
               type="submit"
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 text-xs font-bold text-red-400 hover:text-red-300 bg-red-500/[0.08] hover:bg-red-500/[0.15] border border-red-500/20 hover:border-red-500/40 rounded-xl transition-all cursor-pointer active:scale-[0.99]"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
               <span>Encerrar Sessão</span>
             </button>
           </form>

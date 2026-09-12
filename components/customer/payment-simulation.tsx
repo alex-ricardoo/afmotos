@@ -120,8 +120,8 @@ export function PaymentSimulation({ consultation, price }: PaymentSimulationProp
 
   return (
     <div className="max-w-xl mx-auto space-y-4 sm:space-y-6 animate-in fade-in duration-300 px-1 sm:px-0">
-      {/* Back button */}
-      <div>
+      {/* Top Breadcrumb & Step Indicator */}
+      <div className="flex items-center justify-between">
         <Link
           href="/cliente"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white transition-colors group py-1"
@@ -129,6 +129,12 @@ export function PaymentSimulation({ consultation, price }: PaymentSimulationProp
           <ArrowLeft className="w-3.5 h-3.5 text-zinc-500 group-hover:-translate-x-1 group-hover:text-[#c9a44c] transition-transform" />
           <span>Voltar ao painel</span>
         </Link>
+
+        {/* Step Indicator Pill */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] font-bold text-zinc-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Etapa 2 de 2 • Pagamento</span>
+        </div>
       </div>
 
       {/* Main Payment Card */}

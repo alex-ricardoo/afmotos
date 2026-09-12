@@ -31,7 +31,7 @@ export default async function NovaConsultaPage({ searchParams }: NovaConsultaPag
   }
 
   if (!placa || !isValidBrazilianPlate(placa)) {
-    redirect('/historico-veicular');
+    redirect('/cliente/consultas/nova');
   }
 
   const res = await initiateConsultation(placa);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition, useRef } from 'react';
+import React, { useState, useTransition } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -9,7 +9,6 @@ import {
   Phone,
   Calendar,
   MapPin,
-  Camera,
   Loader2,
   CheckCircle2,
   AlertCircle,
@@ -20,10 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import type { CustomerProfile } from '@/lib/customer/types';
-import {
-  updateCustomerProfile,
-  uploadCustomerAvatarAction,
-} from '@/lib/customer/actions';
+import { updateCustomerProfile } from '@/lib/customer/actions';
 
 interface ProfileFormProps {
   profile: CustomerProfile;
@@ -34,6 +30,29 @@ const BRAZILIAN_STATES = [
   'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ];
+
+function GoogleIcon({ className = 'w-3 h-3' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M12 5c1.56 0 2.96.54 4.07 1.6l3.05-3.05C17.27 1.8 14.81 1 12 1 7.37 1 3.48 3.65 1.63 7.51l3.66 2.84C6.18 7.35 8.84 5 12 5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.48-1.12 2.73-2.39 3.58l3.71 2.88c2.17-2 3.7-4.95 3.7-8.7z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.29 14.65c-.23-.69-.36-1.42-.36-2.18s.13-1.49.36-2.18L1.63 7.51C.59 9.58 0 11.95 0 14.43s.59 4.85 1.63 6.92l3.66-2.84z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23.86c3.24 0 5.96-1.08 7.95-2.92l-3.71-2.88c-1.08.72-2.45 1.16-4.24 1.16-3.16 0-5.82-2.35-6.71-5.35L1.63 16.7C3.48 20.57 7.37 23.86 12 23.86z"
+      />
+    </svg>
+  );
+}
 
 function formatPhone(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -50,16 +69,13 @@ function formatCep(value: string) {
 
 export function ProfileForm({ profile }: ProfileFormProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isPending, startTransition] = useTransition();
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Form State
   const [fullName, setFullName] = useState(profile.full_name || '');
   const [phone, setPhone] = useState(formatPhone(profile.phone || ''));
   const [dateOfBirth, setDateOfBirth] = useState(profile.date_of_birth || '');
-  const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || '');
 
   // Address State
   const [street, setStreet] = useState(profile.address_street || '');
@@ -70,30 +86,6 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   const [state, setState] = useState(profile.address_state || '');
   const [zip, setZip] = useState(formatCep(profile.address_zip || ''));
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingPhoto(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await uploadCustomerAvatarAction(formData);
-      if (res.data?.url) {
-        setAvatarUrl(res.data.url);
-        toast.success('Foto atualizada! Lembre-se de salvar as alterações.');
-      } else {
-        toast.error(res.error || 'Erro ao fazer upload da foto.');
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('Ocorreu um erro ao enviar a imagem.');
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -102,7 +94,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         full_name: fullName,
         phone,
         date_of_birth: dateOfBirth,
-        avatar_url: avatarUrl,
+        avatar_url: profile.avatar_url || undefined,
         address_street: street,
         address_number: number,
         address_complement: complement,
@@ -130,11 +122,11 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#c9a44c] to-transparent opacity-80" />
 
         <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-zinc-800/80">
-          <div className="relative group">
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#c9a44c] to-[#997628] flex items-center justify-center text-zinc-950 font-black text-3xl overflow-hidden shadow-xl border-2 border-zinc-800 group-hover:border-[#c9a44c] transition-colors">
-              {avatarUrl ? (
+          <div className="relative">
+            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#c9a44c] to-[#997628] flex items-center justify-center text-zinc-950 font-black text-3xl overflow-hidden shadow-xl border-2 border-zinc-800">
+              {profile.avatar_url ? (
                 <Image
-                  src={avatarUrl}
+                  src={profile.avatar_url}
                   alt={fullName}
                   width={96}
                   height={96}
@@ -145,35 +137,21 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 userInitial
               )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploadingPhoto}
-              className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-zinc-900 border border-zinc-700 text-[#c9a44c] hover:bg-zinc-800 shadow-lg cursor-pointer transition-transform active:scale-90"
-              title="Alterar foto de perfil"
-            >
-              {isUploadingPhoto ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Camera className="w-4 h-4" />
-              )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoUpload}
-            />
           </div>
 
           <div className="text-center sm:text-left space-y-1">
             <h2 className="text-xl font-bold text-white tracking-tight">{fullName || 'Meu Perfil'}</h2>
             <p className="text-xs text-zinc-400">{profile.email}</p>
-            <p className="text-[11px] text-zinc-400">
-              Clique no ícone da câmera para trocar sua foto de perfil
-            </p>
+            {profile.avatar_url ? (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] font-medium text-zinc-300 mt-1">
+                <GoogleIcon className="w-3 h-3" />
+                <span>Foto sincronizada com a Conta Google</span>
+              </div>
+            ) : (
+              <p className="text-[11px] text-zinc-500 mt-1">
+                Identificação por inicial do nome
+              </p>
+            )}
           </div>
         </div>
 

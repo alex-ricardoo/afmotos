@@ -143,7 +143,7 @@ export function ConsultationHistory({
             )}
           </form>
 
-          <Link href="/historico-veicular">
+          <Link href="/cliente/consultas/nova">
             <Button
               size="sm"
               className="h-10 px-4 bg-[#c9a44c] hover:bg-[#b38e3a] text-zinc-950 font-bold text-xs rounded-xl shadow-md shadow-[#c9a44c]/10 flex items-center gap-1.5"
@@ -181,7 +181,7 @@ export function ConsultationHistory({
                 Limpar Filtro
               </Button>
             ) : (
-              <Link href="/historico-veicular" className="inline-block pt-2">
+              <Link href="/cliente/consultas/nova" className="inline-block pt-2">
                 <Button className="h-10 px-5 bg-[#c9a44c] hover:bg-[#b38e3a] text-zinc-950 font-bold text-xs rounded-xl">
                   Consultar Primeira Placa
                 </Button>
