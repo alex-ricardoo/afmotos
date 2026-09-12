@@ -88,7 +88,7 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
   };
 
   return (
-    <div className="py-4 sm:py-10 px-3 sm:px-6 lg:px-8">
+    <div className="py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
       <CustomerPaymentFlow
         preference={preference}
         initialConsultation={consultation}

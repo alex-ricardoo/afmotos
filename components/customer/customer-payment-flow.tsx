@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, ArrowLeft, CheckCircle2, ChevronDown } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentBrick } from './payment-brick';
 import { PixPaymentDisplay } from './pix-payment-display';
@@ -112,7 +112,7 @@ export function CustomerPaymentFlow({
   // If already completed
   if (isCompleted) {
     return (
-      <div className="mx-auto max-w-lg text-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-8 backdrop-blur-md shadow-2xl">
+      <div className="mx-auto max-w-lg text-center rounded-2xl bg-zinc-900/60 border border-emerald-500/30 p-8 shadow-xl">
         <CheckCircle2 className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-white mb-2">Consulta Concluída!</h2>
         <p className="text-sm text-zinc-300 mb-6">
@@ -122,7 +122,7 @@ export function CustomerPaymentFlow({
         </p>
         <Link
           href={`/cliente/consultas/${preference.consultationId}`}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition-colors shadow-lg shadow-emerald-950/40"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition-colors"
         >
           Visualizar Laudo Completo
         </Link>
@@ -131,47 +131,37 @@ export function CustomerPaymentFlow({
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      {/* Top Navigation & Step Indicator */}
-      <nav
-        aria-label="Navegação da etapa de pagamento"
-        className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/80 pb-4"
-      >
+    <div className="mx-auto max-w-5xl space-y-6">
+      {/* Top Navigation */}
+      <nav aria-label="Navegação da etapa de pagamento" className="flex items-center">
         <Link
           href="/cliente"
-          className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-lg py-1 px-2 -ml-2"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-zinc-400 hover:text-white transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-500 rounded py-1 px-1 -ml-1"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Voltar ao painel
         </Link>
-
-        {/* Discrete progress badge */}
-        <div className="flex items-center gap-2 text-xs font-semibold text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
-          <ShieldCheck className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
-          <span>Etapa final • Pagamento seguro</span>
-        </div>
       </nav>
 
-      {/* Page Title & Subtitle */}
-      <div>
+      {/* Header Title */}
+      <header className="space-y-1">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
           Finalize sua consulta
         </h1>
-        <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-          Confirme os detalhes e realize o pagamento seguro para liberar o histórico veicular.
+        <p className="text-xs sm:text-sm text-zinc-400">
+          Receba o histórico veicular completo da placa informada.
         </p>
-      </div>
+      </header>
 
-      {/* 2-column layout on desktop (lg+), 1-column on mobile */}
+      {/* Main Composition: 1 column on Mobile, 2 columns on Desktop (lg+) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-        {/* Coluna Esquerda (Desktop) / Topo (Mobile): Resumo e Benefícios */}
+        {/* Left Column (Desktop) / Top Section (Mobile): Resumo e Benefícios */}
         <div className="lg:col-span-5 space-y-5">
           <VehicleConsultationOrderSummary plate={preference.plate} amount={preference.amount} />
-
           <VehicleConsultationBenefits supportPhone={supportPhone} plate={preference.plate} />
         </div>
 
-        {/* Coluna Direita (Desktop) / Abaixo (Mobile): Payment Brick */}
+        {/* Right Column (Desktop) / Bottom Section (Mobile): Área de Pagamento */}
         <div className="lg:col-span-7 space-y-5 min-w-0">
           {/* Status banner if async payment is pending */}
           {asyncPixData && (
@@ -182,7 +172,7 @@ export function CustomerPaymentFlow({
             />
           )}
 
-          {/* Async Pix QR Code view */}
+          {/* Async Pix QR Code view or Mercado Pago Payment Brick */}
           {asyncPixData ? (
             <PixPaymentDisplay
               qrCode={asyncPixData.qrCode}
@@ -191,7 +181,6 @@ export function CustomerPaymentFlow({
               isChecking={isCheckingStatus}
             />
           ) : (
-            /* Mercado Pago Payment Brick */
             <PaymentBrick
               preference={preference}
               onPaymentSuccess={() => {
@@ -229,7 +218,7 @@ export function CustomerPaymentFlow({
           </button>
 
           {showDevSimulation && (
-            <div className="mt-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-5 shadow-inner">
+            <div className="mt-3 rounded-2xl border border-zinc-800/80 bg-zinc-950 p-5">
               <p className="text-xs text-zinc-400 mb-4">
                 Esta seção só aparece quando <code>ENABLE_DEV_PAYMENT_SIMULATION=true</code> e{' '}
                 <code>NODE_ENV=development</code>.
