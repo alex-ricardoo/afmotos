@@ -169,8 +169,8 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
 
       {/* Separator */}
       <div className="relative flex items-center justify-center">
-        <div className="border-t border-zinc-800 w-full" />
-        <span className="bg-[#0e0e11] px-3 text-[11px] uppercase tracking-wider text-zinc-400 font-semibold absolute">
+        <div className="border-t border-zinc-800/80 w-full" />
+        <span className="bg-zinc-950 px-3 text-[10px] uppercase tracking-widest text-zinc-500 font-bold absolute">
           ou com e-mail
         </span>
       </div>
@@ -186,7 +186,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
       <form onSubmit={handleSubmit} className="space-y-4">
         {mode === 'register' && (
           <div>
-            <Label className="text-xs text-zinc-300 font-medium">Nome Completo</Label>
+            <Label className="text-xs text-zinc-300 font-semibold">Nome Completo</Label>
             <div className="relative mt-1.5">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <Input
@@ -196,14 +196,14 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 disabled={isPending}
-                className="pl-9 bg-zinc-900/50 border-zinc-800 focus:border-[#c9a44c] focus:ring-[#c9a44c]/20 text-zinc-100 rounded-xl h-11 text-sm placeholder:text-zinc-400"
+                className="pl-9 bg-zinc-900/70 border-zinc-800 focus:border-amber-400/80 focus:ring-2 focus:ring-amber-400/15 text-zinc-100 rounded-xl h-11 text-sm placeholder:text-zinc-500 transition-all"
               />
             </div>
           </div>
         )}
 
         <div>
-          <Label className="text-xs text-zinc-300 font-medium">E-mail</Label>
+          <Label className="text-xs text-zinc-300 font-semibold">E-mail</Label>
           <div className="relative mt-1.5">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <Input
@@ -213,7 +213,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isPending}
-              className="pl-9 bg-zinc-900/50 border-zinc-800 focus:border-[#c9a44c] focus:ring-[#c9a44c]/20 text-zinc-100 rounded-xl h-11 text-sm placeholder:text-zinc-400"
+              className="pl-9 bg-zinc-900/70 border-zinc-800 focus:border-amber-400/80 focus:ring-2 focus:ring-amber-400/15 text-zinc-100 rounded-xl h-11 text-sm placeholder:text-zinc-500 transition-all"
             />
           </div>
         </div>
@@ -221,7 +221,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
         {mode === 'register' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs text-zinc-300 font-medium">WhatsApp / Telefone</Label>
+              <Label className="text-xs text-zinc-300 font-semibold">WhatsApp / Telefone</Label>
               <div className="relative mt-1.5">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                 <Input
@@ -231,13 +231,13 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
                   value={phone}
                   onChange={(e) => setPhone(formatPhone(e.target.value))}
                   disabled={isPending}
-                  className="pl-9 bg-zinc-900/50 border-zinc-800 focus:border-[#c9a44c] focus:ring-[#c9a44c]/20 text-zinc-100 rounded-xl h-11 text-sm placeholder:text-zinc-400"
+                  className="pl-9 bg-zinc-900/70 border-zinc-800 focus:border-amber-400/80 focus:ring-2 focus:ring-amber-400/15 text-zinc-100 rounded-xl h-11 text-sm placeholder:text-zinc-500 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-xs text-zinc-300 font-medium">Data de Nascimento</Label>
+              <Label className="text-xs text-zinc-300 font-semibold">Data de Nascimento</Label>
               <div className="relative mt-1.5">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                 <Input
@@ -247,7 +247,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
                   onChange={(e) => setDateOfBirth(e.target.value)}
                   disabled={isPending}
                   max={new Date().toISOString().split('T')[0]}
-                  className="pl-9 bg-zinc-900/50 border-zinc-800 focus:border-[#c9a44c] focus:ring-[#c9a44c]/20 text-zinc-100 rounded-xl h-11 text-sm [color-scheme:dark]"
+                  className="pl-9 bg-zinc-900/70 border-zinc-800 focus:border-amber-400/80 focus:ring-2 focus:ring-amber-400/15 text-zinc-100 rounded-xl h-11 text-sm [color-scheme:dark] transition-all"
                 />
               </div>
             </div>
@@ -256,7 +256,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
 
         <div>
           <div className="flex items-center justify-between">
-            <Label className="text-xs text-zinc-300 font-medium">Senha</Label>
+            <Label className="text-xs text-zinc-300 font-semibold">Senha</Label>
           </div>
           <div className="relative mt-1.5">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -267,12 +267,12 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isPending}
-              className="pl-9 pr-10 bg-zinc-900/50 border-zinc-800 focus:border-[#c9a44c] focus:ring-[#c9a44c]/20 text-zinc-100 rounded-xl h-11 text-sm placeholder:text-zinc-400"
+              className="pl-9 pr-10 bg-zinc-900/70 border-zinc-800 focus:border-amber-400/80 focus:ring-2 focus:ring-amber-400/15 text-zinc-100 rounded-xl h-11 text-sm placeholder:text-zinc-500 transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -305,15 +305,15 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
         <Button
           type="submit"
           disabled={isPending}
-          className="w-full h-11 bg-gradient-to-r from-[#c9a44c] to-[#b38e3a] hover:from-[#d8b35b] hover:to-[#c49e49] text-zinc-950 font-bold text-sm rounded-xl shadow-lg shadow-[#c9a44c]/20 transition-all duration-200 mt-2"
+          className="w-full h-12 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center gap-2 cursor-pointer"
         >
           {isPending ? (
             <span className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
               <span>{mode === 'login' ? 'Entrando...' : 'Criando conta...'}</span>
             </span>
           ) : (
-            <span>{mode === 'login' ? 'Entrar na Conta' : 'Criar Minha Conta'}</span>
+            <span>{mode === 'login' ? 'Entrar no Meu Painel' : 'Criar Minha Conta Grátis'}</span>
           )}
         </Button>
       </form>
@@ -325,7 +325,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
             Não tem uma conta?{' '}
             <Link
               href={`/cliente/cadastro?returnUrl=${encodeURIComponent(returnUrl)}`}
-              className="text-[#c9a44c] hover:underline font-semibold"
+              className="text-amber-400 hover:text-amber-300 hover:underline font-bold"
             >
               Cadastre-se grátis
             </Link>
@@ -335,7 +335,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
             Já possui uma conta?{' '}
             <Link
               href={`/cliente/login?returnUrl=${encodeURIComponent(returnUrl)}`}
-              className="text-[#c9a44c] hover:underline font-semibold"
+              className="text-amber-400 hover:text-amber-300 hover:underline font-bold"
             >
               Fazer login
             </Link>

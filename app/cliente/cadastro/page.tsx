@@ -3,7 +3,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import { AuthForm } from '@/components/customer/auth-form';
-import { ArrowLeft, UserPlus } from 'lucide-react';
+import {
+  ArrowLeft,
+  UserPlus,
+  ShieldCheck,
+  Zap,
+  Lock,
+  Sparkles,
+  FileCheck2,
+  CheckCircle2,
+  BadgeCheck,
+  FileText,
+} from 'lucide-react';
 
 interface CadastroPageProps {
   searchParams: Promise<{
@@ -12,8 +23,8 @@ interface CadastroPageProps {
 }
 
 export const metadata = {
-  title: 'Criar Conta | Área do Cliente | AF Motos',
-  description: 'Cadastre-se na AF Motos para consultar placas, acompanhar laudos e gerenciar seu perfil.',
+  title: 'Criar Conta | Portal do Cliente | AF Motos',
+  description: 'Cadastre-se na AF Motos para consultar placas, emitir laudos oficiais e gerenciar seu histórico veicular.',
 };
 
 export default async function CustomerCadastroPage({ searchParams }: CadastroPageProps) {
@@ -30,48 +41,150 @@ export default async function CustomerCadastroPage({ searchParams }: CadastroPag
   }
 
   return (
-    <div className="w-full max-w-[480px] mx-auto space-y-6">
-      {/* Top action: Link to public site */}
-      <div className="flex items-center justify-between px-1">
+    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6">
+      {/* Top action bar */}
+      <div className="flex items-center justify-between px-2 sm:px-3">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors py-1.5 px-3 rounded-lg hover:bg-zinc-900/60 border border-transparent hover:border-zinc-800/60"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-white transition-all py-1.5 px-3 rounded-xl hover:bg-zinc-900/70 border border-transparent hover:border-zinc-800"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Voltar ao site</span>
+          <span>Voltar ao site da AF Motos</span>
         </Link>
 
-        <div className="flex items-center gap-1.5 text-xs text-[#c9a44c] font-semibold">
-          <UserPlus className="w-4 h-4" />
-          <span>Novo Cadastro</span>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-bold tracking-wide">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Novo Cliente
+          </span>
         </div>
       </div>
 
-      {/* Main Glass Card */}
-      <div className="relative rounded-3xl bg-zinc-950/70 border border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_40px_rgba(201,164,76,0.06)] backdrop-blur-2xl p-7 sm:p-9 overflow-hidden">
-        {/* Top Gold Accent Line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#c9a44c] to-transparent opacity-80" />
+      {/* Main Glass Split Card */}
+      <div className="relative rounded-3xl bg-zinc-950/80 border border-zinc-800/90 shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_50px_rgba(59,130,246,0.06)] backdrop-blur-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12">
+        {/* Subtle Top Accent Lighting Line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80 z-20" />
 
-        {/* Logo & Header */}
-        <div className="flex flex-col items-center text-center mb-6">
-          <div className="relative w-14 h-14 rounded-2xl overflow-hidden mb-3 border border-[#c9a44c]/30 shadow-lg shadow-[#c9a44c]/10 bg-zinc-900">
-            <Image
-              src="/logo.jpg"
-              alt="AF Motos"
-              fill
-              className="object-cover"
-              priority
-            />
+        {/* LEFT COLUMN: Customer Experience & Value Proposition (Visible on md+) */}
+        <div className="hidden md:flex md:col-span-5 flex-col justify-between p-8 lg:p-9 bg-gradient-to-br from-[#0c1426] via-[#080d19] to-[#050912] border-r border-zinc-800/80 relative overflow-hidden">
+          {/* Ambient Inner Glow */}
+          <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute bottom-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+
+          {/* Top Brand Identity */}
+          <div className="space-y-6 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-amber-500/40 shadow-md shadow-amber-500/10 bg-zinc-900 shrink-0">
+                <Image
+                  src="/logo.jpg"
+                  alt="AF Motos"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              <div>
+                <span className="text-sm font-black text-white tracking-tight font-heading block">
+                  AF MOTOS
+                </span>
+                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">
+                  Portal do Cliente
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xl lg:text-2xl font-black text-white leading-tight font-heading">
+                Cadastre-se grátis e tenha acesso a consultas veiculares completas.
+              </h2>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Em menos de 1 minuto você cria sua conta segura para consultar histórico de placas, checar restrições e emitir laudos certificados.
+              </p>
+            </div>
+
+            {/* Benefit Highlights List */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-start gap-2.5">
+                <div className="w-6 h-6 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <Zap className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">Consulta Instantânea</h4>
+                  <p className="text-[11px] text-zinc-400 leading-snug">Dados oficiais de Senatran, Detran e Renajud sem burocracia.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <div className="w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <FileCheck2 className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">Histórico Permanente</h4>
+                  <p className="text-[11px] text-zinc-400 leading-snug">Seus laudos ficam salvos para download em PDF a qualquer momento.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <div className="w-6 h-6 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">Proteção Anti-Golpe</h4>
+                  <p className="text-[11px] text-zinc-400 leading-snug">Evite prejuízos de milhares de reais antes de comprar ou vender.</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Crie sua conta</h1>
-          <p className="text-xs text-zinc-400 mt-1 max-w-[320px]">
-            Tenha acesso instantâneo a consultas veiculares completas e histórico seguro
-          </p>
+
+          {/* Bottom Security Footer */}
+          <div className="pt-6 border-t border-zinc-800/80 flex items-center gap-2 text-[11px] text-zinc-400 relative z-10">
+            <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>Dados 100% protegidos com criptografia SSL 256-bit</span>
+          </div>
         </div>
 
-        {/* Auth Form */}
-        <AuthForm mode="register" returnUrl={returnUrl} />
+        {/* RIGHT COLUMN: Authentication Form (md:col-span-7) */}
+        <div className="md:col-span-7 p-6 sm:p-9 lg:p-10 flex flex-col justify-center relative">
+          {/* Mobile Header Accent Pill */}
+          <div className="md:hidden flex items-center justify-center gap-2 mb-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Portal do Cliente AF Motos</span>
+            </span>
+          </div>
+
+          {/* Header */}
+          <div className="text-center md:text-left mb-6 space-y-1.5">
+            <div className="flex items-center justify-center md:justify-start gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-xs shrink-0">
+                <UserPlus className="w-5 h-5 text-amber-400" />
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight font-heading">
+                Criar Nova Conta
+              </h1>
+            </div>
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-md">
+              Cadastre-se rapidamente para acessar laudos e proteger suas negociações.
+            </p>
+          </div>
+
+          {/* Mobile Feature Perks Chips */}
+          <div className="md:hidden grid grid-cols-2 gap-2 mb-5 p-2.5 rounded-xl bg-zinc-900/50 border border-zinc-800/80 text-[11px] text-zinc-300">
+            <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span>Cadastro Gratuito</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-amber-400 font-medium">
+              <Zap className="w-3.5 h-3.5 shrink-0" />
+              <span>Acesso Imediato</span>
+            </div>
+          </div>
+
+          {/* Auth Form Component */}
+          <AuthForm mode="register" returnUrl={returnUrl} />
+        </div>
       </div>
     </div>
   );
 }
+
