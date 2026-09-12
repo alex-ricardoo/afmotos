@@ -14,6 +14,7 @@ import {
   ChevronRight,
   FilterX,
   PlusCircle,
+  Download,
 } from 'lucide-react';
 import type { ConsultationHistoryResult, ConsultationStatus } from '@/lib/customer/types';
 import { formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
@@ -246,16 +247,32 @@ export function ConsultationHistory({
                         <td className="py-4 px-6 text-xs text-zinc-400">{formattedDate}</td>
                         <td className="py-4 px-6">{getStatusBadge(item.status)}</td>
                         <td className="py-4 px-6 text-right">
-                          <Link href={targetHref}>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 px-3 text-xs bg-zinc-900/60 hover:bg-zinc-800 border-zinc-700 text-zinc-200 group-hover:border-[#c9a44c]/50 rounded-lg inline-flex items-center gap-1.5"
-                            >
-                              <span>{item.status === 'pending' ? 'Pagar' : 'Ver Laudo'}</span>
-                              <ArrowRight className="w-3.5 h-3.5 text-[#c9a44c]" />
-                            </Button>
-                          </Link>
+                          <div className="inline-flex items-center gap-2 justify-end">
+                            {item.status === 'completed' && (
+                              <a
+                                href={`/api/cliente/consultas/${item.id}/pdf`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={`laudo-veicular_${item.plate}_${item.id.slice(0, 8)}.pdf`}
+                                className="h-8 px-2.5 text-xs bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700 hover:border-[#c9a44c]/60 text-zinc-300 rounded-lg inline-flex items-center gap-1.5 transition-colors shadow-xs"
+                                title="Baixar Laudo PDF"
+                              >
+                                <Download className="w-3.5 h-3.5 text-[#c9a44c]" />
+                                <span className="hidden xl:inline">PDF</span>
+                              </a>
+                            )}
+
+                            <Link href={targetHref}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3 text-xs bg-zinc-900/60 hover:bg-zinc-800 border-zinc-700 text-zinc-200 group-hover:border-[#c9a44c]/50 rounded-lg inline-flex items-center gap-1.5"
+                              >
+                                <span>{item.status === 'pending' ? 'Pagar' : 'Ver Laudo'}</span>
+                                <ArrowRight className="w-3.5 h-3.5 text-[#c9a44c]" />
+                              </Button>
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -300,8 +317,21 @@ export function ConsultationHistory({
                       <p className="text-[11px] text-zinc-400 mt-0.5">{formattedDate}</p>
                     </div>
 
-                    <div className="pt-1">
-                      <Link href={targetHref} className="block">
+                    <div className="pt-2 flex items-center gap-2">
+                      {item.status === 'completed' && (
+                        <a
+                          href={`/api/cliente/consultas/${item.id}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download={`laudo-veicular_${item.plate}_${item.id.slice(0, 8)}.pdf`}
+                          className="h-9 px-3 text-xs bg-zinc-900 border border-zinc-700 hover:border-[#c9a44c]/60 text-zinc-200 rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                          title="Baixar Laudo PDF"
+                        >
+                          <Download className="w-3.5 h-3.5 text-[#c9a44c]" />
+                          <span>PDF</span>
+                        </a>
+                      )}
+                      <Link href={targetHref} className="flex-1 block">
                         <Button
                           variant="outline"
                           size="sm"

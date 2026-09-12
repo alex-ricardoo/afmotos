@@ -67,37 +67,62 @@ export async function getCustomerDashboardData(): Promise<DashboardData | null> 
   // 1. Fetch Profile
   const profile = await getCustomerProfile();
 
-  // 2. Fetch Total Count
-  const { count, error: countError } = await supabase
-    .from('customer_plate_consultations')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id);
+  // 2. Fetch Total Count & Completed Count
+  const [totalRes, completedRes] = await Promise.all([
+    supabase
+      .from('customer_plate_consultations')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+    supabase
+      .from('customer_plate_consultations')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('status', 'completed'),
+  ]);
 
-  const total_consultations = countError || count === null ? 0 : count;
+  const total_consultations = totalRes.count || 0;
+  const completed_consultations = completedRes.count || 0;
 
-  // 3. Fetch Last 3 Consultations
+  // 3. Fetch Last 4 Consultations for Rich Dashboard
   const { data: recent, error: recentError } = await supabase
     .from('customer_plate_consultations')
     .select('id, plate, plate_normalized, status, created_at, vehicle_data')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(3);
+    .limit(4);
 
   const recentConsultations =
     recentError || !recent
       ? []
       : recent.map((item) => {
-          const vd = (item.vehicle_data as Record<string, unknown>) || null;
+          const raw = (item.vehicle_data as any) || {};
+          const d = raw.data || raw.dados || raw.dadosBasicosDoVeiculo || raw;
+
+          let brand = d.marca || d.brand || d.dadosBasicosDoVeiculo?.marca;
+          let model = d.modelo || d.model || d.dadosBasicosDoVeiculo?.modelo;
+          if (!brand && d.marcaModelo && typeof d.marcaModelo === 'string') {
+            const parts = d.marcaModelo.split('/');
+            brand = parts[0]?.trim();
+            model = parts[1]?.trim();
+          }
+
+          const year = d.anoModelo || d.ano_modelo || d.dadosBasicosDoVeiculo?.anoModelo;
+          const color = d.corVeiculo || d.cor || d.baseEstadual?.cor;
+          const riskLevel = d.analiseRisco?.classificacaoRisco || d.risk_level;
+
           return {
             id: item.id,
             plate: item.plate,
             plate_normalized: item.plate_normalized,
             status: item.status as ConsultationStatus,
             created_at: item.created_at,
-            vehicle_data: vd
+            vehicle_data: (brand || model)
               ? {
-                  brand: (vd.marca as string) || (vd.brand as string) || undefined,
-                  model: (vd.modelo as string) || (vd.model as string) || undefined,
+                  brand: brand || undefined,
+                  model: model || undefined,
+                  year: year ? String(year) : undefined,
+                  color: color || undefined,
+                  risk_level: riskLevel || undefined,
                 }
               : null,
           };
@@ -110,6 +135,7 @@ export async function getCustomerDashboardData(): Promise<DashboardData | null> 
     },
     stats: {
       total_consultations,
+      completed_consultations,
     },
     recent_consultations: recentConsultations,
   };
@@ -164,7 +190,20 @@ export async function getConsultationHistory(
     error || !data
       ? []
       : data.map((item) => {
-          const vd = (item.vehicle_data as Record<string, unknown>) || null;
+          const raw = (item.vehicle_data as any) || {};
+          const d = raw.data || raw.dados || raw.dadosBasicosDoVeiculo || raw;
+
+          let brand = d.marca || d.brand || d.dadosBasicosDoVeiculo?.marca;
+          let model = d.modelo || d.model || d.dadosBasicosDoVeiculo?.modelo;
+          if (!brand && d.marcaModelo && typeof d.marcaModelo === 'string') {
+            const parts = d.marcaModelo.split('/');
+            brand = parts[0]?.trim();
+            model = parts[1]?.trim();
+          }
+
+          const year = d.anoModelo || d.ano_modelo || d.dadosBasicosDoVeiculo?.anoModelo;
+          const color = d.corVeiculo || d.cor || d.baseEstadual?.cor;
+
           return {
             id: item.id,
             plate: item.plate,
@@ -172,12 +211,12 @@ export async function getConsultationHistory(
             payment_status: item.payment_status as PaymentStatus,
             created_at: item.created_at,
             processed_at: item.processed_at,
-            vehicle_data: vd
+            vehicle_data: (brand || model)
               ? {
-                  brand: (vd.marca as string) || (vd.brand as string) || undefined,
-                  model: (vd.modelo as string) || (vd.model as string) || undefined,
-                  year_model: (vd.ano_modelo as number) || (vd.year_model as number) || undefined,
-                  color: (vd.cor as string) || (vd.color as string) || undefined,
+                  brand: brand || undefined,
+                  model: model || undefined,
+                  year_model: year ? parseInt(String(year), 10) : undefined,
+                  color: color || undefined,
                 }
               : null,
           };

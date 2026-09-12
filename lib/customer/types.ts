@@ -62,6 +62,7 @@ export interface DashboardData {
   };
   stats: {
     total_consultations: number;
+    completed_consultations?: number;
   };
   recent_consultations: Array<{
     id: string;
@@ -72,6 +73,9 @@ export interface DashboardData {
     vehicle_data: {
       brand?: string;
       model?: string;
+      year?: string;
+      color?: string;
+      risk_level?: string;
     } | null;
   }>;
 }
