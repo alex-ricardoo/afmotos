@@ -175,22 +175,17 @@ export function AgreementSalePDF({
               {
                 label: 'Marca / Modelo / Versão',
                 value: `${vehicleBrand || ''} ${vehicleModel || ''} ${vehicleVersion || ''}`.trim() || 'Não informado',
-                width: '40%',
+                width: '48%',
               },
               {
                 label: 'Ano Fab. / Mod.',
                 value: `${vehicleManufactureYear || vehicleYear || '-'} / ${vehicleModelYear || vehicleYear || '-'}`,
-                width: '20%',
+                width: '24%',
               },
               {
                 label: 'Placa',
                 value: vehiclePlate || 'Não informada',
-                width: '18%',
-              },
-              {
-                label: 'Cor / Combustível',
-                value: `${vehicleColor || 'Não inf.'} • ${vehicleFuel || 'Flex'}`,
-                width: '18%',
+                width: '26%',
               },
               {
                 label: 'Chassi (VIN)',
