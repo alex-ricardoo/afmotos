@@ -19,7 +19,6 @@ import {
   type BrickSubmitFormData,
   type PaymentPreferenceData,
 } from './types';
-export { createMinimalCardPaymentForDiagnostics } from './diagnostic';
 import {
   createPaymentPreferenceSchema,
   brickPaymentSubmitSchema,
@@ -28,8 +27,10 @@ import {
   ticketPaymentFormDataSchema,
   normalizeCpf,
 } from './schemas';
+import crypto from 'crypto';
 import { cleanPayload } from './payload';
 export { cleanPayload, buildPaymentRequestBody } from './payload';
+import { createMercadoPagoPaymentRequestSnapshot } from './request-snapshot';
 import {
   paymentLogInfo,
   paymentLogWarn,
@@ -37,6 +38,42 @@ import {
   maskEmail,
   extractSafeError,
 } from '@/lib/observability/payment-logger';
+
+export interface BrickClientTelemetry {
+  tokenCreatedAt?: number;
+  tokenLength?: number;
+  tokenHashTruncated?: string;
+  submitAttemptNumber?: number;
+}
+
+// In-memory cache for recent token hashes (10 min TTL) to enforce single-use tokens
+const recentTokenHashes = new Map<string, number>();
+
+function verifyTokenHashUniqueness(token: string): {
+  valid: boolean;
+  tokenHashTruncated: string;
+  reason?: string;
+} {
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex').substring(0, 12);
+  const now = Date.now();
+
+  for (const [hash, timestamp] of recentTokenHashes.entries()) {
+    if (now - timestamp > 10 * 60 * 1000) {
+      recentTokenHashes.delete(hash);
+    }
+  }
+
+  if (recentTokenHashes.has(tokenHash)) {
+    return {
+      valid: false,
+      tokenHashTruncated: tokenHash,
+      reason: 'Token já utilizado em tentativa anterior. Um novo token é obrigatório.',
+    };
+  }
+
+  recentTokenHashes.set(tokenHash, now);
+  return { valid: true, tokenHashTruncated: tokenHash };
+}
 
 /**
  * -------------------------------------------------------------
@@ -552,6 +589,7 @@ export async function processBrickPayment(
   consultationId: string,
   formData: BrickSubmitFormData,
   flowIdParam?: string,
+  telemetry?: BrickClientTelemetry,
 ): Promise<ProcessBrickPaymentResult> {
   const flowId = flowIdParam || crypto.randomUUID();
 
@@ -712,6 +750,44 @@ export async function processBrickPayment(
       };
     }
     validatedCardData = cardParse.data;
+
+    // Token validation and uniqueness enforcement
+    if (!formData.token || typeof formData.token !== 'string' || !formData.token.trim()) {
+      paymentLogWarn('payment.token_missing', { flowId, consultationId });
+      return {
+        success: false,
+        status: 'rejected',
+        consultationId,
+        error: 'Token do cartão não gerado. Por favor, revise os dados do cartão.',
+      };
+    }
+
+    const tokenUniqueness = verifyTokenHashUniqueness(formData.token);
+    if (!tokenUniqueness.valid) {
+      paymentLogWarn('payment.token_reused_blocked', {
+        flowId,
+        consultationId,
+        tokenHashTruncated: tokenUniqueness.tokenHashTruncated,
+      });
+      return {
+        success: false,
+        status: 'rejected',
+        consultationId,
+        error: tokenUniqueness.reason || 'Token de cartão já utilizado. Digite os dados novamente.',
+      };
+    }
+
+    const tokenAgeMs = telemetry?.tokenCreatedAt
+      ? Date.now() - telemetry.tokenCreatedAt
+      : undefined;
+    paymentLogInfo('payment.card_token_validated', {
+      flowId,
+      consultationId,
+      tokenHashTruncated: tokenUniqueness.tokenHashTruncated,
+      tokenLength: formData.token.length,
+      tokenAgeMs,
+      submitAttemptNumber: telemetry?.submitAttemptNumber || 1,
+    });
   }
 
   let validatedTicketData;
@@ -865,18 +941,26 @@ export async function processBrickPayment(
   const payerFirstName = formData.payer.first_name || defaultFirst || 'Cliente';
   const payerLastName = formData.payer.last_name || defaultRest.join(' ') || 'AF Motos';
 
+  // Tarefa F: Validar issuer
+  // Confirmar se issuer_id é retornado pelo Brick, não usar default/hardcoded nem converter silenciosamente
   const rawIssuer = formData.issuer_id;
-  const parsedIssuer =
-    rawIssuer !== undefined && rawIssuer !== null && rawIssuer !== ''
-      ? Number(rawIssuer)
-      : undefined;
-  const validIssuerId =
-    parsedIssuer !== undefined &&
-    Number.isInteger(parsedIssuer) &&
-    parsedIssuer > 0 &&
-    Number.isFinite(parsedIssuer)
-      ? parsedIssuer
-      : undefined;
+  let validIssuerId: number | undefined;
+  let issuerSource: 'brick' | 'none' = 'none';
+
+  if (rawIssuer !== undefined && rawIssuer !== null && rawIssuer !== '') {
+    const parsed = Number(rawIssuer);
+    if (Number.isInteger(parsed) && parsed > 0 && Number.isFinite(parsed)) {
+      validIssuerId = parsed;
+      issuerSource = 'brick';
+    } else {
+      paymentLogWarn('payment.issuer_id_invalid_type', {
+        flowId,
+        consultationId,
+        rawIssuerType: typeof rawIssuer,
+      });
+    }
+  }
+
   const issuerMasked = validIssuerId
     ? String(validIssuerId).length > 2
       ? `***${String(validIssuerId).slice(-2)}`
@@ -953,6 +1037,7 @@ export async function processBrickPayment(
     installments: formData.installments || 1,
     issuerProvided: Boolean(validIssuerId),
     hasIssuer: Boolean(validIssuerId),
+    issuerSource,
     issuerMasked,
     payerEmailPresent: Boolean(user.email || formData.payer?.email),
     payerIdentificationType: 'CPF',
@@ -979,7 +1064,26 @@ export async function processBrickPayment(
     idempotencyForwardingAttempted: true,
     idempotencyHeaderName: 'X-Idempotency-Key',
     hasIssuer: Boolean(validIssuerId),
+    issuerSource,
     issuerMasked,
+  });
+
+  // Tarefa B: Snapshot sanitizado seguro imediatamente antes de payment.create
+  const requestSnapshot = createMercadoPagoPaymentRequestSnapshot(
+    cleanedPaymentBody,
+    { idempotencyKey },
+    {
+      flowId,
+      consultationId: consultation.id,
+      tokenCreatedAt: telemetry?.tokenCreatedAt,
+      submitAttemptNumber: telemetry?.submitAttemptNumber,
+    },
+  );
+
+  paymentLogInfo('payment.request_snapshot_logged', {
+    flowId,
+    consultationId: consultation.id,
+    snapshot: requestSnapshot,
   });
 
   try {

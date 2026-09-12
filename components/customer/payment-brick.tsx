@@ -52,6 +52,21 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 });
 
+async function computeTruncatedHash(text: string): Promise<string> {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+      .substring(0, 12);
+  } catch {
+    return text.substring(0, 12);
+  }
+}
+
 export function PaymentBrick({
   preference,
   onPaymentSuccess,
@@ -66,6 +81,9 @@ export function PaymentBrick({
   const [isBrickReady, setIsBrickReady] = useState(false);
   const [isProcessing, startTransition] = useTransition();
   const [brickError, setBrickError] = useState<string | null>(null);
+  const [mountKey, setMountKey] = useState(0);
+  const isSubmittingRef = useRef(false);
+  const submitAttemptNumberRef = useRef(0);
   const brickControllerRef = useRef<MercadoPagoBrickController | null>(null);
   const containerId = 'mercadopago-payment-brick-container';
 
@@ -225,19 +243,47 @@ export function PaymentBrick({
               if (isMounted) setIsBrickReady(true);
             },
             onSubmit: ({ formData }: { formData: BrickSubmitFormData }) => {
-              if (process.env.NODE_ENV === 'development') {
-                console.info('[MP Brick]', {
-                  event: 'brick.submit_started',
-                  consultationId: preference.consultationId,
-                  paymentMethodPresent: Boolean(formData?.payment_method_id),
-                  tokenPresent: Boolean(formData?.token),
-                  issuerPresent: Boolean(formData?.issuer_id),
-                  installments: formData?.installments || 1,
-                });
+              // Tarefa E: Bloquear double-submit no frontend
+              if (isSubmittingRef.current || isProcessing) {
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn('[MP Brick]', {
+                    event: 'brick.submit_blocked_concurrent',
+                    consultationId: preference.consultationId,
+                  });
+                }
+                return Promise.reject(
+                  new Error('Pagamento já em processamento. Aguarde alguns instantes.'),
+                );
               }
+
+              isSubmittingRef.current = true;
+              submitAttemptNumberRef.current += 1;
+              const tokenCreatedAt = Date.now();
+              const token = formData?.token;
+
               return new Promise<void>((resolve, reject) => {
                 startTransition(async () => {
                   try {
+                    let tokenHashTruncated: string | undefined;
+                    if (token) {
+                      tokenHashTruncated = await computeTruncatedHash(token);
+                    }
+
+                    // Tarefa E: Registrar observabilidade segura no frontend
+                    if (process.env.NODE_ENV === 'development') {
+                      console.info('[MP Brick]', {
+                        event: 'brick.submit_started',
+                        consultationId: preference.consultationId,
+                        tokenCreatedAt,
+                        tokenLength: token ? token.length : 0,
+                        tokenHashTruncado: tokenHashTruncated,
+                        paymentMethodId: formData?.payment_method_id,
+                        issuerPresent: Boolean(formData?.issuer_id),
+                        installments: formData?.installments || 1,
+                        submitAttemptNumber: submitAttemptNumberRef.current,
+                      });
+                    }
+
                     // Merge fallback address if provided and not present in formData
                     const isTicket =
                       formData.payment_method_id.toLowerCase().includes('bol') ||
@@ -284,9 +330,18 @@ export function PaymentBrick({
                       });
                     }
 
+                    const clientTelemetry = {
+                      tokenCreatedAt,
+                      tokenLength: token ? token.length : undefined,
+                      tokenHashTruncated,
+                      submitAttemptNumber: submitAttemptNumberRef.current,
+                    };
+
                     const result = await processBrickPaymentAction(
                       preference.consultationId,
                       formData,
+                      undefined,
+                      clientTelemetry,
                     );
 
                     if (process.env.NODE_ENV === 'development') {
@@ -299,16 +354,25 @@ export function PaymentBrick({
                     }
 
                     if (!result.success) {
-                      if (result.status === 'lookup_failed_refunded') {
-                        onLookupFailedRefunded?.(result.error);
-                        resolve();
-                        return;
+                      // Tarefa E: Ao receber provider_error ou falha com token de cartão,
+                      // desmontar/remontar o Brick para forçar novo token antes de novo submit
+                      if (result.status === 'provider_error' || Boolean(formData?.token)) {
+                        toast.error(
+                          result.error ||
+                            'Instabilidade técnica temporária. O formulário foi atualizado. Por favor, confirme os dados e tente novamente.',
+                        );
+                        setIsBrickReady(false);
+                        setMountKey((prev) => prev + 1);
+                      } else {
+                        toast.error(
+                          result.error ||
+                            'Não foi possível processar o pagamento agora. Revise os dados informados e tente novamente.',
+                        );
                       }
 
-                      toast.error(
-                        result.error ||
-                          'Não foi possível processar o pagamento agora. Revise os dados informados e tente novamente.',
-                      );
+                      if (result.status === 'lookup_failed_refunded') {
+                        onLookupFailedRefunded?.(result.error);
+                      }
                       reject();
                       return;
                     }
@@ -330,6 +394,8 @@ export function PaymentBrick({
                         : 'Não foi possível processar o pagamento agora. Revise os dados informados e tente novamente.';
                     toast.error(errorMsg);
                     reject();
+                  } finally {
+                    isSubmittingRef.current = false;
                   }
                 });
               });
@@ -394,6 +460,7 @@ export function PaymentBrick({
 
     return () => {
       isMounted = false;
+      isBrickReadyRef.current = false;
       if (process.env.NODE_ENV === 'development') {
         console.info('[MP Brick]', {
           event: 'brick.unmounted',
@@ -403,8 +470,8 @@ export function PaymentBrick({
       if (brickControllerRef.current?.unmount) {
         try {
           brickControllerRef.current.unmount();
-        } catch {
-          // ignore unmount errors on teardown
+        } catch (unmountErr) {
+          console.warn('[MP Brick] Unmount warning:', unmountErr);
         }
       }
     };
@@ -420,6 +487,7 @@ export function PaymentBrick({
     onPaymentSuccess,
     onAsyncPaymentCreated,
     onLookupFailedRefunded,
+    mountKey,
   ]);
 
   // CEP Auto Lookup Handler for Boleto
@@ -653,6 +721,7 @@ export function PaymentBrick({
 
       {/* Official Mercado Pago Payment Brick Container - No restrictive overflow or height */}
       <div
+        key={mountKey}
         id={containerId}
         className={!isBrickReady || brickError ? 'hidden' : 'w-full min-w-0 py-2'}
       />

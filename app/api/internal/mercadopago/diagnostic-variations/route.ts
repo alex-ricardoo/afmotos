@@ -76,19 +76,22 @@ export async function GET(request: NextRequest) {
     },
     webhookUrlConfigured: Boolean(webhookUrl),
     variations: {
-      A: {
+      '1': {
+        alias: 'A',
         description:
-          'Payload normal completo (Mastercard, issuer dinâmico, external_reference, notification_url, requestOptions com idempotência)',
+          'Clone do request normal AF Motos (Mastercard, issuer dinâmico se retornado pelo Brick, external_reference, metadata, requestOptions com idempotência)',
         allowedInEnvironment: gate.allowed,
       },
-      B: {
+      '2': {
+        alias: 'C',
         description:
-          'Payload mínimo (Mastercard, sem issuer_id, sem external_reference, sem notification_url)',
+          'Mesmo request AF Motos, SEM issuer_id (isola estritamente a variável issuer_id para verificar erro 500)',
         allowedInEnvironment: gate.allowed,
       },
-      C: {
+      '3': {
+        alias: 'B',
         description:
-          'Payload completo sem issuer_id (com external_reference, notification_url, requestOptions com idempotência)',
+          'Clone mínimo do exemplo funcional Moura’s Pizzas (sem description, sem notification_url, metadata com preference_id)',
         allowedInEnvironment: gate.allowed,
       },
     },
@@ -96,7 +99,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST: Executa uma variação de teste (A, B ou C) de forma estritamente isolada.
+ * POST: Executa uma variação de teste (1, 2, 3 ou A, B, C) de forma estritamente isolada.
  * NUNCA atualiza a consulta veicular para completada e NUNCA libera consulta.
  */
 export async function POST(request: NextRequest) {
@@ -118,12 +121,13 @@ export async function POST(request: NextRequest) {
   }
 
   let bodyData: {
-    variation?: 'A' | 'B' | 'C';
+    variation?: '1' | '2' | '3' | 'A' | 'B' | 'C';
     token?: string;
     installments?: number;
     userEmail?: string;
     normalizedCpf?: string;
     brickIssuerId?: number | string | null;
+    tokenCreatedAt?: number;
   } = {};
 
   try {
@@ -133,42 +137,49 @@ export async function POST(request: NextRequest) {
   }
 
   const {
-    variation = 'A',
+    variation = '1',
     token,
     installments = 1,
-    userEmail = 'teste@exemplo.com',
+    userEmail = 'cliente.teste@exemplo.com',
     normalizedCpf = '12345678909',
     brickIssuerId,
+    tokenCreatedAt,
   } = bodyData;
 
-  if (!token) {
+  if (!token || typeof token !== 'string' || token.trim().length === 0) {
     return NextResponse.json(
       { error: 'Token do cartão (gerado pelo Brick) é obrigatório para o teste.' },
       { status: 400 },
     );
   }
 
+  const flowId = crypto.randomUUID();
   const params: DiagnosticVariationParams = {
     canonicalAmount: 49.99,
-    token,
+    token: token.trim(),
     installments,
     userEmail,
     normalizedCpf,
-    flowId: crypto.randomUUID(),
+    flowId,
     consultationId: `diag-${crypto.randomUUID()}`,
     brickIssuerId,
     notificationUrl: getMercadoPagoWebhookUrl(),
+    tokenCreatedAt,
   };
 
   let callData;
-  if (variation === 'A') {
+  const normVar = String(variation).toUpperCase();
+  if (normVar === '1' || normVar === 'A') {
     callData = buildVariationAPayload(params);
-  } else if (variation === 'B') {
-    callData = buildVariationBPayload(params);
-  } else if (variation === 'C') {
+  } else if (normVar === '2' || normVar === 'C') {
     callData = buildVariationCPayload(params);
+  } else if (normVar === '3' || normVar === 'B') {
+    callData = buildVariationBPayload(params);
   } else {
-    return NextResponse.json({ error: 'Variação inválida. Use A, B ou C.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Variação inválida. Use 1, 2, 3 (ou A, B, C).' },
+      { status: 400 },
+    );
   }
 
   const startTime = Date.now();
@@ -183,7 +194,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      variation,
+      variation: normVar,
+      snapshotId: callData.snapshot.snapshotId,
+      snapshot: callData.snapshot,
+      httpStatus: 200,
       mpPaymentId: mpPayment?.id ? String(mpPayment.id) : null,
       status: mpPayment?.status,
       statusDetail: mpPayment?.status_detail,
@@ -197,18 +211,30 @@ export async function POST(request: NextRequest) {
     const durationMs = Date.now() - startTime;
     const safeErr = extractSafeError(err);
 
+    const allowedHeaders: Record<string, string> = {};
+    const anyErr = err as Record<string, unknown>;
+    const resHeaders = (anyErr?.apiResponse as { headers?: Record<string, string> })?.headers;
+    if (resHeaders && typeof resHeaders === 'object') {
+      ['x-request-id', 'x-correlation-id', 'content-type', 'date'].forEach((h) => {
+        if (resHeaders[h]) allowedHeaders[h] = String(resHeaders[h]);
+      });
+    }
+
     return NextResponse.json(
       {
         success: false,
-        variation,
+        variation: normVar,
+        snapshotId: callData.snapshot.snapshotId,
+        snapshot: callData.snapshot,
+        httpStatus: safeErr.providerStatus || 500,
         errorName: safeErr.errorName,
-        errorMessageSanitized: safeErr.errorMessageSanitized,
-        providerStatus: safeErr.providerStatus,
         providerMessage: safeErr.providerMessage,
+        errorMessageSanitized: safeErr.errorMessageSanitized,
         providerError: safeErr.providerError,
         causeCount: safeErr.causeCount,
-        causesSummary: safeErr.causesSummary,
+        causesSummary: safeErr.causesSummary || [],
         requestId: safeErr.requestId,
+        allowedHeaders,
         durationMs,
         idempotencyKeyPresent: Boolean(callData.idempotencyKey),
         idempotencyGenerated: true,

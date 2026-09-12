@@ -77,13 +77,26 @@ export async function GET(request: NextRequest) {
         ? 'degraded'
         : 'unhealthy';
 
+  const webhookUrl = process.env.MERCADO_PAGO_WEBHOOK_URL || process.env.MP_WEBHOOK_URL;
+  const diagnosticsAllowed =
+    process.env.NODE_ENV === 'development' &&
+    process.env.VERCEL_ENV !== 'production' &&
+    process.env.VERCEL_ENV !== 'preview' &&
+    process.env.ENABLE_MP_DIAGNOSTIC_TESTS === 'true';
+
   return NextResponse.json({
     status: overallStatus,
     timestamp: new Date().toISOString(),
-    environment: {
-      nodeEnv: envValidation.nodeEnv,
-      vercelEnv: envValidation.vercelEnv,
-    },
+    sdkVersion: envValidation.sdkVersion,
+    nodeEnv: envValidation.nodeEnv,
+    vercelEnv: envValidation.vercelEnv,
+    credentialMode: envValidation.providerCredentialMode,
+    publicKeyFingerprint: envValidation.publicKeyFingerprint,
+    accessTokenFingerprint: envValidation.accessTokenFingerprint,
+    webhookUrlConfigured: Boolean(webhookUrl && webhookUrl.startsWith('https://')),
+    diagnosticsAllowed,
+    paymentClientConstructed: localClientInstantiated,
+    expectedEnvironmentCompatibility: envValidation.isValid,
     credentials: {
       mode: envValidation.providerCredentialMode,
       publicKey: envValidation.publicKeyFingerprint,

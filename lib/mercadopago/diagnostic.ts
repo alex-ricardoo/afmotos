@@ -197,9 +197,14 @@ export async function createMinimalCardPaymentForDiagnostics(
   }
 }
 
+import {
+  createMercadoPagoPaymentRequestSnapshot,
+  type MercadoPagoPaymentRequestSnapshot,
+} from './request-snapshot.ts';
+
 /**
  * -------------------------------------------------------------
- * Server-Side Diagnostic Test Variations (A, B, C)
+ * Server-Side Diagnostic Test Variations (1, 2, 3)
  * -------------------------------------------------------------
  * Strictly isolated for local development opt-in testing.
  * NEVER executed automatically in production or preview.
@@ -216,6 +221,7 @@ export interface DiagnosticVariationParams {
   consultationId: string;
   brickIssuerId?: number | string | null;
   notificationUrl?: string | null;
+  tokenCreatedAt?: number;
 }
 
 export interface DiagnosticVariationCallData {
@@ -224,10 +230,11 @@ export interface DiagnosticVariationCallData {
     idempotencyKey?: string;
   };
   idempotencyKey?: string;
+  snapshot: MercadoPagoPaymentRequestSnapshot;
 }
 
 /**
- * Validates if server-side diagnostic variations (A, B, C) are permitted.
+ * Validates if server-side diagnostic variations are permitted.
  * Rules:
  * - VERCEL_ENV must NOT be 'production'
  * - VERCEL_ENV must NOT be 'preview'
@@ -264,20 +271,18 @@ export function assertDiagnosticTestsAllowed(): void {
 }
 
 /**
- * Teste A:
- * - payload normal completo;
- * - payment_method_id=master;
- * - issuer_id somente quando retornado pelo Brick (sem fallback hardcoded);
+ * Variação 1 (Clone do request normal AF Motos):
+ * - body normal AF Motos;
+ * - issuer_id se Brick forneceu;
  * - external_reference;
- * - notification_url;
- * - idempotency no requestOptions/header correto.
+ * - metadata;
+ * - requestOptions.idempotencyKey.
  */
-export function buildVariationAPayload(
+export function buildVariation1Payload(
   params: DiagnosticVariationParams,
 ): DiagnosticVariationCallData {
   const idempotencyKey = crypto.randomUUID();
 
-  // Validate issuer strictly from Brick
   const rawIssuer = params.brickIssuerId;
   const parsedIssuer =
     rawIssuer !== undefined && rawIssuer !== null && rawIssuer !== ''
@@ -293,7 +298,7 @@ export function buildVariationAPayload(
 
   const body: Record<string, unknown> = {
     transaction_amount: Number(params.canonicalAmount.toFixed(2)),
-    description: `Consulta Veicular - Diagnostico Variacao A`,
+    description: `Consulta Veicular - Diagnostico Variacao 1`,
     payment_method_id: 'master',
     token: params.token,
     installments: Number(params.installments) || 1,
@@ -308,7 +313,7 @@ export function buildVariationAPayload(
     metadata: {
       consultation_id: params.consultationId,
       flow_id: params.flowId,
-      diagnostic_variation: 'A',
+      diagnostic_variation: '1',
     },
   };
 
@@ -320,66 +325,35 @@ export function buildVariationAPayload(
     body.notification_url = params.notificationUrl;
   }
 
+  const requestOptions = { idempotencyKey };
+  const snapshot = createMercadoPagoPaymentRequestSnapshot(body, requestOptions, {
+    flowId: params.flowId,
+    tokenCreatedAt: params.tokenCreatedAt,
+    issuerProvidedByBrick: Boolean(validIssuerId),
+  });
+
   return {
     body,
-    requestOptions: {
-      idempotencyKey,
-    },
+    requestOptions,
     idempotencyKey,
+    snapshot,
   };
 }
 
 /**
- * Teste B:
- * - payload mínimo;
- * - sem issuer_id;
- * - sem external_reference;
- * - sem notification_url;
- * - mesma estrutura correta do SDK.
- * Usar somente local development e nunca como fallback.
+ * Variação 2 (Mesmo request AF Motos, SEM issuer_id):
+ * - Tudo idêntico à Variação 1;
+ * - Remove estritamente issuer_id;
+ * - Isola a variável issuer_id para comprovar se causa o HTTP 500.
  */
-export function buildVariationBPayload(
+export function buildVariation2Payload(
   params: DiagnosticVariationParams,
 ): DiagnosticVariationCallData {
   const idempotencyKey = crypto.randomUUID();
 
   const body: Record<string, unknown> = {
     transaction_amount: Number(params.canonicalAmount.toFixed(2)),
-    token: params.token,
-    installments: Number(params.installments) || 1,
-    payment_method_id: 'master',
-    payer: {
-      email: params.userEmail.trim().toLowerCase(),
-      identification: {
-        type: 'CPF',
-        number: params.normalizedCpf,
-      },
-    },
-  };
-
-  return {
-    body,
-    requestOptions: {
-      idempotencyKey,
-    },
-    idempotencyKey,
-  };
-}
-
-/**
- * Teste C:
- * - payload completo sem issuer_id;
- * - todos os demais campos válidos.
- * Usar somente local development e nunca como fallback.
- */
-export function buildVariationCPayload(
-  params: DiagnosticVariationParams,
-): DiagnosticVariationCallData {
-  const idempotencyKey = crypto.randomUUID();
-
-  const body: Record<string, unknown> = {
-    transaction_amount: Number(params.canonicalAmount.toFixed(2)),
-    description: `Consulta Veicular - Diagnostico Variacao C`,
+    description: `Consulta Veicular - Diagnostico Variacao 2`,
     payment_method_id: 'master',
     token: params.token,
     installments: Number(params.installments) || 1,
@@ -394,7 +368,7 @@ export function buildVariationCPayload(
     metadata: {
       consultation_id: params.consultationId,
       flow_id: params.flowId,
-      diagnostic_variation: 'C',
+      diagnostic_variation: '2',
     },
   };
 
@@ -402,11 +376,89 @@ export function buildVariationCPayload(
     body.notification_url = params.notificationUrl;
   }
 
+  const requestOptions = { idempotencyKey };
+  const snapshot = createMercadoPagoPaymentRequestSnapshot(body, requestOptions, {
+    flowId: params.flowId,
+    tokenCreatedAt: params.tokenCreatedAt,
+    issuerProvidedByBrick: false,
+  });
+
   return {
     body,
-    requestOptions: {
-      idempotencyKey,
-    },
+    requestOptions,
     idempotencyKey,
+    snapshot,
   };
 }
+
+/**
+ * Variação 3 (Clone mínimo do exemplo Moura's Pizzas):
+ * - Estrutura equivalente ao endpoint do Moura's Pizzas;
+ * - external_reference e metadata: { preference_id };
+ * - requestOptions: { idempotencyKey: `brick-${id}` };
+ * - sem description, sem notification_url.
+ */
+export function buildVariation3Payload(
+  params: DiagnosticVariationParams,
+): DiagnosticVariationCallData {
+  const idempotencyKey = `brick-${params.consultationId}`;
+
+  const body: Record<string, unknown> = {
+    transaction_amount: Number(params.canonicalAmount.toFixed(2)),
+    token: params.token,
+    installments: Number(params.installments) || 1,
+    payment_method_id: 'master',
+    payer: {
+      email: params.userEmail.trim().toLowerCase(),
+      identification: {
+        type: 'CPF',
+        number: params.normalizedCpf,
+      },
+    },
+    external_reference: params.consultationId,
+    metadata: {
+      preference_id: params.consultationId,
+      diagnostic_variation: '3',
+    },
+  };
+
+  const requestOptions = { idempotencyKey };
+  const snapshot = createMercadoPagoPaymentRequestSnapshot(body, requestOptions, {
+    flowId: params.flowId,
+    tokenCreatedAt: params.tokenCreatedAt,
+    issuerProvidedByBrick: false,
+  });
+
+  return {
+    body,
+    requestOptions,
+    idempotencyKey,
+    snapshot,
+  };
+}
+
+// Backward compatibility aliases
+export const buildVariationAPayload = buildVariation1Payload;
+export const buildVariationBPayload = (params: DiagnosticVariationParams) => {
+  const idempotencyKey = crypto.randomUUID();
+  const body = {
+    transaction_amount: Number(params.canonicalAmount.toFixed(2)),
+    token: params.token,
+    installments: Number(params.installments) || 1,
+    payment_method_id: 'master',
+    payer: {
+      email: params.userEmail.trim().toLowerCase(),
+      identification: {
+        type: 'CPF',
+        number: params.normalizedCpf,
+      },
+    },
+  };
+  const requestOptions = { idempotencyKey };
+  const snapshot = createMercadoPagoPaymentRequestSnapshot(body, requestOptions, {
+    flowId: params.flowId,
+    tokenCreatedAt: params.tokenCreatedAt,
+  });
+  return { body, requestOptions, idempotencyKey, snapshot };
+};
+export const buildVariationCPayload = buildVariation2Payload;

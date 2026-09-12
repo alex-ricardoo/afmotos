@@ -3,6 +3,7 @@
 import {
   createPaymentPreference as createPreferenceInternal,
   processBrickPayment as processBrickPaymentInternal,
+  type BrickClientTelemetry,
 } from './payment-service';
 import {
   type BrickSubmitFormData,
@@ -27,6 +28,7 @@ export async function processBrickPaymentAction(
   consultationId: string,
   formData: BrickSubmitFormData,
   clientFlowId?: string,
+  clientTelemetry?: BrickClientTelemetry,
 ): Promise<ProcessBrickPaymentResult> {
   const startTime = Date.now();
   const flowId = clientFlowId || crypto.randomUUID();
@@ -42,10 +44,16 @@ export async function processBrickPaymentAction(
     cpfLength: formData?.payer?.identification?.number?.replace(/\D/g, '')?.length || 0,
     addressPresent: Boolean(formData?.payer?.address),
     userEmailMasked: maskEmail(formData?.payer?.email),
+    submitAttemptNumber: clientTelemetry?.submitAttemptNumber || 1,
   });
 
   try {
-    const result = await processBrickPaymentInternal(consultationId, formData, flowId);
+    const result = await processBrickPaymentInternal(
+      consultationId,
+      formData,
+      flowId,
+      clientTelemetry,
+    );
 
     paymentLogInfo('payment.action_completed', {
       flowId,
