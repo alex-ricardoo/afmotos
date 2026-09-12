@@ -18,7 +18,11 @@ export function getMercadoPagoPublicKey(): string | null {
 }
 
 export function getMercadoPagoWebhookSecret(): string | null {
-  return process.env.MERCADO_PAGO_WEBHOOK_SECRET || process.env.MP_WEBHOOK_SECRET || null;
+  return (
+    process.env.MERCADO_PAGO_WEBHOOK_SECRET ||
+    process.env.MP_WEBHOOK_SECRET ||
+    null
+  );
 }
 
 export function isDevPaymentSimulationEnabled(): boolean {
@@ -32,7 +36,7 @@ export function getMercadoPagoClient(): MercadoPagoConfig {
   const token = getMercadoPagoAccessToken();
   if (!token) {
     throw new Error(
-      'Mercado Pago Access Token não configurado. Defina MERCADO_PAGO_ACCESS_TOKEN ou MP_ACCESS_TOKEN.'
+      'Mercado Pago Access Token não configurado. Defina MERCADO_PAGO_ACCESS_TOKEN.'
     );
   }
 
