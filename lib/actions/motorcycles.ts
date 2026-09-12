@@ -382,27 +382,32 @@ export async function generateMotorcycleAiDescriptionAction(data: {
   const brand = data.brand?.trim() || 'Motocicleta';
   const model = data.model?.trim() || '';
   const version = data.version?.trim() ? ` ${data.version.trim()}` : '';
+  const fullName = `${brand} ${model}${version}`.trim();
 
-  const fallbackText = `🚀 OPORTUNIDADE: ${brand.toUpperCase()} ${model.toUpperCase()}${version.toUpperCase()}
-
-Está cansado de perder horas preciosas no trânsito, depender de transporte público lotado ou gastar uma fortuna em combustível todo mês? Chegou a sua vez de conquistar liberdade, agilidade e economia real!
-
-✨ POR QUE ESSA MOTO É IDEAL PARA VOCÊ:
-• Economia no Bolso: Consumo extremamente baixo de combustível e manutenção simples e acessível.
-• Parceira de Trabalho & Renda: Perfeita para o corre do dia a dia, deslocamento para o trabalho ou entregas e aplicativos.
-• Praticidade Máxima: Fuja do engarrafamento, chegue sempre no horário e estacione em qualquer lugar com facilidade.
-• Liberdade no Cotidiano: Mais tempo livre para você aproveitar sua rotina e seus fins de semana.
-
-💳 FACILIDADES DE NEGOCIAÇÃO:
-• Aceitamos sua moto usada na troca com avaliação justa e sem complicação.
-• Parcelamento no cartão de crédito, dinheiro e PIX.
-• Opções de financiamento com parcelas que cabem no seu orçamento (sujeito à análise).
-
-⚡ Uma oportunidade como essa não dura muito no nosso estoque! Entre em contato agora mesmo pelo nosso WhatsApp, tire suas dúvidas e agende sua visita antes que seja vendida!`;
-
-  if (!apiKey) {
-    return { success: true, description: fallbackText, isFallback: true };
+  // Formatação das características para contextualizar a IA e o fallback
+  const yearFab = data.year_manufacture;
+  const yearMod = data.year_model;
+  let yearStr = '';
+  if (yearFab && yearMod) {
+    yearStr = yearFab === yearMod ? `${yearFab}` : `${yearFab}/${yearMod}`;
+  } else if (yearMod || yearFab) {
+    yearStr = `${yearMod || yearFab}`;
   }
+
+  const mileageFormatted =
+    data.mileage !== undefined && data.mileage !== null && Number(data.mileage) >= 0
+      ? `${Number(data.mileage).toLocaleString('pt-BR')} km`
+      : null;
+
+  const engineCapacityFormatted = data.engine_capacity ? `${data.engine_capacity} cc` : null;
+  const colorFormatted = data.color?.trim() || null;
+  const fuelFormatted = data.fuel?.trim() || null;
+  const transmissionFormatted = data.transmission?.trim() || null;
+  const priceFormatted =
+    data.price && Number(data.price) > 0
+      ? `R$ ${Number(data.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      : null;
+  const notesFormatted = data.notes?.trim() || null;
 
   const supabase = await createClient();
   const settingsRes = await supabase
@@ -412,51 +417,112 @@ Está cansado de perder horas preciosas no trânsito, depender de transporte pú
     .maybeSingle();
   const siteName = settingsRes?.data?.site_name || 'nossa loja';
 
-  const prompt = `Você é um especialista em vendas e consultor de motos da ${siteName}.
-Crie um texto de anúncio comercial ALTAMENTE PERSUASIVO, ENVOLVENTE, COMPLETO E COM FORTES GATILHOS DE CONVERSÃO para venda desta motocicleta.
+  // Fallback compacto, objetivo e persuasivo caso a IA esteja indisponível
+  const fallbackText = `🔥 ${fullName.toUpperCase()}${yearStr ? ` (${yearStr})` : ''} — OPORTUNIDADE ÚNICA!
 
-MOTOCICLETA: ${brand} ${model}${version}
+Procurando economia real de combustível, agilidade para fugir do trânsito e uma moto confiável para o seu dia a dia ou trabalho? Essa é a escolha certa!
 
-OBJETIVO DO TEXTO:
-Fazer o cliente visualizar imediatamente a transformação e os benefícios reais que essa moto trará para a vida dele, despertando o desejo imediato de entrar em contato e garantir o veículo.
+✨ DESTAQUES DA MOTO:
+${yearStr ? `• Ano/Modelo: ${yearStr}${mileageFormatted ? ` com apenas ${mileageFormatted} rodados` : ''}` : mileageFormatted ? `• Quilometragem: Apenas ${mileageFormatted} rodados` : '• Procedência garantida com documentação 100% em dia'}
+• Baixíssimo consumo de combustível e manutenção barata que cabe no bolso.
+• Agilidade máxima para o corre diário, trabalho ou lazer.
+${colorFormatted ? `• Cor ${colorFormatted}, em ótimo estado de conservação.` : '• Revisada, inspecionada e pronta para rodar.'}
+
+💳 FACILIDADES NA ${siteName.toUpperCase()}:
+• Aceitamos sua moto usada na troca com ótima avaliação.
+• Financiamento facilitado e parcelamento no cartão de crédito ou PIX.
+${priceFormatted ? `• Valor promocional: ${priceFormatted}` : ''}
+
+⚡ Motos com essa procedência vendem rápido!
+📲 Chame agora no WhatsApp para tirar dúvidas, fazer sua simulação rápida sem compromisso ou agendar uma visita!`;
+
+  if (!apiKey) {
+    return { success: true, description: fallbackText, isFallback: true };
+  }
+
+  // Ângulos criativos para garantir variedade e inovação sem perder a concisão
+  const creativeAngles = [
+    'ÂNGULO 1 (ECONOMIA & AGILIDADE): Foque na economia de combustível, fuga do trânsito caótico e ganho de tempo.',
+    'ÂNGULO 2 (TRABALHO & RENDA): Foque na moto como ferramenta de trabalho confiável que se paga rápido no dia a dia.',
+    'ÂNGULO 3 (ESTADO IMPECÁVEL & PROCEDÊNCIA): Foque no estado de conservação, baixa quilometragem e segurança de compra.',
+    'ÂNGULO 4 (ESTILO & PRATICIDADE): Foque na facilidade de pilotagem, visual moderno e versatilidade rotineira.',
+  ];
+  const chosenAngle = creativeAngles[Math.floor(Math.random() * creativeAngles.length)];
+
+  // Ficha resumida para o prompt da IA
+  const vehicleSpecsList = [
+    `• Moto: ${fullName}`,
+    yearStr ? `• Ano: ${yearStr}` : null,
+    mileageFormatted ? `• Quilometragem: ${mileageFormatted}` : null,
+    engineCapacityFormatted ? `• Motor: ${engineCapacityFormatted}` : null,
+    colorFormatted ? `• Cor: ${colorFormatted}` : null,
+    fuelFormatted ? `• Combustível: ${fuelFormatted}` : null,
+    transmissionFormatted ? `• Câmbio: ${transmissionFormatted}` : null,
+    priceFormatted ? `• Preço: ${priceFormatted}` : null,
+    notesFormatted ? `• Detalhes extras: ${notesFormatted}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const prompt = `Você é um copywriter de elite de vendas de motos da ${siteName}.
+Crie um anúncio de venda COMPLETO, PERSUASIVO, ENVOLVENTE E DE PURO MARKETING para esta moto.
+
+DADOS DA MOTO:
+${vehicleSpecsList}
+
+DIRETRIZ DESTE ANÚNCIO:
+${chosenAngle}
+(Atenção: Seja criativo nas palavras, varie o estilo e nunca repita o mesmo texto de outros anúncios).
 
 ESTRUTURA OBRIGATÓRIA DO ANÚNCIO:
-1. TÍTULO / GANCHO DE ABERTURA:
-   - Destaque impactante para ${brand} ${model}${version} com emojis adequados.
-   - Conexão emocional com as dores reais do cliente (chega de depender de ponto de ônibus lotado, atrasos, estresse no trânsito ou altos gastos de transporte).
+1. GANCHO DE ENTRADA PERSUASIVO:
+   - Apresente a ${fullName} de forma atraente, conectando com as dores do cliente (chega de depender de ônibus lotado, atrasos no trânsito ou altos gastos) e mostrando a liberdade e praticidade que essa moto proporciona.
 
-2. BENEFÍCIOS PRÁTICOS PARA O DIA A DIA E TRABALHO:
-   - Economia brutal de combustível e baixo custo de manutenção, fazendo sobrar dinheiro no bolso no final do mês.
-   - Versatilidade total: Excelente tanto para quem precisa de uma ferramenta de trabalho (deslocamento diário para o serviço, entregas ou renda extra) quanto para a rotina diária (estudos, compromissos rápidos e lazer).
-   - Agilidade e ganho de tempo: fugir dos engarrafamentos, estacionar com facilidade e ter liberdade de horários.
+2. DIFERENCIAIS E BENEFÍCIOS NO DIA A DIA:
+   - Destaque as características reais em tópicos objetivos:
+     ${yearStr ? `• Ano/Modelo: ${yearStr}` : ''}
+     ${mileageFormatted ? `• Quilometragem: ${mileageFormatted}` : ''}
+     ${engineCapacityFormatted ? `• Motor: ${engineCapacityFormatted}` : ''}
+     • Economia de combustível excelente e manutenção acessível que faz sobrar dinheiro no bolso.
+     • Agilidade para o dia a dia, trabalho/entregas ou passeios no final de semana.
 
-3. CONDIÇÕES FACILITADAS DE PAGAMENTO NA ${siteName}:
-   - Aceitamos sua moto usada na troca com ótima avaliação.
-   - Parcelamento no cartão de crédito, dinheiro e PIX.
-   - Financiamento facilitado com parcelas que cabem no bolso (sujeito à análise).
-   - REGRA: NUNCA mencione "consórcio" ou "carta contemplada".
+3. CONDIÇÕES FACILITADAS NA ${siteName.toUpperCase()}:
+   - Aceitamos sua moto usada na troca com avaliação justa e sem burocracia.
+   - Financiamento facilitado com as melhores taxas e parcelamento no cartão de crédito ou PIX.
+   - REGRA RIGOROSA: NUNCA mencione "consórcio" ou "carta contemplada".
+   - REGRA RIGOROSA: NUNCA mencione "link na bio".
 
-4. GATILHO DE URGÊNCIA E CHAMADA PARA AÇÃO (CTA):
-   - Inclua gatilho de escassez (ex: motos com essa procedência e qualidade vendem muito rápido no estoque).
-   - Convide o cliente a chamar no WhatsApp da loja para tirar dúvidas, fazer uma simulação personalizada sem compromisso ou agendar uma visita para ver a moto de perto.
-   - REGRA: NUNCA use "link na bio", pois o cliente já está navegando no site.
+4. CHAMADA PARA AÇÃO (CTA) FINAL COMPLETA:
+   - Gatilho de oportunidade (moto com essa qualidade e procedência vende rápido).
+   - Convite para chamar no WhatsApp, tirar dúvidas, fazer simulação sem compromisso ou agendar uma visita/test-ride na loja.
 
-REGRAS RÍGIDAS DE FORMATAÇÃO:
-- NÃO coloque tabelas frias de ficha técnica repetitiva (ano, km, cor ou preço FIPE), foque nos benefícios, emoção e facilidades comerciais.
-- Utilize tópicos com bullet points e emojis discretos para tornar a leitura visualmente agradável no celular.
-- Retorne APENAS o texto final do anúncio, pronto para publicação.`;
+REGRAS RÍGIDAS:
+- Escreva um anúncio comercial equilibrado, envolvente e completo (cerca de 130 a 200 palavras).
+- NUNCA termine o texto no meio de uma frase. O texto DEVE conter início, desenvolvimento e a chamada final (CTA) 100% concluída.
+- Retorne APENAS o texto pronto do anúncio, sem notas explicativas.`;
 
   const configuredFallbackModels = (process.env.GEMINI_FALLBACK_MODELS || '')
     .split(',')
     .map((model) => model.trim())
-    .filter(Boolean)
-    .filter((model) => model !== 'gemini-3.6-flash');
+    .filter(Boolean);
 
-  const models = ['gemini-3.6-flash', ...configuredFallbackModels];
+  // Modelos suportados pela API Google Gemini v1beta.
+  // gemini-1.5-flash gera o texto completo imediatamente sem consumo de tokens em processo de pensamento interno.
+  const models = [
+    'gemini-1.5-flash',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-pro',
+    'gemini-3.6-flash',
+    ...configuredFallbackModels,
+  ];
+  const uniqueModels = [...new Set(models)];
+
   let aiDescription: string | null = null;
 
-  for (const modelName of models) {
+  for (const modelName of uniqueModels) {
     try {
+      const isThinkingModel = modelName.includes('2.5') || modelName.includes('2.0');
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
         {
@@ -467,8 +533,9 @@ REGRAS RÍGIDAS DE FORMATAÇÃO:
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
-              temperature: 0.75,
-              maxOutputTokens: 1500,
+              temperature: 0.8,
+              maxOutputTokens: 8192,
+              ...(isThinkingModel ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
             },
           }),
         },
@@ -476,14 +543,24 @@ REGRAS RÍGIDAS DE FORMATAÇÃO:
 
       if (response.ok) {
         const responseJson = await response.json();
-        const candidateText = responseJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidateText && candidateText.trim()) {
-          aiDescription = candidateText.trim();
+        const candidateParts = responseJson?.candidates?.[0]?.content?.parts || [];
+        // Filtra eventuais partes de pensamento interno e concatena o texto real
+        const candidateText = candidateParts
+          .filter((p: { thought?: boolean; text?: string }) => !p.thought)
+          .map((p: { text?: string }) => p.text || '')
+          .join('')
+          .trim();
+
+        if (candidateText) {
+          aiDescription = candidateText;
           break;
         }
+      } else {
+        const errText = await response.text().catch(() => '');
+        console.warn(`[Gemini AI Desc] Modelo ${modelName} retornou status ${response.status}:`, errText);
       }
     } catch (err) {
-      console.warn(`Falha ao chamar modelo ${modelName} do Gemini:`, err);
+      console.warn(`[Gemini AI Desc] Falha na conexão com modelo ${modelName}:`, err);
     }
   }
 
