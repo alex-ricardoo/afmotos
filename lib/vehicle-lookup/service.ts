@@ -113,6 +113,59 @@ function loadMockFixture(targetPlate: string): Record<string, unknown> {
         tipo_veiculo: 'MOTOCICLO',
         uf: 'SP',
         municipio: 'SAO PAULO',
+        fotos: [
+          'https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e824b5d6bf-687e824c41ecb.jpg',
+          'https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82bc54f8a-687e82bcafa77.jpg',
+          'https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82fca9c2b-687e82fd903ef.jpg',
+        ],
+        fotosLoteVeiculo: {
+          conteudo: [
+            {
+              url: 'https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e824b5d6bf-687e824c41ecb.jpg',
+              descricao: 'FRENTE DO VEÍCULO / LOTE',
+              base64: null,
+            },
+            {
+              url: 'https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82bc54f8a-687e82bcafa77.jpg',
+              descricao: 'LATERAL E TRASEIRA',
+              base64: null,
+            },
+            {
+              url: 'https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82fca9c2b-687e82fd903ef.jpg',
+              descricao: 'VISTA SUPERIOR / PÁTIO',
+              base64: null,
+            },
+          ],
+        },
+        leilao: {
+          descricao: 'Consta registro de leilão para o veículo informado',
+          registros: [
+            {
+              leiloeiro: 'FREITAS LEILOEIRO OFICIAL',
+              dataLeilao: '15/08/2021',
+              lote: '1234',
+              comitente: 'PORTO SEGURO CIA DE SEGUROS GERAIS',
+              condicaoGeral: 'RECUPERAVEL / SUCATA',
+              tipoSinistro: 'COLISAO / PEQUENA MONTA',
+              patio: 'SAO PAULO / SP',
+              chassi: '9C2KC123456789012',
+              placa: norm,
+              marcaModelo: 'HONDA/CB 600F HORNET',
+              fotos: [
+                'https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e824b5d6bf-687e824c41ecb.jpg',
+                'https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82bc54f8a-687e82bcafa77.jpg',
+                'https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82fca9c2b-687e82fd903ef.jpg',
+              ],
+            },
+          ],
+          score: {
+            aceitacao: 'RESTRITA',
+            exigenciaVistoriaEspecial: 'SIM',
+            percentualSobreRef: '70',
+            pontuacao: '4',
+            score: 'ALTO RISCO',
+          },
+        },
       },
     };
   }

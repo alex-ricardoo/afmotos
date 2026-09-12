@@ -2,7 +2,8 @@
 
 import React from 'react';
 import type { InternalVehicleConsultationDto } from '@/lib/vehicle-lookup/types';
-import { Users, Gavel, AlertTriangle, CheckCircle2, RotateCcw } from 'lucide-react';
+import { Users, CheckCircle2, RotateCcw } from 'lucide-react';
+import { AuctionDetailsCard } from '../auction-details-card';
 
 export function TabHistory({ dto }: { dto: InternalVehicleConsultationDto }) {
   const h = dto.history;
@@ -44,56 +45,78 @@ export function TabHistory({ dto }: { dto: InternalVehicleConsultationDto }) {
         )}
       </div>
 
-      {/* Leilões & Sinistros */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Leilão */}
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs space-y-3">
-          <div className="flex items-center gap-2 pb-3 border-b border-border/60">
-            <Gavel className="w-5 h-5 text-orange-500" />
-            <h4 className="font-bold text-foreground text-base">Passagens por Leilão</h4>
-          </div>
+      {/* Passagens por Leilão Oficial (com Records, Score de Segurabilidade e Galeria de Fotos Expandível) */}
+      <AuctionDetailsCard
+        hasAuction={h.has_auction}
+        records={h.auction_records}
+        score={h.auction_score}
+        photos={h.auction_photos}
+      />
 
-          {!h.has_auction || h.auction_records.length === 0 ? (
-            <div className="flex items-center gap-2 text-xs text-emerald-500 font-medium py-2">
-              <CheckCircle2 className="w-4 h-4" />
-              Nenhum registro de leilão identificado nas bases conveniadas.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {h.auction_records.map((auc, idx) => (
-                <div key={idx} className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 text-xs space-y-1">
-                  <div className="font-bold text-foreground">{auc.auctioneer || 'Leiloeiro Oficial'}</div>
-                  <div className="text-muted-foreground">Lote: {auc.lot || 'N/I'} • Data: {auc.auction_date || 'N/I'}</div>
-                  <div className="text-muted-foreground">Condição: {auc.condition || 'Arrematado'}</div>
-                </div>
-              ))}
-            </div>
-          )}
+      {/* Sinistros & Chamados de Recall */}
+      <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs space-y-4">
+        <div className="flex items-center gap-2 pb-3 border-b border-border/60">
+          <RotateCcw className="w-5 h-5 text-blue-500" />
+          <h4 className="font-bold text-foreground text-base">Sinistros & Chamados de Recall</h4>
         </div>
 
-        {/* Sinistros / Recalls */}
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs space-y-3">
-          <div className="flex items-center gap-2 pb-3 border-b border-border/60">
-            <RotateCcw className="w-5 h-5 text-blue-500" />
-            <h4 className="font-bold text-foreground text-base">Sinistros & Chamados de Recall</h4>
+        {h.recalls.length === 0 && !h.has_claims ? (
+          <div className="flex items-center gap-2 text-xs text-emerald-500 font-medium py-2">
+            <CheckCircle2 className="w-4 h-4" />
+            Nenhum sinistro ou recall pendente registrado para este veículo nas bases governamentais e montadoras.
           </div>
-
-          {h.recalls.length === 0 && !h.has_claims ? (
-            <div className="flex items-center gap-2 text-xs text-emerald-500 font-medium py-2">
-              <CheckCircle2 className="w-4 h-4" />
-              Nenhum sinistro ou recall pendente registrado para este veículo.
-            </div>
-          ) : (
-            <div className="space-y-2 text-xs">
-              {h.recalls.map((rec, idx) => (
-                <div key={idx} className="p-2.5 rounded-lg bg-muted border space-y-0.5">
-                  <div className="font-semibold text-foreground">{rec.component} ({rec.status})</div>
-                  <div className="text-muted-foreground">{rec.risk_description}</div>
+        ) : (
+          <div className="space-y-3">
+            {h.claims_records.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                  Registros de Sinistro ({h.claims_records.length})
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {h.claims_records.map((c, idx) => (
+                    <div key={idx} className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-foreground">{c.claim_type || 'Sinistro Cadastrado'}</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">
+                          {c.damage_level || 'Média Monta'}
+                        </span>
+                      </div>
+                      <div className="text-muted-foreground">
+                        Data: {c.claim_date || 'N/I'} • Seguradora: {c.insurance_company || 'Bases do Mercado'}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+
+            {h.recalls.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                  Chamados de Fábrica / Recall ({h.recalls.length})
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {h.recalls.map((rec, idx) => (
+                    <div key={idx} className="p-3 rounded-xl bg-muted border space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground">{rec.component}</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          rec.status === 'PENDENTE' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400'
+                        }`}>
+                          {rec.status}
+                        </span>
+                      </div>
+                      <div className="text-muted-foreground text-[11px]">{rec.risk_description}</div>
+                      {rec.announcement_date && (
+                        <div className="text-[10px] text-muted-foreground">Anunciado em: {rec.announcement_date}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

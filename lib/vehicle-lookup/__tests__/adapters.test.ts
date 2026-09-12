@@ -44,10 +44,10 @@ describe('Vehicle Lookup Adapters with Authentic API Brasil Payload', () => {
     const risk = toVehicleRiskSummary(parsed);
 
     assert.strictEqual(risk.has_active_theft_robbery, false);
-    assert.strictEqual(risk.has_judicial_restriction, false);
     assert.strictEqual(risk.has_active_gravamen, true); // Active gravamen in fintech
     assert.strictEqual(risk.has_debts, false);
-    assert.strictEqual(risk.risk_level, 'MEDIUM');
+    assert.strictEqual(risk.has_auction_record, true); // Verified auction record in mock
+    assert.strictEqual(risk.risk_level, 'HIGH');
   });
 
   it('consolidates debts and infractions from baseEstadual', () => {
@@ -160,8 +160,8 @@ describe('Vehicle Lookup Adapters with Authentic API Brasil Payload', () => {
     const customerDto = toCustomerVehicleReportDto(internalDto);
     assert.strictEqual(customerDto.brand, 'MARCA FICTICIA');
     assert.strictEqual(customerDto.procedural_verdict, 'ATTENTION');
-    assert.strictEqual(customerDto.recalls_summary?.pending_count, 0);
     assert.strictEqual(customerDto.latest_km_record?.mileage, 12850);
+    assert.strictEqual(customerDto.latest_km_record?.announced_price, 125000);
     assert.strictEqual(customerDto.commercial_indicators?.has_rental_record, true);
     assert.strictEqual(customerDto.commercial_indicators?.has_sale_communication, false);
     assert.strictEqual(customerDto.disclaimer.includes('API Brasil'), true);

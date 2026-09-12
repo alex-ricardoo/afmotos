@@ -66,11 +66,13 @@ export function toVehicleRiskSummary(parsed: ApiBrasilVehicleResponse): Calculat
     hasFinancial = hasActiveGravamen || sit.includes('ALIENADO');
   }
 
-  // 4. Auction (Leilão)
+  // 4. Auction (Leilão) - Prioritize registros.length > 0
   const leilaoDesc = String(d.leilao?.descricao || '');
   const hasAuction = Boolean(
-    d.leilao?.tem_leilao ||
     (Array.isArray(d.leilao?.registros) && d.leilao.registros.length > 0) ||
+    d.leilao?.tem_leilao ||
+    (d.leilao?.score && (d.leilao.score.score || d.leilao.score.aceitacao)) ||
+    (Array.isArray(d.fotosLoteVeiculo?.conteudo) && d.fotosLoteVeiculo.conteudo.length > 0) ||
     (leilaoDesc && !leilaoDesc.toLowerCase().includes('nao consta') && !leilaoDesc.toLowerCase().includes('sem registro'))
   );
 

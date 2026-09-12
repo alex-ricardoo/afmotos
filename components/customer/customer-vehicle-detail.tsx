@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ShieldCheck,
@@ -29,7 +29,11 @@ import {
   Palette,
   FileText,
   Printer,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { CustomerPlateBadge } from './customer-plate-badge';
 import type { InternalVehicleConsultationDto } from '@/lib/vehicle-lookup/types';
 import type { ConsultationDetail } from '@/lib/customer/types';
@@ -64,6 +68,46 @@ export function CustomerVehicleDetail({
 }: CustomerVehicleDetailProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('summary');
 
+  // Desktop horizontal scroll support for tabs
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = useCallback(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 6);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    checkScroll();
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll);
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [checkScroll]);
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const scrollAmount = direction === 'left' ? -260 : 260;
+    el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0) {
+      const el = tabsContainerRef.current;
+      if (!el) return;
+      el.scrollLeft += e.deltaY;
+    }
+  };
+
   const tabs: Array<{
     key: TabKey;
     label: string;
@@ -89,9 +133,52 @@ export function CustomerVehicleDetail({
     minute: '2-digit',
   });
 
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
+
   const pdfDownloadUrl = `/api/cliente/consultas/${consultation.id}/pdf`;
   const pdfFilename = `laudo-veicular_${consultation.plate_normalized}_${consultation.id.slice(0, 8)}.pdf`;
   const formattedPlate = formatBrazilianPlate(consultation.plate);
+
+  const handleDownloadPdf = async () => {
+    if (isDownloadingPdf) return;
+
+    try {
+      setIsDownloadingPdf(true);
+      toast.info('Gerando seu Laudo Oficial em PDF...', {
+        description: 'Compilando histórico, dados dos órgãos e laudo de procedência.',
+      });
+
+      const response = await fetch(pdfDownloadUrl);
+      if (!response.ok) {
+        throw new Error(`Falha ao gerar o PDF (Status ${response.status})`);
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = pdfFilename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+      }, 1000);
+
+      setDownloadSuccess(true);
+      toast.success('Laudo Oficial baixado com sucesso!');
+      setTimeout(() => {
+        setDownloadSuccess(false);
+      }, 2500);
+    } catch (err) {
+      console.error('Erro ao baixar laudo em PDF:', err);
+      toast.error('Erro ao gerar laudo em PDF. Tente novamente.');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   if (!dto) {
     return (
@@ -145,6 +232,12 @@ export function CustomerVehicleDetail({
     raw.registro_em_locadora === true ||
     /LOCADORA/i.test(JSON.stringify(h.previous_owners || ''))
   );
+
+  // Market & Ads variables
+  const latestAdWithPrice = dto.ads_mileage?.ads_records?.find((a) => (a.price || 0) > 0) || dto.ads_mileage?.ads_records?.[0];
+  const adPrice = latestAdWithPrice?.price || 0;
+  const fipePrice = dto.fipe?.price || 0;
+  const latestKm = dto.ads_mileage?.mileage_records?.[0]?.mileage || latestAdWithPrice?.mileage || 0;
 
   // Risk Level Config
   const riskConfig = (() => {
@@ -255,19 +348,45 @@ export function CustomerVehicleDetail({
             </div>
           </div>
 
-          {/* Action CTAs: Download PDF */}
+          {/* Action CTAs: Download PDF with loading state */}
           <div className="flex items-center gap-2.5 shrink-0 pt-2 lg:pt-0">
-            <a
-              href={pdfDownloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              download={pdfFilename}
-              className="h-12 px-6 rounded-xl bg-gradient-to-r from-[#d4b35e] via-[#c9a44c] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-black text-xs sm:text-sm shadow-xl shadow-[#c9a44c]/20 inline-flex items-center justify-center gap-2.5 transition-all active:scale-95 relative overflow-hidden group"
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
+              aria-label="Baixar Laudo Oficial em PDF"
+              className={`h-12 px-6 rounded-xl font-black text-xs sm:text-sm shadow-xl inline-flex items-center justify-center gap-2.5 transition-all select-none relative overflow-hidden group ${
+                isDownloadingPdf
+                  ? 'bg-gradient-to-r from-[#d4b35e] via-[#c9a44c] to-[#b38e3a] opacity-90 cursor-wait shadow-[#c9a44c]/30 text-zinc-950'
+                  : downloadSuccess
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-emerald-500/20 active:scale-95'
+                  : 'bg-gradient-to-r from-[#d4b35e] via-[#c9a44c] to-[#b38e3a] hover:brightness-110 active:scale-95 text-zinc-950 shadow-[#c9a44c]/20'
+              }`}
             >
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-              <Download className="w-4 h-4 stroke-[2.5]" />
-              <span>Baixar Laudo Oficial PDF</span>
-            </a>
+              <div
+                className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none ${
+                  isDownloadingPdf
+                    ? 'animate-[shimmer_1.5s_infinite] -translate-x-full'
+                    : '-translate-x-full group-hover:translate-x-full duration-1000'
+                }`}
+              />
+              {isDownloadingPdf ? (
+                <>
+                  <Loader2 className="w-4 h-4 stroke-[2.5] animate-spin text-zinc-950" />
+                  <span>Gerando Laudo Oficial...</span>
+                </>
+              ) : downloadSuccess ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 stroke-[2.5] text-zinc-950" />
+                  <span>Laudo Baixado!</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 stroke-[2.5]" />
+                  <span>Baixar Laudo Oficial PDF</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -307,29 +426,69 @@ export function CustomerVehicleDetail({
         </div>
       </div>
 
-      {/* Luxury Segmented Pill Tabs Navigation */}
-      <div className="bg-[#0b0e15] border border-zinc-800/80 p-1.5 rounded-2xl shadow-xl overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1.5 min-w-max">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer select-none ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#d4b35e] via-[#c9a44c] to-[#b38e3a] text-zinc-950 shadow-md shadow-[#c9a44c]/20'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-850/60'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-zinc-950' : 'text-zinc-400'}`} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+      {/* Luxury Segmented Pill Tabs Navigation with Desktop & Mobile Scroll Controls */}
+      <div className="relative group bg-[#0b0e15] border border-zinc-800/80 p-1.5 rounded-2xl shadow-xl">
+        {/* Left Scroll Button (Desktop) */}
+        {canScrollLeft && (
+          <div className="absolute left-1.5 top-1.5 bottom-1.5 z-10 hidden sm:flex items-center">
+            <button
+              type="button"
+              onClick={() => handleScroll('left')}
+              className="h-full px-2.5 rounded-xl bg-zinc-900/95 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 shadow-lg shadow-black/80 flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+              aria-label="Rolar opções para esquerda"
+              title="Rolar abas para esquerda"
+            >
+              <ChevronLeft className="w-4 h-4 text-[#c9a44c]" />
+            </button>
+          </div>
+        )}
+
+        {/* Scrollable Tabs Track */}
+        <div
+          ref={tabsContainerRef}
+          onWheel={handleWheel}
+          className="overflow-x-auto scrollbar-none scroll-smooth px-1"
+        >
+          <div className="flex items-center gap-1.5 min-w-max py-0.5">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={(e) => {
+                    setActiveTab(tab.key);
+                    e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer select-none shrink-0 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-[#d4b35e] via-[#c9a44c] to-[#b38e3a] text-zinc-950 shadow-md shadow-[#c9a44c]/20'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-850/60'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-zinc-950' : 'text-zinc-400'}`} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Right Scroll Button (Desktop) */}
+        {canScrollRight && (
+          <div className="absolute right-1.5 top-1.5 bottom-1.5 z-10 hidden sm:flex items-center">
+            <button
+              type="button"
+              onClick={() => handleScroll('right')}
+              className="h-full px-2.5 rounded-xl bg-zinc-900/95 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 shadow-lg shadow-black/80 flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+              aria-label="Rolar opções para direita"
+              title="Rolar abas para direita"
+            >
+              <ChevronRight className="w-4 h-4 text-[#c9a44c]" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tab 1: Executive Resumo & Riscos */}
@@ -578,11 +737,63 @@ export function CustomerVehicleDetail({
               <div className={`text-sm font-black ${isLocadora ? 'text-amber-400' : 'text-white'}`}>
                 {isLocadora ? 'Consta Registro em Locadora' : 'Não Consta Registro'}
               </div>
-              <p className="text-[11px] text-zinc-400 mt-1">
-                Histórico comercial e de frotas
-              </p>
             </div>
           </div>
+
+          {/* Executive Market & Mileage Strip */}
+          {(fipePrice > 0 || adPrice > 0 || latestKm > 0) && (
+            <div className="p-5 rounded-3xl bg-zinc-950/60 border border-zinc-800/80 shadow-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-[#c9a44c]" />
+                  Referência de Mercado & Odômetro
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('ads')}
+                  className="text-xs text-[#c9a44c] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  Ver histórico completo →
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                {/* FIPE */}
+                <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Tabela FIPE</span>
+                  <span className="text-base sm:text-lg font-black text-emerald-400 block mt-0.5">
+                    {fipePrice > 0 ? `R$ ${fipePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/D'}
+                  </span>
+                  <span className="text-[10px] text-zinc-400 block mt-0.5">
+                    Mês: {dto?.fipe?.reference_month || 'Atual'}
+                  </span>
+                </div>
+
+                {/* Preço Anunciado */}
+                <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Último Preço Anunciado</span>
+                  <span className="text-base sm:text-lg font-black text-amber-400 block mt-0.5">
+                    {adPrice > 0 ? `R$ ${adPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Não registrado'}
+                  </span>
+                  <span className="text-[10px] text-zinc-400 block mt-0.5">
+                    {latestAdWithPrice?.portal ? `Portal: ${latestAdWithPrice.portal}` : 'Bases Web'}
+                    {adPrice > 0 && fipePrice > 0 ? ` • ${Math.round((adPrice / fipePrice) * 100)}% FIPE` : ''}
+                  </span>
+                </div>
+
+                {/* Quilometragem */}
+                <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Último Odômetro</span>
+                  <span className="text-base sm:text-lg font-black text-white block mt-0.5">
+                    {latestKm > 0 ? `${Number(latestKm).toLocaleString('pt-BR')} km` : '0 km'}
+                  </span>
+                  <span className="text-[10px] text-zinc-400 block mt-0.5">
+                    {dto?.ads_mileage?.mileage_records?.[0]?.source || latestAdWithPrice?.portal || 'Registro de Vistoria'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

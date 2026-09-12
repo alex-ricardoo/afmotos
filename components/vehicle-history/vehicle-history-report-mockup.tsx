@@ -173,7 +173,7 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos', price }: Veh
             {/* The Document Sheet */}
             <div className="relative w-full aspect-[9/13] sm:aspect-[4/5] md:aspect-[16/15] rounded-xl overflow-hidden bg-white shadow-2xl shadow-black/90">
               <Image
-                src="/exemplo-laudo-historico.jpg"
+                src="/exemplo-laudo-historico-new.jpg"
                 alt={`Exemplo do Laudo de Histórico Veicular Oficial emitido pela ${siteName}`}
                 fill
                 loading="lazy"
@@ -342,7 +342,7 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos', price }: Veh
               }}
             >
               <Image
-                src="/exemplo-laudo-historico.jpg"
+                src="/exemplo-laudo-historico-new.jpg"
                 alt="Laudo Oficial de Histórico Veicular Ampliado em Alta Resolução"
                 fill
                 loading="eager"

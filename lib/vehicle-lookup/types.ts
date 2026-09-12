@@ -98,6 +98,36 @@ export interface VehicleConsultationSummaryDto {
   sell_request_id: string | null;
 }
 
+export interface AuctionPhoto {
+  url?: string | null;
+  description?: string | null;
+  base64?: string | null;
+  preview_src: string;
+}
+
+export interface AuctionRecord {
+  auctioneer?: string;
+  auction_date?: string;
+  lot?: string;
+  bidder?: string; // comitente (seguradora, banco, etc.)
+  condition?: string; // condicaoGeral
+  claim_type?: string; // tipoSinistro
+  yard?: string; // patio
+  chassis?: string; // chassi
+  plate?: string; // placa
+  make_model?: string; // marcaModelo
+  category?: string; // categoria fallback
+  photos?: string[];
+}
+
+export interface AuctionScore {
+  acceptance?: string; // aceitacao: Baixa, RESTRITA, Normal, etc.
+  special_inspection_required?: string | boolean; // exigenciaVistoriaEspecial: Sim, SIM, Nao, NAO
+  reference_percentage?: string | number; // percentualSobreRef: "-30%", "70", etc.
+  points?: string | number; // pontuacao: "3", "4", etc.
+  score_label?: string; // score: "Risco Alto", "ALTO RISCO", etc.
+}
+
 /** Structured internal DTO for Admin 9-Tabs Detail View */
 export interface InternalVehicleConsultationDto {
   id: string;
@@ -218,13 +248,9 @@ export interface InternalVehicleConsultationDto {
       masked_document?: string;
     }>;
     has_auction: boolean;
-    auction_records: Array<{
-      auctioneer?: string;
-      auction_date?: string;
-      lot?: string;
-      condition?: string;
-      category?: string;
-    }>;
+    auction_records: AuctionRecord[];
+    auction_score?: AuctionScore;
+    auction_photos?: AuctionPhoto[];
     has_claims: boolean;
     claims_records: Array<{
       claim_type?: string;
@@ -375,13 +401,9 @@ export interface CustomerVehicleReportDto {
     has_auction: boolean;
     status_label: string;
     description?: string;
-    records: Array<{
-      auctioneer?: string;
-      auction_date?: string;
-      lot?: string;
-      condition?: string;
-      category?: string;
-    }>;
+    records: AuctionRecord[];
+    score?: AuctionScore;
+    photos?: AuctionPhoto[];
   };
 
   claims_details?: {

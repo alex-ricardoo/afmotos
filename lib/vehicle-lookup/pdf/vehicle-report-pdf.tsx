@@ -335,6 +335,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  // Auction Photo & Score in PDF
+  auctionPhotoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 3,
+    marginTop: 3,
+    paddingTop: 2.5,
+    borderTopWidth: 0.5,
+    borderTopColor: '#e2e8f0',
+  },
+  auctionPhotoItem: {
+    width: '23.5%',
+    height: 38,
+    borderRadius: 2,
+    borderWidth: 0.5,
+    borderColor: '#cbd5e1',
+    overflow: 'hidden',
+    backgroundColor: '#f8fafc',
+  },
+  auctionPhotoImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+  auctionScoreBox: {
+    marginTop: 2.5,
+    padding: 2.5,
+    backgroundColor: '#f8fafc',
+    borderRadius: 2,
+    borderWidth: 0.5,
+    borderColor: '#e2e8f0',
+  },
+
   // Footer
   footer: {
     position: 'absolute',
@@ -827,25 +860,101 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                   <View style={styles.col6}>
                     <Text style={styles.fieldLabel}>Leilão</Text>
                     <Text style={[styles.fieldValueBold, { color: report.auction_details?.has_auction ? '#b45309' : '#166534' }]}>
-                      {report.auction_details?.status_label || 'Sem Registro'}
+                      {report.auction_details?.status_label || (report.auction_details?.has_auction ? 'Consta Registro' : 'Sem Registro')}
                     </Text>
-                    {report.auction_details?.has_auction && report.auction_details.records[0] ? (
-                      <Text style={[styles.fieldValue, { fontSize: 6.2, marginTop: 1 }]}>
-                        {report.auction_details.records[0].category || 'Recuperado'}
+                    {report.auction_details?.has_auction && report.auction_details.records?.[0]?.bidder ? (
+                      <Text style={[styles.fieldValue, { fontSize: 5.8, color: '#475569', marginTop: 1 }]}>
+                        Comitente: {report.auction_details.records[0].bidder}
                       </Text>
                     ) : null}
                   </View>
                   <View style={styles.col6}>
-                    <Text style={styles.fieldLabel}>Sinistro / Avaria</Text>
-                    <Text style={[styles.fieldValueBold, { color: report.claims_details?.has_claims ? '#b45309' : '#166534' }]}>
-                      {report.claims_details?.status_label || 'Sem Registro'}
+                    <Text style={styles.fieldLabel}>Sinistro / Condição</Text>
+                    <Text style={[styles.fieldValueBold, { color: report.claims_details?.has_claims || report.auction_details?.records?.[0]?.claim_type ? '#b45309' : '#166534' }]}>
+                      {report.auction_details?.records?.[0]?.claim_type || report.claims_details?.status_label || 'Sem Registro'}
                     </Text>
-                    {report.claims_details?.has_claims && report.claims_details.records[0] ? (
-                      <Text style={[styles.fieldValue, { fontSize: 6.2, marginTop: 1 }]}>
+                    {report.auction_details?.has_auction && report.auction_details.records?.[0]?.condition ? (
+                      <Text style={[styles.fieldValue, { fontSize: 5.8, color: '#475569', marginTop: 1 }]}>
+                        Condição: {report.auction_details.records[0].condition}
+                      </Text>
+                    ) : report.claims_details?.has_claims && report.claims_details.records?.[0] ? (
+                      <Text style={[styles.fieldValue, { fontSize: 5.8, marginTop: 1 }]}>
                         {report.claims_details.records[0].damage_level || 'Média Monta'}
                       </Text>
                     ) : null}
                   </View>
+
+                  {/* Informações detalhadas do lote se houver passagem por leilão */}
+                  {report.auction_details?.has_auction && report.auction_details.records?.[0] ? (
+                    <>
+                      <View style={[styles.col6, { marginTop: 2 }]}>
+                        <Text style={styles.fieldLabel}>Leiloeiro / Lote</Text>
+                        <Text style={[styles.fieldValue, { fontSize: 6 }]}>
+                          {report.auction_details.records[0].auctioneer || 'Leiloeiro Oficial'}
+                          {report.auction_details.records[0].lot ? ` • Lote: ${report.auction_details.records[0].lot}` : ''}
+                        </Text>
+                      </View>
+                      <View style={[styles.col6, { marginTop: 2 }]}>
+                        <Text style={styles.fieldLabel}>Data / Pátio</Text>
+                        <Text style={[styles.fieldValue, { fontSize: 6 }]}>
+                          {report.auction_details.records[0].auction_date || 'N/I'}
+                          {report.auction_details.records[0].yard ? ` • ${report.auction_details.records[0].yard}` : ''}
+                        </Text>
+                      </View>
+                    </>
+                  ) : null}
+
+                  {/* Score de Mercado & Segurabilidade */}
+                  {report.auction_details?.has_auction && report.auction_details.score ? (
+                    <View style={[styles.col12, styles.auctionScoreBox]}>
+                      <Text style={[styles.fieldLabel, { fontSize: 5.2, marginBottom: 1 }]}>
+                        Score & Segurabilidade de Mercado:
+                      </Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Text style={{ fontSize: 5.8, fontFamily: 'Helvetica-Bold', color: '#b45309' }}>
+                          Aceitação: {report.auction_details.score.acceptance || 'Restrita'}
+                        </Text>
+                        {report.auction_details.score.reference_percentage ? (
+                          <Text style={{ fontSize: 5.8, color: '#334155' }}>
+                            Ref. FIPE: {report.auction_details.score.reference_percentage}%
+                          </Text>
+                        ) : null}
+                        {report.auction_details.score.special_inspection_required != null ? (
+                          <Text style={{ fontSize: 5.8, color: '#334155' }}>
+                            Vistoria Especial: {String(report.auction_details.score.special_inspection_required).toUpperCase()}
+                          </Text>
+                        ) : null}
+                        {report.auction_details.score.score_label ? (
+                          <Text style={{ fontSize: 5.8, fontFamily: 'Helvetica-Bold', color: '#dc2626' }}>
+                            {report.auction_details.score.score_label}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </View>
+                  ) : null}
+
+                  {/* Fotos Padronizadas Compactas do Lote */}
+                  {report.auction_details?.has_auction &&
+                  Array.isArray(report.auction_details.photos) &&
+                  report.auction_details.photos.length > 0 ? (
+                    <View style={styles.col12}>
+                      <View style={styles.auctionPhotoGrid}>
+                        {report.auction_details.photos
+                          .filter((p) => p.preview_src && (p.preview_src.startsWith('http') || p.preview_src.startsWith('data:image')))
+                          .slice(0, 4)
+                          .map((photo, pIdx) => (
+                            <View key={pIdx} style={styles.auctionPhotoItem}>
+                              <Image src={photo.preview_src} style={styles.auctionPhotoImg} />
+                            </View>
+                          ))}
+                      </View>
+                      {report.auction_details.photos.length > 4 ? (
+                        <Text style={{ fontSize: 4.8, color: '#64748b', marginTop: 1.5, textAlign: 'right' }}>
+                          +{report.auction_details.photos.length - 4} foto(s) no laudo digital completo
+                        </Text>
+                      ) : null}
+                    </View>
+                  ) : null}
                 </View>
               </View>
             </View>
@@ -941,6 +1050,70 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                     <Text style={styles.fieldLabel}>Mês de Referência</Text>
                     <Text style={styles.fieldValue}>{report.fipe_reference?.reference_month || 'Atual'}</Text>
                   </View>
+                </View>
+              </View>
+            </View>
+
+            {/* VIII. ÚLTIMO ANÚNCIO DE MERCADO & QUILOMETRAGEM */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>VIII. Último Anúncio & Quilometragem</Text>
+                <Text style={styles.sectionSub}>Bases Web & Odômetro</Text>
+              </View>
+              <View style={styles.card}>
+                <View style={styles.grid}>
+                  <View style={styles.col6}>
+                    <Text style={styles.fieldLabel}>Preço do Último Anúncio</Text>
+                    <Text style={[styles.fieldValueBold, { fontSize: 8.8, color: '#15803d' }]}>
+                      {report.latest_km_record?.announced_price
+                        ? formatCurrency(report.latest_km_record.announced_price)
+                        : (report.ads_history?.[0]?.price ? formatCurrency(report.ads_history[0].price) : 'Não registrado')}
+                    </Text>
+                  </View>
+                  <View style={styles.col6}>
+                    <Text style={styles.fieldLabel}>Quilometragem do Odômetro</Text>
+                    <Text style={[styles.fieldValueBold, { fontSize: 8.8, color: '#0f172a' }]}>
+                      {formatKm(report.latest_km_record?.mileage ?? report.ads_history?.[0]?.mileage)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.col6}>
+                    <Text style={styles.fieldLabel}>Data do Registro</Text>
+                    <Text style={styles.fieldValue}>
+                      {report.latest_km_record?.date || report.ads_history?.[0]?.date || 'Registro recente'}
+                    </Text>
+                  </View>
+                  <View style={styles.col6}>
+                    <Text style={styles.fieldLabel}>Origem / Portal</Text>
+                    <Text style={styles.fieldValue}>
+                      {report.latest_km_record?.source || report.ads_history?.[0]?.portal || 'Portal de Anúncios'}
+                    </Text>
+                  </View>
+
+                  {/* Comparativo FIPE x Anúncio */}
+                  {Boolean(
+                    (report.latest_km_record?.announced_price || report.ads_history?.[0]?.price) &&
+                    report.fipe_reference?.price
+                  ) && (
+                    <View style={[styles.col12, { marginTop: 2, paddingTop: 2, borderTopWidth: 0.5, borderTopColor: '#e2e8f0' }]}>
+                      <Text style={[styles.fieldLabel, { fontSize: 5.2 }]}>Relação com Tabela FIPE:</Text>
+                      <Text style={[styles.fieldValue, { fontSize: 6, color: '#475569' }]}>
+                        {(() => {
+                          const adPrice = report.latest_km_record?.announced_price || report.ads_history?.[0]?.price || 0;
+                          const fipePrice = report.fipe_reference?.price || 0;
+                          const ratio = Math.round((adPrice / fipePrice) * 100);
+                          const diff = adPrice - fipePrice;
+                          const diffFormatted = formatCurrency(Math.abs(diff));
+                          if (diff > 0) {
+                            return `Anúncio em ${ratio}% da FIPE (+${diffFormatted} acima da tabela)`;
+                          } else if (diff < 0) {
+                            return `Anúncio em ${ratio}% da FIPE (${diffFormatted} abaixo da tabela)`;
+                          }
+                          return `Preço anunciado 100% alinhado à Tabela FIPE`;
+                        })()}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
             </View>

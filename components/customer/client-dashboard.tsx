@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   PlusCircle,
@@ -13,7 +13,9 @@ import {
   CreditCard,
   Download,
   Car,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { DashboardData, ConsultationStatus } from '@/lib/customer/types';
 import { formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
 import { CustomerPlateBadge } from './customer-plate-badge';
@@ -76,6 +78,31 @@ function getStatusBadge(status: ConsultationStatus) {
 }
 
 export function ClientDashboard({ data }: ClientDashboardProps) {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadPdf = async (item: { id: string; plate_normalized: string }) => {
+    if (downloadingId) return;
+    try {
+      setDownloadingId(item.id);
+      toast.info('Gerando seu Laudo Oficial em PDF...');
+      const res = await fetch(`/api/cliente/consultas/${item.id}/pdf`);
+      if (!res.ok) throw new Error('Falha no download do laudo');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `laudo-veicular_${item.plate_normalized}_${item.id.slice(0, 8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success('Laudo baixado com sucesso!');
+    } catch {
+      toast.error('Erro ao gerar laudo em PDF.');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
   const firstName = data.profile.full_name.split(' ')[0] || 'Cliente';
 
   return (
@@ -260,17 +287,24 @@ export function ClientDashboard({ data }: ClientDashboardProps) {
 
                     <div className="flex items-center gap-1.5">
                       {item.status === 'completed' && (
-                        <a
-                          href={pdfDownloadUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download={pdfFilename}
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadPdf(item)}
+                          disabled={downloadingId === item.id}
                           title="Baixar Laudo em PDF"
-                          className="h-8 px-2.5 text-xs bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded-lg inline-flex items-center gap-1 transition-colors"
+                          className={`h-8 px-2.5 text-xs bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded-lg inline-flex items-center gap-1 transition-all ${
+                            downloadingId === item.id ? 'opacity-80 cursor-wait' : 'active:scale-95'
+                          }`}
                         >
-                          <Download className="w-3 h-3 text-[#c9a44c]" />
-                          <span className="hidden sm:inline">PDF</span>
-                        </a>
+                          {downloadingId === item.id ? (
+                            <Loader2 className="w-3 h-3 text-[#c9a44c] animate-spin" />
+                          ) : (
+                            <Download className="w-3 h-3 text-[#c9a44c]" />
+                          )}
+                          <span className="hidden sm:inline">
+                            {downloadingId === item.id ? 'Gerando...' : 'PDF'}
+                          </span>
+                        </button>
                       )}
 
                       <Link href={targetHref}>

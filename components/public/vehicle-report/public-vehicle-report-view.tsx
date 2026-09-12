@@ -31,6 +31,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
+import { AuctionDetailsCard } from '@/components/admin/vehicle-lookup/auction-details-card';
 
 interface PublicVehicleReportViewProps {
   report: PublicVehicleReportDto;
@@ -507,6 +508,18 @@ export function PublicVehicleReportView({
                 </p>
               )}
             </div>
+
+            {/* Auction Details (with records, score, and photo lightbox) */}
+            <div className="pt-2">
+              <AuctionDetailsCard
+                hasAuction={Boolean(report.auction_details?.has_auction)}
+                records={report.auction_details?.records || []}
+                score={report.auction_details?.score}
+                photos={report.auction_details?.photos}
+                description={report.auction_details?.description}
+                className="border-slate-800 bg-slate-950/40"
+              />
+            </div>
           </div>
         )}
 
@@ -516,19 +529,48 @@ export function PublicVehicleReportView({
             <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">
               Tabela FIPE & Referência de Mercado
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-xs">
+              {/* Valor FIPE */}
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                 <span className="text-slate-500">Valor FIPE de Referência</span>
                 <p className="text-2xl font-black text-emerald-400">
                   R$ {(report.fipe_reference?.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-[11px] text-slate-500 pt-1">
-                  Mês de referência: {report.fipe_reference?.reference_month || 'Atual'} • Código: {report.fipe_reference?.code || '—'}
+                  Mês: {report.fipe_reference?.reference_month || 'Atual'} • Código: {report.fipe_reference?.code || '—'}
                 </p>
               </div>
 
-              {report.latest_km_record && (
+              {/* Preço do Último Anúncio */}
+              {Boolean(report.latest_km_record?.announced_price || report.ads_history?.[0]?.price) && (
                 <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Preço do Último Anúncio</span>
+                    {report.fipe_reference?.price && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+                        {Math.round(
+                          ((report.latest_km_record?.announced_price || report.ads_history?.[0]?.price || 0) /
+                            report.fipe_reference.price) *
+                            100
+                        )}% da FIPE
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-2xl font-black text-amber-400">
+                    R$ {Number(
+                      report.latest_km_record?.announced_price || report.ads_history?.[0]?.price || 0
+                    ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-[11px] text-slate-500 pt-1">
+                    Origem: {report.latest_km_record?.source || report.ads_history?.[0]?.portal || 'Anúncio Web'}{' '}
+                    {report.latest_km_record?.date || report.ads_history?.[0]?.date ? `• ${report.latest_km_record?.date || report.ads_history?.[0]?.date}` : ''}
+                  </p>
+                </div>
+              )}
+
+              {/* Último Odômetro */}
+              {report.latest_km_record && (
+                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1 sm:col-span-2 lg:col-span-1">
                   <span className="text-slate-500">Último Odômetro / Registro de Km</span>
                   <p className="text-2xl font-black text-white">
                     {report.latest_km_record.mileage.toLocaleString('pt-BR')} km
@@ -539,6 +581,31 @@ export function PublicVehicleReportView({
                 </div>
               )}
             </div>
+
+            {/* Lista de anúncios anteriores se houver mais de um ou se houver histórico */}
+            {report.ads_history && report.ads_history.length > 0 && (
+              <div className="pt-3 border-t border-slate-800/80 space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                  Anúncios Indexados em Portais Web ({report.ads_history.length})
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                  {report.ads_history.map((ad, idx) => (
+                    <div key={idx} className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/70 flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-white">{ad.portal || 'Portal Web'}</div>
+                        <div className="text-[11px] text-slate-500">
+                          {ad.mileage ? `${Number(ad.mileage).toLocaleString('pt-BR')} km • ` : ''}
+                          {ad.date || 'Data N/I'}
+                        </div>
+                      </div>
+                      <div className="font-bold text-amber-400 text-sm">
+                        {ad.price ? `R$ ${Number(ad.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Sob consulta'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

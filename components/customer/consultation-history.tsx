@@ -15,7 +15,9 @@ import {
   FilterX,
   PlusCircle,
   Download,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { ConsultationHistoryResult, ConsultationStatus } from '@/lib/customer/types';
 import { formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
 import { CustomerPlateBadge } from './customer-plate-badge';
@@ -78,6 +80,31 @@ export function ConsultationHistory({
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(initialPlateFilter);
   const [isPending, startTransition] = useTransition();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadPdf = async (item: { id: string; plate: string }) => {
+    if (downloadingId) return;
+    try {
+      setDownloadingId(item.id);
+      toast.info('Gerando seu Laudo Oficial em PDF...');
+      const res = await fetch(`/api/cliente/consultas/${item.id}/pdf`);
+      if (!res.ok) throw new Error('Falha no download');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `laudo-veicular_${item.plate}_${item.id.slice(0, 8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success('Laudo baixado com sucesso!');
+    } catch {
+      toast.error('Erro ao gerar laudo em PDF.');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,17 +275,24 @@ export function ConsultationHistory({
                         <td className="py-4 px-6 text-right">
                           <div className="inline-flex items-center gap-2 justify-end">
                             {item.status === 'completed' && (
-                              <a
-                                href={`/api/cliente/consultas/${item.id}/pdf`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                download={`laudo-veicular_${item.plate}_${item.id.slice(0, 8)}.pdf`}
-                                className="h-8 px-2.5 text-xs bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700 hover:border-[#c9a44c]/60 text-zinc-300 rounded-lg inline-flex items-center gap-1.5 transition-colors shadow-xs"
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadPdf(item)}
+                                disabled={downloadingId === item.id}
+                                className={`h-8 px-2.5 text-xs bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700 hover:border-[#c9a44c]/60 text-zinc-300 rounded-lg inline-flex items-center gap-1.5 transition-all shadow-xs ${
+                                  downloadingId === item.id ? 'opacity-80 cursor-wait' : 'active:scale-95'
+                                }`}
                                 title="Baixar Laudo PDF"
                               >
-                                <Download className="w-3.5 h-3.5 text-[#c9a44c]" />
-                                <span className="hidden xl:inline">PDF</span>
-                              </a>
+                                {downloadingId === item.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 text-[#c9a44c] animate-spin" />
+                                ) : (
+                                  <Download className="w-3.5 h-3.5 text-[#c9a44c]" />
+                                )}
+                                <span className="hidden xl:inline">
+                                  {downloadingId === item.id ? 'Gerando...' : 'PDF'}
+                                </span>
+                              </button>
                             )}
 
                             <Link href={targetHref}>
@@ -316,17 +350,22 @@ export function ConsultationHistory({
 
                     <div className="pt-2 flex items-center gap-2">
                       {item.status === 'completed' && (
-                        <a
-                          href={`/api/cliente/consultas/${item.id}/pdf`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download={`laudo-veicular_${item.plate}_${item.id.slice(0, 8)}.pdf`}
-                          className="h-9 px-3 text-xs bg-zinc-900 border border-zinc-700 hover:border-[#c9a44c]/60 text-zinc-200 rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadPdf(item)}
+                          disabled={downloadingId === item.id}
+                          className={`h-9 px-3 text-xs bg-zinc-900 border border-zinc-700 hover:border-[#c9a44c]/60 text-zinc-200 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs ${
+                            downloadingId === item.id ? 'opacity-80 cursor-wait' : 'active:scale-95'
+                          }`}
                           title="Baixar Laudo PDF"
                         >
-                          <Download className="w-3.5 h-3.5 text-[#c9a44c]" />
-                          <span>PDF</span>
-                        </a>
+                          {downloadingId === item.id ? (
+                            <Loader2 className="w-3.5 h-3.5 text-[#c9a44c] animate-spin" />
+                          ) : (
+                            <Download className="w-3.5 h-3.5 text-[#c9a44c]" />
+                          )}
+                          <span>{downloadingId === item.id ? 'Gerando...' : 'PDF'}</span>
+                        </button>
                       )}
                       <Link href={targetHref} className="flex-1 block">
                         <Button

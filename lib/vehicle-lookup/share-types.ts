@@ -1,4 +1,4 @@
-// Types for Public Vehicle Report Sharing, Security Tokens, and Audit Events
+import type { AuctionRecord, AuctionScore, AuctionPhoto } from './types.ts';
 
 export type VehicleReportShareStatus = 'active' | 'revoked' | 'expired' | 'disabled';
 
@@ -142,13 +142,9 @@ export interface PublicVehicleReportDto {
     has_auction: boolean;
     status_label: string;
     description?: string;
-    records: Array<{
-      auctioneer?: string;
-      auction_date?: string;
-      lot?: string;
-      condition?: string;
-      category?: string;
-    }>;
+    records: AuctionRecord[];
+    score?: AuctionScore;
+    photos?: AuctionPhoto[];
   };
 
   claims_details?: {

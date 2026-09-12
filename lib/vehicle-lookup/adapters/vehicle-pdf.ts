@@ -14,8 +14,8 @@ export function toCustomerVehicleReportDto(
   const rest = internalDto.restrictions;
   const hist = internalDto.history;
   const fipe = internalDto.fipe;
-  const ads = internalDto.ads_mileage;
-  const tech = internalDto.technical_specs;
+  const ads = internalDto.ads_mileage || { ads_records: [], mileage_records: [] };
+  const tech = internalDto.technical_specs || {};
   const rawParsed = internalDto.raw_response as unknown as ApiBrasilVehicleResponse;
   const d = rawParsed?.data || rawParsed?.dados || {};
 
@@ -105,25 +105,26 @@ export function toCustomerVehicleReportDto(
 
   // Mileage & Ads extraction (Tarefa C)
   let latestKmRecord: CustomerVehicleReportDto['latest_km_record'] = undefined;
+  const firstAdWithPrice = ads.ads_records?.find((a) => (a.price || 0) > 0);
+  const firstAdWithMileage = ads.ads_records?.find((a) => (a.mileage || 0) > 0);
+
   if (ads.mileage_records && ads.mileage_records.length > 0) {
     const kmItem = ads.mileage_records[0];
     const adItem = ads.ads_records && ads.ads_records.length > 0 ? ads.ads_records[0] : undefined;
     latestKmRecord = {
-      mileage: kmItem.mileage || (adItem?.mileage || 0),
+      mileage: kmItem.mileage || (firstAdWithMileage?.mileage || adItem?.mileage || 0),
       date: kmItem.date || adItem?.date,
       source: kmItem.source || adItem?.portal || 'Histórico de Odômetro / Anúncio',
-      announced_price: adItem?.price,
+      announced_price: firstAdWithPrice?.price || adItem?.price,
     };
   } else if (ads.ads_records && ads.ads_records.length > 0) {
     const adItem = ads.ads_records[0];
-    if (adItem.mileage) {
-      latestKmRecord = {
-        mileage: adItem.mileage,
-        date: adItem.date,
-        source: adItem.portal || 'Anúncio Web',
-        announced_price: adItem.price,
-      };
-    }
+    latestKmRecord = {
+      mileage: firstAdWithMileage?.mileage || adItem.mileage || 0,
+      date: adItem.date,
+      source: adItem.portal || 'Anúncio Web',
+      announced_price: firstAdWithPrice?.price || adItem.price,
+    };
   }
 
   return {
@@ -208,6 +209,8 @@ export function toCustomerVehicleReportDto(
         ? 'Veículo possui passagem cadastrada em base de leilão.'
         : 'Nenhum registro de leilão localizado nas bases oficiais consultadas.',
       records: hist.auction_records || [],
+      score: hist.auction_score,
+      photos: hist.auction_photos,
     },
 
     claims_details: {

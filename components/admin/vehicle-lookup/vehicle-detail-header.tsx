@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Download, Link2, ExternalLink, FileSignature } from 'lucide-react';
+import { ArrowLeft, Download, Link2, ExternalLink, FileSignature, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button, buttonVariants } from '@/components/ui/button';
 import type { InternalVehicleConsultationDto } from '@/lib/vehicle-lookup/types';
 import { RiskBadge, ModeBadge, StatusBadge } from './consultation-badge';
@@ -16,6 +17,31 @@ interface VehicleDetailHeaderProps {
 
 export function VehicleDetailHeader({ dto, onOpenLinkModal }: VehicleDetailHeaderProps) {
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (isDownloadingPdf) return;
+    try {
+      setIsDownloadingPdf(true);
+      toast.info('Gerando Laudo Oficial em PDF...');
+      const res = await fetch(`/api/admin/vehicle-lookup/${dto.id}/pdf`);
+      if (!res.ok) throw new Error('Falha no download');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `historico-veicular_${dto.plate_normalized}_${dto.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success('Laudo PDF baixado com sucesso!');
+    } catch {
+      toast.error('Erro ao gerar laudo em PDF.');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const initialData: Partial<PurchaseAgreementPrepareInput> = {
     vehicle_consultation_id: dto.id,
@@ -114,18 +140,28 @@ export function VehicleDetailHeader({ dto, onOpenLinkModal }: VehicleDetailHeade
             Vincular
           </Button>
 
-          <a
-            href={`/api/admin/vehicle-lookup/${dto.id}/pdf`}
-            target="_blank"
-            rel="noopener noreferrer"
-            download={`historico-veicular_${dto.plate_normalized}_${dto.id}.pdf`}
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={isDownloadingPdf}
             className={buttonVariants({
-              className: 'rounded-xl text-xs font-semibold gap-1.5 h-10 shadow-xs',
+              className: `rounded-xl text-xs font-semibold gap-1.5 h-10 shadow-xs cursor-pointer ${
+                isDownloadingPdf ? 'opacity-80 cursor-wait' : 'active:scale-95'
+              }`,
             })}
           >
-            <Download className="w-4 h-4" />
-            Baixar Laudo PDF
-          </a>
+            {isDownloadingPdf ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Gerando Laudo PDF...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                <span>Baixar Laudo PDF</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 

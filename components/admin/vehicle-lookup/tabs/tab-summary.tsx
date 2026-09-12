@@ -12,6 +12,7 @@ import {
   Building2,
   Wrench,
   Car,
+  Tag,
 } from 'lucide-react';
 import { RiskBadge } from '../consultation-badge';
 
@@ -22,6 +23,11 @@ export function TabSummary({ dto }: { dto: InternalVehicleConsultationDto }) {
 
   const pendingRecalls = h.recalls ? h.recalls.filter((r) => r.status === 'PENDENTE') : [];
   const hasPendingRecall = pendingRecalls.length > 0;
+
+  const latestAdWithPrice = dto.ads_mileage?.ads_records?.find((a) => (a.price || 0) > 0) || dto.ads_mileage?.ads_records?.[0];
+  const adPrice = latestAdWithPrice?.price || 0;
+  const fipePrice = dto.fipe?.price || 0;
+  const latestKm = dto.ads_mileage?.mileage_records?.[0]?.mileage || latestAdWithPrice?.mileage || 0;
 
   const isLocadora = Boolean(
     raw.registroEmLocadora?.registroEmLocadora === true ||
@@ -205,6 +211,51 @@ export function TabSummary({ dto }: { dto: InternalVehicleConsultationDto }) {
           </p>
         </div>
       </div>
+
+      {/* Executive Market & Odometer Strip */}
+      {(fipePrice > 0 || adPrice > 0 || latestKm > 0) && (
+        <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1.5">
+              <Tag className="w-4 h-4 text-primary" />
+              Referência de Mercado & Odômetro
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40">
+              <span className="text-[10px] text-muted-foreground uppercase font-semibold block">Tabela FIPE</span>
+              <span className="text-lg font-bold text-emerald-500 block mt-0.5">
+                {fipePrice > 0 ? `R$ ${fipePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/D'}
+              </span>
+              <span className="text-[10px] text-muted-foreground block mt-0.5">
+                Mês: {dto.fipe?.reference_month || 'Atual'}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40">
+              <span className="text-[10px] text-muted-foreground uppercase font-semibold block">Último Preço Anunciado</span>
+              <span className="text-lg font-bold text-amber-500 block mt-0.5">
+                {adPrice > 0 ? `R$ ${adPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Não registrado'}
+              </span>
+              <span className="text-[10px] text-muted-foreground block mt-0.5">
+                {latestAdWithPrice?.portal ? `Portal: ${latestAdWithPrice.portal}` : 'Bases Web'}
+                {adPrice > 0 && fipePrice > 0 ? ` • ${Math.round((adPrice / fipePrice) * 100)}% FIPE` : ''}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/40">
+              <span className="text-[10px] text-muted-foreground uppercase font-semibold block">Último Odômetro</span>
+              <span className="text-lg font-bold text-foreground block mt-0.5">
+                {latestKm > 0 ? `${Number(latestKm).toLocaleString('pt-BR')} km` : '0 km'}
+              </span>
+              <span className="text-[10px] text-muted-foreground block mt-0.5">
+                {dto.ads_mileage?.mileage_records?.[0]?.source || latestAdWithPrice?.portal || 'Registro de Vistoria'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

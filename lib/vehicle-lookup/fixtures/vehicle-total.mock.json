@@ -383,9 +383,29 @@
       "registros": [],
       "veiculosFipe": []
     },
-    "fotos": [],
+    "fotos": [
+      "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e824b5d6bf-687e824c41ecb.jpg",
+      "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82bc54f8a-687e82bcafa77.jpg",
+      "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82fca9c2b-687e82fd903ef.jpg"
+    ],
     "fotosLoteVeiculo": {
-      "conteudo": []
+      "conteudo": [
+        {
+          "url": "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e824b5d6bf-687e824c41ecb.jpg",
+          "descricao": "FRENTE DO VEÍCULO / LOTE",
+          "base64": null
+        },
+        {
+          "url": "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82bc54f8a-687e82bcafa77.jpg",
+          "descricao": "LATERAL E TRASEIRA",
+          "base64": null
+        },
+        {
+          "url": "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82fca9c2b-687e82fd903ef.jpg",
+          "descricao": "VISTA SUPERIOR / PÁTIO",
+          "base64": null
+        }
+      ]
     },
     "gravame": [
       {
@@ -550,14 +570,32 @@
       "descricao": "NAO CONSTA INDICIO DE SINISTRO PARA O VEICULO INFORMADO"
     },
     "leilao": {
-      "descricao": "Nao consta registro de leilao para o veiculo informado",
-      "registros": [],
+      "descricao": "Consta registro de leilão para o veículo informado",
+      "registros": [
+        {
+          "leiloeiro": "FREITAS LEILOEIRO OFICIAL",
+          "dataLeilao": "15/08/2021",
+          "lote": "1234",
+          "comitente": "PORTO SEGURO CIA DE SEGUROS GERAIS",
+          "condicaoGeral": "RECUPERAVEL / SUCATA",
+          "tipoSinistro": "COLISAO / PEQUENA MONTA",
+          "patio": "SAO PAULO / SP",
+          "chassi": "8AJZZZ999JZ123456",
+          "placa": "ABC1234",
+          "marcaModelo": "MARCA FICTICIA/SUV CONCEITO",
+          "fotos": [
+            "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e824b5d6bf-687e824c41ecb.jpg",
+            "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82bc54f8a-687e82bcafa77.jpg",
+            "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82fca9c2b-687e82fd903ef.jpg"
+          ]
+        }
+      ],
       "score": {
-        "aceitacao": null,
-        "exigenciaVistoriaEspecial": null,
-        "percentualSobreRef": null,
-        "pontuacao": null,
-        "score": null
+        "aceitacao": "RESTRITA",
+        "exigenciaVistoriaEspecial": "SIM",
+        "percentualSobreRef": "70",
+        "pontuacao": "4",
+        "score": "ALTO RISCO"
       }
     },
     "limiteRestricaoTrib": null,

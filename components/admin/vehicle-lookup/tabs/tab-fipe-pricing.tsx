@@ -6,6 +6,8 @@ import { Tag, TrendingDown, DollarSign } from 'lucide-react';
 
 export function TabFipePricing({ dto }: { dto: InternalVehicleConsultationDto }) {
   const f = dto.fipe;
+  const latestAd = dto.ads_mileage?.ads_records?.find((a) => (a.price || 0) > 0) || dto.ads_mileage?.ads_records?.[0];
+  const adPrice = latestAd?.price || 0;
 
   return (
     <div className="space-y-6">
@@ -24,10 +26,26 @@ export function TabFipePricing({ dto }: { dto: InternalVehicleConsultationDto })
           </div>
         </div>
 
-        <div className="text-left md:text-right">
-          <div className="text-xs text-muted-foreground">Valor Médio de Mercado</div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-            R$ {f.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-left md:text-right">
+          {adPrice > 0 && (
+            <div className="p-3 rounded-xl bg-muted/60 border border-border/60 text-left">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+                Último Anúncio Web
+              </span>
+              <span className="text-base font-black text-amber-500 block">
+                R$ {adPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+              <span className="text-[10px] text-muted-foreground block">
+                {f.price > 0 ? `${Math.round((adPrice / f.price) * 100)}% da Tabela FIPE` : (latestAd?.portal || 'Web')}
+              </span>
+            </div>
+          )}
+
+          <div>
+            <div className="text-xs text-muted-foreground">Valor Médio FIPE</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+              R$ {f.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
           </div>
         </div>
       </div>
