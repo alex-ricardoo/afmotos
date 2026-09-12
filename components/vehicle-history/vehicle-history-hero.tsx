@@ -147,7 +147,7 @@ export function VehicleHistoryHero({
           {/* Sub-headline: strictly max 3 lines */}
           <p className="text-base sm:text-lg lg:text-xl text-zinc-200 max-w-2xl leading-relaxed font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
             Descubra leilão escondido, dívidas bancárias e bloqueios judiciais em segundos.
-            Receba o laudo oficial em PDF direto no seu WhatsApp e compre com total segurança.
+            Consulte 100% online com liberação imediata, painel interativo e download do laudo oficial em PDF.
           </p>
 
           {/* Plate Input Box & Primary CTA */}
@@ -200,7 +200,7 @@ export function VehicleHistoryHero({
                   className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-emerald-400 transition-colors py-1"
                 >
                   <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Ou prefere consultar pelo WhatsApp? Clique aqui</span>
+                  <span>Dúvidas sobre a placa? Fale com nosso suporte no WhatsApp</span>
                 </button>
 
                 <button
@@ -222,12 +222,12 @@ export function VehicleHistoryHero({
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <Link2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>Link Online Imediato</span>
+                <span>Painel 100% Online</span>
               </span>
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <FileDown className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>PDF Oficial</span>
+                <span>Download em PDF</span>
               </span>
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">

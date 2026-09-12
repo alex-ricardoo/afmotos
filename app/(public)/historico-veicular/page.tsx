@@ -38,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 
   const title = `Consulta Veicular Oficial | Qualquer Veículo por Placa | ${siteName}`;
-  const description = `Não caia em golpes. Consulte histórico completo de leilão, sinistro, gravames, multas e débitos para motos, carros, caminhões e utilitários em todo o Brasil por apenas ${priceFormatted} na ${siteName}. Laudo oficial imediato em PDF no WhatsApp.`;
+  const description = `Não caia em golpes. Consulte histórico completo de leilão, sinistro, gravames, multas e débitos para motos, carros, caminhões e utilitários em todo o Brasil por apenas ${priceFormatted} na ${siteName}. Consulta 100% online com liberação imediata na Área do Cliente e laudo oficial em PDF.`;
 
   return buildPageMetadata({
     title,

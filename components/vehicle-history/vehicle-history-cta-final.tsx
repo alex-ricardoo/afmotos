@@ -26,17 +26,7 @@ export function VehicleHistoryCtaFinal({
 
   const handleSolicitarClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!plate) {
-      scrollToSection('btn-hero-consultar-placa');
-      return;
-    }
-    const url = buildVehicleHistoryWhatsAppUrl({
-      phone,
-      plate: isValid ? plate : null,
-      price: settings.price,
-      siteName,
-    });
-    window.open(url, '_blank', 'noopener,noreferrer');
+    scrollToSection('consulta-placa');
   };
 
   const handleDuvidasClick = (e: React.MouseEvent) => {
@@ -67,7 +57,7 @@ export function VehicleHistoryCtaFinal({
           </h2>
           {/* Strict max 3 lines paragraph */}
           <p className="text-sm sm:text-base text-zinc-300 max-w-xl mx-auto leading-relaxed">
-            Receba o link online e baixe o laudo oficial em PDF em minutos por apenas <strong className="text-amber-400 font-bold">{formattedPrice}</strong>.
+            Consulte 100% online e acesse o diagnóstico completo com download do laudo oficial em PDF por apenas <strong className="text-amber-400 font-bold">{formattedPrice}</strong>.
             Evite prejuízos irreversíveis e feche seu negócio com total tranquilidade.
           </p>
         </div>

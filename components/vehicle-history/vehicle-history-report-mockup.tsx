@@ -117,8 +117,8 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
           </h2>
 
           <p className="text-xs sm:text-sm text-zinc-300 max-w-xl mx-auto leading-relaxed">
-            Você recebe um <strong className="text-amber-400">link no WhatsApp</strong> e pode{' '}
-            <strong className="text-amber-400">baixar o laudo em PDF</strong> para guardar ou apresentar ao comprador na hora de negociar.
+            Você acessa o laudo interativo na sua <strong className="text-amber-400">Área do Cliente</strong> e pode{' '}
+            <strong className="text-amber-400">baixar o laudo em PDF oficial</strong> para guardar ou apresentar ao comprador na hora de negociar.
           </p>
         </div>
 
@@ -246,7 +246,7 @@ export function VehicleHistoryReportMockup({ siteName = 'AF Motos' }: VehicleHis
           <div className="mt-5 pt-3.5 border-t border-[#1F293D] flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-zinc-400">
             <div className="flex items-center gap-2 text-zinc-300 font-medium">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Receba o PDF oficial e link seguro direto no seu WhatsApp após a confirmação.</span>
+              <span>Acesse o laudo completo na sua conta e baixe o PDF oficial autenticado a qualquer momento.</span>
             </div>
             <div className="flex items-center gap-1.5 text-amber-300/90 text-[11px] font-semibold">
               <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />

@@ -129,10 +129,10 @@ export function VehicleHistoryReasons() {
                 <div className="p-3.5 rounded-xl bg-[#080B11] border border-[#1F293D] space-y-1">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
                     <Link2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>Link no WhatsApp</span>
+                    <span>Área do Cliente Online</span>
                   </div>
                   <p className="text-xs text-zinc-400 leading-snug">
-                    Envie o histórico para o interessado abrir no celular sem burocracia.
+                    Acesse e compartilhe o laudo com o comprador direto do seu painel.
                   </p>
                 </div>
 
