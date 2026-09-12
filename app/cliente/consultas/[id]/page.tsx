@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getConsultationDetail } from '@/lib/customer/queries';
-import { ConsultationDetails } from '@/components/customer/consultation-details';
+import { getCustomerConsultationWithDto } from '@/lib/customer/queries';
+import { CustomerVehicleDetail } from '@/components/customer/customer-vehicle-detail';
 
 interface ConsultationDetailPageProps {
   params: Promise<{
@@ -28,11 +28,16 @@ export default async function CustomerConsultationDetailPage({
     redirect(`/cliente/login?returnUrl=/cliente/consultas/${id}`);
   }
 
-  const consultation = await getConsultationDetail(id);
+  const result = await getCustomerConsultationWithDto(id);
 
-  if (!consultation) {
+  if (!result || !result.consultation) {
     notFound();
   }
 
-  return <ConsultationDetails consultation={consultation} />;
+  return (
+    <CustomerVehicleDetail
+      consultation={result.consultation}
+      dto={result.dto}
+    />
+  );
 }

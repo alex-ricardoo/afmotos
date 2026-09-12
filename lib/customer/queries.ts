@@ -227,3 +227,131 @@ export async function getConsultationDetail(
     vehicle_data: (data.vehicle_data as Record<string, unknown>) || null,
   };
 }
+
+/**
+ * Retrieves consultation record along with its parsed InternalVehicleConsultationDto (same as admin panel).
+ */
+export async function getCustomerConsultationWithDto(consultationId: string): Promise<{
+  consultation: ConsultationDetail;
+  dto: import('@/lib/vehicle-lookup/types').InternalVehicleConsultationDto | null;
+} | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from('customer_plate_consultations')
+    .select('*')
+    .eq('id', consultationId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const consultation: ConsultationDetail = {
+    id: data.id,
+    plate: data.plate,
+    plate_normalized: data.plate_normalized,
+    status: data.status as ConsultationStatus,
+    payment_status: data.payment_status as PaymentStatus,
+    payment_method: data.payment_method as PaymentMethod | null,
+    payment_date: data.payment_date,
+    processed_at: data.processed_at,
+    created_at: data.created_at,
+    vehicle_data: (data.vehicle_data as Record<string, unknown>) || null,
+  };
+
+  let dto: import('@/lib/vehicle-lookup/types').InternalVehicleConsultationDto | null = null;
+
+  if (data.status === 'completed') {
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const { toInternalVehicleConsultationDto } = await import(
+      '@/lib/vehicle-lookup/adapters/vehicle-summary'
+    );
+    const adminClient = createAdminClient();
+
+    let vpcRecord: import('@/lib/vehicle-lookup/types').VehicleConsultationRecord | null = null;
+
+    if (data.source_consultation_id) {
+      const { data: vpc } = await adminClient
+        .from('vehicle_plate_consultations')
+        .select('*')
+        .eq('id', data.source_consultation_id)
+        .maybeSingle();
+
+      if (vpc) {
+        vpcRecord = vpc as import('@/lib/vehicle-lookup/types').VehicleConsultationRecord;
+      }
+    }
+
+    if (!vpcRecord && data.vehicle_data) {
+      vpcRecord = {
+        id: data.id,
+        plate_normalized: data.plate_normalized,
+        plate_display: data.plate,
+        consultation_type: 'veiculos-total',
+        provider: 'apibrasil',
+        raw_response: data.vehicle_data,
+        response_schema_version: '1.0',
+        status: 'COMPLETED',
+        provider_status_code: 200,
+        provider_error: false,
+        provider_message: null,
+        mode: 'mock',
+        is_mock: true,
+        is_chargeable: false,
+        charged_amount: 0,
+        provider_balance_before: null,
+        provider_balance_after: null,
+        provider_tax: null,
+        vehicle_type: 'AUTOMOVEL',
+        brand: 'VEÍCULO',
+        model: 'CONSULTADO',
+        vehicle_description: null,
+        year_manufacture: 2021,
+        year_model: 2022,
+        color: 'N/I',
+        state: 'SP',
+        city: 'São Paulo',
+        chassis_masked: null,
+        renavam_masked: null,
+        risk_level: 'LOW',
+        risk_index: 10,
+        has_active_theft_robbery: false,
+        has_judicial_restriction: false,
+        has_financial_restriction: false,
+        has_active_gravamen: false,
+        has_auction_record: false,
+        has_accident_indication: false,
+        has_debts: false,
+        debts_total_amount: 0,
+        confirmation_at: data.created_at,
+        confirmed_by: user.id,
+        confirmation_plate: data.plate,
+        confirmation_message_version: 'v1.0',
+        motorcycle_id: null,
+        sell_request_id: null,
+        consignment_id: null,
+        lead_id: null,
+        consulted_at: data.processed_at || data.created_at,
+        consulted_by: user.id,
+        pdf_generated_at: null,
+        pdf_generation_count: 0,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+    }
+
+    if (vpcRecord) {
+      dto = toInternalVehicleConsultationDto(vpcRecord);
+    }
+  }
+
+  return {
+    consultation,
+    dto,
+  };
+}
