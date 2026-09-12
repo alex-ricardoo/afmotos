@@ -14,6 +14,8 @@ import {
 } from './schemas';
 import type { ActionResult } from './types';
 
+import { createAdminClient } from '@/lib/supabase/admin';
+
 /**
  * Register a new customer via email/password and create customer_profiles row.
  */
@@ -47,20 +49,31 @@ export async function registerCustomer(data: RegisterCustomerInput): Promise<Act
     return { error: 'Não foi possível criar a conta. Tente novamente.' };
   }
 
-  // Insert customer profile
+  // Insert customer profile using admin client to ensure RLS bypass during registration
   const phoneNormalized = phone.replace(/\D/g, '');
-  const { error: profileError } = await supabase.from('customer_profiles').insert({
+  const adminClient = createAdminClient();
+
+  // Auto-confirm user email so they can immediately sign in without getting blocked
+  try {
+    await adminClient.auth.admin.updateUserById(authData.user.id, {
+      email_confirm: true,
+    });
+  } catch (confirmErr) {
+    console.warn('[registerCustomer] auto-confirm warning:', confirmErr);
+  }
+
+  const { error: profileError } = await adminClient.from('customer_profiles').upsert({
     id: authData.user.id,
     email,
     full_name,
     phone,
     phone_normalized: phoneNormalized,
     date_of_birth,
-  });
+  }, { onConflict: 'id' });
 
   if (profileError) {
-    // If the profile already exists or failed to create
     console.error('[registerCustomer] profileError:', profileError);
+    return { error: 'Erro ao salvar dados do perfil. Tente novamente.' };
   }
 
   return { success: true };
@@ -78,7 +91,7 @@ export async function loginCustomer(data: LoginCustomerInput): Promise<ActionRes
   const { email, password } = parseResult.data;
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data: authData, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -87,7 +100,47 @@ export async function loginCustomer(data: LoginCustomerInput): Promise<ActionRes
     if (error.message?.toLowerCase().includes('invalid login credentials')) {
       return { error: 'E-mail ou senha incorretos.' };
     }
+    if (error.message?.toLowerCase().includes('email not confirmed')) {
+      // Auto-confirm via admin client and retry sign in
+      try {
+        const adminClient = createAdminClient();
+        const { data: userData } = await adminClient.auth.admin.listUsers();
+        const found = userData?.users.find(
+          (u) => u.email?.toLowerCase() === email.toLowerCase().trim()
+        );
+        if (found) {
+          await adminClient.auth.admin.updateUserById(found.id, { email_confirm: true });
+          const retry = await supabase.auth.signInWithPassword({ email, password });
+          if (!retry.error && retry.data.user) {
+            return { success: true };
+          }
+        }
+      } catch (confirmErr) {
+        console.warn('[loginCustomer] auto-confirm on login error:', confirmErr);
+      }
+      return { error: 'Por favor, confirme seu e-mail para continuar ou tente novamente.' };
+    }
     return { error: error.message || 'Erro ao fazer login.' };
+  }
+
+  // Ensure customer profile row exists
+  if (authData?.user) {
+    try {
+      const adminClient = createAdminClient();
+      await adminClient.from('customer_profiles').upsert(
+        {
+          id: authData.user.id,
+          email: authData.user.email || email,
+          full_name:
+            authData.user.user_metadata?.full_name ||
+            authData.user.user_metadata?.name ||
+            email.split('@')[0],
+        },
+        { onConflict: 'id', ignoreDuplicates: true }
+      );
+    } catch (upsertErr) {
+      console.warn('[loginCustomer] profile upsert warning:', upsertErr);
+    }
   }
 
   return { success: true };

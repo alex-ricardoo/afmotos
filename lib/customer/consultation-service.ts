@@ -28,6 +28,26 @@ export async function initiateConsultation(
     return { error: 'Faça login para continuar com a consulta veicular.' };
   }
 
+  // Ensure customer profile row exists to prevent foreign key constraint violations
+  try {
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const adminClient = createAdminClient();
+    await adminClient.from('customer_profiles').upsert(
+      {
+        id: user.id,
+        email: user.email || '',
+        full_name:
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split('@')[0] ||
+          'Cliente',
+      },
+      { onConflict: 'id', ignoreDuplicates: true }
+    );
+  } catch (syncErr) {
+    console.warn('[initiateConsultation] profile sync warning:', syncErr);
+  }
+
   // Check if customer already has a consultation record for this plate
   const { data: existing, error: findError } = await supabase
     .from('customer_plate_consultations')

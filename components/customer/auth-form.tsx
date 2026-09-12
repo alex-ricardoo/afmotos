@@ -110,6 +110,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
           // Automatically log the user in after registration
           const loginRes = await loginCustomer({ email, password });
           if (loginRes.error) {
+            toast.error(loginRes.error);
             router.push(`/cliente/login?returnUrl=${encodeURIComponent(returnUrl)}`);
           } else {
             if (onSuccess) {
