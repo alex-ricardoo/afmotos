@@ -865,8 +865,23 @@ export async function processBrickPayment(
   const payerFirstName = formData.payer.first_name || defaultFirst || 'Cliente';
   const payerLastName = formData.payer.last_name || defaultRest.join(' ') || 'AF Motos';
 
-  const parsedIssuer = formData.issuer_id ? Number(formData.issuer_id) : undefined;
-  const validIssuerId = parsedIssuer && !isNaN(parsedIssuer) ? parsedIssuer : undefined;
+  const rawIssuer = formData.issuer_id;
+  const parsedIssuer =
+    rawIssuer !== undefined && rawIssuer !== null && rawIssuer !== ''
+      ? Number(rawIssuer)
+      : undefined;
+  const validIssuerId =
+    parsedIssuer !== undefined &&
+    Number.isInteger(parsedIssuer) &&
+    parsedIssuer > 0 &&
+    Number.isFinite(parsedIssuer)
+      ? parsedIssuer
+      : undefined;
+  const issuerMasked = validIssuerId
+    ? String(validIssuerId).length > 2
+      ? `***${String(validIssuerId).slice(-2)}`
+      : '***'
+    : undefined;
 
   const payerPayload: Record<string, unknown> = {
     email: (user.email || formData.payer.email).trim().toLowerCase(),
@@ -937,12 +952,17 @@ export async function processBrickPayment(
           : undefined,
     installments: formData.installments || 1,
     issuerProvided: Boolean(validIssuerId),
+    hasIssuer: Boolean(validIssuerId),
+    issuerMasked,
     payerEmailPresent: Boolean(user.email || formData.payer?.email),
     payerIdentificationType: 'CPF',
     payerIdentificationLength: normalizedCpf.length,
     hasAddress: Boolean(payerAddress),
     externalReferencePresent: Boolean(consultation.id),
     idempotencyKeyPresent: Boolean(idempotencyKey),
+    idempotencyGenerated: true,
+    idempotencyForwardingAttempted: true,
+    idempotencyHeaderName: 'X-Idempotency-Key',
     webhookUrlPresent: Boolean(webhookUrl),
   });
 
@@ -955,6 +975,11 @@ export async function processBrickPayment(
     canonicalAmount: canonicalPrice,
     currency: 'BRL',
     idempotencyKeyPresent: Boolean(idempotencyKey),
+    idempotencyGenerated: true,
+    idempotencyForwardingAttempted: true,
+    idempotencyHeaderName: 'X-Idempotency-Key',
+    hasIssuer: Boolean(validIssuerId),
+    issuerMasked,
   });
 
   try {
@@ -1106,11 +1131,14 @@ export async function processBrickPayment(
       paymentMethodId: formData.payment_method_id,
       tokenPresent: Boolean(formData.token),
       canonicalAmount: canonicalPrice,
+      errorName: normalizedError.errorName,
+      errorMessageSanitized: normalizedError.errorMessageSanitized,
       providerStatus: normalizedError.providerStatus,
       providerMessage: normalizedError.providerMessage,
       providerError: normalizedError.providerError,
       causeCount: normalizedError.causeCount,
       causesSummary: normalizedError.causesSummary,
+      requestId: normalizedError.requestId,
       durationMs: createDurationMs,
     });
 
@@ -1129,9 +1157,12 @@ export async function processBrickPayment(
             failure_message_safe:
               'Instabilidade técnica temporária no processamento de pagamentos do Mercado Pago.',
             raw_response: {
+              errorName: normalizedError.errorName,
+              errorMessageSanitized: normalizedError.errorMessageSanitized,
               providerStatus: normalizedError.providerStatus || 500,
               providerMessage: normalizedError.providerMessage || 'internal_error',
               providerError: normalizedError.providerError,
+              requestId: normalizedError.requestId,
             },
           },
           flowId,
@@ -1143,12 +1174,16 @@ export async function processBrickPayment(
             status: 'rejected',
             failure_code: 'MERCADO_PAGO_CREATE_FAILED',
             failure_message_safe:
+              normalizedError.errorMessageSanitized ||
               normalizedError.providerMessage ||
               'Não foi possível processar o pagamento com os dados informados.',
             raw_response: {
+              errorName: normalizedError.errorName,
+              errorMessageSanitized: normalizedError.errorMessageSanitized,
               providerStatus: normalizedError.providerStatus,
               providerMessage: normalizedError.providerMessage,
               providerError: normalizedError.providerError,
+              requestId: normalizedError.requestId,
             },
           },
           flowId,

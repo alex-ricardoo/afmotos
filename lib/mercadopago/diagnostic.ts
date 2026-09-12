@@ -196,3 +196,217 @@ export async function createMinimalCardPaymentForDiagnostics(
     };
   }
 }
+
+/**
+ * -------------------------------------------------------------
+ * Server-Side Diagnostic Test Variations (A, B, C)
+ * -------------------------------------------------------------
+ * Strictly isolated for local development opt-in testing.
+ * NEVER executed automatically in production or preview.
+ * NEVER releases consultation without real verified payment.
+ */
+
+export interface DiagnosticVariationParams {
+  canonicalAmount: number;
+  token: string;
+  installments: number;
+  userEmail: string;
+  normalizedCpf: string;
+  flowId: string;
+  consultationId: string;
+  brickIssuerId?: number | string | null;
+  notificationUrl?: string | null;
+}
+
+export interface DiagnosticVariationCallData {
+  body: Record<string, unknown>;
+  requestOptions?: {
+    idempotencyKey?: string;
+  };
+  idempotencyKey?: string;
+}
+
+/**
+ * Validates if server-side diagnostic variations (A, B, C) are permitted.
+ * Rules:
+ * - VERCEL_ENV must NOT be 'production'
+ * - VERCEL_ENV must NOT be 'preview'
+ * - NODE_ENV must be 'development'
+ * - ENABLE_MP_DIAGNOSTIC_TESTS must be 'true'
+ */
+export function isDiagnosticTestsAllowed(): { allowed: boolean; reason?: string } {
+  if (process.env.VERCEL_ENV === 'production') {
+    return { allowed: false, reason: 'Bloqueado em ambiente Vercel Production.' };
+  }
+  if (process.env.VERCEL_ENV === 'preview') {
+    return { allowed: false, reason: 'Bloqueado em ambiente Vercel Preview.' };
+  }
+  if (process.env.NODE_ENV !== 'development') {
+    return { allowed: false, reason: 'Bloqueado fora de NODE_ENV=development.' };
+  }
+  if (process.env.ENABLE_MP_DIAGNOSTIC_TESTS !== 'true') {
+    return {
+      allowed: false,
+      reason: 'Requer flag de ambiente ENABLE_MP_DIAGNOSTIC_TESTS=true.',
+    };
+  }
+  return { allowed: true };
+}
+
+export function assertDiagnosticTestsAllowed(): void {
+  const gate = isDiagnosticTestsAllowed();
+  if (!gate.allowed) {
+    throw new Error(
+      gate.reason ||
+        'Testes diagnósticos A/B/C bloqueados em produção/preview ou sem ENABLE_MP_DIAGNOSTIC_TESTS=true.',
+    );
+  }
+}
+
+/**
+ * Teste A:
+ * - payload normal completo;
+ * - payment_method_id=master;
+ * - issuer_id somente quando retornado pelo Brick (sem fallback hardcoded);
+ * - external_reference;
+ * - notification_url;
+ * - idempotency no requestOptions/header correto.
+ */
+export function buildVariationAPayload(
+  params: DiagnosticVariationParams,
+): DiagnosticVariationCallData {
+  const idempotencyKey = crypto.randomUUID();
+
+  // Validate issuer strictly from Brick
+  const rawIssuer = params.brickIssuerId;
+  const parsedIssuer =
+    rawIssuer !== undefined && rawIssuer !== null && rawIssuer !== ''
+      ? Number(rawIssuer)
+      : undefined;
+  const validIssuerId =
+    parsedIssuer !== undefined &&
+    Number.isInteger(parsedIssuer) &&
+    parsedIssuer > 0 &&
+    Number.isFinite(parsedIssuer)
+      ? parsedIssuer
+      : undefined;
+
+  const body: Record<string, unknown> = {
+    transaction_amount: Number(params.canonicalAmount.toFixed(2)),
+    description: `Consulta Veicular - Diagnostico Variacao A`,
+    payment_method_id: 'master',
+    token: params.token,
+    installments: Number(params.installments) || 1,
+    payer: {
+      email: params.userEmail.trim().toLowerCase(),
+      identification: {
+        type: 'CPF',
+        number: params.normalizedCpf,
+      },
+    },
+    external_reference: params.consultationId,
+    metadata: {
+      consultation_id: params.consultationId,
+      flow_id: params.flowId,
+      diagnostic_variation: 'A',
+    },
+  };
+
+  if (validIssuerId) {
+    body.issuer_id = validIssuerId;
+  }
+
+  if (params.notificationUrl && params.notificationUrl.startsWith('https://')) {
+    body.notification_url = params.notificationUrl;
+  }
+
+  return {
+    body,
+    requestOptions: {
+      idempotencyKey,
+    },
+    idempotencyKey,
+  };
+}
+
+/**
+ * Teste B:
+ * - payload mínimo;
+ * - sem issuer_id;
+ * - sem external_reference;
+ * - sem notification_url;
+ * - mesma estrutura correta do SDK.
+ * Usar somente local development e nunca como fallback.
+ */
+export function buildVariationBPayload(
+  params: DiagnosticVariationParams,
+): DiagnosticVariationCallData {
+  const idempotencyKey = crypto.randomUUID();
+
+  const body: Record<string, unknown> = {
+    transaction_amount: Number(params.canonicalAmount.toFixed(2)),
+    token: params.token,
+    installments: Number(params.installments) || 1,
+    payment_method_id: 'master',
+    payer: {
+      email: params.userEmail.trim().toLowerCase(),
+      identification: {
+        type: 'CPF',
+        number: params.normalizedCpf,
+      },
+    },
+  };
+
+  return {
+    body,
+    requestOptions: {
+      idempotencyKey,
+    },
+    idempotencyKey,
+  };
+}
+
+/**
+ * Teste C:
+ * - payload completo sem issuer_id;
+ * - todos os demais campos válidos.
+ * Usar somente local development e nunca como fallback.
+ */
+export function buildVariationCPayload(
+  params: DiagnosticVariationParams,
+): DiagnosticVariationCallData {
+  const idempotencyKey = crypto.randomUUID();
+
+  const body: Record<string, unknown> = {
+    transaction_amount: Number(params.canonicalAmount.toFixed(2)),
+    description: `Consulta Veicular - Diagnostico Variacao C`,
+    payment_method_id: 'master',
+    token: params.token,
+    installments: Number(params.installments) || 1,
+    payer: {
+      email: params.userEmail.trim().toLowerCase(),
+      identification: {
+        type: 'CPF',
+        number: params.normalizedCpf,
+      },
+    },
+    external_reference: params.consultationId,
+    metadata: {
+      consultation_id: params.consultationId,
+      flow_id: params.flowId,
+      diagnostic_variation: 'C',
+    },
+  };
+
+  if (params.notificationUrl && params.notificationUrl.startsWith('https://')) {
+    body.notification_url = params.notificationUrl;
+  }
+
+  return {
+    body,
+    requestOptions: {
+      idempotencyKey,
+    },
+    idempotencyKey,
+  };
+}

@@ -659,7 +659,11 @@ export function PaymentBrick({
 
       {/* Security Note Footer */}
       <div className="mt-4 pt-3 border-t border-zinc-800/60">
-        <PaymentSecurityNotice />
+        <PaymentSecurityNotice
+          isTestMode={
+            preference.publicKey.startsWith('TEST-') || process.env.NODE_ENV === 'development'
+          }
+        />
       </div>
     </div>
   );

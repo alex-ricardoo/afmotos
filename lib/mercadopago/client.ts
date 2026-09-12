@@ -21,13 +21,18 @@ export function getMercadoPagoWebhookSecret(): string | null {
 
 export function getMercadoPagoWebhookUrl(): string | null {
   const customUrl = process.env.MERCADO_PAGO_WEBHOOK_URL || process.env.MP_WEBHOOK_URL;
-  if (customUrl && customUrl.startsWith('https://')) {
+  if (
+    customUrl &&
+    customUrl.startsWith('https://') &&
+    !customUrl.includes('localhost') &&
+    !customUrl.includes('127.0.0.1')
+  ) {
     return customUrl;
   }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
   if (appUrl) {
     const base = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
-    if (base.startsWith('https://')) {
+    if (base.startsWith('https://') && !base.includes('localhost') && !base.includes('127.0.0.1')) {
       return `${base.replace(/\/$/, '')}/api/webhooks/mercadopago`;
     }
   }

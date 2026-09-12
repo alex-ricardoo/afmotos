@@ -269,3 +269,260 @@ describe('Credential Fingerprinting & Safe Environment Validation (Section D & E
     }
   });
 });
+
+describe('Issuer ID Handling & Anti-Hardcoded Verification (Task 7)', () => {
+  it('strictly prohibits hardcoded issuer_id (e.g. 12749) when Brick does not return an issuer', () => {
+    const rawIssuer = undefined;
+    const parsedIssuer =
+      rawIssuer !== undefined && rawIssuer !== null && rawIssuer !== ''
+        ? Number(rawIssuer)
+        : undefined;
+    const validIssuerId =
+      parsedIssuer !== undefined &&
+      Number.isInteger(parsedIssuer) &&
+      parsedIssuer > 0 &&
+      Number.isFinite(parsedIssuer)
+        ? parsedIssuer
+        : undefined;
+
+    const payload: Record<string, unknown> = {
+      transaction_amount: 49.99,
+      payment_method_id: 'master',
+      token: 'tok_card_sample',
+    };
+
+    if (validIssuerId) {
+      payload.issuer_id = validIssuerId;
+    }
+
+    const cleaned = cleanPayload(payload);
+
+    assert.equal('issuer_id' in cleaned, false);
+    assert.notEqual(cleaned.issuer_id, 12749);
+    assert.notEqual(cleaned.issuer_id, '12749');
+  });
+
+  it('includes issuer_id dynamically only when provided as a valid number by Brick', () => {
+    const rawIssuer: string | undefined = '24';
+    const parsedIssuer =
+      rawIssuer !== undefined && rawIssuer !== null && rawIssuer !== ''
+        ? Number(rawIssuer)
+        : undefined;
+    const validIssuerId =
+      parsedIssuer !== undefined &&
+      Number.isInteger(parsedIssuer) &&
+      parsedIssuer > 0 &&
+      Number.isFinite(parsedIssuer)
+        ? parsedIssuer
+        : undefined;
+
+    const payload: Record<string, unknown> = {
+      transaction_amount: 49.99,
+      payment_method_id: 'master',
+      token: 'tok_card_sample',
+    };
+
+    if (validIssuerId) {
+      payload.issuer_id = validIssuerId;
+    }
+
+    const cleaned = cleanPayload(payload);
+
+    assert.equal(cleaned.issuer_id, 24);
+    assert.equal(typeof cleaned.issuer_id, 'number');
+  });
+});
+
+describe('Diagnostic Variations A, B, C & Security Gates (Tasks 8 & 9)', () => {
+  const {
+    buildVariationAPayload,
+    buildVariationBPayload,
+    buildVariationCPayload,
+    isDiagnosticTestsAllowed,
+    assertDiagnosticTestsAllowed,
+  } = require('../diagnostic.ts');
+  const { getMercadoPagoWebhookUrl } = require('../client.ts');
+
+  it('Variation A builds complete payload with idempotency key and dynamic issuer', () => {
+    const params = {
+      canonicalAmount: 49.99,
+      token: 'tok_var_a_123',
+      installments: 1,
+      userEmail: 'cliente@teste.com',
+      normalizedCpf: '12345678909',
+      flowId: 'flow-a-1',
+      consultationId: 'cons-a-1',
+      brickIssuerId: 310,
+      notificationUrl: 'https://afmotos.vercel.app/api/webhooks/mercadopago',
+    };
+
+    const result = buildVariationAPayload(params);
+
+    assert.ok(result.body);
+    assert.equal(result.body.payment_method_id, 'master');
+    assert.equal(result.body.token, 'tok_var_a_123');
+    assert.equal(result.body.issuer_id, 310);
+    assert.equal(result.body.external_reference, 'cons-a-1');
+    assert.equal(
+      result.body.notification_url,
+      'https://afmotos.vercel.app/api/webhooks/mercadopago',
+    );
+    assert.ok(result.requestOptions?.idempotencyKey);
+    assert.equal(result.idempotencyKey, result.requestOptions?.idempotencyKey);
+  });
+
+  it('Variation B builds minimal payload without issuer, external_reference, or notification_url', () => {
+    const params = {
+      canonicalAmount: 49.99,
+      token: 'tok_var_b_456',
+      installments: 1,
+      userEmail: 'cliente@teste.com',
+      normalizedCpf: '12345678909',
+      flowId: 'flow-b-1',
+      consultationId: 'cons-b-1',
+      brickIssuerId: 310,
+      notificationUrl: 'https://afmotos.vercel.app/api/webhooks/mercadopago',
+    };
+
+    const result = buildVariationBPayload(params);
+
+    assert.ok(result.body);
+    assert.equal(result.body.payment_method_id, 'master');
+    assert.equal(result.body.token, 'tok_var_b_456');
+    assert.equal('issuer_id' in result.body, false);
+    assert.equal('external_reference' in result.body, false);
+    assert.equal('notification_url' in result.body, false);
+    assert.ok(result.requestOptions?.idempotencyKey);
+  });
+
+  it('Variation C builds complete payload without issuer_id', () => {
+    const params = {
+      canonicalAmount: 49.99,
+      token: 'tok_var_c_789',
+      installments: 1,
+      userEmail: 'cliente@teste.com',
+      normalizedCpf: '12345678909',
+      flowId: 'flow-c-1',
+      consultationId: 'cons-c-1',
+      brickIssuerId: 310,
+      notificationUrl: 'https://afmotos.vercel.app/api/webhooks/mercadopago',
+    };
+
+    const result = buildVariationCPayload(params);
+
+    assert.ok(result.body);
+    assert.equal(result.body.payment_method_id, 'master');
+    assert.equal(result.body.token, 'tok_var_c_789');
+    assert.equal('issuer_id' in result.body, false);
+    assert.equal(result.body.external_reference, 'cons-c-1');
+    assert.equal(
+      result.body.notification_url,
+      'https://afmotos.vercel.app/api/webhooks/mercadopago',
+    );
+    assert.ok(result.requestOptions?.idempotencyKey);
+  });
+
+  it('each test variation generates a distinct new idempotency key', () => {
+    const params = {
+      canonicalAmount: 49.99,
+      token: 'tok_test',
+      installments: 1,
+      userEmail: 'a@b.com',
+      normalizedCpf: '12345678909',
+      flowId: 'f1',
+      consultationId: 'c1',
+    };
+
+    const call1 = buildVariationAPayload(params);
+    const call2 = buildVariationAPayload(params);
+
+    assert.notEqual(
+      call1.requestOptions?.idempotencyKey,
+      call2.requestOptions?.idempotencyKey,
+    );
+  });
+
+  it('strictly blocks diagnostic variations in Vercel Production', () => {
+    const origVercel = process.env.VERCEL_ENV;
+    const origNode = process.env.NODE_ENV;
+    const origFlag = process.env.ENABLE_MP_DIAGNOSTIC_TESTS;
+
+    try {
+      setEnv('VERCEL_ENV', 'production');
+      setEnv('NODE_ENV', 'development');
+      setEnv('ENABLE_MP_DIAGNOSTIC_TESTS', 'true');
+
+      const gate = isDiagnosticTestsAllowed();
+      assert.equal(gate.allowed, false);
+      assert.throws(() => assertDiagnosticTestsAllowed(), /Vercel Production/);
+    } finally {
+      setEnv('VERCEL_ENV', origVercel);
+      setEnv('NODE_ENV', origNode);
+      setEnv('ENABLE_MP_DIAGNOSTIC_TESTS', origFlag);
+    }
+  });
+
+  it('strictly blocks diagnostic variations in Vercel Preview', () => {
+    const origVercel = process.env.VERCEL_ENV;
+    const origNode = process.env.NODE_ENV;
+    const origFlag = process.env.ENABLE_MP_DIAGNOSTIC_TESTS;
+
+    try {
+      setEnv('VERCEL_ENV', 'preview');
+      setEnv('NODE_ENV', 'development');
+      setEnv('ENABLE_MP_DIAGNOSTIC_TESTS', 'true');
+
+      const gate = isDiagnosticTestsAllowed();
+      assert.equal(gate.allowed, false);
+      assert.throws(() => assertDiagnosticTestsAllowed(), /Vercel Preview/);
+    } finally {
+      setEnv('VERCEL_ENV', origVercel);
+      setEnv('NODE_ENV', origNode);
+      setEnv('ENABLE_MP_DIAGNOSTIC_TESTS', origFlag);
+    }
+  });
+
+  it('strictly blocks diagnostic variations when ENABLE_MP_DIAGNOSTIC_TESTS is false or unset', () => {
+    const origVercel = process.env.VERCEL_ENV;
+    const origNode = process.env.NODE_ENV;
+    const origFlag = process.env.ENABLE_MP_DIAGNOSTIC_TESTS;
+
+    try {
+      setEnv('VERCEL_ENV', undefined);
+      setEnv('NODE_ENV', 'development');
+      setEnv('ENABLE_MP_DIAGNOSTIC_TESTS', undefined);
+
+      const gate = isDiagnosticTestsAllowed();
+      assert.equal(gate.allowed, false);
+      assert.throws(() => assertDiagnosticTestsAllowed(), /ENABLE_MP_DIAGNOSTIC_TESTS/);
+    } finally {
+      setEnv('VERCEL_ENV', origVercel);
+      setEnv('NODE_ENV', origNode);
+      setEnv('ENABLE_MP_DIAGNOSTIC_TESTS', origFlag);
+    }
+  });
+
+  it('rejects localhost or http in getMercadoPagoWebhookUrl (Task 12)', () => {
+    const origCustom = process.env.MERCADO_PAGO_WEBHOOK_URL;
+    const origApp = process.env.NEXT_PUBLIC_APP_URL;
+
+    try {
+      setEnv('MERCADO_PAGO_WEBHOOK_URL', 'http://localhost:3000/api/webhooks/mercadopago');
+      setEnv('NEXT_PUBLIC_APP_URL', 'http://localhost:3000');
+      assert.equal(getMercadoPagoWebhookUrl(), null);
+
+      setEnv('MERCADO_PAGO_WEBHOOK_URL', 'https://localhost/api/webhooks/mercadopago');
+      assert.equal(getMercadoPagoWebhookUrl(), null);
+
+      setEnv('MERCADO_PAGO_WEBHOOK_URL', 'https://afmotos.vercel.app/api/webhooks/mercadopago');
+      assert.equal(
+        getMercadoPagoWebhookUrl(),
+        'https://afmotos.vercel.app/api/webhooks/mercadopago',
+      );
+    } finally {
+      setEnv('MERCADO_PAGO_WEBHOOK_URL', origCustom);
+      setEnv('NEXT_PUBLIC_APP_URL', origApp);
+    }
+  });
+});
+
