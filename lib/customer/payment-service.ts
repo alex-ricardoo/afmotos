@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import {
   findExistingConsultation,
@@ -88,8 +89,10 @@ export async function confirmPayment(
     .eq('id', consultation.id);
 
   // 4. Vehicle Plate Lookup (Cache-first via findExistingConsultation / executeVehiclePlateLookup)
+  // We use the adminClient because vehicle_plate_consultations table has RLS policies restricted to admin users
   try {
-    const cached = await findExistingConsultation(consultation.plate_normalized, supabase);
+    const adminClient = createAdminClient();
+    const cached = await findExistingConsultation(consultation.plate_normalized, adminClient);
 
     if (cached && cached.status === 'COMPLETED' && cached.raw_response) {
       await supabase
@@ -110,7 +113,7 @@ export async function confirmPayment(
           userId: user.id,
           confirmedPlate: consultation.plate_normalized,
         },
-        supabase
+        adminClient
       );
 
       if (lookupResult.success && lookupResult.record) {
