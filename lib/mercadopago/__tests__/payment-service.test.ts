@@ -6,6 +6,11 @@ import {
   webhookPayloadSchema,
   adminRefundRetrySchema,
   adminReconcileSchema,
+  normalizeCpf,
+  identificationSchema,
+  cardPaymentFormDataSchema,
+  pixPaymentFormDataSchema,
+  ticketPaymentFormDataSchema,
 } from '../schemas.ts';
 
 describe('Mercado Pago Validation Schemas & Business Rules', () => {
@@ -169,6 +174,119 @@ describe('Mercado Pago Validation Schemas & Business Rules', () => {
       const valid = { mpPaymentId: '987654321' };
       const res = adminReconcileSchema.safeParse(valid);
       assert.equal(res.success, true);
+    });
+  });
+
+  describe('CPF Normalization & Identification Enforcement', () => {
+    it('normalizeCpf extracts only numeric digits', () => {
+      assert.equal(normalizeCpf('123.456.789-09'), '12345678909');
+      assert.equal(normalizeCpf(' 123 456 789 09 '), '12345678909');
+      assert.equal(normalizeCpf(null), '');
+      assert.equal(normalizeCpf(undefined), '');
+      assert.equal(normalizeCpf(''), '');
+    });
+
+    it('identificationSchema enforces type CPF and normalizes number', () => {
+      const input = {
+        type: '', // Empty type from client
+        number: '123.456.789-09',
+      };
+      const res = identificationSchema.safeParse(input);
+      assert.equal(res.success, true);
+      if (res.success) {
+        assert.equal(res.data.type, 'CPF');
+        assert.equal(res.data.number, '12345678909');
+      }
+    });
+
+    it('identificationSchema defaults type to CPF when omitted', () => {
+      const input = {
+        number: '12345678909',
+      };
+      const res = identificationSchema.safeParse(input);
+      assert.equal(res.success, true);
+      if (res.success) {
+        assert.equal(res.data.type, 'CPF');
+        assert.equal(res.data.number, '12345678909');
+      }
+    });
+
+    it('identificationSchema rejects CPF with invalid length', () => {
+      const short = { number: '123456789' };
+      const resShort = identificationSchema.safeParse(short);
+      assert.equal(resShort.success, false);
+
+      const long = { number: '12345678901234' };
+      const resLong = identificationSchema.safeParse(long);
+      assert.equal(resLong.success, false);
+    });
+  });
+
+  describe('Discriminated Payment Schemas', () => {
+    it('cardPaymentFormDataSchema requires token, email, and 11-digit CPF', () => {
+      const validCard = {
+        payment_method_id: 'master',
+        token: 'card_token_abc_123',
+        installments: 1,
+        issuer_id: '24',
+        payer: {
+          email: 'cartao@teste.com',
+          identification: {
+            number: '12345678909',
+          },
+        },
+      };
+
+      const res = cardPaymentFormDataSchema.safeParse(validCard);
+      assert.equal(res.success, true);
+      if (res.success) {
+        assert.equal(res.data.payer.identification.type, 'CPF');
+        assert.equal(res.data.payer.identification.number, '12345678909');
+        assert.equal(res.data.token, 'card_token_abc_123');
+        assert.equal(res.data.issuer_id, '24');
+      }
+    });
+
+    it('cardPaymentFormDataSchema rejects when token is missing', () => {
+      const invalidCard = {
+        payment_method_id: 'master',
+        payer: {
+          email: 'cartao@teste.com',
+          identification: {
+            number: '12345678909',
+          },
+        },
+      };
+
+      const res = cardPaymentFormDataSchema.safeParse(invalidCard);
+      assert.equal(res.success, false);
+    });
+
+    it('pixPaymentFormDataSchema allows submission without card token', () => {
+      const validPix = {
+        payment_method_id: 'pix',
+        payer: {
+          email: 'pix@teste.com',
+        },
+      };
+
+      const res = pixPaymentFormDataSchema.safeParse(validPix);
+      assert.equal(res.success, true);
+    });
+
+    it('ticketPaymentFormDataSchema requires complete address', () => {
+      const invalidTicket = {
+        payment_method_id: 'bolbradesco',
+        payer: {
+          email: 'boleto@teste.com',
+          identification: {
+            number: '12345678909',
+          },
+        },
+      };
+
+      const res = ticketPaymentFormDataSchema.safeParse(invalidTicket);
+      assert.equal(res.success, false);
     });
   });
 });

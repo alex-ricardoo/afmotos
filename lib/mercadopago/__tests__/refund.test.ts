@@ -8,9 +8,7 @@ describe('Automatic Refund Workflow & State Logic', () => {
     const hasVehicleData: boolean = false;
 
     const isRefundEligible =
-      paymentStatus === 'approved' &&
-      consultationStatus !== 'completed' &&
-      !hasVehicleData;
+      paymentStatus === 'approved' && consultationStatus !== 'completed' && !hasVehicleData;
 
     assert.equal(isRefundEligible, true);
   });
@@ -21,9 +19,7 @@ describe('Automatic Refund Workflow & State Logic', () => {
     const hasVehicleData: boolean = true;
 
     const isRefundEligible =
-      paymentStatus === 'approved' &&
-      consultationStatus !== 'completed' &&
-      !hasVehicleData;
+      paymentStatus === 'approved' && consultationStatus !== 'completed' && !hasVehicleData;
 
     assert.equal(isRefundEligible, false);
   });
@@ -33,7 +29,7 @@ describe('Automatic Refund Workflow & State Logic', () => {
 
     function transitionRefundState(
       current: RefundState,
-      action: 'initiate' | 'success' | 'fail'
+      action: 'initiate' | 'success' | 'fail',
     ): RefundState {
       switch (action) {
         case 'initiate':

@@ -12,6 +12,13 @@ import {
 import { brickPayerAddressSchema } from './schemas';
 import { createClient } from '@/lib/supabase/server';
 
+import {
+  paymentLogInfo,
+  paymentLogError,
+  maskEmail,
+  extractSafeError,
+} from '@/lib/observability/payment-logger';
+
 export async function createPaymentPreferenceAction(consultationId: string) {
   return await createPreferenceInternal(consultationId);
 }
@@ -19,8 +26,47 @@ export async function createPaymentPreferenceAction(consultationId: string) {
 export async function processBrickPaymentAction(
   consultationId: string,
   formData: BrickSubmitFormData,
+  clientFlowId?: string,
 ): Promise<ProcessBrickPaymentResult> {
-  return await processBrickPaymentInternal(consultationId, formData);
+  const startTime = Date.now();
+  const flowId = clientFlowId || crypto.randomUUID();
+
+  paymentLogInfo('payment.action_started', {
+    flowId,
+    consultationId,
+    paymentMethodId: formData?.payment_method_id,
+    tokenPresent: Boolean(formData?.token),
+    issuerProvided: Boolean(formData?.issuer_id),
+    installments: formData?.installments || 1,
+    cpfPresent: Boolean(formData?.payer?.identification?.number),
+    cpfLength: formData?.payer?.identification?.number?.replace(/\D/g, '')?.length || 0,
+    addressPresent: Boolean(formData?.payer?.address),
+    userEmailMasked: maskEmail(formData?.payer?.email),
+  });
+
+  try {
+    const result = await processBrickPaymentInternal(consultationId, formData, flowId);
+
+    paymentLogInfo('payment.action_completed', {
+      flowId,
+      consultationId,
+      status: result.status,
+      success: result.success,
+      mercadoPagoPaymentId: result.paymentId,
+      durationMs: Date.now() - startTime,
+    });
+
+    return result;
+  } catch (err: unknown) {
+    const safeErr = extractSafeError(err);
+    paymentLogError('payment.action_failed', {
+      flowId,
+      consultationId,
+      ...safeErr,
+      durationMs: Date.now() - startTime,
+    });
+    throw err;
+  }
 }
 
 /**

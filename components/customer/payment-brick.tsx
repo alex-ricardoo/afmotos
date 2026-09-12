@@ -107,9 +107,22 @@ export function PaymentBrick({
     script.src = 'https://sdk.mercadopago.com/js/v2';
     script.async = true;
     script.onload = () => {
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[MP Brick]', {
+          event: 'brick.sdk_initialized',
+          consultationId: preference.consultationId,
+        });
+      }
       setIsSdkLoaded(true);
     };
     script.onerror = () => {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[MP Brick]', {
+          event: 'brick.critical_error',
+          consultationId: preference.consultationId,
+          errorMessage: 'Failed to load Mercado Pago SDK script',
+        });
+      }
       setBrickError('Falha ao carregar o módulo seguro de pagamentos do Mercado Pago.');
     };
 
@@ -120,7 +133,7 @@ export function PaymentBrick({
         script.parentNode.removeChild(script);
       }
     };
-  }, []);
+  }, [preference.consultationId]);
 
   // 2. Initialize Payment Brick when SDK is ready
   useEffect(() => {
@@ -131,6 +144,15 @@ export function PaymentBrick({
     async function initBrick() {
       try {
         if (!window.MercadoPago) return;
+
+        if (process.env.NODE_ENV === 'development') {
+          console.info('[MP Brick]', {
+            event: 'brick.initialization_started',
+            consultationId: preference.consultationId,
+            hasPublicKey: Boolean(preference.publicKey),
+          });
+        }
+
         const mp = new window.MercadoPago(preference.publicKey, {
           locale: 'pt-BR',
         });
@@ -193,9 +215,25 @@ export function PaymentBrick({
           callbacks: {
             onReady: () => {
               isBrickReadyRef.current = true;
+              if (process.env.NODE_ENV === 'development') {
+                console.info('[MP Brick]', {
+                  event: 'brick.ready',
+                  consultationId: preference.consultationId,
+                });
+              }
               if (isMounted) setIsBrickReady(true);
             },
             onSubmit: ({ formData }: { formData: BrickSubmitFormData }) => {
+              if (process.env.NODE_ENV === 'development') {
+                console.info('[MP Brick]', {
+                  event: 'brick.submit_started',
+                  consultationId: preference.consultationId,
+                  paymentMethodPresent: Boolean(formData?.payment_method_id),
+                  tokenPresent: Boolean(formData?.token),
+                  issuerPresent: Boolean(formData?.issuer_id),
+                  installments: formData?.installments || 1,
+                });
+              }
               return new Promise<void>((resolve, reject) => {
                 startTransition(async () => {
                   try {
@@ -250,6 +288,15 @@ export function PaymentBrick({
                       formData,
                     );
 
+                    if (process.env.NODE_ENV === 'development') {
+                      console.info('[MP Brick]', {
+                        event: 'brick.submit_received',
+                        consultationId: preference.consultationId,
+                        success: result.success,
+                        status: result.status,
+                      });
+                    }
+
                     if (!result.success) {
                       if (result.status === 'lookup_failed_refunded') {
                         onLookupFailedRefunded?.(result.error);
@@ -257,7 +304,10 @@ export function PaymentBrick({
                         return;
                       }
 
-                      toast.error(result.error || 'Pagamento não aprovado. Tente outro meio.');
+                      toast.error(
+                        result.error ||
+                          'Não foi possível processar o pagamento agora. Revise os dados informados e tente novamente.',
+                      );
                       reject();
                       return;
                     }
@@ -274,7 +324,9 @@ export function PaymentBrick({
                     resolve();
                   } catch (err: unknown) {
                     const errorMsg =
-                      err instanceof Error ? err.message : 'Erro ao processar pagamento.';
+                      err instanceof Error
+                        ? err.message
+                        : 'Não foi possível processar o pagamento agora. Revise os dados informados e tente novamente.';
                     toast.error(errorMsg);
                     reject();
                   }
@@ -283,16 +335,33 @@ export function PaymentBrick({
             },
             onError: (error: unknown) => {
               const err = error as { cause?: string; message?: string; type?: string };
+              const isNonCritical =
+                err?.type === 'non_critical' ||
+                err?.cause === 'get_address_data_failed' ||
+                err?.cause === 'missing_payment_information';
+
               if (process.env.NODE_ENV === 'development') {
-                console.warn('[MercadoPago Brick]:', {
-                  cause: err?.cause,
-                  type: err?.type,
-                  message: err?.message,
-                });
+                if (isNonCritical) {
+                  console.info('[MP Brick]', {
+                    event: 'brick.non_critical_error',
+                    consultationId: preference.consultationId,
+                    errorCause: err?.cause,
+                    errorType: err?.type,
+                    errorMessage: err?.message,
+                  });
+                } else {
+                  console.warn('[MP Brick]', {
+                    event: 'brick.critical_error',
+                    consultationId: preference.consultationId,
+                    errorCause: err?.cause,
+                    errorType: err?.type,
+                    errorMessage: err?.message,
+                  });
+                }
               }
 
               // Non-critical events like get_address_data_failed must NOT tear down the Brick
-              if (err?.type === 'non_critical' || err?.cause === 'get_address_data_failed') {
+              if (isNonCritical) {
                 if (err?.cause === 'get_address_data_failed') {
                   setShowAddressFallback(true);
                 }
@@ -324,8 +393,18 @@ export function PaymentBrick({
 
     return () => {
       isMounted = false;
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[MP Brick]', {
+          event: 'brick.unmounted',
+          consultationId: preference.consultationId,
+        });
+      }
       if (brickControllerRef.current?.unmount) {
-        brickControllerRef.current.unmount();
+        try {
+          brickControllerRef.current.unmount();
+        } catch {
+          // ignore unmount errors on teardown
+        }
       }
     };
   }, [

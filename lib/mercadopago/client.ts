@@ -11,33 +11,24 @@ export function getMercadoPagoAccessToken(): string | null {
 
 export function getMercadoPagoPublicKey(): string | null {
   return (
-    process.env.NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY ||
-    process.env.NEXT_PUBLIC_MP_PUBLIC_KEY ||
-    null
+    process.env.NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY || process.env.NEXT_PUBLIC_MP_PUBLIC_KEY || null
   );
 }
 
 export function getMercadoPagoWebhookSecret(): string | null {
-  return (
-    process.env.MERCADO_PAGO_WEBHOOK_SECRET ||
-    process.env.MP_WEBHOOK_SECRET ||
-    null
-  );
+  return process.env.MERCADO_PAGO_WEBHOOK_SECRET || process.env.MP_WEBHOOK_SECRET || null;
 }
 
 export function isDevPaymentSimulationEnabled(): boolean {
   return (
-    process.env.NODE_ENV === 'development' &&
-    process.env.ENABLE_DEV_PAYMENT_SIMULATION === 'true'
+    process.env.NODE_ENV === 'development' && process.env.ENABLE_DEV_PAYMENT_SIMULATION === 'true'
   );
 }
 
 export function getMercadoPagoClient(): MercadoPagoConfig {
   const token = getMercadoPagoAccessToken();
   if (!token) {
-    throw new Error(
-      'Mercado Pago Access Token não configurado. Defina MERCADO_PAGO_ACCESS_TOKEN.'
-    );
+    throw new Error('Mercado Pago Access Token não configurado. Defina MERCADO_PAGO_ACCESS_TOKEN.');
   }
 
   if (!mpClientInstance) {

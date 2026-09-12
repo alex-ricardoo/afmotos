@@ -24,6 +24,7 @@ export interface PaymentTransaction {
   user_id: string;
   mp_payment_id: string | null;
   mp_preference_id?: string | null;
+  idempotency_key?: string | null;
   status: MercadoPagoPaymentStatus;
   status_detail?: string | null;
   payment_method_id?: string | null;
@@ -39,6 +40,8 @@ export interface PaymentTransaction {
   refunded_at?: string | null;
   refund_reason?: string | null;
   mp_refund_id?: string | null;
+  failure_code?: string | null;
+  failure_message_safe?: string | null;
   raw_response?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
