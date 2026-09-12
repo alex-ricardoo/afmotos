@@ -74,6 +74,62 @@ describe('Mercado Pago Validation Schemas & Business Rules', () => {
       const res = brickPaymentSubmitSchema.safeParse(invalid);
       assert.equal(res.success, false);
     });
+
+    it('accepts valid Boleto submission with complete address', () => {
+      const valid = {
+        consultationId: '123e4567-e89b-12d3-a456-426614174000',
+        formData: {
+          payment_method_id: 'bolbradesco',
+          payer: {
+            email: 'boleto@teste.com',
+            first_name: 'João',
+            last_name: 'Silva',
+            identification: {
+              type: 'CPF',
+              number: '12345678909',
+            },
+            address: {
+              zip_code: '50010-000',
+              street_name: 'Rua da Aurora',
+              street_number: '123',
+              neighborhood: 'Boa Vista',
+              city: 'Recife',
+              federal_unit: 'pe',
+            },
+          },
+        },
+      };
+
+      const res = brickPaymentSubmitSchema.safeParse(valid);
+      assert.equal(res.success, true);
+      if (res.success) {
+        assert.equal(res.data.formData.payer.address?.zip_code, '50010000');
+        assert.equal(res.data.formData.payer.address?.federal_unit, 'PE');
+      }
+    });
+
+    it('rejects Boleto address with invalid CEP length', () => {
+      const invalid = {
+        consultationId: '123e4567-e89b-12d3-a456-426614174000',
+        formData: {
+          payment_method_id: 'bolbradesco',
+          payer: {
+            email: 'boleto@teste.com',
+            address: {
+              zip_code: '123',
+              street_name: 'Rua',
+              street_number: '1',
+              neighborhood: 'Centro',
+              city: 'Recife',
+              federal_unit: 'PE',
+            },
+          },
+        },
+      };
+
+      const res = brickPaymentSubmitSchema.safeParse(invalid);
+      assert.equal(res.success, false);
+    });
   });
 
   describe('webhookPayloadSchema', () => {

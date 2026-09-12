@@ -25,7 +25,7 @@ export function VehicleConsultationOrderSummary({
   return (
     <section
       aria-label="Resumo da consulta veicular"
-      className={`rounded-2xl bg-zinc-900/40 p-5 sm:p-6 border border-zinc-800/40 ${className}`}
+      className={`rounded-2xl bg-white/[0.02] p-5 sm:p-6 border border-white/10 ${className}`}
     >
       <div className="space-y-4">
         {/* Header: Title and Type */}

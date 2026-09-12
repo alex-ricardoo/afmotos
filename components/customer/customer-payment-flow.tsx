@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentBrick } from './payment-brick';
 import { PixPaymentDisplay } from './pix-payment-display';
+import { BoletoPaymentDisplay } from './boleto-payment-display';
 import { PaymentStatusBanner } from './payment-status-banner';
 import { AutoRefundNotice } from './auto-refund-notice';
 import { PaymentSimulation } from './payment-simulation';
@@ -36,9 +37,10 @@ export function CustomerPaymentFlow({
   allowDevSimulation = false,
 }: CustomerPaymentFlowProps) {
   const router = useRouter();
-  const [asyncPixData, setAsyncPixData] = useState<{
+  const [asyncPaymentData, setAsyncPaymentData] = useState<{
     qrCode?: string;
     qrCodeBase64?: string;
+    ticketUrl?: string;
     paymentId?: string;
   } | null>(null);
   const [currentStatus, setCurrentStatus] = useState(initialConsultation.status);
@@ -71,29 +73,30 @@ export function CustomerPaymentFlow({
             router.push(`/cliente/consultas/${preference.consultationId}`);
           } else if (res.data.autoRefundAttempted) {
             toast.info('Estorno automático registrado.');
-          } else if (res.data.qrCode && !asyncPixData) {
-            setAsyncPixData({
-              qrCode: res.data.qrCode,
-              qrCodeBase64: res.data.qrCodeBase64,
-            });
+          } else if (res.data.qrCode && !asyncPaymentData?.qrCode) {
+            setAsyncPaymentData((prev) => ({
+              ...prev,
+              qrCode: res.data?.qrCode,
+              qrCodeBase64: res.data?.qrCodeBase64,
+            }));
           }
         }
       } catch (err) {
         console.error('Error checking payment status:', err);
       }
     });
-  }, [asyncPixData, preference.consultationId, router]);
+  }, [asyncPaymentData, preference.consultationId, router]);
 
   // Poll status every 8s if async payment is pending
   useEffect(() => {
-    if (isCompleted || hasAutoRefund || (!asyncPixData && paymentStatus !== 'paid')) return;
+    if (isCompleted || hasAutoRefund || (!asyncPaymentData && paymentStatus !== 'paid')) return;
 
     const interval = setInterval(() => {
       checkStatus();
     }, 8000);
 
     return () => clearInterval(interval);
-  }, [asyncPixData, isCompleted, hasAutoRefund, paymentStatus, checkStatus]);
+  }, [asyncPaymentData, isCompleted, hasAutoRefund, paymentStatus, checkStatus]);
 
   // If already auto-refunded
   if (hasAutoRefund) {
@@ -112,7 +115,7 @@ export function CustomerPaymentFlow({
   // If already completed
   if (isCompleted) {
     return (
-      <div className="mx-auto max-w-lg text-center rounded-2xl bg-zinc-900/60 border border-emerald-500/30 p-8 shadow-xl">
+      <div className="mx-auto max-w-lg text-center rounded-2xl bg-white/[0.02] border border-emerald-500/30 p-8 shadow-xl">
         <CheckCircle2 className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-white mb-2">Consulta Concluída!</h2>
         <p className="text-sm text-zinc-300 mb-6">
@@ -164,7 +167,7 @@ export function CustomerPaymentFlow({
         {/* Right Column (Desktop) / Bottom Section (Mobile): Área de Pagamento */}
         <div className="lg:col-span-7 space-y-5 min-w-0">
           {/* Status banner if async payment is pending */}
-          {asyncPixData && (
+          {asyncPaymentData && (
             <PaymentStatusBanner
               status="pending"
               onRefresh={checkStatus}
@@ -172,24 +175,33 @@ export function CustomerPaymentFlow({
             />
           )}
 
-          {/* Async Pix QR Code view or Mercado Pago Payment Brick */}
-          {asyncPixData ? (
+          {/* Async Boleto Display */}
+          {asyncPaymentData?.ticketUrl ? (
+            <BoletoPaymentDisplay
+              ticketUrl={asyncPaymentData.ticketUrl}
+              onRefreshStatus={checkStatus}
+              isChecking={isCheckingStatus}
+            />
+          ) : asyncPaymentData?.qrCode ? (
+            /* Async Pix Display */
             <PixPaymentDisplay
-              qrCode={asyncPixData.qrCode}
-              qrCodeBase64={asyncPixData.qrCodeBase64}
+              qrCode={asyncPaymentData.qrCode}
+              qrCodeBase64={asyncPaymentData.qrCodeBase64}
               onRefreshStatus={checkStatus}
               isChecking={isCheckingStatus}
             />
           ) : (
+            /* Mercado Pago Payment Brick */
             <PaymentBrick
               preference={preference}
               onPaymentSuccess={() => {
                 setCurrentStatus('completed');
               }}
               onAsyncPaymentCreated={(result) => {
-                setAsyncPixData({
+                setAsyncPaymentData({
                   qrCode: result.qrCode,
                   qrCodeBase64: result.qrCodeBase64,
+                  ticketUrl: result.ticketUrl,
                   paymentId: result.paymentId,
                 });
               }}
@@ -218,7 +230,7 @@ export function CustomerPaymentFlow({
           </button>
 
           {showDevSimulation && (
-            <div className="mt-3 rounded-2xl border border-zinc-800/80 bg-zinc-950 p-5">
+            <div className="mt-3 rounded-2xl border border-white/10 bg-zinc-950 p-5">
               <p className="text-xs text-zinc-400 mb-4">
                 Esta seção só aparece quando <code>ENABLE_DEV_PAYMENT_SIMULATION=true</code> e{' '}
                 <code>NODE_ENV=development</code>.

@@ -15,7 +15,8 @@ export type MercadoPagoPaymentStatus =
 
 export type RefundStatus = 'none' | 'pending' | 'refunded' | 'failed';
 
-export type PaymentMethodType = 'credit_card' | 'debit_card' | 'bank_transfer' | 'ticket' | 'account_money';
+export type PaymentMethodType =
+  'credit_card' | 'debit_card' | 'bank_transfer' | 'ticket' | 'account_money';
 
 export interface PaymentTransaction {
   id: string;
@@ -79,6 +80,16 @@ export interface ConsultationAuditLog {
   created_at: string;
 }
 
+export interface BrickPayerAddress {
+  zip_code: string;
+  street_name: string;
+  street_number: string;
+  neighborhood: string;
+  city: string;
+  federal_unit: string;
+  complement?: string;
+}
+
 export interface PaymentPreferenceData {
   consultationId: string;
   plate: string;
@@ -86,6 +97,15 @@ export interface PaymentPreferenceData {
   publicKey: string;
   payerEmail: string;
   payerName?: string;
+  payerAddress?: {
+    zipCode?: string;
+    streetName?: string;
+    streetNumber?: string;
+    neighborhood?: string;
+    city?: string;
+    federalUnit?: string;
+    complement?: string;
+  };
 }
 
 export interface BrickSubmitFormData {
@@ -95,10 +115,13 @@ export interface BrickSubmitFormData {
   issuer_id?: string;
   payer: {
     email: string;
+    first_name?: string;
+    last_name?: string;
     identification?: {
       type: string;
       number: string;
     };
+    address?: BrickPayerAddress;
   };
 }
 

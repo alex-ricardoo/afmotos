@@ -28,11 +28,12 @@ export function VehicleConsultationBenefits({
     'Restrições judiciais e Renajud',
     'Débitos, multas e IPVA',
     'Acesso ao laudo no seu painel',
+    'E muito mais: mais de 30 checagens completas no laudo',
   ];
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <div className="rounded-2xl bg-zinc-900/40 p-5 sm:p-6 border border-zinc-800/40">
+      <div className="rounded-2xl bg-white/[0.02] p-5 sm:p-6 border border-white/10">
         <h3 className="text-sm font-bold tracking-tight text-white mb-3.5">Você receberá</h3>
 
         <ul className="space-y-2.5" role="list">

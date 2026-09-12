@@ -3,12 +3,17 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
-import { processBrickPaymentAction } from '@/lib/mercadopago/actions';
+import { Loader2, AlertCircle, ShieldCheck, MapPin, Search } from 'lucide-react';
+import {
+  processBrickPaymentAction,
+  lookupCepAction,
+  saveCustomerAddressAction,
+} from '@/lib/mercadopago/actions';
 import {
   type PaymentPreferenceData,
   type ProcessBrickPaymentResult,
   type BrickSubmitFormData,
+  type BrickPayerAddress,
 } from '@/lib/mercadopago/types';
 import { PaymentSecurityNotice } from './payment-security-notice';
 
@@ -64,6 +69,32 @@ export function PaymentBrick({
   const brickControllerRef = useRef<MercadoPagoBrickController | null>(null);
   const containerId = 'mercadopago-payment-brick-container';
 
+  // Address Fallback State (for Boleto if Mercado Pago postal lookup fails or requires manual completion)
+  const [showAddressFallback, setShowAddressFallback] = useState(false);
+  const [isSearchingCep, setIsSearchingCep] = useState(false);
+  const [saveAddressToProfile, setSaveAddressToProfile] = useState(true);
+  const [addressData, setAddressData] = useState<BrickPayerAddress>(() => ({
+    zip_code: preference.payerAddress?.zipCode || '',
+    street_name: preference.payerAddress?.streetName || '',
+    street_number: preference.payerAddress?.streetNumber || '',
+    neighborhood: preference.payerAddress?.neighborhood || '',
+    city: preference.payerAddress?.city || '',
+    federal_unit: preference.payerAddress?.federalUnit || '',
+    complement: preference.payerAddress?.complement || '',
+  }));
+
+  const addressDataRef = useRef(addressData);
+  const saveAddressToProfileRef = useRef(saveAddressToProfile);
+  const isBrickReadyRef = useRef(false);
+
+  useEffect(() => {
+    addressDataRef.current = addressData;
+  }, [addressData]);
+
+  useEffect(() => {
+    saveAddressToProfileRef.current = saveAddressToProfile;
+  }, [saveAddressToProfile]);
+
   const formattedTotal = currencyFormatter.format(preference.amount);
 
   // 1. Dynamically load Mercado Pago JS SDK v2
@@ -117,6 +148,19 @@ export function PaymentBrick({
             amount: preference.amount,
             payer: {
               email: preference.payerEmail,
+              ...(preference.payerAddress
+                ? {
+                    address: {
+                      zipCode: preference.payerAddress.zipCode,
+                      streetName: preference.payerAddress.streetName,
+                      streetNumber: preference.payerAddress.streetNumber,
+                      neighborhood: preference.payerAddress.neighborhood,
+                      city: preference.payerAddress.city,
+                      federalUnit: preference.payerAddress.federalUnit,
+                      complement: preference.payerAddress.complement,
+                    },
+                  }
+                : {}),
             },
           },
           customization: {
@@ -137,7 +181,6 @@ export function PaymentBrick({
                   baseColor: '#c9a44c',
                   baseColorFirstVariant: '#b38e3a',
                   baseColorSecondVariant: '#8f6d25',
-                  outlinePrimaryColor: '#c9a44c',
                   borderRadiusSmall: '8px',
                   borderRadiusMedium: '10px',
                   borderRadiusLarge: '12px',
@@ -149,12 +192,59 @@ export function PaymentBrick({
           },
           callbacks: {
             onReady: () => {
+              isBrickReadyRef.current = true;
               if (isMounted) setIsBrickReady(true);
             },
             onSubmit: ({ formData }: { formData: BrickSubmitFormData }) => {
               return new Promise<void>((resolve, reject) => {
                 startTransition(async () => {
                   try {
+                    // Merge fallback address if provided and not present in formData
+                    const isTicket =
+                      formData.payment_method_id.toLowerCase().includes('bol') ||
+                      formData.payment_method_id.toLowerCase().includes('ticket') ||
+                      formData.payment_method_id.toLowerCase() === 'pec';
+
+                    let finalAddress = formData.payer.address;
+                    const currentAddress = addressDataRef.current;
+
+                    if (
+                      isTicket &&
+                      (!finalAddress || !finalAddress.street_name || !finalAddress.city)
+                    ) {
+                      if (
+                        currentAddress.zip_code &&
+                        currentAddress.street_name &&
+                        currentAddress.city &&
+                        currentAddress.federal_unit
+                      ) {
+                        finalAddress = {
+                          zip_code: currentAddress.zip_code.replace(/\D/g, ''),
+                          street_name: currentAddress.street_name,
+                          street_number: currentAddress.street_number || 'S/N',
+                          neighborhood: currentAddress.neighborhood || 'Centro',
+                          city: currentAddress.city,
+                          federal_unit: currentAddress.federal_unit.toUpperCase(),
+                          complement: currentAddress.complement,
+                        };
+                        formData.payer.address = finalAddress;
+                      } else {
+                        setShowAddressFallback(true);
+                        toast.error(
+                          'Por favor, preencha seu endereço completo para emitir o boleto bancário.',
+                        );
+                        reject();
+                        return;
+                      }
+                    }
+
+                    // Optionally persist address to customer profile
+                    if (saveAddressToProfileRef.current && finalAddress && finalAddress.zip_code) {
+                      saveCustomerAddressAction(finalAddress).catch((err) => {
+                        console.warn('[saveCustomerAddressAction] silent notice:', err);
+                      });
+                    }
+
                     const result = await processBrickPaymentAction(
                       preference.consultationId,
                       formData,
@@ -192,8 +282,29 @@ export function PaymentBrick({
               });
             },
             onError: (error: unknown) => {
-              console.error('[MercadoPago Brick Error]:', error);
-              setBrickError('Ocorreu uma instabilidade no formulário de pagamento.');
+              const err = error as { cause?: string; message?: string; type?: string };
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('[MercadoPago Brick]:', {
+                  cause: err?.cause,
+                  type: err?.type,
+                  message: err?.message,
+                });
+              }
+
+              // Non-critical events like get_address_data_failed must NOT tear down the Brick
+              if (err?.type === 'non_critical' || err?.cause === 'get_address_data_failed') {
+                if (err?.cause === 'get_address_data_failed') {
+                  setShowAddressFallback(true);
+                }
+                return;
+              }
+
+              // Only genuine critical loading failures display error card
+              if (!isBrickReadyRef.current) {
+                setBrickError(
+                  'Não foi possível carregar as opções de pagamento agora. Tente novamente em instantes.',
+                );
+              }
             },
           },
         });
@@ -223,15 +334,44 @@ export function PaymentBrick({
     preference.amount,
     preference.consultationId,
     preference.payerEmail,
+    preference.payerAddress,
     router,
     onPaymentSuccess,
     onAsyncPaymentCreated,
     onLookupFailedRefunded,
   ]);
 
+  // CEP Auto Lookup Handler for Boleto
+  const handleCepLookup = async (cepInput: string) => {
+    const cleanCep = cepInput.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+
+    setIsSearchingCep(true);
+    try {
+      const res = await lookupCepAction(cleanCep);
+      if (res.success && res.data) {
+        setAddressData((prev) => ({
+          ...prev,
+          zip_code: cleanCep,
+          street_name: res.data?.street || prev.street_name,
+          neighborhood: res.data?.neighborhood || prev.neighborhood,
+          city: res.data?.city || prev.city,
+          federal_unit: res.data?.state || prev.federal_unit,
+        }));
+        toast.success('Endereço localizado!');
+      } else {
+        toast.info(res.error || 'Preencha o endereço manualmente.');
+      }
+    } catch {
+      toast.info('Preencha os dados de endereço manualmente.');
+    } finally {
+      setIsSearchingCep(false);
+    }
+  };
+
   return (
     <div
-      className={`relative w-full rounded-2xl bg-zinc-900/40 p-5 sm:p-6 border border-zinc-800/40 ${className}`}
+      className={`relative w-full rounded-2xl bg-white/[0.02] p-5 sm:p-6 border border-white/10 ${className}`}
     >
       {/* Header: Clean title & Total value */}
       <div className="flex items-start justify-between gap-4 pb-4 border-b border-zinc-800/60">
@@ -246,7 +386,7 @@ export function PaymentBrick({
             </span>
           </div>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Selecione o meio de pagamento para liberar seu laudo.
+            Selecione a forma de pagamento para liberar sua consulta.
           </p>
         </div>
 
@@ -269,9 +409,9 @@ export function PaymentBrick({
             <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
             <span>Carregando ambiente seguro do Mercado Pago...</span>
           </div>
-          <div className="h-12 w-full rounded-xl bg-zinc-800/50" />
-          <div className="h-12 w-full rounded-xl bg-zinc-800/30" />
-          <div className="h-12 w-full rounded-xl bg-zinc-800/30" />
+          <div className="h-12 w-full rounded-xl bg-zinc-800/40" />
+          <div className="h-12 w-full rounded-xl bg-zinc-800/20" />
+          <div className="h-12 w-full rounded-xl bg-zinc-800/20" />
         </div>
       )}
 
@@ -293,7 +433,7 @@ export function PaymentBrick({
         </div>
       )}
 
-      {/* Processing overlay blocking interaction during submit */}
+      {/* Processing overlay blocking duplicate submit */}
       {isProcessing && (
         <div
           className="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-2xl bg-zinc-950/85 backdrop-blur-sm p-6 text-center"
@@ -306,6 +446,127 @@ export function PaymentBrick({
           <p className="text-xs text-zinc-400 mt-1 max-w-xs">
             Por favor, aguarde a confirmação sem fechar ou recarregar esta página.
           </p>
+        </div>
+      )}
+
+      {/* Address Fallback Form (for Boleto if required) */}
+      {showAddressFallback && (
+        <div className="my-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-300">
+            <MapPin className="h-4 w-4" aria-hidden="true" />
+            <span>Dados de endereço para emissão de boleto</span>
+          </div>
+          <p className="text-[11px] text-zinc-400 leading-relaxed">
+            O Banco Central exige endereço completo para registro oficial do boleto. Preencha ou
+            confirme seus dados:
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+            <div className="sm:col-span-1">
+              <label className="text-[10px] text-zinc-400 font-medium block mb-1">CEP</label>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  maxLength={9}
+                  placeholder="00000-000"
+                  value={addressData.zip_code}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setAddressData((prev) => ({ ...prev, zip_code: val }));
+                    if (val.replace(/\D/g, '').length === 8) {
+                      handleCepLookup(val);
+                    }
+                  }}
+                  onBlur={(e) => handleCepLookup(e.target.value)}
+                  className="w-full rounded-lg bg-zinc-900 border border-zinc-700/80 px-2.5 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:border-amber-500 focus:outline-none pr-7"
+                />
+                <div className="absolute right-2 text-zinc-400">
+                  {isSearchingCep ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
+                  ) : (
+                    <Search className="h-3.5 w-3.5" />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="text-[10px] text-zinc-400 font-medium block mb-1">Logradouro</label>
+              <input
+                type="text"
+                placeholder="Rua, Avenida..."
+                value={addressData.street_name}
+                onChange={(e) =>
+                  setAddressData((prev) => ({ ...prev, street_name: e.target.value }))
+                }
+                className="w-full rounded-lg bg-zinc-900 border border-zinc-700/80 px-2.5 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:border-amber-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="sm:col-span-1">
+              <label className="text-[10px] text-zinc-400 font-medium block mb-1">Número</label>
+              <input
+                type="text"
+                placeholder="123 ou S/N"
+                value={addressData.street_number}
+                onChange={(e) =>
+                  setAddressData((prev) => ({ ...prev, street_number: e.target.value }))
+                }
+                className="w-full rounded-lg bg-zinc-900 border border-zinc-700/80 px-2.5 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:border-amber-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="sm:col-span-1">
+              <label className="text-[10px] text-zinc-400 font-medium block mb-1">Bairro</label>
+              <input
+                type="text"
+                placeholder="Bairro"
+                value={addressData.neighborhood}
+                onChange={(e) =>
+                  setAddressData((prev) => ({ ...prev, neighborhood: e.target.value }))
+                }
+                className="w-full rounded-lg bg-zinc-900 border border-zinc-700/80 px-2.5 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:border-amber-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="sm:col-span-1">
+              <label className="text-[10px] text-zinc-400 font-medium block mb-1">
+                Cidade / UF
+              </label>
+              <div className="flex gap-1">
+                <input
+                  type="text"
+                  placeholder="Cidade"
+                  value={addressData.city}
+                  onChange={(e) => setAddressData((prev) => ({ ...prev, city: e.target.value }))}
+                  className="flex-1 min-w-0 rounded-lg bg-zinc-900 border border-zinc-700/80 px-2 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:border-amber-500 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  maxLength={2}
+                  placeholder="UF"
+                  value={addressData.federal_unit}
+                  onChange={(e) =>
+                    setAddressData((prev) => ({
+                      ...prev,
+                      federal_unit: e.target.value.toUpperCase(),
+                    }))
+                  }
+                  className="w-10 rounded-lg bg-zinc-900 border border-zinc-700/80 px-1 text-center text-xs text-white placeholder:text-zinc-600 focus:border-amber-500 focus:outline-none uppercase"
+                />
+              </div>
+            </div>
+          </div>
+
+          <label className="flex items-center gap-2 pt-1 text-[11px] text-zinc-400 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={saveAddressToProfile}
+              onChange={(e) => setSaveAddressToProfile(e.target.checked)}
+              className="rounded border-zinc-700 bg-zinc-900 text-amber-500 focus:ring-0"
+            />
+            <span>Salvar este endereço no meu perfil para consultas futuras</span>
+          </label>
         </div>
       )}
 

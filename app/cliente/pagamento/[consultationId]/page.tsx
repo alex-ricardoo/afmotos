@@ -29,10 +29,15 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     redirect(`/cliente/login?returnUrl=/cliente/pagamento/${consultationId}`);
   }
 
-  // 1. Fetch consultation using service role to prevent RLS mismatches or partial schema issues
+  // 1. Fetch consultation, price, settings, and customer profile in parallel
   const adminSupabase = createAdminClient();
 
-  const [{ data: consultation, error: consultationError }, price, settings] = await Promise.all([
+  const [
+    { data: consultation, error: consultationError },
+    price,
+    settings,
+    { data: customerProfile },
+  ] = await Promise.all([
     adminSupabase
       .from('customer_plate_consultations')
       .select(
@@ -51,6 +56,13 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
       .maybeSingle(),
     getVehicleConsultationPrice(),
     getSiteSettings(),
+    supabase
+      .from('customer_profiles')
+      .select(
+        'full_name, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip',
+      )
+      .eq('id', user.id)
+      .maybeSingle(),
   ]);
 
   if (consultationError || !consultation) {
@@ -84,7 +96,18 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     amount: price,
     publicKey,
     payerEmail: user.email || '',
-    payerName: user.user_metadata?.full_name || '',
+    payerName: customerProfile?.full_name || user.user_metadata?.full_name || '',
+    payerAddress: customerProfile?.address_zip
+      ? {
+          zipCode: customerProfile.address_zip.replace(/\D/g, ''),
+          streetName: customerProfile.address_street || '',
+          streetNumber: customerProfile.address_number || '',
+          neighborhood: customerProfile.address_neighborhood || '',
+          city: customerProfile.address_city || '',
+          federalUnit: (customerProfile.address_state || '').toUpperCase(),
+          complement: customerProfile.address_complement || '',
+        }
+      : undefined,
   };
 
   return (

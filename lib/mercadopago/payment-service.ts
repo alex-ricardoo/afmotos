@@ -1,10 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { getVehicleConsultationPrice } from '@/lib/settings/server-queries';
-import {
-  findExistingConsultation,
-  executeVehiclePlateLookup,
-} from '@/lib/vehicle-lookup/service';
+import { findExistingConsultation, executeVehiclePlateLookup } from '@/lib/vehicle-lookup/service';
 import {
   getPaymentClient,
   getRefundClient,
@@ -21,10 +18,7 @@ import {
   type BrickSubmitFormData,
   type PaymentPreferenceData,
 } from './types';
-import {
-  createPaymentPreferenceSchema,
-  brickPaymentSubmitSchema,
-} from './schemas';
+import { createPaymentPreferenceSchema, brickPaymentSubmitSchema } from './schemas';
 
 /**
  * -------------------------------------------------------------
@@ -124,7 +118,7 @@ export async function recordPaymentTransaction(data: {
 
 export async function updatePaymentTransaction(
   id: string,
-  updates: Partial<PaymentTransaction>
+  updates: Partial<PaymentTransaction>,
 ): Promise<void> {
   const admin = createAdminClient();
   await admin
@@ -143,7 +137,7 @@ export async function updatePaymentTransaction(
  */
 
 export async function createPaymentPreference(
-  consultationId: string
+  consultationId: string,
 ): Promise<{ success: boolean; data?: PaymentPreferenceData; error?: string }> {
   const parse = createPaymentPreferenceSchema.safeParse({ consultationId });
   if (!parse.success) {
@@ -301,7 +295,7 @@ export async function processAutoRefund(params: {
 
 export async function processBrickPayment(
   consultationId: string,
-  formData: BrickSubmitFormData
+  formData: BrickSubmitFormData,
 ): Promise<ProcessBrickPaymentResult> {
   const parse = brickPaymentSubmitSchema.safeParse({ consultationId, formData });
   if (!parse.success) {
@@ -356,6 +350,61 @@ export async function processBrickPayment(
   // Enforce server-authoritative price
   const canonicalPrice = await getVehicleConsultationPrice();
 
+  // Extract address: from form submission or user profile
+  let payerAddress = formData.payer.address;
+  if (!payerAddress) {
+    const { data: profile } = await supabase
+      .from('customer_profiles')
+      .select(
+        'address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip, full_name',
+      )
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (
+      profile?.address_zip &&
+      profile.address_street &&
+      profile.address_city &&
+      profile.address_state
+    ) {
+      payerAddress = {
+        zip_code: profile.address_zip.replace(/\D/g, ''),
+        street_name: profile.address_street,
+        street_number: profile.address_number || 'S/N',
+        neighborhood: profile.address_neighborhood || 'Centro',
+        city: profile.address_city,
+        federal_unit: profile.address_state.toUpperCase(),
+        complement: profile.address_complement || undefined,
+      };
+    }
+  }
+
+  const isTicket =
+    formData.payment_method_id.toLowerCase().includes('bol') ||
+    formData.payment_method_id.toLowerCase().includes('ticket') ||
+    formData.payment_method_id.toLowerCase() === 'pec';
+
+  if (
+    isTicket &&
+    (!payerAddress?.zip_code ||
+      !payerAddress?.street_name ||
+      !payerAddress?.city ||
+      !payerAddress?.federal_unit)
+  ) {
+    return {
+      success: false,
+      status: 'rejected',
+      consultationId,
+      error:
+        'Para emissão de boleto bancário, o endereço completo (CEP, rua, número, bairro, cidade e UF) é obrigatório.',
+    };
+  }
+
+  const fullName = (user.user_metadata?.full_name || '').trim();
+  const [defaultFirst, ...defaultRest] = fullName.split(' ');
+  const payerFirstName = formData.payer.first_name || defaultFirst || 'Cliente';
+  const payerLastName = formData.payer.last_name || defaultRest.join(' ') || 'AF Motos';
+
   try {
     const paymentClient = getPaymentClient();
     const mpPayment = await paymentClient.create({
@@ -368,7 +417,21 @@ export async function processBrickPayment(
         issuer_id: formData.issuer_id ? Number(formData.issuer_id) : undefined,
         payer: {
           email: user.email || formData.payer.email,
+          first_name: payerFirstName,
+          last_name: payerLastName,
           identification: formData.payer.identification,
+          ...(payerAddress
+            ? {
+                address: {
+                  zip_code: payerAddress.zip_code.replace(/\D/g, ''),
+                  street_name: payerAddress.street_name,
+                  street_number: String(payerAddress.street_number || 'S/N'),
+                  neighborhood: payerAddress.neighborhood,
+                  city: payerAddress.city,
+                  federal_unit: payerAddress.federal_unit.toUpperCase(),
+                },
+              }
+            : {}),
         },
         external_reference: consultation.id,
         metadata: {
@@ -414,7 +477,10 @@ export async function processBrickPayment(
     const pointOfInteraction = mpPayment.point_of_interaction;
     const qrCode = pointOfInteraction?.transaction_data?.qr_code;
     const qrCodeBase64 = pointOfInteraction?.transaction_data?.qr_code_base64;
-    const ticketUrl = pointOfInteraction?.transaction_data?.ticket_url;
+    const ticketUrl =
+      pointOfInteraction?.transaction_data?.ticket_url ||
+      (mpPayment.transaction_details as { external_resource_url?: string } | undefined)
+        ?.external_resource_url;
 
     // If Payment Approved Immediately: Trigger Consultation Lookup
     if (mpStatus === 'approved') {
@@ -504,10 +570,7 @@ export async function executePostPaymentLookup(params: {
 
   try {
     // 1. Check cache first
-    const cached = await findExistingConsultation(
-      params.consultation.plate_normalized,
-      admin
-    );
+    const cached = await findExistingConsultation(params.consultation.plate_normalized, admin);
 
     if (cached && cached.status === 'COMPLETED' && cached.raw_response) {
       await admin
@@ -537,7 +600,7 @@ export async function executePostPaymentLookup(params: {
         userId: params.consultation.user_id,
         confirmedPlate: params.consultation.plate_normalized,
       },
-      admin
+      admin,
     );
 
     if (lookupResult.success && lookupResult.record && lookupResult.record.raw_response) {
@@ -563,7 +626,8 @@ export async function executePostPaymentLookup(params: {
 
     // Permanent lookup failure: Trigger Auto-Refund
     throw new Error(
-      lookupResult.message || 'Falha técnica ao obter dados do veículo junto ao Detran/Bases Oficiais'
+      lookupResult.message ||
+        'Falha técnica ao obter dados do veículo junto ao Detran/Bases Oficiais',
     );
   } catch (err: any) {
     const errorMsg = err?.message || 'Serviço de consulta veicular indisponível no momento';
@@ -606,14 +670,16 @@ export interface WebhookHandlerParams {
 }
 
 export async function handleMercadoPagoWebhook(
-  params: WebhookHandlerParams
+  params: WebhookHandlerParams,
 ): Promise<{ status: number; message: string }> {
   const admin = createAdminClient();
   const secret = getMercadoPagoWebhookSecret();
 
   const resourceId = params.dataId || (params.payload.data as any)?.id;
   const eventId = String(params.payload.id || params.xRequestId || resourceId || Date.now());
-  const eventType = String(params.payload.type || params.type || params.payload.action || 'unknown');
+  const eventType = String(
+    params.payload.type || params.type || params.payload.action || 'unknown',
+  );
   const action = String(params.payload.action || params.action || '');
 
   // 1. Validate signature if secret is configured
@@ -801,4 +867,3 @@ export async function handleMercadoPagoWebhook(
     return { status: 500, message: 'Internal Server Error' };
   }
 }
-
