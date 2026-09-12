@@ -1,5 +1,3 @@
-import { createClient } from '../supabase/server';
-import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface AdminProfile {
@@ -37,6 +35,7 @@ export async function validateAdminUser(supabase: SupabaseClient, authUserId: st
  * Throws an error or returns null if not authenticated or not an admin.
  */
 export async function getAuthenticatedAdmin() {
+  const { createClient } = await import('../supabase/server');
   const supabase = await createClient();
   const {
     data: { user },
@@ -63,10 +62,12 @@ export async function requireAdminUser() {
   const { supabase, user, profile } = await getAuthenticatedAdmin();
 
   if (!user) {
+    const { redirect } = await import('next/navigation');
     redirect('/admin/login');
   }
 
   if (!profile) {
+    const { redirect } = await import('next/navigation');
     redirect('/admin/login?error=unauthorized');
   }
 
