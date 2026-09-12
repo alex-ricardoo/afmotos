@@ -1,94 +1,66 @@
 # Auditoria Comparativa: Integração Mercado Pago — AF Motos vs Moura’s Pizzas
 
-Este documento apresenta uma análise técnica estrutural e factual comparando a integração do Mercado Pago no projeto **AF Motos** (`alex-ricardoo/afmotos`, branch `fix/mercadopago-payment-brick-500`) com a integração funcional do projeto de referência **Moura’s Pizzas** (`alex-ricardoo/mouras-pizzas`, branch `main`).
+**Feature**: `027-mercadopago-payment-route-handler-compatibility`  
+**Date**: 2026-09-12  
+**AF Motos Commit SHA**: `eb080da82c4b92a056de8fe542e58d7620679f08`  
+**Moura’s Pizzas Commit SHA**: `15407381c974c4406dd0f54f5cafc3cae675ec6f` (branch `main`)  
 
 ---
 
-## 1. Tabela Comparativa dos 13 Pontos do Contrato
+## 1. Tabela Comparativa dos 24 Pontos do Contrato
 
-| Item | AF Motos (`alex-ricardoo/afmotos`) | Moura’s Pizzas (`alex-ricardoo/mouras-pizzas`) | Status da Evidência |
-| :--- | :--- | :--- | :--- |
-| **1. Versão SDK Node** | `mercadopago: ^3.6.1` | `mercadopago: ^2.12.0` | **Comprovado** (Breaking changes entre v2 e v3) |
-| **2. Criação `MercadoPagoConfig`** | `new MercadoPagoConfig({ accessToken, options: { timeout: 10000 } })` | `new MercadoPagoConfig({ accessToken, options: { timeout: 15000 } })` | **Comprovado** (Mesmo padrão de inicialização) |
-| **3. Criação `Payment`** | `new Payment(client)` via singleton `getPaymentClient()` | `new Payment(client)` instanciado no handler da rota | **Comprovado** (Equivalente) |
-| **4. Assinatura `payment.create`** | `paymentClient.create({ body, requestOptions })` | `paymentApi.create({ body, requestOptions })` | **Comprovado** (Assinatura v2 e v3 idêntica na superfície) |
-| **5. Formato `requestOptions`** | `{ idempotencyKey: string }` | `{ idempotencyKey: \`brick-${preferenceId}\` }` | **Comprovado** (Ambos usam `requestOptions.idempotencyKey`) |
-| **6. Idempotência** | Header HTTP `X-Idempotency-Key` gerado via UUID v4 por tentativa | Header HTTP `X-Idempotency-Key` prefixado com `brick-<preferenceId>` | **Comprovado** |
-| **7. Body Obrigatório** | `transaction_amount`, `payment_method_id`, `token`, `installments`, `payer.email`, `payer.identification` | `...formData` vindo diretamente do Brick, sem remontagem manual | **Comprovado** |
-| **8. Body Opcional** | `description`, `external_reference`, `metadata`, `notification_url`, `issuer_id` (se presente) | `external_reference`, `metadata: { preference_id }` | **Comprovado** (AF Motos enviava mais campos opcionais) |
-| **9. Transformação de `issuer_id`** | Extraído, convertido para `Number` estrito se válido, ou omitido | Repassado verbatim como retornado pelo Brick no spread `...formData` | **Comprovado** |
-| **10. Token do Brick** | Gerado via SDK JS v2 (`sdk.mercadopago.com/js/v2`) vanilla | Gerado via `@mercadopago/sdk-react: ^1.0.7` | **Comprovado** |
-| **11. Configuração do Brick** | Inicializado apenas com `amount` quando sem preference id pré-criado | **SEMPRE inicializado com `preferenceId` pré-criado no Mercado Pago** | **COMPROVADO E CRUCIAL** |
-| **12. Runtime Next/Vercel** | Next.js 16.3.2 (Turbopack, Server Actions + Route Handlers) | Next.js 16.2.1 (API Route Handler POST tradicional) | **Comprovado** |
-| **13. Headers Implícitos da SDK** | `X-Product-Id`, `X-Tracking-Id`, `User-Agent: Node.js SDK v3.6.1`, `X-Idempotency-Key` | `X-Product-Id`, `X-Tracking-Id`, `User-Agent: Node.js SDK v2.12.0`, `X-Idempotency-Key` | **Comprovado** |
-
----
-
-## 2. Destaque das Diferenças Cruciais
-
-### Diferença Crítica A: Inicialização do Brick com ou sem Preferência MP Prévia
-- **No Moura’s Pizzas:**
-  O componente `MPPaymentBrick` **nunca** renderiza o Brick de cartão sem antes criar uma `preference` na API do Mercado Pago via backend (`POST /checkout/preferences`). O ID retornado (`prefResult.id`) é passado diretamente na inicialização do Brick:
-  ```typescript
-  // Moura's Pizzas: MPPaymentBrick.tsx
-  const initialization = {
-    amount: Number(amount.toFixed(2)),
-    preferenceId: mpPreferenceId, // ID retornado pelo Mercado Pago
-    ...(userEmail ? { payer: { email: userEmail } } : {}),
-  };
-  ```
-  Quando o Brick gera o token com base em uma `preferenceId` real do Mercado Pago, a transação fica previamente ancorada na conta vendedora no backend do provedor, garantindo contexto de split, taxas e antifraude idênticos aos esperados pelo checkout transparente.
-
-- **No AF Motos:**
-  Se a criação da preferência falhar ou estiver ausente, o Payment Brick era inicializado com `preferenceId: undefined`. O SDK JS v2 gera um token genérico desvinculado de preferência.
-
-### Diferença Crítica B: Remontagem Manual vs Spread do `formData`
-- **No Moura’s Pizzas:**
-  ```typescript
-  // Moura's Pizzas: route.ts
-  const mpPaymentBody = {
-    ...formData,
-    external_reference: preferenceId,
-    metadata: { preference_id: preferenceId },
-  };
-  ```
-  O Moura’s Pizzas envia exatamente a estrutura de `payer`, `identification`, `token`, `payment_method_id` e `issuer_id` gerada pelo próprio Brick do SDK React oficial, sem modificar nomes de chaves ou estrutura interna.
-
-- **No AF Motos:**
-  O backend reconstruía o `payer` montando um objeto novo com `first_name`, `last_name`, `identification`, e às vezes campos `undefined`. A adição de `cleanPayload` corrigiu as chaves `undefined`, mas a presença condicional de `issuer_id` como número vs ausência precisa ser testada de forma isolada (Variação 2).
-
-### Diferença Crítica C: Versão do SDK Mercado Pago (`2.12.0` vs `3.6.1`)
-- O SDK `mercadopago@2.12.0` usava o cliente HTTP interno legado com tratamentos específicos para `POST /v1/payments`.
-- O SDK `mercadopago@3.6.1` utiliza um `RestClient` reescrito que injeta headers adicionais de telemetria (`X-Product-Id: bc32b6ntrpp001u8nhkg`, `X-Tracking-Id`).
+| Concern | AF Motos Current | Moura’s Pizzas Reference | Planned AF Motos Target | Evidence / Classification |
+|---|---|---|---|---|
+| **1. Frontend SDK version** | `https://sdk.mercadopago.com/js/v2` (script vanilla) | `@mercadopago/sdk-react: ^1.0.7` | `https://sdk.mercadopago.com/js/v2` via `buildPaymentBrickConfig` (determinístico) ou `@mercadopago/sdk-react` | **Confirmed by code & package.json** |
+| **2. Node SDK version** | `mercadopago: ^3.6.1` | `mercadopago: ^2.12.0` | `mercadopago: ^3.6.1` (Track A) com alias `mercadopago-v2: npm:mercadopago@2.12.0` (Track B) | **Confirmed by package/type** |
+| **3. Brick initialization** | `initMercadoPago(key, { locale: 'pt-BR' })` com `amount`, `payer.entityType` | `initMercadoPago(key, { locale: 'pt-BR' })` com `amount`, `preferenceId` pré-criado | Inicialização determinística via `buildPaymentBrickConfig` sem warnings | **Confirmed by code** |
+| **4. Preference usage** | Sem preference no fluxo direto de cartão | Criação prévia de `preferenceId` no backend (`POST /checkout/preferences`) | Tokenização direta sem preference, ou preference opcional se comprovado necessário | **Confirmed by code** |
+| **5. `mercadoPago` prop usage** | Removido de `paymentMethods` para evitar warning | Presente (`mercadoPago: 'all'`) pois havia `preferenceId` | Omitido no modo transparente de cartão | **Confirmed by code & provider documentation** |
+| **6. `entityType` usage** | Normalizado estritamente para `'individual'` | Não especificado explicitamente | Normalizado estritamente para `'individual'` | **Confirmed by code & provider documentation** |
+| **7. Text customization** | Tipografia movida para classe CSS contêiner (`font-sans`) | `texts` apenas para títulos de parcelas | Sem `fontFamily` em nenhum nível de configuração | **Confirmed by code & provider documentation** |
+| **8. Token generation** | Gerado via Brick no navegador a cada clique | Gerado via Brick no navegador | Token novo a cada submissão, remounting automático após erro | **Confirmed by code** |
+| **9. Double submit prevention** | `isSubmittingRef` + `isProcessing` com unmount pós-erro | `isProcessing` com overlay blur de carregamento | `isProcessing` + `isSubmittingRef` com bloqueio no cliente e backend | **Confirmed by code** |
+| **10. Browser-to-server transport** | Server Action Next.js (`processBrickPaymentAction`) | `fetch('/api/mp/process-payment', { method: 'POST' })` | `fetch('/api/mp/process-payment', { method: 'POST' })` explícito | **Confirmed by code** |
+| **11. Server-side endpoint** | Server Action em `lib/mercadopago/actions.ts` | Route Handler em `app/api/mp/process-payment/route.ts` | Route Handler dedicado em `app/api/mp/process-payment/route.ts` | **Confirmed by code** |
+| **12. Auth mechanism** | Supabase Auth server-side (`createClient()`) | Supabase Auth admin / session | Supabase Auth via `supabase.auth.getUser()` no Route Handler | **Confirmed by code** |
+| **13. Price source of truth** | Servidor (`getVehicleConsultationPrice()`) | Servidor (cálculo de pedido e taxas) | Servidor exclusivamente (`getVehicleConsultationPrice()`) | **Confirmed by code** |
+| **14. Payment client initialization** | `new MercadoPagoConfig({ accessToken })` + `new Payment(client)` | `new MercadoPagoConfig({ accessToken, options: { timeout: 15000 } })` + `new Payment(client)` | `MercadoPagoPaymentProvider` com adapter v2 ou v3 | **Confirmed by code** |
+| **15. `Payment.create` call shape** | `{ body, requestOptions: { idempotencyKey } }` | `{ body, requestOptions: { idempotencyKey } }` | `{ body, requestOptions: { idempotencyKey } }` via adapter | **Confirmed by package/type** |
+| **16. Idempotency forwarding** | UUID v4 gerado por tentativa no servidor | `brick-${preferenceId}` no servidor | UUID v4 persistido em `payment_transactions.idempotency_key` | **Confirmed by code** |
+| **17. `issuer_id` handling** | Validado como inteiro positivo se vindo do Brick, senão omitido | Repassado via spread de `formData` do Brick | Enviado apenas se presente e validado como inteiro positivo | **Confirmed by code** |
+| **18. Provider error mapping** | Mapeado para `provider_error` (sem aprovação artificial) | Retorna status 500 com mensagem genérica | Mapeado para `provider_error` ou `pending_reconciliation` | **Confirmed by code** |
+| **19. Transaction persistence** | `payment_transactions` criada antes da chamada com status `pending` | `mp_pending_checkouts` validada antes da chamada | `payment_transactions` persistida com auditoria completa | **Confirmed by code** |
+| **20. Release condition** | Apenas com `status === 'approved'` e `mp_payment_id` real | Com `status === 'approved'` chama `confirmMPPayment` | Laudo liberado estritamente com `approved` e `mp_payment_id` real | **Confirmed by code** |
+| **21. Webhook verification** | HMAC SHA-256 via `x-signature` + busca na API oficial | Validação de evento e chamada a `confirmMPPayment` | HMAC SHA-256 + busca obrigatória via server Access Token | **Confirmed by code** |
+| **22. Reconciliation** | Reconciliação com busca ativa da API oficial | Reconciliação via webhook | Reconciliação idempotente compartilhando o mesmo serviço de domínio | **Confirmed by code** |
+| **23. Logging/sanitization** | Snapshot sanitizado com hashes truncados | Logs de console com mascaramento básico de cartão | Snapshot sanitizado estrito (sem token, CVV, CPF ou e-mail completo) | **Confirmed by code** |
+| **24. SDK/runtime differences** | Next.js 16.3.2, SDK Node 3.6.1, React 19.2.8 | Next.js 16.2.1, SDK Node 2.12.0, React 19.2.4 | Isolamento via Route Handler; compatibilidade com SDK v2 via alias | **Hypothesis requiring controlled local test** |
 
 ---
 
----
+## 2. Diferenças Estruturais Cruciais
 
-## 4. Resolução dos Warnings do Browser no Payment Brick
+### Diferença A: Transporte Browser-to-Server (Server Action vs Route Handler)
+- No **AF Motos**, a criação do pagamento utilizava Server Actions do Next.js (`"use server"`). O runtime do App Router para Server Actions empacota argumentos em payloads internos multipart/RSC.
+- No **Moura’s Pizzas**, o formulário utilizava uma chamada `fetch()` tradicional direta para `POST /api/mp/process-payment`. A migração para Route Handler elimina qualquer interferência de runtime do Next.js.
 
-Durante a auditoria da integração do Payment Brick no AF Motos, três advertências técnicas reais no console do navegador foram identificadas e resolvidas:
+### Diferença B: Motor HTTP Interno do SDK Node (`mercadopago 2.12.0` vs `3.6.1`)
+- O SDK `mercadopago@2.12.0` utilizava o motor clássico de requisições HTTP do Mercado Pago, com serialização direta de headers e corpo.
+- O SDK `mercadopago@3.6.1` reescreveu o cliente HTTP (`RestClient`) em TypeScript, injetando cabeçalhos de telemetria adicionais (`X-Product-Id`, `X-Tracking-Id`). A introdução do adapter v2 permite isolar essa diferença sem downgrade destrutivo.
 
-### Warning 1: `Bricks Customize Texts: property 'fontFamily' is not valid.`
-- **Causa Raiz:** A propriedade `fontFamily` estava sendo informada dentro de `customization.visual.style.customVariables`. O SDK JS v2 do Mercado Pago valida tokens de estilo (`baseColor`, `borderRadiusSmall`, etc.) e rejeita `fontFamily` por meio do validador de textos/estilos.
-- **Solução Aplicada:** `fontFamily` foi completamente removido do objeto entregue ao SDK. A tipografia da aplicação (`font-sans`) é aplicada no elemento contêiner pai via CSS/Tailwind, herdando naturalmente sem intervenção ou avisos do SDK.
-
-### Warning 2: `[BRICKS] [Payment Brick] parameters preferenceId and mercadoPago must be provided together.`
-- **Causa Raiz:** O componente Payment Brick continha `mercadoPago: 'all'` em `customization.paymentMethods` e repassava `preferenceId` condicionalmente. No SDK do Mercado Pago, a opção de pagamento via carteira digital da conta Mercado Pago (`mercadoPago`) exige estritamente a coexistência de uma preferência pré-criada (`preferenceId`). Como o AF Motos utiliza checkout transparente direto com tokenização server-side (Cartão de Crédito, Débito, Boleto, Pix) sem carteira Mercado Pago, a ausência da preferência disparava a inconsistência.
-- **Solução Aplicada:** `mercadoPago` foi removido de `paymentMethods` e qualquer menção a `preferenceId` foi purgada do fluxo de cartão transparente, isolando a tokenização nativa direta.
-
-### Warning 3: `Bricks Payment: entityType only receives the value individual or association.`
-- **Causa Raiz:** No Brasil, o Payment Brick exige a definição do tipo de entidade do pagador (`payer.entityType`). Quando omitido ou indefinido, o validador interno do SDK emite o aviso.
-- **Solução Aplicada:** Foi criado o módulo `lib/mercadopago/brick-config.ts` com a função `normalizeEntityType`, que fixa estritamente `entityType: 'individual'` para pessoa física (CPF), impedindo valores nulos, vazios ou informais (`PF`, `PJ`, `person`).
+### Diferença C: Ausência de Vínculo com Buyer Account no Supabase
+- **Fato Comprovado**: Em nenhum dos dois repositórios há exigência ou existência de tabela de usuários compradores ("Buyer Accounts") do Mercado Pago no Supabase. O pagamento com cartão de teste funciona com e-mail e CPF informados no checkout.
 
 ---
 
-## 5. Conclusão Factual
+## 3. Resolução dos 3 Warnings de Configuração do Browser
 
-1. **Hipótese de "usuário Buyer Mercado Pago cadastrado no Supabase":**
-   **DESMENTIDA**. Moura’s Pizzas não possuía nenhum cadastro de comprador prévio ou vínculo de usuário MP no Supabase. O pagamento com cartão em sandbox utilizava apenas os dados do formulário do Brick.
-2. **Diferença comprovada 1:** Moura’s Pizzas sempre usava `preferenceId` pré-gerado para inicializar o Payment Brick no frontend.
-3. **Diferença comprovada 2:** Moura's Pizzas não enviava `description` customizado longo nem `notification_url` para cobranças síncronas de cartão de crédito.
-4. **Diferença comprovada 3:** O ciclo de vida do token: no Moura's, cada clique gerava uma tentativa com loading bloqueante impedindo novo submit com o mesmo token já invalidado.
-5. **Diferença comprovada 4:** Inconsistências de configuração no frontend (`fontFamily`, `mercadoPago` sem preferência e `entityType` ausente) geravam avisos e instabilidades no ciclo de inicialização do Brick. A centralização via `buildPaymentBrickConfig` sanou todas as ocorrências.
-
+1. **`fontFamily is not valid`**:
+   - *Origem*: Propriedade `fontFamily` informada dentro de `customVariables` do Brick.
+   - *Resolução*: Removida do objeto do SDK; estilização transferida para classes CSS externas (`font-sans`).
+2. **`parameters preferenceId and mercadoPago must be provided together`**:
+   - *Origem*: O Brick continha `mercadoPago: 'all'` sem um `preferenceId` pré-criado no Mercado Pago.
+   - *Resolução*: `mercadoPago` removido de `paymentMethods` e `preferenceId` purgado do fluxo direto.
+3. **`entityType only receives individual or association`**:
+   - *Origem*: Falta de definição de `payer.entityType` na inicialização do Brick.
+   - *Resolução*: Normalizado estritamente para `'individual'` via `normalizeEntityType` em `lib/mercadopago/brick-config.ts`.
