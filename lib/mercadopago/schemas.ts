@@ -27,21 +27,93 @@ export const brickPayerAddressSchema = z.object({
     .transform((v) => v || undefined),
 });
 
+export function normalizeCpf(value: unknown): string {
+  return String(value ?? '').replace(/\D/g, '');
+}
+
+export const identificationSchema = z.object({
+  type: z
+    .string()
+    .optional()
+    .default('CPF')
+    .transform(() => 'CPF'),
+  number: z
+    .string()
+    .transform(normalizeCpf)
+    .refine((val) => val.length === 11, 'Informe um CPF válido com 11 dígitos'),
+});
+
+export const cardPaymentFormDataSchema = z.object({
+  payment_method_id: z.string().min(1, 'Método de pagamento é obrigatório'),
+  token: z.string().min(1, 'Token do cartão ausente'),
+  installments: z.coerce.number().int().min(1).max(24).default(1),
+  issuer_id: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((v) =>
+      v !== undefined && v !== null && String(v).trim() !== '' ? String(v) : undefined,
+    ),
+  payer: z.object({
+    email: z.string().email('E-mail do pagador inválido'),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    identification: identificationSchema,
+    address: brickPayerAddressSchema.optional(),
+  }),
+});
+
+export const pixPaymentFormDataSchema = z.object({
+  payment_method_id: z.string().min(1, 'Método de pagamento é obrigatório'),
+  token: z.string().optional(),
+  installments: z.coerce.number().int().optional().default(1),
+  issuer_id: z.string().optional(),
+  payer: z.object({
+    email: z.string().email('E-mail do pagador inválido'),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    identification: identificationSchema.optional(),
+    address: brickPayerAddressSchema.optional(),
+  }),
+});
+
+export const ticketPaymentFormDataSchema = z.object({
+  payment_method_id: z.string().min(1, 'Método de pagamento é obrigatório'),
+  token: z.string().optional(),
+  installments: z.coerce.number().int().optional().default(1),
+  issuer_id: z.string().optional(),
+  payer: z.object({
+    email: z.string().email('E-mail do pagador inválido'),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    identification: identificationSchema,
+    address: brickPayerAddressSchema,
+  }),
+});
+
 export const brickPaymentSubmitSchema = z.object({
   consultationId: z.string().uuid('ID de consulta inválido'),
   formData: z.object({
     payment_method_id: z.string().min(1, 'Método de pagamento é obrigatório'),
     token: z.string().optional(),
-    installments: z.number().int().positive().optional().default(1),
-    issuer_id: z.string().optional(),
+    installments: z.coerce.number().int().positive().optional().default(1),
+    issuer_id: z
+      .union([z.string(), z.number()])
+      .optional()
+      .transform((v) =>
+        v !== undefined && v !== null && String(v).trim() !== '' ? String(v) : undefined,
+      ),
     payer: z.object({
       email: z.string().email('E-mail do pagador inválido'),
       first_name: z.string().optional(),
       last_name: z.string().optional(),
       identification: z
         .object({
-          type: z.string().min(1, 'Tipo de documento obrigatório'),
-          number: z.string().min(5, 'Número de documento inválido'),
+          type: z
+            .string()
+            .optional()
+            .default('CPF')
+            .transform(() => 'CPF'),
+          number: z.string().min(1, 'Número do documento ausente'),
         })
         .optional(),
       address: brickPayerAddressSchema.optional(),

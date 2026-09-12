@@ -162,9 +162,10 @@ export function sanitizeContext(data: Record<string, unknown>): Record<string, u
       continue;
     }
 
-    // CPF masking
+    // CPF masking (do not treat identification 'type' as a numeric document)
     if (
       (lowerKey.includes('cpf') || lowerKey.includes('identification')) &&
+      !lowerKey.includes('type') &&
       typeof value === 'string'
     ) {
       const clean = value.replace(/\D/g, '');

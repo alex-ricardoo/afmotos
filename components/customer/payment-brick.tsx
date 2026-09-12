@@ -304,7 +304,10 @@ export function PaymentBrick({
                         return;
                       }
 
-                      toast.error(result.error || 'Pagamento não aprovado. Tente outro meio.');
+                      toast.error(
+                        result.error ||
+                          'Não foi possível processar o pagamento agora. Revise os dados informados e tente novamente.',
+                      );
                       reject();
                       return;
                     }
@@ -321,7 +324,9 @@ export function PaymentBrick({
                     resolve();
                   } catch (err: unknown) {
                     const errorMsg =
-                      err instanceof Error ? err.message : 'Erro ao processar pagamento.';
+                      err instanceof Error
+                        ? err.message
+                        : 'Não foi possível processar o pagamento agora. Revise os dados informados e tente novamente.';
                     toast.error(errorMsg);
                     reject();
                   }

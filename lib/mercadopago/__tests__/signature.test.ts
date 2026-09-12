@@ -76,7 +76,7 @@ describe('Mercado Pago Webhook Signature Verification', () => {
         dataId,
         secret,
       }),
-      false
+      false,
     );
 
     assert.equal(
@@ -86,7 +86,7 @@ describe('Mercado Pago Webhook Signature Verification', () => {
         dataId,
         secret: '',
       }),
-      false
+      false,
     );
   });
 });

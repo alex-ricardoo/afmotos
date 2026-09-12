@@ -17,7 +17,14 @@ import {
   type BrickSubmitFormData,
   type PaymentPreferenceData,
 } from './types';
-import { createPaymentPreferenceSchema, brickPaymentSubmitSchema } from './schemas';
+import {
+  createPaymentPreferenceSchema,
+  brickPaymentSubmitSchema,
+  cardPaymentFormDataSchema,
+  pixPaymentFormDataSchema,
+  ticketPaymentFormDataSchema,
+  normalizeCpf,
+} from './schemas';
 import {
   paymentLogInfo,
   paymentLogWarn,
@@ -72,6 +79,7 @@ export async function recordAuditLog(params: {
 export async function recordPaymentTransaction(data: {
   consultationId: string;
   userId: string;
+  idempotencyKey?: string | null;
   mpPaymentId?: string | null;
   status: MercadoPagoPaymentStatus;
   statusDetail?: string | null;
@@ -83,6 +91,8 @@ export async function recordPaymentTransaction(data: {
   payerEmail?: string | null;
   payerIdentificationType?: string | null;
   payerIdentificationNumber?: string | null;
+  failureCode?: string | null;
+  failureMessageSafe?: string | null;
   rawResponse?: Record<string, unknown> | null;
   flowId?: string;
 }): Promise<PaymentTransaction | null> {
@@ -105,6 +115,7 @@ export async function recordPaymentTransaction(data: {
     .insert({
       consultation_id: data.consultationId,
       user_id: data.userId,
+      idempotency_key: data.idempotencyKey || crypto.randomUUID(),
       mp_payment_id: data.mpPaymentId || null,
       status: data.status,
       status_detail: data.statusDetail || null,
@@ -114,8 +125,10 @@ export async function recordPaymentTransaction(data: {
       net_received_amount: data.netReceivedAmount || null,
       installments: data.installments || 1,
       payer_email: data.payerEmail || null,
-      payer_identification_type: data.payerIdentificationType || null,
+      payer_identification_type: data.payerIdentificationType || 'CPF',
       payer_identification_number: data.payerIdentificationNumber || null,
+      failure_code: data.failureCode || null,
+      failure_message_safe: data.failureMessageSafe || null,
       refund_status: 'none',
       raw_response: data.rawResponse
         ? { ...data.rawResponse, _flowId: data.flowId }
@@ -409,8 +422,7 @@ export async function processAutoRefund(params: {
     });
 
     console.error('[processAutoRefund] Error issuing refund with Mercado Pago:', err);
-    const errorMsg =
-      safeErr.providerMessage || 'Falha ao comunicar com Mercado Pago';
+    const errorMsg = safeErr.providerMessage || 'Falha ao comunicar com Mercado Pago';
 
     if (params.transactionId) {
       await updatePaymentTransaction(
@@ -591,6 +603,105 @@ export async function processBrickPayment(
     formData.payment_method_id.toLowerCase().includes('bol') ||
     formData.payment_method_id.toLowerCase().includes('ticket') ||
     formData.payment_method_id.toLowerCase() === 'pec';
+  const isPix = formData.payment_method_id.toLowerCase() === 'pix';
+  const isCard = Boolean(formData.token) || (!isTicket && !isPix);
+
+  // Method-specific discriminated schema validations
+  let validatedCardData;
+  if (isCard) {
+    const cardParse = cardPaymentFormDataSchema.safeParse(formData);
+    if (!cardParse.success) {
+      const errorMsg =
+        cardParse.error.issues[0]?.message || 'Dados do cartão incompletos ou inválidos';
+      paymentLogWarn('payment.action_validation_failed', {
+        flowId,
+        consultationId,
+        paymentMethodId: formData.payment_method_id,
+        errorMessage: errorMsg,
+      });
+      return {
+        success: false,
+        status: 'rejected',
+        consultationId,
+        error: errorMsg,
+      };
+    }
+    validatedCardData = cardParse.data;
+  }
+
+  let validatedTicketData;
+  if (isTicket) {
+    const ticketParse = ticketPaymentFormDataSchema.safeParse({
+      ...formData,
+      payer: {
+        ...formData.payer,
+        address: payerAddress,
+      },
+    });
+    if (!ticketParse.success) {
+      const errorMsg =
+        ticketParse.error.issues[0]?.message ||
+        'Para emissão de boleto bancário, o endereço completo (CEP, rua, número, bairro, cidade e UF) e CPF são obrigatórios.';
+      paymentLogWarn('payment.action_validation_failed', {
+        flowId,
+        consultationId,
+        paymentMethodId: formData.payment_method_id,
+        errorMessage: errorMsg,
+      });
+      return {
+        success: false,
+        status: 'rejected',
+        consultationId,
+        error: errorMsg,
+      };
+    }
+    validatedTicketData = ticketParse.data;
+  }
+
+  let validatedPixData;
+  if (isPix) {
+    const pixParse = pixPaymentFormDataSchema.safeParse(formData);
+    if (!pixParse.success) {
+      const errorMsg = pixParse.error.issues[0]?.message || 'Dados do Pix inválidos';
+      paymentLogWarn('payment.action_validation_failed', {
+        flowId,
+        consultationId,
+        paymentMethodId: formData.payment_method_id,
+        errorMessage: errorMsg,
+      });
+      return {
+        success: false,
+        status: 'rejected',
+        consultationId,
+        error: errorMsg,
+      };
+    }
+    validatedPixData = pixParse.data;
+  }
+
+  // Server-authoritative normalized CPF
+  const rawDocNumber =
+    validatedCardData?.payer.identification?.number ||
+    validatedTicketData?.payer.identification?.number ||
+    validatedPixData?.payer.identification?.number ||
+    formData.payer?.identification?.number ||
+    '';
+  const normalizedCpf = normalizeCpf(rawDocNumber);
+
+  if (isCard && normalizedCpf.length !== 11) {
+    paymentLogWarn('payment.action_validation_failed', {
+      flowId,
+      consultationId,
+      paymentMethodId: formData.payment_method_id,
+      errorMessage: 'CPF com quantidade inválida de dígitos',
+    });
+    return {
+      success: false,
+      status: 'rejected',
+      consultationId,
+      error: 'Informe um CPF válido para continuar.',
+    };
+  }
 
   const addressCompleteness = {
     zipCode: Boolean(payerAddress?.zip_code),
@@ -600,30 +711,6 @@ export async function processBrickPayment(
     city: Boolean(payerAddress?.city),
     federalUnit: Boolean(payerAddress?.federal_unit),
   };
-
-  if (
-    isTicket &&
-    (!payerAddress?.zip_code ||
-      !payerAddress?.street_name ||
-      !payerAddress?.city ||
-      !payerAddress?.federal_unit)
-  ) {
-    paymentLogWarn('payment.action_validation_failed', {
-      flowId,
-      consultationId,
-      paymentMethodId: formData.payment_method_id,
-      addressPresent: Boolean(payerAddress),
-      addressCompleteness,
-      errorMessage: 'Endereço incompleto para boleto',
-    });
-    return {
-      success: false,
-      status: 'rejected',
-      consultationId,
-      error:
-        'Para emissão de boleto bancário, o endereço completo (CEP, rua, número, bairro, cidade e UF) é obrigatório.',
-    };
-  }
 
   paymentLogInfo('payment.provider_client_initialization_started', { flowId, consultationId });
   let paymentClient;
@@ -645,6 +732,49 @@ export async function processBrickPayment(
     };
   }
 
+  // Idempotency Key & Prior Transaction Persistence
+  const admin = createAdminClient();
+
+  // Reuse existing idempotency key if a pending transaction already exists for this consultation
+  const { data: existingPendingTx } = await admin
+    .from('payment_transactions')
+    .select('*')
+    .eq('consultation_id', consultation.id)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let localTransaction: PaymentTransaction | null = null;
+  let idempotencyKey: string;
+
+  if (existingPendingTx && existingPendingTx.idempotency_key) {
+    localTransaction = existingPendingTx as PaymentTransaction;
+    idempotencyKey = existingPendingTx.idempotency_key;
+    paymentLogInfo('payment.idempotency_key_reused', {
+      flowId,
+      consultationId: consultation.id,
+      transactionId: localTransaction.id,
+      idempotencyKeyPresent: true,
+    });
+  } else {
+    idempotencyKey = crypto.randomUUID();
+    localTransaction = await recordPaymentTransaction({
+      consultationId: consultation.id,
+      userId: user.id,
+      idempotencyKey,
+      status: 'pending',
+      paymentMethodId: formData.payment_method_id,
+      paymentTypeId: isCard ? 'credit_card' : isTicket ? 'ticket' : isPix ? 'bank_transfer' : null,
+      transactionAmount: canonicalPrice,
+      installments: formData.installments || 1,
+      payerEmail: user.email || formData.payer.email,
+      payerIdentificationType: 'CPF',
+      payerIdentificationNumber: normalizedCpf || null,
+      flowId,
+    });
+  }
+
   paymentLogInfo('payment.provider_request_build_started', { flowId, consultationId });
 
   paymentLogInfo('payment.provider_request_build_succeeded', {
@@ -654,22 +784,76 @@ export async function processBrickPayment(
     currency: 'BRL',
     hasToken: Boolean(formData.token),
     paymentMethodId: formData.payment_method_id,
+    paymentTypeId: isCard
+      ? 'credit_card'
+      : isTicket
+        ? 'ticket'
+        : isPix
+          ? 'bank_transfer'
+          : undefined,
     installments: formData.installments || 1,
     issuerProvided: Boolean(formData.issuer_id),
     payerEmailPresent: Boolean(user.email || formData.payer?.email),
-    payerIdentificationType: formData.payer?.identification?.type ?? null,
-    payerIdentificationLength:
-      formData.payer?.identification?.number?.replace(/\D/g, '')?.length || 0,
+    payerIdentificationTypePresent: Boolean(normalizedCpf),
+    payerIdentificationType: 'CPF',
+    payerIdentificationLength: normalizedCpf.length,
     hasAddress: Boolean(payerAddress),
     addressFieldsPresent: addressCompleteness,
     externalReferencePresent: Boolean(consultation.id),
-    idempotencyKeyPresent: false,
+    idempotencyKeyPresent: Boolean(idempotencyKey),
   });
 
   const fullName = (user.user_metadata?.full_name || '').trim();
   const [defaultFirst, ...defaultRest] = fullName.split(' ');
   const payerFirstName = formData.payer.first_name || defaultFirst || 'Cliente';
   const payerLastName = formData.payer.last_name || defaultRest.join(' ') || 'AF Motos';
+
+  const parsedIssuer = formData.issuer_id ? Number(formData.issuer_id) : undefined;
+  const validIssuerId = parsedIssuer && !isNaN(parsedIssuer) ? parsedIssuer : undefined;
+
+  const payerPayload: Record<string, unknown> = {
+    email: user.email || formData.payer.email,
+    first_name: payerFirstName,
+    last_name: payerLastName,
+    identification: {
+      type: 'CPF',
+      number: normalizedCpf,
+    },
+  };
+
+  if (isTicket && payerAddress) {
+    payerPayload.address = {
+      zip_code: payerAddress.zip_code.replace(/\D/g, ''),
+      street_name: payerAddress.street_name,
+      street_number: String(payerAddress.street_number || 'S/N'),
+      neighborhood: payerAddress.neighborhood,
+      city: payerAddress.city,
+      federal_unit: payerAddress.federal_unit.toUpperCase(),
+    };
+  }
+
+  const paymentBody: Record<string, unknown> = {
+    transaction_amount: canonicalPrice,
+    description: `Consulta Veicular Placa ${consultation.plate}`,
+    payment_method_id: formData.payment_method_id,
+    payer: payerPayload,
+    external_reference: consultation.id,
+    metadata: {
+      consultation_id: consultation.id,
+      user_id: user.id,
+      plate: consultation.plate,
+      flow_id: flowId,
+      transaction_id: localTransaction?.id,
+    },
+  };
+
+  if (isCard) {
+    paymentBody.token = formData.token;
+    paymentBody.installments = formData.installments || 1;
+    if (validIssuerId) {
+      paymentBody.issuer_id = validIssuerId;
+    }
+  }
 
   const createStart = Date.now();
   paymentLogInfo('payment.provider_create_started', {
@@ -679,42 +863,14 @@ export async function processBrickPayment(
     tokenPresent: Boolean(formData.token),
     canonicalAmount: canonicalPrice,
     currency: 'BRL',
+    idempotencyKeyPresent: Boolean(idempotencyKey),
   });
 
   try {
     const mpPayment = await paymentClient.create({
-      body: {
-        transaction_amount: canonicalPrice,
-        token: formData.token,
-        description: `Consulta Veicular Placa ${consultation.plate}`,
-        payment_method_id: formData.payment_method_id,
-        installments: formData.installments || 1,
-        issuer_id: formData.issuer_id ? Number(formData.issuer_id) : undefined,
-        payer: {
-          email: user.email || formData.payer.email,
-          first_name: payerFirstName,
-          last_name: payerLastName,
-          identification: formData.payer.identification,
-          ...(payerAddress
-            ? {
-                address: {
-                  zip_code: payerAddress.zip_code.replace(/\D/g, ''),
-                  street_name: payerAddress.street_name,
-                  street_number: String(payerAddress.street_number || 'S/N'),
-                  neighborhood: payerAddress.neighborhood,
-                  city: payerAddress.city,
-                  federal_unit: payerAddress.federal_unit.toUpperCase(),
-                },
-              }
-            : {}),
-        },
-        external_reference: consultation.id,
-        metadata: {
-          consultation_id: consultation.id,
-          user_id: user.id,
-          plate: consultation.plate,
-          flow_id: flowId,
-        },
+      body: paymentBody as Parameters<typeof paymentClient.create>[0]['body'],
+      requestOptions: {
+        idempotencyKey,
       },
     });
 
@@ -733,37 +889,35 @@ export async function processBrickPayment(
       durationMs: createDurationMs,
     });
 
-    // Record transaction row
-    const transaction = await recordPaymentTransaction({
-      consultationId: consultation.id,
-      userId: user.id,
-      mpPaymentId,
-      status: mpStatus,
-      statusDetail,
-      paymentMethodId: formData.payment_method_id,
-      paymentTypeId: mpPayment.payment_type_id,
-      transactionAmount: canonicalPrice,
-      netReceivedAmount: mpPayment.transaction_details?.net_received_amount,
-      installments: formData.installments || 1,
-      payerEmail: user.email || formData.payer.email,
-      payerIdentificationType: formData.payer.identification?.type,
-      payerIdentificationNumber: formData.payer.identification?.number,
-      rawResponse: mpPayment as unknown as Record<string, unknown>,
-      flowId,
-    });
+    // Update local transaction with provider response
+    if (localTransaction) {
+      await updatePaymentTransaction(
+        localTransaction.id,
+        {
+          mp_payment_id: mpPaymentId,
+          status: mpStatus,
+          status_detail: statusDetail,
+          payment_method_id: formData.payment_method_id,
+          payment_type_id: mpPayment.payment_type_id,
+          net_received_amount: mpPayment.transaction_details?.net_received_amount,
+          raw_response: mpPayment as unknown as Record<string, unknown>,
+        },
+        flowId,
+      );
+    }
 
     paymentLogInfo('payment.status_transition', {
       flowId,
-      transactionId: transaction?.id,
+      transactionId: localTransaction?.id,
       consultationId,
-      statusBefore: 'created',
+      statusBefore: 'pending',
       statusAfter: mpStatus,
       reason: 'mercado_pago_response',
     });
 
     await recordAuditLog({
       consultationId: consultation.id,
-      transactionId: transaction?.id,
+      transactionId: localTransaction?.id,
       event: mpStatus === 'approved' ? 'payment_approved' : 'payment_created',
       actorType: 'customer',
       actorId: user.id,
@@ -784,7 +938,7 @@ export async function processBrickPayment(
     if (mpStatus === 'approved') {
       const lookupResult = await executePostPaymentLookup({
         consultation,
-        transactionId: transaction?.id,
+        transactionId: localTransaction?.id,
         mpPaymentId,
         flowId,
       });
@@ -836,6 +990,19 @@ export async function processBrickPayment(
       causesSummary: normalizedError.causesSummary,
       durationMs: createDurationMs,
     });
+
+    // Mark local transaction with safe failure status
+    if (localTransaction) {
+      await updatePaymentTransaction(
+        localTransaction.id,
+        {
+          status: 'rejected',
+          failure_code: 'MERCADO_PAGO_CREATE_FAILED',
+          failure_message_safe: 'Não foi possível iniciar o pagamento.',
+        },
+        flowId,
+      );
+    }
 
     return {
       success: false,
