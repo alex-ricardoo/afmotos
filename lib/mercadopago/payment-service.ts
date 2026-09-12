@@ -9,8 +9,7 @@ import {
   getPreferenceClient,
   getMercadoPagoPublicKey,
   getMercadoPagoWebhookSecret,
-  getMercadoPagoAccessToken,
-  isDevPaymentSimulationEnabled,
+  getMercadoPagoWebhookUrl,
 } from './client';
 import { verifyMercadoPagoWebhookSignature } from './signature';
 import {
@@ -20,7 +19,6 @@ import {
   type BrickSubmitFormData,
   type PaymentPreferenceData,
 } from './types';
-import { createMinimalCardPaymentForDiagnostics } from './diagnostic';
 export { createMinimalCardPaymentForDiagnostics } from './diagnostic';
 import {
   createPaymentPreferenceSchema,
@@ -30,6 +28,8 @@ import {
   ticketPaymentFormDataSchema,
   normalizeCpf,
 } from './schemas';
+import { cleanPayload } from './payload';
+export { cleanPayload, buildPaymentRequestBody } from './payload';
 import {
   paymentLogInfo,
   paymentLogWarn,
@@ -788,15 +788,6 @@ export async function processBrickPayment(
     };
   }
 
-  const addressCompleteness = {
-    zipCode: Boolean(payerAddress?.zip_code),
-    streetName: Boolean(payerAddress?.street_name),
-    streetNumber: Boolean(payerAddress?.street_number),
-    neighborhood: Boolean(payerAddress?.neighborhood),
-    city: Boolean(payerAddress?.city),
-    federalUnit: Boolean(payerAddress?.federal_unit),
-  };
-
   paymentLogInfo('payment.provider_client_initialization_started', { flowId, consultationId });
   let paymentClient;
   try {
@@ -820,73 +811,54 @@ export async function processBrickPayment(
   // Idempotency Key & Prior Transaction Persistence
   const admin = createAdminClient();
 
-  // Reuse existing idempotency key if a pending transaction already exists for this consultation
-  const { data: existingPendingTx } = await admin
+  // Throttling safeguard: Prevent duplicate concurrent attempts within 10 seconds for the same consultation
+  const { data: recentPendingTx } = await admin
     .from('payment_transactions')
-    .select('*')
+    .select('id, created_at, status')
     .eq('consultation_id', consultation.id)
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  let localTransaction: PaymentTransaction | null = null;
-  let idempotencyKey: string;
-
-  if (existingPendingTx && existingPendingTx.idempotency_key) {
-    localTransaction = existingPendingTx as PaymentTransaction;
-    idempotencyKey = existingPendingTx.idempotency_key;
-    paymentLogInfo('payment.idempotency_key_reused', {
-      flowId,
-      consultationId: consultation.id,
-      transactionId: localTransaction.id,
-      idempotencyKeyPresent: true,
-    });
-  } else {
-    idempotencyKey = crypto.randomUUID();
-    localTransaction = await recordPaymentTransaction({
-      consultationId: consultation.id,
-      userId: user.id,
-      idempotencyKey,
-      status: 'pending',
-      paymentMethodId: formData.payment_method_id,
-      paymentTypeId: isCard ? 'credit_card' : isTicket ? 'ticket' : isPix ? 'bank_transfer' : null,
-      transactionAmount: canonicalPrice,
-      installments: formData.installments || 1,
-      payerEmail: user.email || formData.payer.email,
-      payerIdentificationType: 'CPF',
-      payerIdentificationNumber: normalizedCpf || null,
-      flowId,
-    });
+  if (recentPendingTx) {
+    const ageSeconds = (Date.now() - new Date(recentPendingTx.created_at).getTime()) / 1000;
+    if (ageSeconds < 10) {
+      paymentLogWarn('payment.duplicate_attempt_throttled', {
+        flowId,
+        consultationId: consultation.id,
+        transactionId: recentPendingTx.id,
+        ageSeconds,
+      });
+      return {
+        success: false,
+        status: 'rejected',
+        consultationId,
+        error:
+          'Uma tentativa de pagamento para esta consulta já está em processamento. Por favor, aguarde alguns instantes.',
+      };
+    }
   }
 
-  paymentLogInfo('payment.provider_request_build_started', { flowId, consultationId });
+  // Generate a dedicated idempotency key for this attempt
+  const idempotencyKey = crypto.randomUUID();
 
-  paymentLogInfo('payment.provider_request_build_succeeded', {
-    flowId,
-    consultationId,
-    transactionAmount: canonicalPrice,
-    currency: 'BRL',
-    hasToken: Boolean(formData.token),
+  const localTransaction = await recordPaymentTransaction({
+    consultationId: consultation.id,
+    userId: user.id,
+    idempotencyKey,
+    status: 'pending',
     paymentMethodId: formData.payment_method_id,
-    paymentTypeId: isCard
-      ? 'credit_card'
-      : isTicket
-        ? 'ticket'
-        : isPix
-          ? 'bank_transfer'
-          : undefined,
+    paymentTypeId: isCard ? 'credit_card' : isTicket ? 'ticket' : isPix ? 'bank_transfer' : null,
+    transactionAmount: canonicalPrice,
     installments: formData.installments || 1,
-    issuerProvided: Boolean(formData.issuer_id),
-    payerEmailPresent: Boolean(user.email || formData.payer?.email),
-    payerIdentificationTypePresent: Boolean(normalizedCpf),
+    payerEmail: user.email || formData.payer.email,
     payerIdentificationType: 'CPF',
-    payerIdentificationLength: normalizedCpf.length,
-    hasAddress: Boolean(payerAddress),
-    addressFieldsPresent: addressCompleteness,
-    externalReferencePresent: Boolean(consultation.id),
-    idempotencyKeyPresent: Boolean(idempotencyKey),
+    payerIdentificationNumber: normalizedCpf || null,
+    flowId,
   });
+
+  paymentLogInfo('payment.provider_request_build_started', { flowId, consultationId });
 
   const fullName = (user.user_metadata?.full_name || '').trim();
   const [defaultFirst, ...defaultRest] = fullName.split(' ');
@@ -897,7 +869,7 @@ export async function processBrickPayment(
   const validIssuerId = parsedIssuer && !isNaN(parsedIssuer) ? parsedIssuer : undefined;
 
   const payerPayload: Record<string, unknown> = {
-    email: user.email || formData.payer.email,
+    email: (user.email || formData.payer.email).trim().toLowerCase(),
     first_name: payerFirstName,
     last_name: payerLastName,
     identification: {
@@ -917,9 +889,11 @@ export async function processBrickPayment(
     };
   }
 
+  const webhookUrl = getMercadoPagoWebhookUrl();
+
   const paymentBody: Record<string, unknown> = {
-    transaction_amount: canonicalPrice,
-    description: `Consulta Veicular Placa ${consultation.plate}`,
+    transaction_amount: Number(canonicalPrice.toFixed(2)),
+    description: `Consulta Veicular - Placa ${consultation.plate}`,
     payment_method_id: formData.payment_method_id,
     payer: payerPayload,
     external_reference: consultation.id,
@@ -934,240 +908,25 @@ export async function processBrickPayment(
 
   if (isCard) {
     paymentBody.token = formData.token;
-    paymentBody.installments = formData.installments || 1;
+    paymentBody.installments = Number(formData.installments) || 1;
     if (validIssuerId) {
       paymentBody.issuer_id = validIssuerId;
     }
   }
 
-  const isSandboxOrDev =
-    process.env.NODE_ENV === 'development' ||
-    process.env.VERCEL_ENV === 'preview' ||
-    Boolean(getMercadoPagoAccessToken()?.startsWith('TEST-'));
-
-  const runDiagnosticMinimal =
-    isCard && isSandboxOrDev && process.env.DISABLE_MINIMAL_CARD_DIAGNOSTIC !== 'true';
-
-  if (runDiagnosticMinimal && validatedCardData) {
-    const diagResult = await createMinimalCardPaymentForDiagnostics({
-      paymentClient,
-      canonicalAmount: canonicalPrice,
-      token: validatedCardData.token,
-      installments: validatedCardData.installments || 1,
-      paymentMethodId: validatedCardData.payment_method_id,
-      userEmail: user.email || formData.payer.email,
-      normalizedCpf,
-      flowId,
-      consultationId: consultation.id,
-      transactionId: localTransaction?.id,
-    });
-
-    if (diagResult.success && diagResult.mpPayment) {
-      const mpPayment = diagResult.mpPayment;
-      const mpPaymentId = String(mpPayment.id);
-      const mpStatus = (mpPayment.status || 'pending') as MercadoPagoPaymentStatus;
-      const statusDetail = mpPayment.status_detail ? String(mpPayment.status_detail) : undefined;
-
-      if (localTransaction) {
-        await updatePaymentTransaction(
-          localTransaction.id,
-          {
-            mp_payment_id: mpPaymentId,
-            status: mpStatus,
-            status_detail: statusDetail,
-            payment_method_id: formData.payment_method_id,
-            payment_type_id: mpPayment.payment_type_id
-              ? String(mpPayment.payment_type_id)
-              : undefined,
-            net_received_amount: (
-              mpPayment.transaction_details as { net_received_amount?: number } | undefined
-            )?.net_received_amount,
-            raw_response: mpPayment as unknown as Record<string, unknown>,
-          },
-          flowId,
-        );
-      }
-
-      await recordAuditLog({
-        consultationId: consultation.id,
-        transactionId: localTransaction?.id,
-        event: mpStatus === 'approved' ? 'payment_approved' : 'payment_created',
-        actorType: 'customer',
-        actorId: user.id,
-        details: { mpPaymentId, status: mpStatus, statusDetail, mode: 'minimal_card_diagnostic' },
-        flowId,
-      });
-
-      if (mpStatus === 'approved') {
-        const lookupResult = await executePostPaymentLookup({
-          consultation,
-          transactionId: localTransaction?.id,
-          mpPaymentId,
-          flowId,
-        });
-
-        if (!lookupResult.success) {
-          return {
-            success: false,
-            status: 'lookup_failed_refunded',
-            statusDetail: 'lookup_failed_refunded',
-            consultationId,
-            error: lookupResult.error,
-          };
-        }
-
-        return {
-          success: true,
-          status: 'approved',
-          statusDetail,
-          paymentId: mpPaymentId,
-          consultationId,
-        };
-      }
-
-      return {
-        success: true,
-        status: mpStatus,
-        statusDetail,
-        paymentId: mpPaymentId,
-        consultationId,
-      };
-    } else {
-      const normalizedError = extractSafeError(diagResult.error);
-      const isProvider500 =
-        normalizedError.providerStatus === 500 ||
-        String(normalizedError.providerMessage).includes('internal_error') ||
-        (diagResult.error as { status?: number })?.status === 500;
-
-      if (isProvider500) {
-        if (isDevPaymentSimulationEnabled()) {
-          paymentLogWarn('payment.dev_simulation_fallback_on_provider_500', {
-            flowId,
-            consultationId: consultation.id,
-            transactionId: localTransaction?.id,
-            reason:
-              'Mercado Pago API retornou 500 internal_error em ambiente de desenvolvimento. Ativando aprovação simulada com base em ENABLE_DEV_PAYMENT_SIMULATION.',
-          });
-
-          const simPaymentId = `dev-sim-${Date.now()}`;
-
-          if (localTransaction) {
-            await updatePaymentTransaction(
-              localTransaction.id,
-              {
-                mp_payment_id: simPaymentId,
-                status: 'approved',
-                status_detail: 'accredited',
-                payment_method_id: formData.payment_method_id,
-                payment_type_id: 'credit_card',
-                net_received_amount: canonicalPrice,
-                raw_response: {
-                  simulated: true,
-                  reason: 'dev_simulation_fallback_on_provider_500',
-                  providerStatus: 500,
-                  providerMessage: 'internal_error',
-                },
-              },
-              flowId,
-            );
-          }
-
-          await recordAuditLog({
-            consultationId: consultation.id,
-            transactionId: localTransaction?.id,
-            event: 'payment_approved',
-            actorType: 'customer',
-            actorId: user.id,
-            details: {
-              mpPaymentId: simPaymentId,
-              status: 'approved',
-              statusDetail: 'accredited',
-              mode: 'dev_simulation_fallback_on_provider_500',
-            },
-            flowId,
-          });
-
-          const lookupResult = await executePostPaymentLookup({
-            consultation,
-            transactionId: localTransaction?.id,
-            mpPaymentId: simPaymentId,
-            flowId,
-          });
-
-          if (!lookupResult.success) {
-            return {
-              success: false,
-              status: 'lookup_failed_refunded',
-              statusDetail: 'lookup_failed_refunded',
-              consultationId,
-              error: lookupResult.error,
-            };
-          }
-
-          return {
-            success: true,
-            status: 'approved',
-            statusDetail: 'accredited',
-            paymentId: simPaymentId,
-            consultationId,
-          };
-        }
-
-        if (localTransaction) {
-          await updatePaymentTransaction(
-            localTransaction.id,
-            {
-              status: 'provider_error',
-              failure_code: 'MERCADO_PAGO_PROVIDER_INTERNAL_ERROR',
-              failure_message_safe:
-                'Instabilidade técnica temporária no processamento de pagamentos do Mercado Pago.',
-            },
-            flowId,
-          );
-        }
-
-        return {
-          success: false,
-          status: 'provider_error',
-          consultationId,
-          error:
-            'O Mercado Pago apresentou uma instabilidade temporária ao processar seu cartão. Nenhuma cobrança foi confirmada. Por favor, aguarde alguns instantes e tente novamente.',
-        };
-      } else {
-        if (localTransaction) {
-          await updatePaymentTransaction(
-            localTransaction.id,
-            {
-              status: 'rejected',
-              failure_code: 'MERCADO_PAGO_CREATE_FAILED',
-              failure_message_safe:
-                normalizedError.providerMessage || 'Não foi possível iniciar o pagamento.',
-            },
-            flowId,
-          );
-        }
-
-        return {
-          success: false,
-          status: 'rejected',
-          consultationId,
-          error:
-            'Não foi possível processar o pagamento com os dados informados. Revise os dados e tente novamente.',
-        };
-      }
-    }
+  if (webhookUrl) {
+    paymentBody.notification_url = webhookUrl;
   }
 
-  // Normal / Comparison Path
-  paymentLogInfo('payment.diagnostic_normal_comparison_started', {
+  // Strip all undefined and null values recursively
+  const cleanedPaymentBody = cleanPayload(paymentBody);
+
+  paymentLogInfo('payment.provider_request_build_succeeded', {
     flowId,
     consultationId,
-    transactionId: localTransaction?.id,
-    mode: 'normal',
-    canonicalAmount: canonicalPrice,
-    amountType: typeof canonicalPrice,
+    transactionAmount: canonicalPrice,
     currency: 'BRL',
-    tokenPresent: Boolean(formData.token),
+    hasToken: Boolean(formData.token),
     paymentMethodId: formData.payment_method_id,
     paymentTypeId: isCard
       ? 'credit_card'
@@ -1177,15 +936,14 @@ export async function processBrickPayment(
           ? 'bank_transfer'
           : undefined,
     installments: formData.installments || 1,
-    issuerIncluded: Boolean(validIssuerId),
-    externalReferenceIncluded: Boolean(consultation.id),
-    descriptionIncluded: true,
-    addressIncluded: Boolean(payerAddress),
-    requestOptionsIncluded: Boolean(idempotencyKey),
-    idempotencySentToProvider: Boolean(idempotencyKey),
+    issuerProvided: Boolean(validIssuerId),
     payerEmailPresent: Boolean(user.email || formData.payer?.email),
-    cpfType: 'CPF',
-    cpfLength: normalizedCpf.length,
+    payerIdentificationType: 'CPF',
+    payerIdentificationLength: normalizedCpf.length,
+    hasAddress: Boolean(payerAddress),
+    externalReferencePresent: Boolean(consultation.id),
+    idempotencyKeyPresent: Boolean(idempotencyKey),
+    webhookUrlPresent: Boolean(webhookUrl),
   });
 
   const createStart = Date.now();
@@ -1201,16 +959,46 @@ export async function processBrickPayment(
 
   try {
     const mpPayment = await paymentClient.create({
-      body: paymentBody as Parameters<typeof paymentClient.create>[0]['body'],
+      body: cleanedPaymentBody as Parameters<typeof paymentClient.create>[0]['body'],
       requestOptions: {
         idempotencyKey,
       },
     });
 
     const createDurationMs = Date.now() - createStart;
-    const mpPaymentId = String(mpPayment.id);
-    const mpStatus = (mpPayment.status || 'pending') as MercadoPagoPaymentStatus;
-    const statusDetail = mpPayment.status_detail;
+    const mpPaymentId = mpPayment?.id ? String(mpPayment.id) : null;
+    const mpStatus = (mpPayment?.status || 'pending') as MercadoPagoPaymentStatus;
+    const statusDetail = mpPayment?.status_detail ? String(mpPayment.status_detail) : undefined;
+
+    // Fail safe if provider returns without a valid payment ID
+    if (!mpPaymentId) {
+      paymentLogError('payment.provider_response_missing_payment_id', {
+        flowId,
+        consultationId,
+        providerStatus: mpStatus,
+        durationMs: createDurationMs,
+      });
+
+      if (localTransaction) {
+        await updatePaymentTransaction(
+          localTransaction.id,
+          {
+            status: 'provider_error',
+            failure_code: 'MERCADO_PAGO_MISSING_PAYMENT_ID',
+            failure_message_safe: 'Resposta do provedor sem identificador de pagamento.',
+          },
+          flowId,
+        );
+      }
+
+      return {
+        success: false,
+        status: 'provider_error',
+        consultationId,
+        error:
+          'Não foi possível processar o pagamento agora. Nenhuma cobrança foi confirmada. Tente novamente em alguns minutos.',
+      };
+    }
 
     paymentLogInfo('payment.provider_create_succeeded', {
       flowId,
@@ -1222,7 +1010,7 @@ export async function processBrickPayment(
       durationMs: createDurationMs,
     });
 
-    // Update local transaction with provider response
+    // Update local transaction with verified provider response
     if (localTransaction) {
       await updatePaymentTransaction(
         localTransaction.id,
@@ -1231,7 +1019,9 @@ export async function processBrickPayment(
           status: mpStatus,
           status_detail: statusDetail,
           payment_method_id: formData.payment_method_id,
-          payment_type_id: mpPayment.payment_type_id,
+          payment_type_id: mpPayment.payment_type_id
+            ? String(mpPayment.payment_type_id)
+            : undefined,
           net_received_amount: mpPayment.transaction_details?.net_received_amount,
           raw_response: mpPayment as unknown as Record<string, unknown>,
         },
@@ -1329,80 +1119,8 @@ export async function processBrickPayment(
       String(normalizedError.providerMessage).includes('internal_error') ||
       (err as { status?: number })?.status === 500;
 
-    // Mark local transaction with safe failure status (never rejected for HTTP 500)
     if (localTransaction) {
       if (isProvider500) {
-        if (isDevPaymentSimulationEnabled()) {
-          paymentLogWarn('payment.dev_simulation_fallback_on_provider_500', {
-            flowId,
-            consultationId: consultation.id,
-            transactionId: localTransaction?.id,
-            reason:
-              'Mercado Pago API retornou 500 internal_error em ambiente de desenvolvimento. Ativando aprovação simulada com base em ENABLE_DEV_PAYMENT_SIMULATION.',
-          });
-
-          const simPaymentId = `dev-sim-${Date.now()}`;
-
-          await updatePaymentTransaction(
-            localTransaction.id,
-            {
-              mp_payment_id: simPaymentId,
-              status: 'approved',
-              status_detail: 'accredited',
-              payment_method_id: formData.payment_method_id,
-              payment_type_id: isCard ? 'credit_card' : 'bank_transfer',
-              net_received_amount: canonicalPrice,
-              raw_response: {
-                simulated: true,
-                reason: 'dev_simulation_fallback_on_provider_500',
-                providerStatus: 500,
-                providerMessage: 'internal_error',
-              },
-            },
-            flowId,
-          );
-
-          await recordAuditLog({
-            consultationId: consultation.id,
-            transactionId: localTransaction?.id,
-            event: 'payment_approved',
-            actorType: 'customer',
-            actorId: user.id,
-            details: {
-              mpPaymentId: simPaymentId,
-              status: 'approved',
-              statusDetail: 'accredited',
-              mode: 'dev_simulation_fallback_on_provider_500',
-            },
-            flowId,
-          });
-
-          const lookupResult = await executePostPaymentLookup({
-            consultation,
-            transactionId: localTransaction?.id,
-            mpPaymentId: simPaymentId,
-            flowId,
-          });
-
-          if (!lookupResult.success) {
-            return {
-              success: false,
-              status: 'lookup_failed_refunded',
-              statusDetail: 'lookup_failed_refunded',
-              consultationId,
-              error: lookupResult.error,
-            };
-          }
-
-          return {
-            success: true,
-            status: 'approved',
-            statusDetail: 'accredited',
-            paymentId: simPaymentId,
-            consultationId,
-          };
-        }
-
         await updatePaymentTransaction(
           localTransaction.id,
           {
@@ -1410,6 +1128,11 @@ export async function processBrickPayment(
             failure_code: 'MERCADO_PAGO_PROVIDER_INTERNAL_ERROR',
             failure_message_safe:
               'Instabilidade técnica temporária no processamento de pagamentos do Mercado Pago.',
+            raw_response: {
+              providerStatus: normalizedError.providerStatus || 500,
+              providerMessage: normalizedError.providerMessage || 'internal_error',
+              providerError: normalizedError.providerError,
+            },
           },
           flowId,
         );
@@ -1419,7 +1142,14 @@ export async function processBrickPayment(
           {
             status: 'rejected',
             failure_code: 'MERCADO_PAGO_CREATE_FAILED',
-            failure_message_safe: 'Não foi possível iniciar o pagamento.',
+            failure_message_safe:
+              normalizedError.providerMessage ||
+              'Não foi possível processar o pagamento com os dados informados.',
+            raw_response: {
+              providerStatus: normalizedError.providerStatus,
+              providerMessage: normalizedError.providerMessage,
+              providerError: normalizedError.providerError,
+            },
           },
           flowId,
         );
@@ -1432,7 +1162,7 @@ export async function processBrickPayment(
         status: 'provider_error',
         consultationId,
         error:
-          'O Mercado Pago apresentou uma instabilidade temporária ao processar seu pagamento. Nenhuma cobrança foi confirmada. Por favor, aguarde alguns instantes e tente novamente.',
+          'Não foi possível processar o pagamento agora. Nenhuma cobrança foi confirmada. Tente novamente em alguns minutos.',
       };
     }
 

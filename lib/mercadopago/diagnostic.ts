@@ -1,11 +1,17 @@
 /**
  * -------------------------------------------------------------
- * Isolated Minimal Card Payment Diagnostic Module (Section 2 & 3)
+ * Isolated Minimal Card Payment Diagnostic Module
  * -------------------------------------------------------------
- * Strictly isolated diagnostic execution for card payments in development,
- * preview, and sandbox/test environments.
- * Strips all optional parameters to test provider compatibility.
- * Never used as a bypass in production.
+ * Strictly isolated diagnostic execution for card payments in local development ONLY.
+ * Strips optional parameters to isolate provider compatibility.
+ *
+ * MANDATORY SECURITY GATES:
+ * - Blocked in Vercel Production
+ * - Blocked in Vercel Preview
+ * - Blocked when NODE_ENV !== 'development'
+ * - Blocked unless ENABLE_MP_MINIMAL_DIAGNOSTIC === 'true'
+ * - Never acts as a fallback or bypass in payment flow
+ * - Never authorizes or triggers consultation release
  */
 
 import type { Payment } from 'mercadopago';
@@ -13,6 +19,7 @@ import { type MercadoPagoPaymentStatus } from './types.ts';
 import {
   paymentLogInfo,
   paymentLogError,
+  paymentLogWarn,
   extractSafeError,
 } from '../observability/payment-logger.ts';
 
@@ -35,14 +42,56 @@ export interface CreateMinimalCardPaymentParams {
 
 export interface MinimalCardPaymentDiagnosticResult {
   success: boolean;
+  blocked?: boolean;
+  reason?: string;
   mpPayment?: MercadoPagoPaymentResponse;
   error?: unknown;
   durationMs: number;
 }
 
+/**
+ * Checks if the minimal diagnostic execution is permitted in current environment.
+ */
+export function isMinimalDiagnosticAllowed(): { allowed: boolean; reason?: string } {
+  if (process.env.VERCEL_ENV === 'production') {
+    return { allowed: false, reason: 'Bloqueado em ambiente Vercel Production.' };
+  }
+  if (process.env.VERCEL_ENV === 'preview') {
+    return { allowed: false, reason: 'Bloqueado em ambiente Vercel Preview.' };
+  }
+  if (process.env.NODE_ENV !== 'development') {
+    return { allowed: false, reason: 'Bloqueado fora de NODE_ENV=development.' };
+  }
+  if (process.env.ENABLE_MP_MINIMAL_DIAGNOSTIC !== 'true') {
+    return {
+      allowed: false,
+      reason: 'Requer flag de ambiente ENABLE_MP_MINIMAL_DIAGNOSTIC=true.',
+    };
+  }
+  return { allowed: true };
+}
+
 export async function createMinimalCardPaymentForDiagnostics(
   params: CreateMinimalCardPaymentParams,
 ): Promise<MinimalCardPaymentDiagnosticResult> {
+  const gate = isMinimalDiagnosticAllowed();
+  if (!gate.allowed) {
+    paymentLogWarn('payment.diagnostic_minimal_blocked', {
+      flowId: params.flowId,
+      consultationId: params.consultationId,
+      transactionId: params.transactionId,
+      reason: gate.reason,
+      nodeEnv: process.env.NODE_ENV,
+      vercelEnv: process.env.VERCEL_ENV,
+    });
+    return {
+      success: false,
+      blocked: true,
+      reason: gate.reason,
+      durationMs: 0,
+    };
+  }
+
   const {
     paymentClient,
     canonicalAmount,
@@ -93,53 +142,7 @@ export async function createMinimalCardPaymentForDiagnostics(
     },
   };
 
-  paymentLogInfo('payment.diagnostic_minimal_request_built', {
-    flowId,
-    consultationId,
-    transactionId,
-    mode: 'minimal_card_diagnostic',
-    canonicalAmount,
-    amountType: typeof canonicalAmount,
-    currency: 'BRL',
-    tokenPresent: Boolean(token),
-    paymentMethodId,
-    paymentTypeId: 'credit_card',
-    installments,
-    issuerIncluded: false,
-    externalReferenceIncluded: false,
-    descriptionIncluded: false,
-    addressIncluded: false,
-    requestOptionsIncluded: false,
-    idempotencySentToProvider: false,
-    payerEmailPresent: Boolean(userEmail),
-    cpfType: 'CPF',
-    cpfLength: normalizedCpf.length,
-  });
-
   const createStart = Date.now();
-  paymentLogInfo('payment.diagnostic_minimal_provider_create_started', {
-    flowId,
-    consultationId,
-    transactionId,
-    mode: 'minimal_card_diagnostic',
-    canonicalAmount,
-    amountType: typeof canonicalAmount,
-    currency: 'BRL',
-    tokenPresent: Boolean(token),
-    paymentMethodId,
-    paymentTypeId: 'credit_card',
-    installments,
-    issuerIncluded: false,
-    externalReferenceIncluded: false,
-    descriptionIncluded: false,
-    addressIncluded: false,
-    requestOptionsIncluded: false,
-    idempotencySentToProvider: false,
-    payerEmailPresent: Boolean(userEmail),
-    cpfType: 'CPF',
-    cpfLength: normalizedCpf.length,
-  });
-
   try {
     const mpPayment = await paymentClient.create({
       body: minimalCardPaymentBody,
@@ -156,25 +159,11 @@ export async function createMinimalCardPaymentForDiagnostics(
       transactionId,
       mode: 'minimal_card_diagnostic',
       canonicalAmount,
-      amountType: typeof canonicalAmount,
       currency: 'BRL',
-      tokenPresent: Boolean(token),
       paymentMethodId,
-      paymentTypeId: 'credit_card',
-      installments,
-      issuerIncluded: false,
-      externalReferenceIncluded: false,
-      descriptionIncluded: false,
-      addressIncluded: false,
-      requestOptionsIncluded: false,
-      idempotencySentToProvider: false,
-      payerEmailPresent: Boolean(userEmail),
-      cpfType: 'CPF',
-      cpfLength: normalizedCpf.length,
       providerStatus: mpStatus,
       providerMessage: statusDetail,
       providerPaymentIdPresent: Boolean(mpPaymentId),
-      providerPaymentStatus: mpStatus,
       durationMs,
     });
 
@@ -193,25 +182,10 @@ export async function createMinimalCardPaymentForDiagnostics(
       transactionId,
       mode: 'minimal_card_diagnostic',
       canonicalAmount,
-      amountType: typeof canonicalAmount,
       currency: 'BRL',
-      tokenPresent: Boolean(token),
       paymentMethodId,
-      paymentTypeId: 'credit_card',
-      installments,
-      issuerIncluded: false,
-      externalReferenceIncluded: false,
-      descriptionIncluded: false,
-      addressIncluded: false,
-      requestOptionsIncluded: false,
-      idempotencySentToProvider: false,
-      payerEmailPresent: Boolean(userEmail),
-      cpfType: 'CPF',
-      cpfLength: normalizedCpf.length,
       providerStatus: normalizedError.providerStatus,
       providerMessage: normalizedError.providerMessage,
-      providerPaymentIdPresent: false,
-      providerPaymentStatus: null,
       durationMs,
     });
 

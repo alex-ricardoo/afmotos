@@ -19,10 +19,31 @@ export function getMercadoPagoWebhookSecret(): string | null {
   return process.env.MERCADO_PAGO_WEBHOOK_SECRET || process.env.MP_WEBHOOK_SECRET || null;
 }
 
+export function getMercadoPagoWebhookUrl(): string | null {
+  const customUrl = process.env.MERCADO_PAGO_WEBHOOK_URL || process.env.MP_WEBHOOK_URL;
+  if (customUrl && customUrl.startsWith('https://')) {
+    return customUrl;
+  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (appUrl) {
+    const base = appUrl.startsWith('http') ? appUrl : `https://${appUrl}`;
+    if (base.startsWith('https://')) {
+      return `${base.replace(/\/$/, '')}/api/webhooks/mercadopago`;
+    }
+  }
+  return null;
+}
+
 export function isDevPaymentSimulationEnabled(): boolean {
-  return (
-    process.env.NODE_ENV === 'development' && process.env.ENABLE_DEV_PAYMENT_SIMULATION === 'true'
-  );
+  if (
+    process.env.VERCEL_ENV === 'production' ||
+    process.env.VERCEL_ENV === 'preview' ||
+    process.env.NODE_ENV !== 'development' ||
+    process.env.VEHICLE_LOOKUP_MODE === 'live'
+  ) {
+    return false;
+  }
+  return process.env.ENABLE_DEV_PAYMENT_SIMULATION === 'true';
 }
 
 export function getMercadoPagoClient(): MercadoPagoConfig {
