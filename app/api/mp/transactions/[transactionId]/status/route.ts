@@ -39,7 +39,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     // 2. Busca a transação
     const { data: transaction, error: txError } = await adminDb
       .from('payment_transactions')
-      .select('id, consultation_id, user_id, status, status_detail, failure_code')
+      .select('id, consultation_id, user_id, status, status_detail, failure_code, mp_refund_id')
       .eq('id', transactionId)
       .maybeSingle();
 
@@ -81,22 +81,33 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    // 4. Reconciliação sob demanda de Refund se houver estorno pendente (Parte 9)
-    if (consultation.status === 'refund_pending') {
-      const { data: activeRefund } = await adminDb
-        .from('payment_refunds')
-        .select('id, status')
-        .eq('transaction_id', transaction.id)
-        .in('status', ['requested', 'pending'])
-        .maybeSingle();
+    // 4. Busca refund vinculado e reconcilia sob demanda se houver estorno pendente/solicitado
+    const { data: refundRecord } = await adminDb
+      .from('payment_refunds')
+      .select('id, status, provider_refund_id, last_error_code, last_error_safe')
+      .eq('transaction_id', transaction.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-      if (activeRefund) {
+    if (
+      consultation.status === 'refund_pending' ||
+      refundRecord?.status === 'requested' ||
+      refundRecord?.status === 'pending'
+    ) {
+      const targetRefundId = refundRecord?.id;
+      if (targetRefundId) {
         try {
-          const recResult = await reconcileSingleRefund(activeRefund.id, adminDb);
+          const recResult = await reconcileSingleRefund(targetRefundId, adminDb);
           if (recResult.status === 'confirmed') {
             consultation.status = 'refunded';
             consultation.payment_status = 'refunded';
             transaction.status = 'refunded';
+            if (refundRecord) {
+              refundRecord.status = 'confirmed';
+              refundRecord.provider_refund_id =
+                recResult.mpRefundId || refundRecord.provider_refund_id;
+            }
           }
         } catch (e) {
           console.warn('[status route] Falha ao reconciliar refund sob demanda:', e);
@@ -113,7 +124,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       .limit(1)
       .maybeSingle();
 
-    // 6. Derivação de estados e mensagens oficiais (Parte 10)
+    // 6. Derivação de estados e mensagens oficiais conforme Parte 8
     const status = transaction.status as PaymentTransactionStatus;
     const consultationStatus = consultation.status as ConsultationLifecycleStatus;
     const paymentStatus = consultation.payment_status as ConsultationPaymentStatus;
@@ -144,19 +155,37 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       customerTitle = 'Seu laudo está disponível.';
       customerMessage =
         'Seu laudo veicular foi gerado com sucesso e já está liberado para visualização.';
-    } else if (status === 'refunded' || consultationStatus === 'refunded') {
-      nextAction = 'contact_support';
-      customerTitle = 'Pagamento estornado';
-      customerMessage =
-        'Seu pagamento foi estornado integralmente. O prazo para o valor aparecer depende do método de pagamento e da instituição financeira.';
     } else if (
-      consultationStatus === 'failed_permanent' ||
-      consultationStatus === 'refund_pending'
+      status === 'refunded' ||
+      consultationStatus === 'refunded' ||
+      refundRecord?.status === 'confirmed'
     ) {
       nextAction = 'contact_support';
-      customerTitle = 'Não foi possível concluir sua consulta';
+      customerTitle = 'Estorno confirmado';
       customerMessage =
-        'Não foi possível concluir sua consulta neste momento. Solicitamos o estorno integral do seu pagamento e atualizaremos esta página quando ele for confirmado.';
+        'Seu pagamento foi estornado integralmente. O prazo para o valor aparecer depende do método de pagamento e da instituição financeira.';
+    } else if (refundRecord?.status === 'pending') {
+      nextAction = 'wait';
+      customerTitle = 'Estorno pendente';
+      customerMessage = 'Seu estorno foi solicitado e está sendo processado pelo Mercado Pago.';
+    } else if (
+      refundRecord?.status === 'requested' ||
+      consultationStatus === 'refund_pending' ||
+      consultationStatus === 'failed_permanent'
+    ) {
+      nextAction = 'wait';
+      customerTitle = 'Estorno solicitado';
+      customerMessage =
+        'Não foi possível concluir sua consulta neste momento porque o serviço de dados está temporariamente indisponível. Solicitamos o estorno integral do seu pagamento. A confirmação será atualizada automaticamente nesta página. Você não precisa realizar um novo pagamento.';
+    } else if (
+      refundRecord?.status === 'failed' ||
+      refundRecord?.status === 'manual_review' ||
+      consultationStatus === 'manual_review'
+    ) {
+      nextAction = 'contact_support';
+      customerTitle = 'Finalizando confirmação do estorno';
+      customerMessage =
+        'Estamos finalizando a confirmação do seu estorno. Nossa equipe foi avisada e você pode falar com o suporte informando esta consulta.';
     } else if (consultationStatus === 'retry_scheduled' || job?.status === 'retry_scheduled') {
       nextAction = 'wait';
       retryable = true;
@@ -164,11 +193,6 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       customerTitle = 'Instabilidade temporária na consulta';
       customerMessage =
         'Estamos enfrentando uma instabilidade temporária para consultar a placa. Você não precisa pagar novamente; tentaremos novamente automaticamente enquanto esta página estiver aberta.';
-    } else if (consultationStatus === 'manual_review') {
-      nextAction = 'contact_support';
-      customerTitle = 'Verificação necessária';
-      customerMessage =
-        'Sua consulta precisa de uma verificação adicional. Nossa equipe foi avisada e retornará pelo suporte.';
     } else if (status === 'approved') {
       nextAction = 'wait';
       canProcessDelivery = true;
@@ -205,6 +229,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       retryAttempt,
       maxRetryAttempts,
       canProcessDelivery,
+      refundStatus: refundRecord?.status || 'none',
+      mpRefundId: refundRecord?.provider_refund_id || transaction.mp_refund_id || null,
     };
 
     return NextResponse.json(response);

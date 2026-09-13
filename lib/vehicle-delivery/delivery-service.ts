@@ -9,6 +9,10 @@ import {
   type DeliveryJobStatus,
   type ProviderFailureClass,
 } from '../mercadopago/types.ts';
+import {
+  isCacheEntryEligibleForPaidProduction,
+  type RuntimeEnvironment,
+} from './cache-eligibility.ts';
 
 export interface EnqueueDeliveryJobParams {
   consultationId: string;
@@ -266,54 +270,119 @@ export async function executeSingleDeliveryJob(
   }
 
   const plateToLookup = consultation.plate_normalized || consultation.plate;
+  const runtimeEnvironment: RuntimeEnvironment =
+    process.env.VERCEL_ENV === 'production'
+      ? 'production'
+      : process.env.VERCEL_ENV === 'preview'
+        ? 'preview'
+        : 'development';
 
-  // 2. RB-02: Cache-First Check
+  logVehicleDeliveryEvent('cache_lookup_started', {
+    jobIdMasked: maskId(job.id),
+    consultationIdMasked: maskId(consultation.id),
+    plateMasked: maskId(plateToLookup),
+    runtimeEnvironment,
+  });
+
+  // 2. RB-02: Cache-First Check with Strict Paid Production Eligibility
+  let cacheHit = false;
   try {
-    const cached = await findExistingConsultation(plateToLookup, adminDb);
+    const cached = await findExistingConsultation(plateToLookup, adminDb, {
+      requireLiveOnly: runtimeEnvironment === 'production',
+    });
 
-    if (cached && cached.status === 'COMPLETED' && cached.raw_response) {
-      logVehicleDeliveryEvent('cache_hit', {
-        jobIdMasked: maskId(job.id),
-        consultationIdMasked: maskId(consultation.id),
-        plateMasked: maskId(plateToLookup),
-        sourceConsultationId: cached.id,
+    if (cached) {
+      const eligibility = isCacheEntryEligibleForPaidProduction({
+        runtimeEnvironment,
+        cacheRecord: cached,
+        isPaidTransaction: true,
       });
 
-      const nowIso = new Date().toISOString();
+      if (eligibility.eligible) {
+        cacheHit = true;
+        logVehicleDeliveryEvent('cache_hit', {
+          jobIdMasked: maskId(job.id),
+          consultationIdMasked: maskId(consultation.id),
+          plateMasked: maskId(plateToLookup),
+          sourceConsultationId: cached.id,
+          provider: cached.provider,
+          isMock: cached.is_mock,
+        });
 
-      await adminDb
-        .from('customer_plate_consultations')
-        .update({
-          vehicle_data: cached.raw_response,
-          source_consultation_id: cached.id,
-          status: 'completed',
-          processed_at: nowIso,
-          updated_at: nowIso,
-        })
-        .eq('id', consultation.id);
+        const nowIso = new Date().toISOString();
 
-      await adminDb
-        .from('consultation_delivery_jobs')
-        .update({
-          status: 'completed',
-          completed_at: nowIso,
-          updated_at: nowIso,
-        })
-        .eq('id', job.id);
+        await adminDb
+          .from('customer_plate_consultations')
+          .update({
+            vehicle_data: cached.raw_response,
+            source_consultation_id: cached.id,
+            status: 'completed',
+            processed_at: nowIso,
+            updated_at: nowIso,
+          })
+          .eq('id', consultation.id);
 
-      await adminDb.from('consultation_audit_logs').insert({
-        consultation_id: consultation.id,
-        transaction_id: job.transaction_id,
-        actor_type: 'system',
-        event: 'delivery_cache_hit',
-        details: {
-          job_id: job.id,
-          source_consultation_id: cached.id,
-          duration_ms: Date.now() - startTime,
-        },
-      });
+        await adminDb
+          .from('consultation_delivery_jobs')
+          .update({
+            status: 'completed',
+            completed_at: nowIso,
+            updated_at: nowIso,
+          })
+          .eq('id', job.id);
 
-      return { success: true, status: 'completed' };
+        await adminDb.from('consultation_audit_logs').insert({
+          consultation_id: consultation.id,
+          transaction_id: job.transaction_id,
+          actor_type: 'system',
+          event: 'delivery_cache_hit',
+          details: {
+            job_id: job.id,
+            source_consultation_id: cached.id,
+            provider: cached.provider,
+            is_mock: cached.is_mock,
+            duration_ms: Date.now() - startTime,
+          },
+        });
+
+        return { success: true, status: 'completed' };
+      } else {
+        // Cache found but rejected (e.g., MOCK_CACHE_IN_PRODUCTION)
+        logVehicleDeliveryEvent(
+          'cache_rejected',
+          {
+            jobIdMasked: maskId(job.id),
+            consultationIdMasked: maskId(consultation.id),
+            transactionIdMasked: maskId(job.transaction_id),
+            cacheConsultationIdMasked: maskId(cached.id),
+            reasonCode: eligibility.reasonCode || 'MOCK_CACHE_IN_PRODUCTION',
+            nextAction: eligibility.nextAction,
+            provider: cached.provider,
+            source: cached.mode,
+            isMock: cached.is_mock,
+            runtimeEnvironment,
+          },
+          'warn',
+        );
+
+        await adminDb.from('consultation_audit_logs').insert({
+          consultation_id: consultation.id,
+          transaction_id: job.transaction_id,
+          actor_type: 'system',
+          event: 'cache_mock_rejected_in_production',
+          details: {
+            job_id: job.id,
+            source_cache_id: cached.id,
+            reason_code: eligibility.reasonCode,
+            next_action: eligibility.nextAction,
+            is_mock: cached.is_mock,
+            source: cached.mode,
+            provider: cached.provider,
+            runtime_environment: runtimeEnvironment,
+            duration_ms: Date.now() - startTime,
+          },
+        });
+      }
     }
   } catch (cacheErr) {
     console.warn(
@@ -322,18 +391,42 @@ export async function executeSingleDeliveryJob(
     );
   }
 
-  // 3. Cache Miss: Preparação para chamada LIVE
-  logVehicleDeliveryEvent('cache_miss', {
-    jobIdMasked: maskId(job.id),
-    consultationIdMasked: maskId(consultation.id),
-    plateMasked: maskId(plateToLookup),
-  });
+  // 3. Cache Miss (ou Cache Rejeitado): Preparação para chamada LIVE
+  if (!cacheHit) {
+    logVehicleDeliveryEvent('cache_miss', {
+      jobIdMasked: maskId(job.id),
+      consultationIdMasked: maskId(consultation.id),
+      plateMasked: maskId(plateToLookup),
+    });
+  }
 
   const config = getVehicleLookupConfig();
   const isProd = process.env.VERCEL_ENV === 'production';
 
   // RB-03: Guarda de segurança de modo mock em produção
   if (isProd && config.mode === 'mock') {
+    logVehicleDeliveryEvent(
+      'mock_result_blocked',
+      {
+        jobIdMasked: maskId(job.id),
+        consultationIdMasked: maskId(consultation.id),
+        transactionIdMasked: maskId(job.transaction_id),
+        reason: 'MOCK_MODE_IN_PRODUCTION',
+      },
+      'error',
+    );
+
+    await adminDb.from('consultation_audit_logs').insert({
+      consultation_id: consultation.id,
+      transaction_id: job.transaction_id,
+      actor_type: 'system',
+      event: 'mock_result_blocked',
+      details: {
+        job_id: job.id,
+        reason: 'MOCK_MODE_IN_PRODUCTION',
+      },
+    });
+
     const classified = classifyProviderFailure('MOCK_MODE_IN_PRODUCTION');
     return await handleJobPermanentFailure(
       job,
@@ -368,17 +461,73 @@ export async function executeSingleDeliveryJob(
     attempt: job.attempt_count,
   });
 
+  await adminDb.from('consultation_audit_logs').insert({
+    consultation_id: consultation.id,
+    transaction_id: job.transaction_id,
+    actor_type: 'system',
+    event: 'live_provider_attempt_started',
+    details: {
+      job_id: job.id,
+      attempt: job.attempt_count,
+    },
+  });
+
   try {
     const lookupResult = await executeVehiclePlateLookup(
       {
         plate: plateToLookup,
         userId: consultation.user_id,
         confirmedPlate: plateToLookup,
+        requireLiveOnly: isProd,
       },
       adminDb,
     );
 
     if (lookupResult.success && lookupResult.record) {
+      // Bloqueio rigoroso em produção se vier mock por qualquer motivo anômalo
+      if (isProd && lookupResult.record.is_mock) {
+        logVehicleDeliveryEvent(
+          'mock_result_blocked',
+          {
+            jobIdMasked: maskId(job.id),
+            consultationIdMasked: maskId(consultation.id),
+            transactionIdMasked: maskId(job.transaction_id),
+            reason: 'MOCK_RECORD_RETURNED_IN_PRODUCTION',
+          },
+          'error',
+        );
+
+        await adminDb.from('consultation_audit_logs').insert({
+          consultation_id: consultation.id,
+          transaction_id: job.transaction_id,
+          actor_type: 'system',
+          event: 'mock_result_blocked',
+          details: {
+            job_id: job.id,
+            reason: 'MOCK_RECORD_RETURNED_IN_PRODUCTION',
+          },
+        });
+
+        const classified = classifyProviderFailure('MOCK_MODE_IN_PRODUCTION');
+        return await handleJobPermanentFailure(
+          job,
+          consultation,
+          classified.failureCode,
+          classified.errorMessageSafe,
+          500,
+          classified.failureClass,
+          adminDb,
+        );
+      }
+
+      logVehicleDeliveryEvent('provider_response_received', {
+        jobIdMasked: maskId(job.id),
+        consultationIdMasked: maskId(consultation.id),
+        provider: 'apibrasil',
+        attempt: job.attempt_count,
+        isMock: lookupResult.record.is_mock,
+      });
+
       const nowIso = new Date().toISOString();
 
       await adminDb
@@ -412,11 +561,13 @@ export async function executeSingleDeliveryJob(
         consultation_id: consultation.id,
         transaction_id: job.transaction_id,
         actor_type: 'system',
-        event: 'apibrasil_request_succeeded',
+        event: 'live_provider_success',
         details: {
           job_id: job.id,
           attempt: job.attempt_count,
           duration_ms: Date.now() - startTime,
+          vpc_id: lookupResult.record.id,
+          is_mock: lookupResult.record.is_mock,
         },
       });
 
@@ -426,6 +577,20 @@ export async function executeSingleDeliveryJob(
     }
   } catch (err: unknown) {
     const classified = classifyProviderFailure(err);
+
+    await adminDb.from('consultation_audit_logs').insert({
+      consultation_id: consultation.id,
+      transaction_id: job.transaction_id,
+      actor_type: 'system',
+      event: 'live_provider_failed',
+      details: {
+        job_id: job.id,
+        attempt: job.attempt_count,
+        failure_code: classified.failureCode,
+        failure_class: classified.failureClass,
+        http_status: classified.httpStatus,
+      },
+    });
 
     logVehicleDeliveryEvent(
       'provider_request_failed',

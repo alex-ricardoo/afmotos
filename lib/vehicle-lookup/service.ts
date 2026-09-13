@@ -27,7 +27,7 @@ export class InvalidTokenError extends Error {
   constructor(message?: string) {
     super(
       message ||
-        'Token da API Brasil expirado ou inválido. Acesse a tela de credenciais na API Brasil (https://app.apibrasil.io), gere um novo token, configure a variável de ambiente APIBRASIL_TOKEN na Vercel ou entre em contato com o desenvolvedor Alex.'
+        'Token da API Brasil expirado ou inválido. Acesse a tela de credenciais na API Brasil (https://app.apibrasil.io), gere um novo token, configure a variável de ambiente APIBRASIL_TOKEN na Vercel ou entre em contato com o desenvolvedor Alex.',
     );
     this.name = 'InvalidTokenError';
   }
@@ -41,6 +41,7 @@ export interface ExecuteLookupParams {
   motorcycleId?: string | null;
   sellRequestId?: string | null;
   forceRefresh?: boolean;
+  requireLiveOnly?: boolean;
 }
 
 export interface LookupExecutionResult {
@@ -50,23 +51,35 @@ export interface LookupExecutionResult {
   message?: string;
 }
 
+export interface FindExistingConsultationOptions {
+  requireLiveOnly?: boolean;
+}
+
 /**
  * Checks if an existing completed consultation exists in the database for the given plate.
  */
 export async function findExistingConsultation(
   plate: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  options?: FindExistingConsultationOptions,
 ): Promise<VehicleConsultationRecord | null> {
   const normalized = normalizeBrazilianPlate(plate);
   if (!normalized) return null;
 
-  // Prefer LIVE completed consultation, otherwise latest consultation
-  const { data, error } = await supabase
+  let query = supabase
     .from('vehicle_plate_consultations')
     .select('*')
     .eq('plate_normalized', normalized)
-    .in('status', ['COMPLETED'])
-    .order('mode', { ascending: false }) // 'live' first
+    .in('status', ['COMPLETED']);
+
+  if (options?.requireLiveOnly) {
+    query = query.eq('is_mock', false).eq('mode', 'live');
+  } else {
+    // Put live (is_mock = false) first, then mock (is_mock = true)
+    query = query.order('is_mock', { ascending: true });
+  }
+
+  const { data, error } = await query
     .order('consulted_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -80,7 +93,10 @@ export async function findExistingConsultation(
  */
 function loadMockFixture(targetPlate: string): Record<string, unknown> {
   try {
-    const fixturePath = path.resolve(process.cwd(), 'lib/vehicle-lookup/fixtures/vehicle-total.mock.json');
+    const fixturePath = path.resolve(
+      process.cwd(),
+      'lib/vehicle-lookup/fixtures/vehicle-total.mock.json',
+    );
     const content = fs.readFileSync(fixturePath, 'utf-8');
     const parsed = JSON.parse(content);
 
@@ -176,12 +192,14 @@ function loadMockFixture(targetPlate: string): Record<string, unknown> {
  */
 export async function executeVehiclePlateLookup(
   params: ExecuteLookupParams,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<LookupExecutionResult> {
   const normalizedPlate = normalizeBrazilianPlate(params.plate);
 
   if (!isValidBrazilianPlate(normalizedPlate)) {
-    throw new Error(`Placa inválida: "${params.plate}". Informe uma placa válida no formato antigo ou Mercosul.`);
+    throw new Error(
+      `Placa inválida: "${params.plate}". Informe uma placa válida no formato antigo ou Mercosul.`,
+    );
   }
 
   const config = getVehicleLookupConfig();
@@ -189,7 +207,8 @@ export async function executeVehiclePlateLookup(
 
   // 1. Cache-first check (unless forceRefresh is explicitly requested)
   if (!params.forceRefresh) {
-    const existing = await findExistingConsultation(normalizedPlate, supabase);
+    const requireLiveOnly = currentMode === 'live' || Boolean(params.requireLiveOnly);
+    const existing = await findExistingConsultation(normalizedPlate, supabase, { requireLiveOnly });
     if (existing && existing.status === 'COMPLETED') {
       return {
         success: true,
@@ -213,7 +232,7 @@ export async function executeVehiclePlateLookup(
   if (currentMode === 'live') {
     if (!config.apiBrasilToken) {
       throw new InvalidTokenError(
-        'Token da API Brasil não configurado. Por favor, configure a variável de ambiente APIBRASIL_TOKEN com o token obtido em https://app.apibrasil.io ou entre em contato com o desenvolvedor Alex.'
+        'Token da API Brasil não configurado. Por favor, configure a variável de ambiente APIBRASIL_TOKEN com o token obtido em https://app.apibrasil.io ou entre em contato com o desenvolvedor Alex.',
       );
     }
 
@@ -254,14 +273,20 @@ export async function executeVehiclePlateLookup(
       try {
         rawPayload = JSON.parse(responseText) as Record<string, unknown>;
       } catch (parseErr) {
-        throw new Error(`Resposta inválida recebida da API Brasil (HTTP ${response.status}): ${responseText.slice(0, 200)}`);
+        throw new Error(
+          `Resposta inválida recebida da API Brasil (HTTP ${response.status}): ${responseText.slice(0, 200)}`,
+        );
       }
 
       // Check for Insufficient Balance (Saldo Insuficiente)
       if (
         rawPayload.error === true &&
-        (String(rawPayload.message || '').toLowerCase().includes('saldo') ||
-          String(rawPayload.message || '').toLowerCase().includes('recarregue') ||
+        (String(rawPayload.message || '')
+          .toLowerCase()
+          .includes('saldo') ||
+          String(rawPayload.message || '')
+            .toLowerCase()
+            .includes('recarregue') ||
           rawPayload.recharge_url)
       ) {
         const balanceStr = typeof rawPayload.balance === 'string' ? rawPayload.balance : 'R$ 0,00';
@@ -271,9 +296,11 @@ export async function executeVehiclePlateLookup(
             : 'https://app.apibrasil.io/dashboard?modal=recharge';
 
         throw new InsufficientBalanceError(
-          String(rawPayload.message || 'Você não possui saldo suficiente para realizar essa consulta.'),
+          String(
+            rawPayload.message || 'Você não possui saldo suficiente para realizar essa consulta.',
+          ),
           balanceStr,
-          rechargeUrl
+          rechargeUrl,
         );
       }
 
@@ -298,7 +325,7 @@ export async function executeVehiclePlateLookup(
       if (balanceBefore != null && taxCharged != null) {
         balanceAfter = balanceBefore - taxCharged;
       }
-    } catch (fetchErr: any) {
+    } catch (fetchErr: unknown) {
       clearTimeout(timeout);
 
       // Re-throw our specific custom domain errors
@@ -306,14 +333,20 @@ export async function executeVehiclePlateLookup(
         throw fetchErr;
       }
 
-      if (fetchErr.name === 'AbortError') {
-        throw new Error('A consulta na API Brasil excedeu o tempo limite de 120 segundos. Tente novamente.');
+      if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+        throw new Error(
+          'A consulta na API Brasil excedeu o tempo limite de 120 segundos. Tente novamente.',
+        );
       }
 
       executionStatus = 'CHARGE_STATUS_UNKNOWN';
+      const errMsg =
+        fetchErr instanceof Error
+          ? fetchErr.message
+          : 'Falha de comunicação com gateway da API Brasil.';
       rawPayload = {
         error: true,
-        message: fetchErr?.message || 'Falha de comunicação com gateway da API Brasil.',
+        message: errMsg,
         fetch_error: String(fetchErr),
       };
       throw fetchErr;

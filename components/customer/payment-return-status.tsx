@@ -39,6 +39,7 @@ export function PaymentReturnStatus({
 }: PaymentReturnStatusProps) {
   const [status, setStatus] = useState<PaymentTransactionStatus>(initialStatus);
   const [consultationStatus, setConsultationStatus] = useState(initialConsultationStatus);
+  const [refundStatus, setRefundStatus] = useState<string>('none');
   const [reportUrl, setReportUrl] = useState(`/cliente/consultas/${consultationId}`);
   const [nextRetryAt, setNextRetryAt] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
@@ -55,6 +56,7 @@ export function PaymentReturnStatus({
     status === 'cancelled' ||
     status === 'refunded' ||
     consultationStatus === 'refunded' ||
+    refundStatus === 'confirmed' ||
     consultationStatus === 'failed_permanent' ||
     consultationStatus === 'manual_review';
 
@@ -68,6 +70,9 @@ export function PaymentReturnStatus({
       if (data.success) {
         setStatus(data.status);
         setConsultationStatus(data.consultationStatus);
+        if (data.refundStatus) {
+          setRefundStatus(data.refundStatus);
+        }
         if (data.reportUrl) {
           setReportUrl(data.reportUrl);
         }
@@ -166,7 +171,18 @@ export function PaymentReturnStatus({
     handleInitialMount();
   }, [status, consultationStatus, isTerminal, reconcilePayment, triggerProcessDelivery]);
 
-  // 5. Agendamento inteligente de Retry baseado no nextRetryAt retornado pelo servidor
+  // 5. Polling inteligente
+  useEffect(() => {
+    if (isTerminal) return;
+
+    const interval = setInterval(async () => {
+      await checkStatus();
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isTerminal, checkStatus]);
+
+  // 6. Agendamento inteligente de Retry baseado no nextRetryAt retornado pelo servidor
   useEffect(() => {
     if (retryTimerRef.current) {
       clearTimeout(retryTimerRef.current);
@@ -210,11 +226,21 @@ export function PaymentReturnStatus({
     };
   }, [consultationStatus, nextRetryAt, isTerminal, triggerProcessDelivery]);
 
-  // 6. Ação Manual: "Verificar Status"
+  // 7. Ação Manual: "Verificar Status"
   const handleManualRefresh = async () => {
     setIsManualChecking(true);
     try {
-      if (status !== 'approved') {
+      if (
+        consultationStatus === 'refund_pending' ||
+        refundStatus === 'pending' ||
+        refundStatus === 'requested'
+      ) {
+        try {
+          await fetch(`/api/mp/transactions/${transactionId}/refund/reconcile`, { method: 'POST' });
+        } catch {
+          // segue para checkStatus
+        }
+      } else if (status !== 'approved') {
         await reconcilePayment();
       }
       const updatedStatus = await checkStatus();
@@ -230,6 +256,12 @@ export function PaymentReturnStatus({
     }
   };
 
+  // Suporte contextualizado e seguro
+  const supportMessage = `Olá! Meu pagamento para a consulta da placa ${plate} (referência ${consultationId.slice(0, 8)}) foi aprovado, mas a consulta não pôde ser concluída e preciso de suporte com o estorno.`;
+  const safeSupportUrl = whatsappUrl
+    ? `${whatsappUrl.split('?')[0]}?text=${encodeURIComponent(supportMessage)}`
+    : null;
+
   // -------------------------------------------------------------
   // RENDERIZAÇÃO VISUAL BASEADA NOS ESTADOS OFICIAIS
   // -------------------------------------------------------------
@@ -243,12 +275,11 @@ export function PaymentReturnStatus({
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Seu laudo está disponível
-          </h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Pagamento Confirmado!</h1>
           <p className="text-sm text-zinc-300">
-            A consulta da placa <span className="font-mono text-white font-semibold">{plate}</span>{' '}
-            foi processada com sucesso e os dados oficiais já estão liberados.
+            Seu laudo para a placa{' '}
+            <span className="font-mono text-white font-semibold">{plate}</span> já foi gerado e está
+            pronto para consulta.
           </p>
         </div>
 
@@ -256,7 +287,7 @@ export function PaymentReturnStatus({
           <Link href={reportUrl}>
             <Button
               type="button"
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-6 rounded-xl text-base shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+              className="w-full bg-[#c9a44c] hover:bg-[#b38e3a] text-zinc-950 font-bold h-12 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#c9a44c]/20"
             >
               <FileText className="h-5 w-5" />
               Visualizar Laudo Completo
@@ -269,7 +300,7 @@ export function PaymentReturnStatus({
   }
 
   // 2. Estado: Estorno Confirmado (Refunded)
-  if (status === 'refunded' || consultationStatus === 'refunded') {
+  if (status === 'refunded' || consultationStatus === 'refunded' || refundStatus === 'confirmed') {
     return (
       <div className="rounded-2xl border border-purple-500/30 bg-gradient-to-b from-purple-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
         <div className="mx-auto w-16 h-16 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
@@ -277,14 +308,10 @@ export function PaymentReturnStatus({
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Pagamento Estornado</h1>
-          <p className="text-sm text-zinc-300">
-            Seu pagamento para a consulta da placa{' '}
-            <span className="font-mono text-white font-semibold">{plate}</span> foi estornado
-            integralmente no Mercado Pago.
-          </p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Estorno Confirmado</h1>
+          <p className="text-sm text-zinc-300">Seu pagamento foi estornado integralmente.</p>
           <p className="text-xs text-zinc-400 bg-zinc-900/80 p-3 rounded-lg border border-zinc-800">
-            O prazo para o valor aparecer depende do método de pagamento e da sua instituição
+            O prazo para o valor aparecer depende do método de pagamento e da instituição
             financeira.
           </p>
         </div>
@@ -298,8 +325,8 @@ export function PaymentReturnStatus({
               Minhas Consultas
             </Button>
           </Link>
-          {whatsappUrl && (
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+          {safeSupportUrl && (
+            <a href={safeSupportUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
               <Button
                 type="button"
                 variant="outline"
@@ -315,23 +342,81 @@ export function PaymentReturnStatus({
     );
   }
 
-  // 3. Estado: Falha Definitiva / Estorno Solicitado (Refund Pending ou Failed Permanent)
-  if (consultationStatus === 'failed_permanent' || consultationStatus === 'refund_pending') {
+  // 3. Estado: Falha de Estorno / Manual Review
+  if (
+    refundStatus === 'failed' ||
+    refundStatus === 'manual_review' ||
+    consultationStatus === 'manual_review'
+  ) {
     return (
-      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
-        <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+      <div className="rounded-2xl border border-red-500/30 bg-gradient-to-b from-red-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
+        <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
           <AlertTriangle className="h-9 w-9" />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Consulta Indisponível</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Finalizando Confirmação do Estorno
+          </h1>
           <p className="text-sm text-zinc-300">
-            Não foi possível concluir sua consulta neste momento devido a uma indisponibilidade nas
-            bases oficiais de dados.
+            Estamos finalizando a confirmação do seu estorno. Nossa equipe foi avisada e você pode
+            falar com o suporte informando esta consulta.
+          </p>
+          <p className="text-xs text-red-300 bg-red-950/40 p-3 rounded-lg border border-red-800/40">
+            Referência da consulta:{' '}
+            <span className="font-mono font-bold text-white">{consultationId.slice(0, 8)}</span>{' '}
+            (Placa {plate})
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isManualChecking}
+            onClick={handleManualRefresh}
+            className="flex-1 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 flex items-center justify-center gap-2"
+          >
+            {isManualChecking ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Verificar Novamente
+          </Button>
+
+          {safeSupportUrl && (
+            <a href={safeSupportUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+              <Button
+                type="button"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Falar com Suporte
+              </Button>
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Estado: Estorno Pendente
+  if (refundStatus === 'pending') {
+    return (
+      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
+        <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <Clock className="h-9 w-9 animate-pulse" />
+        </div>
+
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Estorno Pendente</h1>
+          <p className="text-sm text-zinc-300">
+            Seu estorno foi solicitado e está sendo processado pelo Mercado Pago.
           </p>
           <p className="text-xs text-amber-300 bg-amber-950/40 p-3 rounded-lg border border-amber-800/40">
-            Solicitamos o <strong>estorno integral automático</strong> do seu pagamento junto ao
-            Mercado Pago e atualizaremos esta página assim que for confirmado.
+            Assim que o provedor concluir o processamento, a confirmação será atualizada
+            automaticamente nesta página.
           </p>
         </div>
 
@@ -351,8 +436,8 @@ export function PaymentReturnStatus({
             Verificar Status
           </Button>
 
-          {whatsappUrl && (
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+          {safeSupportUrl && (
+            <a href={safeSupportUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
               <Button
                 type="button"
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2"
@@ -367,7 +452,63 @@ export function PaymentReturnStatus({
     );
   }
 
-  // 4. Estado: Instabilidade Temporária com Retentativa em Tela (Retry Scheduled)
+  // 5. Estado: Estorno Solicitado
+  if (
+    refundStatus === 'requested' ||
+    consultationStatus === 'failed_permanent' ||
+    consultationStatus === 'refund_pending'
+  ) {
+    return (
+      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
+        <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <AlertTriangle className="h-9 w-9" />
+        </div>
+
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Estorno Solicitado</h1>
+          <p className="text-sm text-zinc-300">
+            Não foi possível concluir sua consulta neste momento porque o serviço de dados está
+            temporariamente indisponível.
+          </p>
+          <p className="text-xs text-amber-300 bg-amber-950/40 p-3 rounded-lg border border-amber-800/40">
+            Solicitamos o <strong>estorno integral</strong> do seu pagamento. A confirmação será
+            atualizada automaticamente nesta página. Você não precisa realizar um novo pagamento.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isManualChecking}
+            onClick={handleManualRefresh}
+            className="flex-1 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 flex items-center justify-center gap-2"
+          >
+            {isManualChecking ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Verificar Status
+          </Button>
+
+          {safeSupportUrl && (
+            <a href={safeSupportUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+              <Button
+                type="button"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Falar com Suporte
+              </Button>
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 6. Estado: Instabilidade Temporária com Retentativa em Tela (Retry Scheduled)
   if (consultationStatus === 'retry_scheduled') {
     return (
       <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-b from-sky-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">

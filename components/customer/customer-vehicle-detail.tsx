@@ -27,8 +27,6 @@ import {
   Calendar,
   MapPin,
   Palette,
-  FileText,
-  Printer,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -53,19 +51,9 @@ interface CustomerVehicleDetailProps {
 }
 
 type TabKey =
-  | 'summary'
-  | 'vehicle'
-  | 'debts'
-  | 'restrictions'
-  | 'history'
-  | 'fipe'
-  | 'ads'
-  | 'technical';
+  'summary' | 'vehicle' | 'debts' | 'restrictions' | 'history' | 'fipe' | 'ads' | 'technical';
 
-export function CustomerVehicleDetail({
-  consultation,
-  dto,
-}: CustomerVehicleDetailProps) {
+export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDetailProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('summary');
 
   // Desktop horizontal scroll support for tabs
@@ -124,7 +112,7 @@ export function CustomerVehicleDetail({
   ];
 
   const formattedDate = new Date(
-    consultation.processed_at || consultation.created_at
+    consultation.processed_at || consultation.created_at,
   ).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -136,8 +124,14 @@ export function CustomerVehicleDetail({
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
+  const isOfficialReport =
+    consultation.status === 'completed' &&
+    consultation.payment_status === 'paid' &&
+    dto?.is_mock === false &&
+    dto?.mode === 'live';
+
   const pdfDownloadUrl = `/api/cliente/consultas/${consultation.id}/pdf`;
-  const pdfFilename = `laudo-veicular_${consultation.plate_normalized}_${consultation.id.slice(0, 8)}.pdf`;
+  const pdfFilename = `${isOfficialReport ? 'laudo-veicular' : 'demonstracao-veicular'}_${consultation.plate_normalized}_${consultation.id.slice(0, 8)}.pdf`;
   const formattedPlate = formatBrazilianPlate(consultation.plate);
 
   const handleDownloadPdf = async () => {
@@ -145,11 +139,22 @@ export function CustomerVehicleDetail({
 
     try {
       setIsDownloadingPdf(true);
-      toast.info('Gerando seu Laudo Oficial em PDF...', {
-        description: 'Compilando histórico, dados dos órgãos e laudo de procedência.',
-      });
+      toast.info(
+        isOfficialReport
+          ? 'Gerando seu Laudo Oficial em PDF...'
+          : 'Gerando prévia de demonstração em PDF...',
+        {
+          description: isOfficialReport
+            ? 'Compilando histórico, dados dos órgãos e laudo de procedência.'
+            : 'Compilando dados de exemplo e simulação de laudo veicular.',
+        },
+      );
 
       const response = await fetch(pdfDownloadUrl);
+      if (response.status === 403) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Laudo oficial indisponível para registros simulados.');
+      }
       if (!response.ok) {
         throw new Error(`Falha ao gerar o PDF (Status ${response.status})`);
       }
@@ -168,13 +173,19 @@ export function CustomerVehicleDetail({
       }, 1000);
 
       setDownloadSuccess(true);
-      toast.success('Laudo Oficial baixado com sucesso!');
+      toast.success(
+        isOfficialReport
+          ? 'Laudo Oficial baixado com sucesso!'
+          : 'Prévia de demonstração baixada com sucesso!',
+      );
       setTimeout(() => {
         setDownloadSuccess(false);
       }, 2500);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Erro ao baixar laudo em PDF:', err);
-      toast.error('Erro ao gerar laudo em PDF. Tente novamente.');
+      const msg =
+        err instanceof Error ? err.message : 'Erro ao gerar laudo em PDF. Tente novamente.';
+      toast.error(msg);
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -195,9 +206,7 @@ export function CustomerVehicleDetail({
           <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
             <ShieldCheck className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-white">
-            Consulta da Placa {formattedPlate}
-          </h2>
+          <h2 className="text-xl font-bold text-white">Consulta da Placa {formattedPlate}</h2>
           <p className="text-sm text-zinc-400">
             {consultation.status === 'pending'
               ? 'Esta consulta está aguardando a confirmação do pagamento para liberar o laudo completo.'
@@ -221,7 +230,12 @@ export function CustomerVehicleDetail({
 
   const s = dto.summary;
   const h = dto.history;
-  const raw = (dto.raw_response?.data || dto.raw_response || {}) as any;
+  type RawVehicleData = Record<string, unknown> & {
+    registroEmLocadora?: { registroEmLocadora?: boolean };
+    registro_locadora?: boolean;
+    registro_em_locadora?: boolean;
+  };
+  const raw = (dto.raw_response?.data || dto.raw_response || {}) as RawVehicleData;
 
   const pendingRecalls = h.recalls ? h.recalls.filter((r) => r.status === 'PENDENTE') : [];
   const hasPendingRecall = pendingRecalls.length > 0;
@@ -230,14 +244,17 @@ export function CustomerVehicleDetail({
     raw.registroEmLocadora?.registroEmLocadora === true ||
     raw.registro_locadora === true ||
     raw.registro_em_locadora === true ||
-    /LOCADORA/i.test(JSON.stringify(h.previous_owners || ''))
+    /LOCADORA/i.test(JSON.stringify(h.previous_owners || '')),
   );
 
   // Market & Ads variables
-  const latestAdWithPrice = dto.ads_mileage?.ads_records?.find((a) => (a.price || 0) > 0) || dto.ads_mileage?.ads_records?.[0];
+  const latestAdWithPrice =
+    dto.ads_mileage?.ads_records?.find((a) => (a.price || 0) > 0) ||
+    dto.ads_mileage?.ads_records?.[0];
   const adPrice = latestAdWithPrice?.price || 0;
   const fipePrice = dto.fipe?.price || 0;
-  const latestKm = dto.ads_mileage?.mileage_records?.[0]?.mileage || latestAdWithPrice?.mileage || 0;
+  const latestKm =
+    dto.ads_mileage?.mileage_records?.[0]?.mileage || latestAdWithPrice?.mileage || 0;
 
   // Risk Level Config
   const riskConfig = (() => {
@@ -296,14 +313,23 @@ export function CustomerVehicleDetail({
           </Link>
 
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Laudo Oficial Emitido
-            </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#c9a44c]/10 text-[#c9a44c] border border-[#c9a44c]/25">
-              <Sparkles className="w-3 h-3" />
-              Base Senatran
-            </span>
+            {isOfficialReport ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Laudo Oficial Emitido
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#c9a44c]/10 text-[#c9a44c] border border-[#c9a44c]/25">
+                  <Sparkles className="w-3 h-3" />
+                  Base Senatran
+                </span>
+              </>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 shadow-xs">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                Dados de demonstração (Ambiente de Teste)
+              </span>
+            )}
           </div>
         </div>
 
@@ -324,13 +350,13 @@ export function CustomerVehicleDetail({
               </h1>
 
               {s.version && (
-                <p className="text-xs sm:text-sm text-zinc-300 font-medium">
-                  {s.version}
-                </p>
+                <p className="text-xs sm:text-sm text-zinc-300 font-medium">{s.version}</p>
               )}
 
               <div className="flex flex-wrap items-center gap-2 pt-1">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold border ${riskConfig.bg} ${riskConfig.color}`}>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold border ${riskConfig.bg} ${riskConfig.color}`}
+                >
                   <ShieldCheck className="w-3.5 h-3.5" />
                   {riskConfig.title}
                 </span>
@@ -354,13 +380,17 @@ export function CustomerVehicleDetail({
               type="button"
               onClick={handleDownloadPdf}
               disabled={isDownloadingPdf}
-              aria-label="Baixar Laudo Oficial em PDF"
+              aria-label={
+                isOfficialReport ? 'Baixar Laudo Oficial em PDF' : 'Baixar Prévia de Demonstração'
+              }
               className={`h-12 px-6 rounded-xl font-black text-xs sm:text-sm shadow-xl inline-flex items-center justify-center gap-2.5 transition-all select-none relative overflow-hidden group ${
                 isDownloadingPdf
                   ? 'bg-gradient-to-r from-[#d4b35e] via-[#c9a44c] to-[#b38e3a] opacity-90 cursor-wait shadow-[#c9a44c]/30 text-zinc-950'
                   : downloadSuccess
-                  ? 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-emerald-500/20 active:scale-95'
-                  : 'bg-gradient-to-r from-[#d4b35e] via-[#c9a44c] to-[#b38e3a] hover:brightness-110 active:scale-95 text-zinc-950 shadow-[#c9a44c]/20'
+                    ? 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-emerald-500/20 active:scale-95'
+                    : isOfficialReport
+                      ? 'bg-gradient-to-r from-[#d4b35e] via-[#c9a44c] to-[#b38e3a] hover:brightness-110 active:scale-95 text-zinc-950 shadow-[#c9a44c]/20'
+                      : 'bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-zinc-200 border border-zinc-700 shadow-md'
               }`}
             >
               <div
@@ -373,17 +403,23 @@ export function CustomerVehicleDetail({
               {isDownloadingPdf ? (
                 <>
                   <Loader2 className="w-4 h-4 stroke-[2.5] animate-spin text-zinc-950" />
-                  <span>Gerando Laudo Oficial...</span>
+                  <span>
+                    {isOfficialReport ? 'Gerando Laudo Oficial...' : 'Gerando Demonstração...'}
+                  </span>
                 </>
               ) : downloadSuccess ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 stroke-[2.5] text-zinc-950" />
-                  <span>Laudo Baixado!</span>
+                  <span>{isOfficialReport ? 'Laudo Baixado!' : 'Demonstração Baixada!'}</span>
                 </>
               ) : (
                 <>
                   <Download className="w-4 h-4 stroke-[2.5]" />
-                  <span>Baixar Laudo Oficial PDF</span>
+                  <span>
+                    {isOfficialReport
+                      ? 'Baixar Laudo Oficial PDF'
+                      : 'Baixar Prévia de Demonstração'}
+                  </span>
                 </>
               )}
             </button>
@@ -395,7 +431,9 @@ export function CustomerVehicleDetail({
           <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 flex items-center gap-2.5">
             <Calendar className="w-4 h-4 text-[#c9a44c] shrink-0" />
             <div className="min-w-0">
-              <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Ano Fab/Mod</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-semibold block">
+                Ano Fab/Mod
+              </span>
               <span className="font-bold text-white truncate block">{s.year_fab_mod || '—'}</span>
             </div>
           </div>
@@ -403,7 +441,9 @@ export function CustomerVehicleDetail({
           <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 flex items-center gap-2.5">
             <Palette className="w-4 h-4 text-[#c9a44c] shrink-0" />
             <div className="min-w-0">
-              <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Cor Oficial</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-semibold block">
+                Cor Oficial
+              </span>
               <span className="font-bold text-white truncate block">{s.color || '—'}</span>
             </div>
           </div>
@@ -411,7 +451,9 @@ export function CustomerVehicleDetail({
           <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 flex items-center gap-2.5">
             <MapPin className="w-4 h-4 text-[#c9a44c] shrink-0" />
             <div className="min-w-0">
-              <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Local de Registro</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-semibold block">
+                Local de Registro
+              </span>
               <span className="font-bold text-white truncate block">{s.city_state || '—'}</span>
             </div>
           </div>
@@ -419,7 +461,9 @@ export function CustomerVehicleDetail({
           <div className="p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 flex items-center gap-2.5">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
             <div className="min-w-0">
-              <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Consultado em</span>
+              <span className="text-[10px] text-zinc-500 uppercase font-semibold block">
+                Consultado em
+              </span>
               <span className="font-bold text-white truncate block">{formattedDate}</span>
             </div>
           </div>
@@ -459,7 +503,11 @@ export function CustomerVehicleDetail({
                   type="button"
                   onClick={(e) => {
                     setActiveTab(tab.key);
-                    e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    e.currentTarget.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'nearest',
+                      inline: 'center',
+                    });
                   }}
                   className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer select-none shrink-0 ${
                     isActive
@@ -502,14 +550,17 @@ export function CustomerVehicleDetail({
                   <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
                     Diagnóstico Geral de Procedência
                   </span>
-                  <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${riskConfig.bg} ${riskConfig.color}`}>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${riskConfig.bg} ${riskConfig.color}`}
+                  >
                     {riskConfig.title}
                   </span>
                 </div>
 
                 <div className="flex items-baseline gap-3">
                   <span className="text-3xl sm:text-4xl font-black text-white font-mono">
-                    {s.risk_index} <span className="text-base sm:text-lg font-medium text-zinc-500">/ 100</span>
+                    {s.risk_index}{' '}
+                    <span className="text-base sm:text-lg font-medium text-zinc-500">/ 100</span>
                   </span>
                   <span className="text-xs font-semibold text-zinc-400">
                     (Índice de Risco Calculado)
@@ -524,16 +575,18 @@ export function CustomerVehicleDetail({
                   />
                 </div>
 
-                <p className="text-xs text-zinc-300 leading-relaxed">
-                  {riskConfig.desc}
-                </p>
+                <p className="text-xs text-zinc-300 leading-relaxed">{riskConfig.desc}</p>
               </div>
 
               {/* 3 Quick KPI Stat Blocks */}
               <div className="grid grid-cols-3 gap-3 shrink-0">
                 <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center space-y-1">
-                  <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Total Débitos</span>
-                  <span className={`text-base sm:text-lg font-black font-mono block ${s.has_debts ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  <span className="text-[10px] text-zinc-400 uppercase font-semibold block">
+                    Total Débitos
+                  </span>
+                  <span
+                    className={`text-base sm:text-lg font-black font-mono block ${s.has_debts ? 'text-amber-400' : 'text-emerald-400'}`}
+                  >
                     {s.has_debts ? `R$ ${s.debts_total_amount.toFixed(2)}` : 'R$ 0,00'}
                   </span>
                   <span className="text-[10px] text-zinc-500 block">
@@ -542,8 +595,12 @@ export function CustomerVehicleDetail({
                 </div>
 
                 <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center space-y-1">
-                  <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Gravame</span>
-                  <span className={`text-base sm:text-lg font-black block ${s.has_active_gravamen ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  <span className="text-[10px] text-zinc-400 uppercase font-semibold block">
+                    Gravame
+                  </span>
+                  <span
+                    className={`text-base sm:text-lg font-black block ${s.has_active_gravamen ? 'text-amber-400' : 'text-emerald-400'}`}
+                  >
                     {s.has_active_gravamen ? 'Ativo' : 'Livre'}
                   </span>
                   <span className="text-[10px] text-zinc-500 block">
@@ -552,8 +609,12 @@ export function CustomerVehicleDetail({
                 </div>
 
                 <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 text-center space-y-1">
-                  <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Roubo/Furto</span>
-                  <span className={`text-base sm:text-lg font-black block ${s.has_active_theft_robbery ? 'text-red-400' : 'text-emerald-400'}`}>
+                  <span className="text-[10px] text-zinc-400 uppercase font-semibold block">
+                    Roubo/Furto
+                  </span>
+                  <span
+                    className={`text-base sm:text-lg font-black block ${s.has_active_theft_robbery ? 'text-red-400' : 'text-emerald-400'}`}
+                  >
                     {s.has_active_theft_robbery ? 'Alerta' : 'Limpo'}
                   </span>
                   <span className="text-[10px] text-zinc-500 block">
@@ -567,20 +628,34 @@ export function CustomerVehicleDetail({
           {/* 8 Security Inspection Stamp Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* 1. Roubo / Furto */}
-            <div className={`p-5 rounded-2xl border transition-all duration-200 ${
-              s.has_active_theft_robbery
-                ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/5'
-                : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
-            }`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all duration-200 ${
+                s.has_active_theft_robbery
+                  ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/5'
+                  : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
+              }`}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Roubo e Furto</span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  s.has_active_theft_robbery ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
-                }`}>
-                  {s.has_active_theft_robbery ? <XCircle className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Roubo e Furto
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    s.has_active_theft_robbery
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-emerald-500/10 text-emerald-400'
+                  }`}
+                >
+                  {s.has_active_theft_robbery ? (
+                    <XCircle className="w-4 h-4" />
+                  ) : (
+                    <ShieldCheck className="w-4 h-4" />
+                  )}
                 </div>
               </div>
-              <div className={`text-sm font-black ${s.has_active_theft_robbery ? 'text-red-400' : 'text-white'}`}>
+              <div
+                className={`text-sm font-black ${s.has_active_theft_robbery ? 'text-red-400' : 'text-white'}`}
+              >
                 {s.has_active_theft_robbery ? 'Alerta Ativo de Roubo' : 'Sem Queixa de Roubo'}
               </div>
               <p className="text-[11px] text-zinc-400 mt-1">
@@ -589,64 +664,102 @@ export function CustomerVehicleDetail({
             </div>
 
             {/* 2. Bloqueio Renajud */}
-            <div className={`p-5 rounded-2xl border transition-all duration-200 ${
-              s.has_judicial_restriction
-                ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/5'
-                : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
-            }`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all duration-200 ${
+                s.has_judicial_restriction
+                  ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/5'
+                  : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
+              }`}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Bloqueio Renajud</span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  s.has_judicial_restriction ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
-                }`}>
-                  {s.has_judicial_restriction ? <AlertOctagon className="w-4 h-4" /> : <Scale className="w-4 h-4" />}
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Bloqueio Renajud
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    s.has_judicial_restriction
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-emerald-500/10 text-emerald-400'
+                  }`}
+                >
+                  {s.has_judicial_restriction ? (
+                    <AlertOctagon className="w-4 h-4" />
+                  ) : (
+                    <Scale className="w-4 h-4" />
+                  )}
                 </div>
               </div>
-              <div className={`text-sm font-black ${s.has_judicial_restriction ? 'text-red-400' : 'text-white'}`}>
+              <div
+                className={`text-sm font-black ${s.has_judicial_restriction ? 'text-red-400' : 'text-white'}`}
+              >
                 {s.has_judicial_restriction ? 'Bloqueio Judicial Ativo' : 'Sem Bloqueios Judiciais'}
               </div>
-              <p className="text-[11px] text-zinc-400 mt-1">
-                Conselho Nacional de Justiça (CNJ)
-              </p>
+              <p className="text-[11px] text-zinc-400 mt-1">Conselho Nacional de Justiça (CNJ)</p>
             </div>
 
             {/* 3. Alienação / Gravame */}
-            <div className={`p-5 rounded-2xl border transition-all duration-200 ${
-              s.has_active_gravamen
-                ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
-                : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
-            }`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all duration-200 ${
+                s.has_active_gravamen
+                  ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
+                  : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
+              }`}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Alienação / Gravame</span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  s.has_active_gravamen ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
-                }`}>
-                  {s.has_active_gravamen ? <AlertTriangle className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Alienação / Gravame
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    s.has_active_gravamen
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'bg-emerald-500/10 text-emerald-400'
+                  }`}
+                >
+                  {s.has_active_gravamen ? (
+                    <AlertTriangle className="w-4 h-4" />
+                  ) : (
+                    <Lock className="w-4 h-4" />
+                  )}
                 </div>
               </div>
-              <div className={`text-sm font-black ${s.has_active_gravamen ? 'text-amber-400' : 'text-white'}`}>
+              <div
+                className={`text-sm font-black ${s.has_active_gravamen ? 'text-amber-400' : 'text-white'}`}
+              >
                 {s.has_active_gravamen ? 'Gravame Financeiro Ativo' : 'Veículo Desalienado'}
               </div>
-              <p className="text-[11px] text-zinc-400 mt-1">
-                Sistema Nacional de Gravames (SNG)
-              </p>
+              <p className="text-[11px] text-zinc-400 mt-1">Sistema Nacional de Gravames (SNG)</p>
             </div>
 
             {/* 4. Passagem por Leilão */}
-            <div className={`p-5 rounded-2xl border transition-all duration-200 ${
-              s.has_auction_record
-                ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
-                : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
-            }`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all duration-200 ${
+                s.has_auction_record
+                  ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
+                  : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
+              }`}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Passagem por Leilão</span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  s.has_auction_record ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
-                }`}>
-                  {s.has_auction_record ? <AlertTriangle className="w-4 h-4" /> : <Gavel className="w-4 h-4" />}
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Passagem por Leilão
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    s.has_auction_record
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'bg-emerald-500/10 text-emerald-400'
+                  }`}
+                >
+                  {s.has_auction_record ? (
+                    <AlertTriangle className="w-4 h-4" />
+                  ) : (
+                    <Gavel className="w-4 h-4" />
+                  )}
                 </div>
               </div>
-              <div className={`text-sm font-black ${s.has_auction_record ? 'text-amber-400' : 'text-white'}`}>
+              <div
+                className={`text-sm font-black ${s.has_auction_record ? 'text-amber-400' : 'text-white'}`}
+              >
                 {s.has_auction_record ? 'Consta Passagem em Leilão' : 'Sem Registro de Leilão'}
               </div>
               <p className="text-[11px] text-zinc-400 mt-1">
@@ -655,42 +768,70 @@ export function CustomerVehicleDetail({
             </div>
 
             {/* 5. Registro de Sinistro */}
-            <div className={`p-5 rounded-2xl border transition-all duration-200 ${
-              s.has_accident_indication
-                ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
-                : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
-            }`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all duration-200 ${
+                s.has_accident_indication
+                  ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
+                  : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
+              }`}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Registro de Sinistro</span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  s.has_accident_indication ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
-                }`}>
-                  {s.has_accident_indication ? <AlertTriangle className="w-4 h-4" /> : <Car className="w-4 h-4" />}
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Registro de Sinistro
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    s.has_accident_indication
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'bg-emerald-500/10 text-emerald-400'
+                  }`}
+                >
+                  {s.has_accident_indication ? (
+                    <AlertTriangle className="w-4 h-4" />
+                  ) : (
+                    <Car className="w-4 h-4" />
+                  )}
                 </div>
               </div>
-              <div className={`text-sm font-black ${s.has_accident_indication ? 'text-amber-400' : 'text-white'}`}>
-                {s.has_accident_indication ? 'Consta Registro de Sinistro' : 'Sem Registro de Sinistro'}
+              <div
+                className={`text-sm font-black ${s.has_accident_indication ? 'text-amber-400' : 'text-white'}`}
+              >
+                {s.has_accident_indication
+                  ? 'Consta Registro de Sinistro'
+                  : 'Sem Registro de Sinistro'}
               </div>
-              <p className="text-[11px] text-zinc-400 mt-1">
-                Indicações de avarias em seguradoras
-              </p>
+              <p className="text-[11px] text-zinc-400 mt-1">Indicações de avarias em seguradoras</p>
             </div>
 
             {/* 6. Recall de Fábrica */}
-            <div className={`p-5 rounded-2xl border transition-all duration-200 ${
-              hasPendingRecall
-                ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/5'
-                : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
-            }`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all duration-200 ${
+                hasPendingRecall
+                  ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/5'
+                  : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
+              }`}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Recall de Fábrica</span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  hasPendingRecall ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/10 text-emerald-400'
-                }`}>
-                  {hasPendingRecall ? <Wrench className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Recall de Fábrica
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    hasPendingRecall
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-emerald-500/10 text-emerald-400'
+                  }`}
+                >
+                  {hasPendingRecall ? (
+                    <Wrench className="w-4 h-4" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
                 </div>
               </div>
-              <div className={`text-sm font-black ${hasPendingRecall ? 'text-red-400' : 'text-white'}`}>
+              <div
+                className={`text-sm font-black ${hasPendingRecall ? 'text-red-400' : 'text-white'}`}
+              >
                 {hasPendingRecall ? `${pendingRecalls.length} Recall Pendente` : 'Sem Pendências'}
               </div>
               <p className="text-[11px] text-zinc-400 mt-1">
@@ -699,39 +840,61 @@ export function CustomerVehicleDetail({
             </div>
 
             {/* 7. Débitos & Multas */}
-            <div className={`p-5 rounded-2xl border transition-all duration-200 ${
-              s.has_debts
-                ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
-                : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
-            }`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all duration-200 ${
+                s.has_debts
+                  ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
+                  : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
+              }`}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Débitos & Multas</span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  s.has_debts ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
-                }`}>
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Débitos & Multas
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    s.has_debts
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'bg-emerald-500/10 text-emerald-400'
+                  }`}
+                >
                   <DollarSign className="w-4 h-4" />
                 </div>
               </div>
-              <div className={`text-sm font-black ${s.has_debts ? 'text-amber-400' : 'text-white'}`}>
-                {s.has_debts ? `Pendências: R$ ${s.debts_total_amount.toFixed(2)}` : 'Débitos Quitados'}
+              <div
+                className={`text-sm font-black ${s.has_debts ? 'text-amber-400' : 'text-white'}`}
+              >
+                {s.has_debts
+                  ? `Pendências: R$ ${s.debts_total_amount.toFixed(2)}`
+                  : 'Débitos Quitados'}
               </div>
-              <p className="text-[11px] text-zinc-400 mt-1">
-                DETRAN Estadual e órgãos autuadores
-              </p>
+              <p className="text-[11px] text-zinc-400 mt-1">DETRAN Estadual e órgãos autuadores</p>
             </div>
 
             {/* 8. Uso em Locadora */}
-            <div className={`p-5 rounded-2xl border transition-all duration-200 ${
-              isLocadora
-                ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
-                : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
-            }`}>
+            <div
+              className={`p-5 rounded-2xl border transition-all duration-200 ${
+                isLocadora
+                  ? 'bg-amber-500/15 border-amber-500/50 shadow-lg shadow-amber-500/10'
+                  : 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700'
+              }`}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Uso em Locadora</span>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                  isLocadora ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
-                }`}>
-                  {isLocadora ? <Building2 className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Uso em Locadora
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    isLocadora
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'bg-emerald-500/10 text-emerald-400'
+                  }`}
+                >
+                  {isLocadora ? (
+                    <Building2 className="w-4 h-4" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
                 </div>
               </div>
               <div className={`text-sm font-black ${isLocadora ? 'text-amber-400' : 'text-white'}`}>
@@ -760,9 +923,13 @@ export function CustomerVehicleDetail({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 {/* FIPE */}
                 <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Tabela FIPE</span>
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">
+                    Tabela FIPE
+                  </span>
                   <span className="text-base sm:text-lg font-black text-emerald-400 block mt-0.5">
-                    {fipePrice > 0 ? `R$ ${fipePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/D'}
+                    {fipePrice > 0
+                      ? `R$ ${fipePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                      : 'N/D'}
                   </span>
                   <span className="text-[10px] text-zinc-400 block mt-0.5">
                     Mês: {dto?.fipe?.reference_month || 'Atual'}
@@ -771,24 +938,36 @@ export function CustomerVehicleDetail({
 
                 {/* Preço Anunciado */}
                 <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Último Preço Anunciado</span>
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">
+                    Último Preço Anunciado
+                  </span>
                   <span className="text-base sm:text-lg font-black text-amber-400 block mt-0.5">
-                    {adPrice > 0 ? `R$ ${adPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Não registrado'}
+                    {adPrice > 0
+                      ? `R$ ${adPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                      : 'Não registrado'}
                   </span>
                   <span className="text-[10px] text-zinc-400 block mt-0.5">
-                    {latestAdWithPrice?.portal ? `Portal: ${latestAdWithPrice.portal}` : 'Bases Web'}
-                    {adPrice > 0 && fipePrice > 0 ? ` • ${Math.round((adPrice / fipePrice) * 100)}% FIPE` : ''}
+                    {latestAdWithPrice?.portal
+                      ? `Portal: ${latestAdWithPrice.portal}`
+                      : 'Bases Web'}
+                    {adPrice > 0 && fipePrice > 0
+                      ? ` • ${Math.round((adPrice / fipePrice) * 100)}% FIPE`
+                      : ''}
                   </span>
                 </div>
 
                 {/* Quilometragem */}
                 <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/80">
-                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">Último Odômetro</span>
+                  <span className="text-[10px] text-zinc-500 uppercase font-semibold block">
+                    Último Odômetro
+                  </span>
                   <span className="text-base sm:text-lg font-black text-white block mt-0.5">
                     {latestKm > 0 ? `${Number(latestKm).toLocaleString('pt-BR')} km` : '0 km'}
                   </span>
                   <span className="text-[10px] text-zinc-400 block mt-0.5">
-                    {dto?.ads_mileage?.mileage_records?.[0]?.source || latestAdWithPrice?.portal || 'Registro de Vistoria'}
+                    {dto?.ads_mileage?.mileage_records?.[0]?.source ||
+                      latestAdWithPrice?.portal ||
+                      'Registro de Vistoria'}
                   </span>
                 </div>
               </div>

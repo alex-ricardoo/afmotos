@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { findExistingConsultation } from '@/lib/vehicle-lookup/service';
 import { enqueueDeliveryJob } from '@/lib/vehicle-delivery/delivery-service';
+import { isCacheEntryEligibleForPaidProduction } from '@/lib/vehicle-delivery/cache-eligibility';
 
 /**
  * Script de Recuperação Operacional:
@@ -14,7 +15,9 @@ export async function recoverApprovedConsultationsWithoutReport() {
   // Busca transações aprovadas
   const { data: transactions, error } = await adminDb
     .from('payment_transactions')
-    .select('id, consultation_id, status, customer_plate_consultations!inner(id, plate, plate_normalized, status, vehicle_data)')
+    .select(
+      'id, consultation_id, status, customer_plate_consultations!inner(id, plate, plate_normalized, status, vehicle_data)',
+    )
     .eq('status', 'approved')
     .neq('customer_plate_consultations.status', 'completed');
 
@@ -33,9 +36,15 @@ export async function recoverApprovedConsultationsWithoutReport() {
     if (!consultation) continue;
 
     const plate = consultation.plate_normalized || consultation.plate;
-    const cached = await findExistingConsultation(plate, adminDb);
+    const cached = await findExistingConsultation(plate, adminDb, { requireLiveOnly: true });
 
-    if (cached && cached.status === 'COMPLETED' && cached.raw_response) {
+    const eligibility = isCacheEntryEligibleForPaidProduction({
+      runtimeEnvironment: 'production',
+      cacheRecord: cached,
+      isPaidTransaction: true,
+    });
+
+    if (eligibility.eligible && cached && cached.raw_response) {
       await adminDb
         .from('customer_plate_consultations')
         .update({
@@ -57,7 +66,9 @@ export async function recoverApprovedConsultationsWithoutReport() {
       });
 
       enqueuedJobs++;
-      console.log(`[Recovery] Consulta ${consultation.id} (Placa ${plate}) enfileirada para entrega.`);
+      console.log(
+        `[Recovery] Consulta ${consultation.id} (Placa ${plate}) enfileirada para entrega.`,
+      );
     }
   }
 

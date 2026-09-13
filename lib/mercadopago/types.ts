@@ -31,11 +31,7 @@ export type ConsultationLifecycleStatus =
 export type ProviderFailureClass = 'transient' | 'permanent' | 'unknown';
 
 export type DeliveryJobStatus =
-  | 'pending'
-  | 'processing'
-  | 'completed'
-  | 'retry_scheduled'
-  | 'failed_permanent';
+  'pending' | 'processing' | 'completed' | 'retry_scheduled' | 'failed_permanent';
 
 export interface ConsultationDeliveryJobRecord {
   id: string;
@@ -62,12 +58,7 @@ export interface ConsultationDeliveryJobRecord {
 }
 
 export type PaymentRefundStatus =
-  | 'none'
-  | 'requested'
-  | 'pending'
-  | 'confirmed'
-  | 'failed'
-  | 'manual_review';
+  'none' | 'requested' | 'pending' | 'confirmed' | 'failed' | 'manual_review';
 
 export interface PaymentRefundRecord {
   id: string;
@@ -156,6 +147,8 @@ export interface TransactionStatusResponse {
   retryAttempt?: number;
   maxRetryAttempts?: number;
   canProcessDelivery?: boolean;
+  refundStatus?: PaymentRefundStatus | string;
+  mpRefundId?: string | null;
 }
 
 export type WebhookRejectionReason =
