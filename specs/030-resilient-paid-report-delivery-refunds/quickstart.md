@@ -40,7 +40,7 @@ Adicione as rotas de cron ao arquivo de configuração do projeto:
   "crons": [
     {
       "path": "/api/cron/process-delivery-jobs",
-      "schedule": "* * * * *"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/cron/reconcile-pending-refunds",
