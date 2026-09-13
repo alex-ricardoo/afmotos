@@ -2,7 +2,7 @@ import { createAdminClient } from '../supabase/admin.ts';
 import { getMercadoPagoConfig } from './client.ts';
 import { PaymentRefund } from 'mercadopago';
 import { logCheckoutProEvent, maskId } from './observability.ts';
-import { type PaymentRefundRecord } from './types.ts';
+import { serializeMercadoPagoError } from './error-serializer.ts';
 
 export interface InitiateRefundParams {
   transactionId: string;
@@ -20,7 +20,17 @@ export interface InitiateRefundResult {
   alreadyProcessed: boolean;
   message: string;
   error?: string;
+  safeProviderError?: ReturnType<typeof serializeMercadoPagoError>;
 }
+
+export const PERMANENT_REFUND_REASONS = [
+  'APIBRASIL_INSUFFICIENT_CREDITS',
+  'APIBRASIL_AUTH_ERROR',
+  'APIBRASIL_CONFIGURATION_ERROR',
+  'APIBRASIL_RETRIES_EXHAUSTED',
+  'APIBRASIL_PROVIDER_UNAVAILABLE_PERMANENT',
+  'MOCK_MODE_IN_PRODUCTION',
+] as const;
 
 export interface RefundEligibilityParams {
   transaction: {
@@ -41,6 +51,13 @@ export interface RefundEligibilityParams {
     id: string;
     status: string;
   } | null;
+  reasonCode?: string;
+}
+
+export interface RefundEligibilityResult {
+  eligible: boolean;
+  reason: string | null;
+  supportActionRequired?: 'RECHARGE_APIBRASIL' | null;
 }
 
 /**
@@ -50,7 +67,8 @@ export function evaluateRefundEligibility({
   transaction,
   consultation,
   existingRefund,
-}: RefundEligibilityParams): { eligible: boolean; reason: string | null } {
+  reasonCode,
+}: RefundEligibilityParams): RefundEligibilityResult {
   const currentStatus = transaction.payment_status || transaction.status;
   if (currentStatus !== 'approved') {
     return {
@@ -63,6 +81,14 @@ export function evaluateRefundEligibility({
     return {
       eligible: false,
       reason: 'Identificador oficial do Mercado Pago (mp_payment_id) ausente na transação.',
+    };
+  }
+
+  const amount = Number(transaction.transaction_amount ?? transaction.amount ?? 0);
+  if (amount <= 0) {
+    return {
+      eligible: false,
+      reason: 'Valor da transação inválido para estorno.',
     };
   }
 
@@ -84,9 +110,13 @@ export function evaluateRefundEligibility({
     };
   }
 
+  const supportActionRequired =
+    reasonCode === 'APIBRASIL_INSUFFICIENT_CREDITS' ? 'RECHARGE_APIBRASIL' : null;
+
   return {
     eligible: true,
     reason: null,
+    supportActionRequired,
   };
 }
 
@@ -105,7 +135,7 @@ export function sanitizeRefundErrorMessage(rawMessage: string): string {
   return rawMessage
     .replace(/APP_USR-[a-zA-Z0-9_-]+/g, '[REDACTED_SECRET]')
     .replace(/Bearer\s+[a-zA-Z0-9_.-]+/gi, 'Bearer [REDACTED]')
-    .replace(/[a-f0-9]{32,64}/gi, (match) => match.length >= 32 ? '[REDACTED_HASH]' : match);
+    .replace(/[a-f0-9]{32,64}/gi, (match) => (match.length >= 32 ? '[REDACTED_HASH]' : match));
 }
 
 /**
@@ -121,6 +151,10 @@ export async function initiateRefundForFailedDelivery({
 }: InitiateRefundParams): Promise<InitiateRefundResult> {
   const adminDb = (dbClient as ReturnType<typeof createAdminClient>) || createAdminClient();
   const startTime = Date.now();
+
+  console.log(
+    `[PAYMENT_REFUND] payment_refund.eligibility_checked transactionId=${maskId(transactionId)} consultationId=${maskId(consultationId)} reason=${reasonCode}`,
+  );
 
   logCheckoutProEvent('checkout_pro.transaction_updated', {
     transactionId,
@@ -146,27 +180,6 @@ export async function initiateRefundForFailedDelivery({
     };
   }
 
-  // Precondição estrita: status deve ser approved e possuir mp_payment_id
-  if (transaction.status !== 'approved') {
-    return {
-      success: false,
-      refundId: '',
-      status: 'failed',
-      alreadyProcessed: false,
-      message: `Transação não está em estado elegível para refund (status: ${transaction.status}).`,
-    };
-  }
-
-  if (!transaction.mp_payment_id) {
-    return {
-      success: false,
-      refundId: '',
-      status: 'failed',
-      alreadyProcessed: false,
-      message: 'Transação não possui mp_payment_id oficial do Mercado Pago.',
-    };
-  }
-
   // 2. Carrega a consulta veicular correspondente
   const { data: consultation, error: consError } = await adminDb
     .from('customer_plate_consultations')
@@ -184,17 +197,6 @@ export async function initiateRefundForFailedDelivery({
     };
   }
 
-  // Se o laudo foi gerado e está concluído, nunca estornar automaticamente
-  if (consultation.status === 'completed' && consultation.vehicle_data) {
-    return {
-      success: false,
-      refundId: '',
-      status: 'failed',
-      alreadyProcessed: true,
-      message: 'Consulta já concluída com laudo válido; estorno automático bloqueado.',
-    };
-  }
-
   // 3. Verifica se já existe ordem de refund ativa ou confirmada
   const { data: existingRefund } = await adminDb
     .from('payment_refunds')
@@ -203,42 +205,66 @@ export async function initiateRefundForFailedDelivery({
     .in('status', ['requested', 'pending', 'confirmed'])
     .maybeSingle();
 
-  if (existingRefund) {
-    logCheckoutProEvent('checkout_pro.transaction_updated', {
-      transactionId: transaction.id,
-      paymentId: transaction.mp_payment_id,
-      errorMessage: `[PAYMENT_REFUND] Estorno duplicado ignorado. Já existe refund ID ${existingRefund.id} com status ${existingRefund.status}.`,
-    });
+  // 4. Avalia elegibilidade estrita
+  const eligibility = evaluateRefundEligibility({
+    transaction,
+    consultation,
+    existingRefund,
+    reasonCode,
+  });
 
-    return {
-      success: true,
-      refundId: existingRefund.id,
-      providerRefundId: existingRefund.provider_refund_id || undefined,
-      status: existingRefund.status,
-      alreadyProcessed: true,
-      message: 'Estorno já registrado ou em andamento.',
-    };
-  }
+  if (!eligibility.eligible) {
+    if (existingRefund) {
+      console.log(
+        `[PAYMENT_REFUND] payment_refund.duplicate_prevented transactionId=${maskId(transaction.id)} refundId=${existingRefund.id} status=${existingRefund.status}`,
+      );
+      return {
+        success: true,
+        refundId: existingRefund.id,
+        providerRefundId: existingRefund.provider_refund_id || undefined,
+        status: existingRefund.status,
+        alreadyProcessed: true,
+        message: 'Estorno já registrado ou em andamento.',
+      };
+    }
 
-  const amountCents = Math.round(Number(transaction.transaction_amount) * 100);
-  if (amountCents <= 0) {
     return {
       success: false,
       refundId: '',
       status: 'failed',
       alreadyProcessed: false,
-      message: 'Valor da transação inválido para estorno.',
+      message: eligibility.reason || 'Transação não elegível para estorno.',
+      error: eligibility.reason || undefined,
     };
   }
 
-  // 4. Cria o registro de refund com status 'requested' (Atômico)
+  // Se a falha for por créditos da API Brasil, registra alerta interno no log
+  if (eligibility.supportActionRequired === 'RECHARGE_APIBRASIL') {
+    await adminDb.from('consultation_audit_logs').insert({
+      consultation_id: consultation.id,
+      transaction_id: transaction.id,
+      actor_type: 'system',
+      event: 'support_attention_required',
+      details: {
+        alert: 'Ação necessária: recarregar saldo da API Brasil.',
+        support_action_required: 'RECHARGE_APIBRASIL',
+        reason_code: reasonCode,
+      },
+    });
+  }
+
+  const amountCents = Math.round(Number(transaction.transaction_amount) * 100);
+  const mpPaymentId = String(transaction.mp_payment_id).trim();
+  const idempotencyKey = buildRefundIdempotencyKey(transaction.id, mpPaymentId);
+
+  // 5. Cria o registro de refund com status 'requested' (Atômico)
   const { data: newRefund, error: createError } = await adminDb
     .from('payment_refunds')
     .insert({
       transaction_id: transaction.id,
       consultation_id: consultation.id,
       provider: 'mercadopago',
-      provider_payment_id: transaction.mp_payment_id,
+      provider_payment_id: mpPaymentId,
       amount_cents: amountCents,
       currency: 'BRL',
       status: 'requested',
@@ -251,7 +277,6 @@ export async function initiateRefundForFailedDelivery({
     .single();
 
   if (createError || !newRefund) {
-    // Pode ter ocorrido colisão por índice único concorrente
     const { data: collidingRefund } = await adminDb
       .from('payment_refunds')
       .select('*')
@@ -264,7 +289,7 @@ export async function initiateRefundForFailedDelivery({
         refundId: collidingRefund.id,
         status: collidingRefund.status,
         alreadyProcessed: true,
-        message: 'Estorno já existente criado por outro processo concorrente.',
+        message: 'Estorno já existente criado por processo concorrente.',
       };
     }
 
@@ -288,45 +313,84 @@ export async function initiateRefundForFailedDelivery({
     })
     .eq('id', consultation.id);
 
-  // 5. Chamada Autoritativa à API do Mercado Pago (PaymentRefund.total)
+  console.log(
+    `[PAYMENT_REFUND] payment_refund.provider_request_sent transactionId=${maskId(transaction.id)} mpPaymentId=${maskId(mpPaymentId)} amountCents=${amountCents}`,
+  );
+
+  // 6. Chamada Autoritativa à API do Mercado Pago com idempotencyKey
   let providerRefundId: string | null = null;
   try {
     const mpConfig = getMercadoPagoConfig();
     const refundClient = new PaymentRefund(mpConfig);
 
-    const paymentIdNum = Number(transaction.mp_payment_id);
-    if (isNaN(paymentIdNum)) {
-      throw new Error(`Identificador mp_payment_id inválido: ${transaction.mp_payment_id}`);
-    }
-
     const mpRefundResponse = await refundClient.total({
-      payment_id: paymentIdNum,
+      payment_id: mpPaymentId,
+      requestOptions: {
+        idempotencyKey,
+      },
     });
 
     if (mpRefundResponse && mpRefundResponse.id) {
       providerRefundId = String(mpRefundResponse.id);
     }
 
-    // Atualiza status do refund para pending (aguardando consolidação definitiva do gateway)
+    const isConfirmed =
+      mpRefundResponse?.status === 'approved' || mpRefundResponse?.status === 'refunded';
+
+    const finalStatus = isConfirmed ? 'confirmed' : 'pending';
+    const nowIso = new Date().toISOString();
+
     await adminDb
       .from('payment_refunds')
       .update({
-        status: 'pending',
+        status: finalStatus,
         provider_refund_id: providerRefundId,
-        updated_at: new Date().toISOString(),
+        confirmed_at: isConfirmed ? nowIso : null,
+        updated_at: nowIso,
       })
       .eq('id', newRefund.id);
+
+    if (isConfirmed) {
+      await adminDb
+        .from('payment_transactions')
+        .update({
+          status: 'refunded',
+          refund_status: 'refunded',
+          refund_amount: amountCents / 100,
+          refunded_at: nowIso,
+          mp_refund_id: providerRefundId,
+          updated_at: nowIso,
+        })
+        .eq('id', transaction.id);
+
+      await adminDb
+        .from('customer_plate_consultations')
+        .update({
+          status: 'refunded',
+          payment_status: 'refunded',
+          updated_at: nowIso,
+        })
+        .eq('id', consultation.id);
+
+      console.log(
+        `[PAYMENT_REFUND] payment_refund.confirmed transactionId=${maskId(transaction.id)} refundId=${newRefund.id} mpRefundId=${maskId(providerRefundId)}`,
+      );
+    } else {
+      console.log(
+        `[PAYMENT_REFUND] payment_refund.pending transactionId=${maskId(transaction.id)} refundId=${newRefund.id} providerStatus=${mpRefundResponse?.status || 'pending'}`,
+      );
+    }
 
     // Auditoria
     await adminDb.from('consultation_audit_logs').insert({
       consultation_id: consultation.id,
       transaction_id: transaction.id,
       actor_type: 'system',
-      event: 'refund_requested',
+      event: isConfirmed ? 'refund_confirmed' : 'refund_requested',
       details: {
         refund_id: newRefund.id,
         provider_refund_id: providerRefundId,
-        mp_payment_id: transaction.mp_payment_id,
+        mp_payment_id: mpPaymentId,
         amount_cents: amountCents,
         reason_code: reasonCode,
         duration_ms: Date.now() - startTime,
@@ -337,22 +401,31 @@ export async function initiateRefundForFailedDelivery({
       success: true,
       refundId: newRefund.id,
       providerRefundId: providerRefundId || undefined,
-      status: 'pending',
+      status: finalStatus,
       alreadyProcessed: false,
-      message: 'Solicitação de estorno enviada com sucesso ao Mercado Pago.',
+      message: isConfirmed
+        ? 'Estorno integral confirmado com sucesso pelo Mercado Pago.'
+        : 'Solicitação de estorno enviada ao Mercado Pago (processamento pendente).',
     };
-  } catch (mpErr: any) {
-    const errorErrMsg = mpErr instanceof Error ? mpErr.message : String(mpErr);
-    console.error('[initiateRefundForFailedDelivery] Erro ao chamar Mercado Pago refund:', errorErrMsg);
+  } catch (mpErr: unknown) {
+    const safeError = serializeMercadoPagoError(mpErr);
+
+    console.error(
+      `[PAYMENT_REFUND] payment_refund.failed transactionId=${maskId(transaction.id)} mpPaymentId=${maskId(mpPaymentId)} httpStatus=${safeError.httpStatus} apiCode=${safeError.apiCode} causeCode=${safeError.causeCode} retryable=${safeError.retryable}: ${safeError.errorMessage}`,
+    );
+
+    const targetStatus = safeError.retryable ? 'pending' : 'failed';
+    const nowIso = new Date().toISOString();
 
     await adminDb
       .from('payment_refunds')
       .update({
-        status: 'failed',
-        last_error_code: 'MP_REFUND_API_ERROR',
-        last_error_safe: 'Instabilidade técnica na comunicação com o Mercado Pago para estorno.',
-        failed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        status: targetStatus,
+        last_error_code: safeError.apiCode || safeError.causeCode || 'MP_REFUND_API_ERROR',
+        last_error_safe:
+          safeError.errorMessage || 'Instabilidade técnica na comunicação com o Mercado Pago.',
+        failed_at: nowIso,
+        updated_at: nowIso,
       })
       .eq('id', newRefund.id);
 
@@ -363,30 +436,36 @@ export async function initiateRefundForFailedDelivery({
       event: 'refund_failed',
       details: {
         refund_id: newRefund.id,
-        mp_payment_id: transaction.mp_payment_id,
+        mp_payment_id: mpPaymentId,
         reason_code: reasonCode,
-        error: errorErrMsg,
+        http_status: safeError.httpStatus,
+        api_code: safeError.apiCode,
+        cause_code: safeError.causeCode,
+        cause_message: safeError.causeMessage,
+        error: safeError.errorMessage,
+        retryable: safeError.retryable,
       },
     });
 
     return {
       success: false,
       refundId: newRefund.id,
-      status: 'failed',
+      status: targetStatus,
       alreadyProcessed: false,
-      message: 'Falha ao processar estorno no Mercado Pago; mantido em fila para reconciliação.',
-      error: errorErrMsg,
+      message: 'Falha ao processar estorno no Mercado Pago; registrado para reconciliação.',
+      error: safeError.errorMessage || 'Erro de comunicação com o gateway',
+      safeProviderError: safeError,
     };
   }
 }
 
 /**
- * Reconcilia um refund individual consultando o status do pagamento no Mercado Pago.
+ * Reconcilia um refund individual consultando o pagamento e a lista de refunds do Mercado Pago.
  */
 export async function reconcileSingleRefund(
   refundId: string,
   dbClient?: unknown,
-): Promise<{ success: boolean; status: string; error?: string }> {
+): Promise<{ success: boolean; status: string; mpRefundId?: string; error?: string }> {
   const adminDb = (dbClient as ReturnType<typeof createAdminClient>) || createAdminClient();
 
   const { data: refund, error: rfError } = await adminDb
@@ -396,25 +475,56 @@ export async function reconcileSingleRefund(
     .maybeSingle();
 
   if (rfError || !refund) {
-    return { success: false, status: 'unknown', error: 'Refund não encontrado.' };
+    return { success: false, status: 'unknown', error: 'Registro de refund não encontrado.' };
   }
 
   if (refund.status === 'confirmed') {
-    return { success: true, status: 'confirmed' };
+    return {
+      success: true,
+      status: 'confirmed',
+      mpRefundId: refund.provider_refund_id || undefined,
+    };
   }
 
-  // Importa fetchAuthoritativePayment dinamicamente para evitar ciclo
-  const { fetchAuthoritativePayment } = await import('./webhook-service');
+  const { fetchAuthoritativePayment } = await import('./webhook-service.ts');
+
   try {
     const payment = await fetchAuthoritativePayment(refund.provider_payment_id);
 
-    if (payment.status === 'refunded' || payment.statusDetail === 'refunded') {
-      const nowIso = new Date().toISOString();
+    // Consulta também a lista autoritativa de refunds vinculados a este payment_id
+    let remoteRefundId: string | null = refund.provider_refund_id;
+    let isConfirmed = payment.status === 'refunded' || payment.statusDetail === 'refunded';
 
+    try {
+      const mpConfig = getMercadoPagoConfig();
+      const refundClient = new PaymentRefund(mpConfig);
+      const refundList = await refundClient.list({
+        payment_id: refund.provider_payment_id,
+      });
+
+      if (Array.isArray(refundList) && refundList.length > 0) {
+        const approvedRefund = refundList.find(
+          (r) => r.status === 'approved' || r.status === 'refunded',
+        );
+        if (approvedRefund) {
+          isConfirmed = true;
+          if (approvedRefund.id) {
+            remoteRefundId = String(approvedRefund.id);
+          }
+        }
+      }
+    } catch (listErr) {
+      console.warn('[reconcileSingleRefund] Falha ao consultar refundClient.list:', listErr);
+    }
+
+    const nowIso = new Date().toISOString();
+
+    if (isConfirmed) {
       await adminDb
         .from('payment_refunds')
         .update({
           status: 'confirmed',
+          provider_refund_id: remoteRefundId,
           confirmed_at: nowIso,
           updated_at: nowIso,
         })
@@ -427,7 +537,7 @@ export async function reconcileSingleRefund(
           refund_status: 'refunded',
           refund_amount: refund.amount_cents / 100,
           refunded_at: nowIso,
-          mp_refund_id: refund.provider_refund_id,
+          mp_refund_id: remoteRefundId,
           updated_at: nowIso,
         })
         .eq('id', refund.transaction_id);
@@ -449,17 +559,58 @@ export async function reconcileSingleRefund(
         details: {
           refund_id: refund.id,
           provider_payment_id: refund.provider_payment_id,
+          provider_refund_id: remoteRefundId,
           amount_cents: refund.amount_cents,
         },
       });
 
-      return { success: true, status: 'confirmed' };
+      console.log(
+        `[PAYMENT_REFUND] payment_refund.confirmed (via reconciliation) transactionId=${maskId(refund.transaction_id)} refundId=${refund.id} mpRefundId=${maskId(remoteRefundId)}`,
+      );
+
+      return { success: true, status: 'confirmed', mpRefundId: remoteRefundId || undefined };
     }
 
-    return { success: true, status: refund.status };
-  } catch (err: any) {
-    return { success: false, status: refund.status, error: err?.message };
+    return {
+      success: true,
+      status: refund.status,
+      mpRefundId: refund.provider_refund_id || undefined,
+    };
+  } catch (err: unknown) {
+    const safeError = serializeMercadoPagoError(err);
+    console.warn(
+      `[reconcileSingleRefund] Erro ao consultar Mercado Pago: ${safeError.errorMessage}`,
+    );
+    return {
+      success: false,
+      status: refund.status,
+      error: safeError.errorMessage || 'Erro de rede',
+    };
   }
+}
+
+/**
+ * Reconcilia o refund de uma transação diretamente pelo transactionId.
+ */
+export async function reconcileRefundByTransactionId(
+  transactionId: string,
+  dbClient?: unknown,
+): Promise<{ success: boolean; status: string; mpRefundId?: string; error?: string }> {
+  const adminDb = (dbClient as ReturnType<typeof createAdminClient>) || createAdminClient();
+
+  const { data: refund } = await adminDb
+    .from('payment_refunds')
+    .select('id')
+    .eq('transaction_id', transactionId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!refund) {
+    return { success: false, status: 'none', error: 'Nenhum estorno associado à transação.' };
+  }
+
+  return reconcileSingleRefund(refund.id, adminDb);
 }
 
 /**
