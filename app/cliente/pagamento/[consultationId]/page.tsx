@@ -5,8 +5,9 @@ import { getVehicleConsultationPrice } from '@/lib/settings/server-queries';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { VehicleConsultationOrderSummary } from '@/components/customer/vehicle-consultation-order-summary';
 import { VehicleConsultationBenefits } from '@/components/customer/vehicle-consultation-benefits';
+import { CheckoutProButton } from '@/components/customer/checkout-pro-button';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, ArrowLeft, MessageCircle } from 'lucide-react';
+import { ArrowLeft, MessageCircle, ShieldCheck } from 'lucide-react';
 
 interface PaymentPageProps {
   params: Promise<{
@@ -31,11 +32,7 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     redirect(`/cliente/login?returnUrl=/cliente/pagamento/${consultationId}`);
   }
 
-  const [
-    { data: consultation, error: consultationError },
-    price,
-    settings,
-  ] = await Promise.all([
+  const [{ data: consultation, error: consultationError }, price, settings] = await Promise.all([
     supabase
       .from('customer_plate_consultations')
       .select('id, user_id, plate, status, payment_status')
@@ -92,70 +89,79 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Coluna Esquerda: Resumo da Consulta e Benefícios */}
         <div className="lg:col-span-5 space-y-6">
-          <VehicleConsultationOrderSummary
-            plate={consultation.plate}
-            amount={price}
-          />
+          <VehicleConsultationOrderSummary plate={consultation.plate} amount={price} />
           <VehicleConsultationBenefits />
         </div>
 
-        {/* Coluna Direita: Estado Claro de Indisponibilidade de Pagamento Online */}
-        <div className="lg:col-span-7">
-          <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] to-transparent p-6 sm:p-8 space-y-6">
+        {/* Coluna Direita: Checkout Pro Mercado Pago */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="rounded-2xl border border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-950 p-6 sm:p-8 space-y-6 shadow-xl">
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 shrink-0 text-amber-400">
-                <AlertTriangle className="h-6 w-6" aria-hidden="true" />
+              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0 text-blue-400">
+                <ShieldCheck className="h-6 w-6" aria-hidden="true" />
               </div>
               <div className="space-y-1">
                 <h1 className="text-xl font-bold text-white tracking-tight">
-                  Pagamentos online estão temporariamente indisponíveis
+                  Finalizar Pagamento Seguro
                 </h1>
-                <p className="text-xs text-amber-400/90 font-medium">
-                  Manutenção programada dos canais de pagamento
+                <p className="text-xs text-zinc-400 font-medium">
+                  Processado diretamente pelo Mercado Pago
                 </p>
               </div>
             </div>
 
             <div className="text-sm text-zinc-300 space-y-3 leading-relaxed border-t border-zinc-800/80 pt-4">
               <p>
-                Estamos aprimorando nossa infraestrutura financeira para oferecer uma experiência de checkout
-                mais ágil, transparente e segura.
+                Ao clicar no botão abaixo, você será redirecionado para o ambiente oficial e
+                criptografado do <strong className="text-white">Mercado Pago</strong>, onde poderá
+                escolher pagar via:
               </p>
-              <p>
-                Por esse motivo, o processamento automatizado de novas cobranças via cartão, PIX e boleto está
-                momentaneamente suspenso nesta página.
-              </p>
-              <p className="text-xs text-zinc-400 bg-zinc-900/60 p-3 rounded-lg border border-zinc-800">
-                🔒 <strong>Importante:</strong> Sua consulta para a placa{' '}
-                <span className="font-mono text-white font-semibold">{consultation.plate}</span> está salva
-                em sua conta com status pendente. Nenhuma cobrança foi realizada e nenhum dado financeiro foi retido.
-              </p>
+              <ul className="grid grid-cols-2 gap-2 text-xs text-zinc-300 font-medium pt-1">
+                <li className="flex items-center gap-2 p-2 rounded-lg bg-zinc-900/80 border border-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  Pix Instantâneo
+                </li>
+                <li className="flex items-center gap-2 p-2 rounded-lg bg-zinc-900/80 border border-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                  Cartão de Crédito em até 12x
+                </li>
+                <li className="flex items-center gap-2 p-2 rounded-lg bg-zinc-900/80 border border-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  Cartão de Débito
+                </li>
+                <li className="flex items-center gap-2 p-2 rounded-lg bg-zinc-900/80 border border-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                  Boleto Bancário / Saldo MP
+                </li>
+              </ul>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            {/* Botão Oficial do Checkout Pro */}
+            <div className="pt-2">
+              <CheckoutProButton consultationId={consultation.id} />
+            </div>
+
+            {/* Links Auxiliares */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-zinc-800/60">
               {whatsappUrl && (
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1"
-                >
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
                   <Button
                     type="button"
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2"
+                    variant="outline"
+                    className="w-full border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white flex items-center justify-center gap-2 text-xs"
                   >
-                    <MessageCircle className="h-4 w-4" />
-                    Falar com Atendimento
+                    <MessageCircle className="h-4 w-4 text-emerald-400" />
+                    Dúvidas? Atendimento WhatsApp
                   </Button>
                 </a>
               )}
               <Link href="/cliente/consultas" className="flex-1">
                 <Button
                   type="button"
-                  variant="outline"
-                  className="w-full border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 hover:text-white"
+                  variant="ghost"
+                  className="w-full text-zinc-400 hover:text-white text-xs"
                 >
-                  Ver Minhas Consultas
+                  Pagar mais tarde
                 </Button>
               </Link>
             </div>
