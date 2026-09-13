@@ -3,12 +3,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import {
-  findExistingConsultation,
-  executeVehiclePlateLookup,
-} from '@/lib/vehicle-lookup/service';
+import { findExistingConsultation, executeVehiclePlateLookup } from '@/lib/vehicle-lookup/service';
 import { getVehicleConsultationPrice } from '@/lib/settings/server-queries';
-import { type ActionResult, type PaymentMethod, CONSULTATION_PRICE_BRL } from './types';
+import { type ActionResult, type PaymentMethod } from './types';
 import { paymentConfirmationSchema } from './schemas';
 
 /**
@@ -16,7 +13,7 @@ import { paymentConfirmationSchema } from './schemas';
  */
 export async function confirmPayment(
   consultationId: string,
-  paymentMethod: PaymentMethod
+  paymentMethod: PaymentMethod,
 ): Promise<ActionResult<{ consultationId: string }>> {
   const parseResult = paymentConfirmationSchema.safeParse({
     consultationId,
@@ -52,7 +49,11 @@ export async function confirmPayment(
 
   // If already completed, return immediately
   if (consultation.status === 'completed' && consultation.vehicle_data) {
-    return { success: true, consultationId: consultation.id, data: { consultationId: consultation.id } };
+    return {
+      success: true,
+      consultationId: consultation.id,
+      data: { consultationId: consultation.id },
+    };
   }
 
   const nowIso = new Date().toISOString();
@@ -115,7 +116,7 @@ export async function confirmPayment(
           userId: user.id,
           confirmedPlate: consultation.plate_normalized,
         },
-        adminClient
+        adminClient,
       );
 
       if (lookupResult.success && lookupResult.record) {
@@ -170,93 +171,3 @@ export async function confirmPayment(
     data: { consultationId: consultation.id },
   };
 }
-
-/**
- * Checks the current payment and lookup status of a consultation.
- */
-export async function getPaymentStatus(consultationId: string): Promise<
-  ActionResult<{
-    status: string;
-    paymentStatus: string;
-    mpStatus?: string;
-    mpStatusDetail?: string;
-    qrCode?: string;
-    qrCodeBase64?: string;
-    ticketUrl?: string;
-    autoRefundAttempted: boolean;
-    lookupErrorMessage?: string;
-    vehicleDataAvailable: boolean;
-  }>
-> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: 'Usuário não autenticado.' };
-  }
-
-  const { data: consultation, error } = await supabase
-    .from('customer_plate_consultations')
-    .select(
-      `
-      id,
-      plate,
-      status,
-      payment_status,
-      auto_refund_attempted,
-      lookup_error_message,
-      vehicle_data,
-      latest_payment_transaction_id
-    `
-    )
-    .eq('id', consultationId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (error || !consultation) {
-    return { error: 'Consulta não encontrada.' };
-  }
-
-  let mpStatus: string | undefined;
-  let mpStatusDetail: string | undefined;
-  let qrCode: string | undefined;
-  let qrCodeBase64: string | undefined;
-  let ticketUrl: string | undefined;
-
-  if (consultation.latest_payment_transaction_id) {
-    const admin = createAdminClient();
-    const { data: tx } = await admin
-      .from('payment_transactions')
-      .select('*')
-      .eq('id', consultation.latest_payment_transaction_id)
-      .maybeSingle();
-
-    if (tx) {
-      mpStatus = tx.status;
-      mpStatusDetail = tx.status_detail;
-      const pointOfInteraction = tx.raw_response?.point_of_interaction;
-      qrCode = pointOfInteraction?.transaction_data?.qr_code;
-      qrCodeBase64 = pointOfInteraction?.transaction_data?.qr_code_base64;
-      ticketUrl = pointOfInteraction?.transaction_data?.ticket_url;
-    }
-  }
-
-  return {
-    success: true,
-    data: {
-      status: consultation.status,
-      paymentStatus: consultation.payment_status,
-      mpStatus,
-      mpStatusDetail,
-      qrCode,
-      qrCodeBase64,
-      ticketUrl,
-      autoRefundAttempted: Boolean(consultation.auto_refund_attempted),
-      lookupErrorMessage: consultation.lookup_error_message,
-      vehicleDataAvailable: Boolean(consultation.vehicle_data),
-    },
-  };
-}
-
