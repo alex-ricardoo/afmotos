@@ -65,8 +65,7 @@ export async function releaseVerifiedPaidConsultation(
     paymentId: transaction.mp_payment_id,
   });
 
-  // 3. Enfileiramento Persistido e Idempotente do Job de Entrega (RB-05)
-  const { enqueueDeliveryJob, executeSingleDeliveryJob } = await import('@/lib/vehicle-delivery/delivery-service');
+  const { enqueueDeliveryJob, executeSingleDeliveryJob } = await import('../vehicle-delivery/delivery-service.ts');
 
   const enqueueResult = await enqueueDeliveryJob({
     consultationId: consultation.id,

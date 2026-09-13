@@ -141,6 +141,8 @@ export interface LogContext {
   status?: string;
   statusDetail?: string;
   paymentId?: string;
+  jobId?: string;
+  jobIdMasked?: string | null;
   signatureValid?: boolean;
   httpStatus?: number;
   errorMessage?: string;

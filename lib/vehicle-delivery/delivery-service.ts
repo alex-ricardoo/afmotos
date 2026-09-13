@@ -3,7 +3,7 @@ import { findExistingConsultation, executeVehiclePlateLookup } from '../vehicle-
 import { getVehicleLookupConfig } from '../vehicle-lookup/config.ts';
 import { classifyProviderFailure } from './failure-classifier.ts';
 import { initiateRefundForFailedDelivery } from '../mercadopago/refund-service.ts';
-import { logCheckoutProEvent, maskId } from '../mercadopago/observability.ts';
+import { maskId } from '../mercadopago/observability.ts';
 import {
   type ConsultationDeliveryJobRecord,
   type DeliveryJobStatus,
@@ -316,7 +316,10 @@ export async function executeSingleDeliveryJob(
       return { success: true, status: 'completed' };
     }
   } catch (cacheErr) {
-    console.warn('[executeSingleDeliveryJob] Erro ao verificar cache, prosseguindo para live:', cacheErr);
+    console.warn(
+      '[executeSingleDeliveryJob] Erro ao verificar cache, prosseguindo para live:',
+      cacheErr,
+    );
   }
 
   // 3. Cache Miss: Preparação para chamada LIVE
@@ -421,18 +424,22 @@ export async function executeSingleDeliveryJob(
     } else {
       throw new Error(lookupResult.message || 'Falha desconhecida na API Brasil.');
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     const classified = classifyProviderFailure(err);
 
-    logVehicleDeliveryEvent('provider_request_failed', {
-      jobIdMasked: maskId(job.id),
-      consultationIdMasked: maskId(consultation.id),
-      failureClass: classified.failureClass,
-      failureCode: classified.failureCode,
-      httpStatus: classified.httpStatus,
-      attempt: job.attempt_count,
-      maxAttempts: job.max_attempts,
-    }, 'warn');
+    logVehicleDeliveryEvent(
+      'provider_request_failed',
+      {
+        jobIdMasked: maskId(job.id),
+        consultationIdMasked: maskId(consultation.id),
+        failureClass: classified.failureClass,
+        failureCode: classified.failureCode,
+        httpStatus: classified.httpStatus,
+        attempt: job.attempt_count,
+        maxAttempts: job.max_attempts,
+      },
+      'warn',
+    );
 
     // 5. Avalia se é falha transitória elegível a retry
     const isRetryable =
@@ -514,12 +521,12 @@ export async function executeSingleDeliveryJob(
  */
 async function handleJobPermanentFailure(
   job: ConsultationDeliveryJobRecord,
-  consultation: any,
+  consultation: { id: string; user_id?: string; status?: string },
   failureCode: string,
   errorMessageSafe: string,
   httpStatus: number | null,
   failureClass: ProviderFailureClass,
-  adminDb: any,
+  adminDb: ReturnType<typeof createAdminClient>,
   isInsufficientCredits = false,
 ): Promise<{ success: boolean; status: DeliveryJobStatus; error: string }> {
   const nowIso = new Date().toISOString();
@@ -549,12 +556,16 @@ async function handleJobPermanentFailure(
     })
     .eq('id', consultation.id);
 
-  logVehicleDeliveryEvent('failed_permanent', {
-    jobIdMasked: maskId(job.id),
-    consultationIdMasked: maskId(consultation.id),
-    failureCode,
-    isInsufficientCredits,
-  }, 'error');
+  logVehicleDeliveryEvent(
+    'failed_permanent',
+    {
+      jobIdMasked: maskId(job.id),
+      consultationIdMasked: maskId(consultation.id),
+      failureCode,
+      isInsufficientCredits,
+    },
+    'error',
+  );
 
   // Alerta explícito de suporte se faltar saldo
   if (isInsufficientCredits) {
@@ -609,7 +620,10 @@ export async function claimAndProcessDeliveryJobs(
     });
 
     if (rpcError) {
-      console.warn('[claimAndProcessDeliveryJobs] RPC claim_next_delivery_jobs falhou, usando fallback direto:', rpcError);
+      console.warn(
+        '[claimAndProcessDeliveryJobs] RPC claim_next_delivery_jobs falhou, usando fallback direto:',
+        rpcError,
+      );
       // Fallback gracioso com update direto se RPC não existir no ambiente
       const { data: directJobs } = await adminDb
         .from('consultation_delivery_jobs')
@@ -655,5 +669,207 @@ export async function claimAndProcessDeliveryJobs(
     retriedCount,
     failedCount,
     durationMs: Date.now() - startTime,
+  };
+}
+
+export type DeliveryActor = 'webhook' | 'reconcile' | 'customer_screen' | 'admin' | 'system';
+
+export interface ProcessEligibleDeliveryJobResult {
+  success: boolean;
+  status: DeliveryJobStatus;
+  delivered: boolean;
+  retryNotDue?: boolean;
+  alreadyLocked?: boolean;
+  nextRetryAt?: string | null;
+  remainingSeconds?: number;
+  attemptCount?: number;
+  maxAttempts?: number;
+  message: string;
+  error?: string;
+}
+
+/**
+ * Cria ou recupera de forma idempotente o job de entrega associado a uma transação aprovada.
+ */
+export async function createOrGetDeliveryJob(
+  transactionId: string,
+  customDb?: unknown,
+): Promise<{ success: boolean; job?: ConsultationDeliveryJobRecord; error?: string }> {
+  const adminDb = (customDb as ReturnType<typeof createAdminClient>) || createAdminClient();
+
+  const { data: transaction, error: txError } = await adminDb
+    .from('payment_transactions')
+    .select('id, consultation_id, status')
+    .eq('id', transactionId)
+    .maybeSingle();
+
+  if (txError || !transaction) {
+    return { success: false, error: 'Transação não encontrada.' };
+  }
+
+  const enqueueRes = await enqueueDeliveryJob({
+    consultationId: transaction.consultation_id,
+    transactionId: transaction.id,
+    dbClient: adminDb,
+  });
+
+  if (!enqueueRes.success && !enqueueRes.alreadyExists) {
+    return { success: false, error: enqueueRes.error || 'Falha ao enfileirar job.' };
+  }
+
+  const { data: job } = await adminDb
+    .from('consultation_delivery_jobs')
+    .select('*')
+    .eq('id', enqueueRes.jobId)
+    .maybeSingle();
+
+  return { success: true, job: job as ConsultationDeliveryJobRecord };
+}
+
+/**
+ * Processa com segurança um job elegível, respeitando next_retry_at, locks atômicos e concorrência.
+ * Usado pelo endpoint do cliente em tela, ações administrativas e reconciliações.
+ */
+export async function processEligibleDeliveryJob(
+  jobId: string,
+  actor: DeliveryActor,
+  options?: { force?: boolean; dbClient?: unknown },
+): Promise<ProcessEligibleDeliveryJobResult> {
+  const adminDb =
+    (options?.dbClient as ReturnType<typeof createAdminClient>) || createAdminClient();
+
+  // 1. Carrega o job
+  const { data: job, error: jobError } = await adminDb
+    .from('consultation_delivery_jobs')
+    .select('*')
+    .eq('id', jobId)
+    .maybeSingle();
+
+  if (jobError || !job) {
+    return {
+      success: false,
+      status: 'pending',
+      delivered: false,
+      message: 'Job de entrega não encontrado.',
+      error: jobError?.message,
+    };
+  }
+
+  // Se já concluído
+  if (job.status === 'completed') {
+    return {
+      success: true,
+      status: 'completed',
+      delivered: true,
+      message: 'Laudo já entregue com sucesso.',
+    };
+  }
+
+  // Se estado terminal
+  if (['failed_permanent', 'cancelled'].includes(job.status)) {
+    return {
+      success: false,
+      status: job.status as DeliveryJobStatus,
+      delivered: false,
+      message: 'Job em estado terminal definitivo.',
+    };
+  }
+
+  const now = Date.now();
+
+  // 2. Verifica elegibilidade de horário se em retry_scheduled
+  if (job.status === 'retry_scheduled' && job.next_retry_at && !options?.force) {
+    const nextRetryTime = new Date(job.next_retry_at).getTime();
+    if (nextRetryTime > now) {
+      const remainingSeconds = Math.ceil((nextRetryTime - now) / 1000);
+      logVehicleDeliveryEvent('retry_not_due', {
+        jobIdMasked: maskId(job.id),
+        actor,
+        remainingSeconds,
+        nextRetryAt: job.next_retry_at,
+      });
+
+      return {
+        success: true,
+        status: 'retry_scheduled',
+        delivered: false,
+        retryNotDue: true,
+        nextRetryAt: job.next_retry_at,
+        remainingSeconds,
+        attemptCount: job.attempt_count,
+        maxAttempts: job.max_attempts,
+        message: 'Aguardando horário programado para nova tentativa.',
+      };
+    }
+  }
+
+  // 3. Concorrência e Lock Atômico
+  if (job.locked_at && job.lock_expires_at) {
+    const lockExpires = new Date(job.lock_expires_at).getTime();
+    if (lockExpires > now && job.status === 'processing') {
+      logVehicleDeliveryEvent('job_claim_rejected', {
+        jobIdMasked: maskId(job.id),
+        actor,
+        lockedBy: job.locked_by,
+      });
+
+      return {
+        success: true,
+        status: 'processing',
+        delivered: false,
+        alreadyLocked: true,
+        message: 'Consulta já está sendo processada por outra requisição.',
+      };
+    }
+  }
+
+  // Adquire lock e incrementa tentativa
+  const newAttempt = (job.attempt_count || 0) + 1;
+  const lockExpiresAt = new Date(now + 300_000).toISOString(); // 5 minutos de lease
+
+  const { data: lockedJob, error: lockError } = await adminDb
+    .from('consultation_delivery_jobs')
+    .update({
+      status: 'processing',
+      attempt_count: newAttempt,
+      locked_at: new Date(now).toISOString(),
+      locked_by: actor,
+      lock_expires_at: lockExpiresAt,
+      last_attempt_at: new Date(now).toISOString(),
+      updated_at: new Date(now).toISOString(),
+    })
+    .eq('id', job.id)
+    .select('*')
+    .single();
+
+  if (lockError || !lockedJob) {
+    return {
+      success: false,
+      status: job.status as DeliveryJobStatus,
+      delivered: false,
+      message: 'Falha ao adquirir lock do job para execução.',
+      error: lockError?.message,
+    };
+  }
+
+  // 4. Executa a entrega
+  const outcome = await executeSingleDeliveryJob(
+    lockedJob as ConsultationDeliveryJobRecord,
+    adminDb,
+  );
+
+  return {
+    success: outcome.success,
+    status: outcome.status,
+    delivered: outcome.status === 'completed',
+    attemptCount: newAttempt,
+    maxAttempts: job.max_attempts,
+    message:
+      outcome.status === 'completed'
+        ? 'Laudo veicular entregue com sucesso.'
+        : outcome.status === 'retry_scheduled'
+          ? 'Instabilidade temporária detectada. Nova tentativa programada.'
+          : 'Não foi possível concluir a entrega do laudo; estorno acionado.',
+    error: outcome.error,
   };
 }
