@@ -1,6 +1,6 @@
 import React from 'react';
 import { NextRequest, NextResponse } from 'next/server';
-import { renderToBuffer } from '@react-pdf/renderer';
+import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import path from 'path';
 import fs from 'fs';
 import { createClient } from '@/lib/supabase/server';
@@ -13,10 +13,7 @@ import type { VehicleConsultationRecord } from '@/lib/vehicle-lookup/types';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
 
@@ -30,7 +27,7 @@ export async function GET(
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Acesso não autorizado. Faça login na Área do Cliente.' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -43,16 +40,13 @@ export async function GET(
       .maybeSingle();
 
     if (consultationError || !consultation) {
-      return NextResponse.json(
-        { error: 'Consulta veicular não encontrada.' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Consulta veicular não encontrada.' }, { status: 404 });
     }
 
     if (consultation.status !== 'completed' || !consultation.vehicle_data) {
       return NextResponse.json(
         { error: 'O laudo desta consulta ainda não está disponível para download.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -132,13 +126,28 @@ export async function GET(
     }
 
     const dto = toInternalVehicleConsultationDto(vpcRecord);
+
+    // 4. Bloqueio de Laudo Oficial PDF em produção se for mock
+    const isProd = process.env.VERCEL_ENV === 'production';
+    if (isProd && dto.is_mock) {
+      return NextResponse.json(
+        {
+          error:
+            'Laudo oficial indisponível para registros de demonstração em produção. Caso seu pagamento tenha sido confirmado, entre em contato com o suporte ou aguarde o reprocessamento.',
+        },
+        { status: 403 },
+      );
+    }
+
     const settings = await getSiteSettings();
 
     // 4. Prepare Logo Base64
     let logoBase64: string | undefined;
+    const settingsObj = settings?.settings as Record<string, unknown> | null;
+    const brandingObj = settingsObj?.branding as Record<string, unknown> | undefined;
     const customLogoUrl =
-      (settings?.settings as any)?.branding?.logoUrl ||
-      (settings?.settings as any)?.logo_path;
+      (typeof brandingObj?.logoUrl === 'string' ? brandingObj.logoUrl : undefined) ||
+      (typeof settingsObj?.logo_path === 'string' ? (settingsObj.logo_path as string) : undefined);
 
     if (
       customLogoUrl &&
@@ -172,7 +181,7 @@ export async function GET(
         report: customerDto,
         settings,
         logoSrc: logoBase64,
-      }) as any
+      }) as React.ReactElement<DocumentProps>,
     );
 
     // 7. Update counter
@@ -183,9 +192,10 @@ export async function GET(
       })
       .eq('id', id);
 
-    const filename = `laudo-veicular_${dto.plate_normalized}_${consultation.id.slice(0, 8)}.pdf`;
+    const filenamePrefix = dto.is_mock ? 'demonstracao-veicular' : 'laudo-veicular';
+    const filename = `${filenamePrefix}_${dto.plate_normalized}_${consultation.id.slice(0, 8)}.pdf`;
 
-    return new NextResponse(pdfBuffer as any, {
+    return new NextResponse(pdfBuffer as unknown as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
@@ -193,11 +203,9 @@ export async function GET(
         'Cache-Control': 'no-store, max-age=0',
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Error generating customer vehicle report PDF:', err);
-    return NextResponse.json(
-      { error: err?.message || 'Falha na geração do laudo PDF.' },
-      { status: 500 }
-    );
+    const message = err instanceof Error ? err.message : 'Falha na geração do laudo PDF.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

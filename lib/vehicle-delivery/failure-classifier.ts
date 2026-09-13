@@ -72,6 +72,7 @@ export function classifyProviderFailure(
   // 4. Modo Mock em Produção (FALHA PERMANENTE OPERACIONAL)
   if (
     lowerMsg.includes('mock mode in production') ||
+    lowerMsg.includes('mock_mode_in_production') ||
     lowerMsg.includes('modo mock') ||
     lowerMsg.includes('mock em produção')
   ) {
@@ -115,7 +116,11 @@ export function classifyProviderFailure(
   }
 
   // 7. Limite de Taxa / Rate Limit (FALHA TRANSITÓRIA)
-  if (httpStatus === 429 || lowerMsg.includes('too many requests') || lowerMsg.includes('rate limit')) {
+  if (
+    httpStatus === 429 ||
+    lowerMsg.includes('too many requests') ||
+    lowerMsg.includes('rate limit')
+  ) {
     return {
       failureClass: 'transient',
       failureCode: 'APIBRASIL_RATE_LIMIT',
@@ -176,7 +181,11 @@ export function classifyProviderFailure(
   }
 
   // 11. Schema de Resposta Inválido (FALHA DESCONHECIDA)
-  if (lowerMsg.includes('resposta inválida') || lowerMsg.includes('json parse') || lowerMsg.includes('syntaxerror')) {
+  if (
+    lowerMsg.includes('resposta inválida') ||
+    lowerMsg.includes('json parse') ||
+    lowerMsg.includes('syntaxerror')
+  ) {
     return {
       failureClass: 'unknown',
       failureCode: 'APIBRASIL_INVALID_RESPONSE',
