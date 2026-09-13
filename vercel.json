@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/process-delivery-jobs",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/reconcile-pending-refunds",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

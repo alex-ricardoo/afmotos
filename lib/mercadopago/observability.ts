@@ -333,4 +333,58 @@ export function logCheckoutProEvent(
   }
 }
 
+/**
+ * Logger estruturado para eventos de entrega de laudos com tag [VEHICLE_DELIVERY]
+ */
+export function logDeliveryEvent(
+  eventName: string,
+  context: Record<string, unknown> = {},
+  level: 'info' | 'warn' | 'error' = 'info',
+): void {
+  const runtimeEnv = getRuntimeEnvironment();
+  const payload = JSON.stringify({
+    tag: '[VEHICLE_DELIVERY]',
+    event: `vehicle_delivery.${eventName}`,
+    timestamp: new Date().toISOString(),
+    runtimeEnvironment: runtimeEnv,
+    vercelEnv: process.env.VERCEL_ENV ?? null,
+    ...context,
+  });
+
+  if (level === 'error') {
+    console.error(payload);
+  } else if (level === 'warn') {
+    console.warn(payload);
+  } else {
+    console.log(payload);
+  }
+}
+
+/**
+ * Logger estruturado para eventos de estorno financeiro com tag [PAYMENT_REFUND]
+ */
+export function logRefundEvent(
+  eventName: string,
+  context: Record<string, unknown> = {},
+  level: 'info' | 'warn' | 'error' = 'info',
+): void {
+  const runtimeEnv = getRuntimeEnvironment();
+  const payload = JSON.stringify({
+    tag: '[PAYMENT_REFUND]',
+    event: `payment_refund.${eventName}`,
+    timestamp: new Date().toISOString(),
+    runtimeEnvironment: runtimeEnv,
+    vercelEnv: process.env.VERCEL_ENV ?? null,
+    ...context,
+  });
+
+  if (level === 'error') {
+    console.error(payload);
+  } else if (level === 'warn') {
+    console.warn(payload);
+  } else {
+    console.log(payload);
+  }
+}
+
 export { extractOriginAndPath, extractOrigin, truncateHash };

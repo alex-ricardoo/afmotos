@@ -1,4 +1,14 @@
-export type ConsultationStatus = 'pending' | 'paid' | 'processing' | 'completed' | 'failed';
+export type ConsultationStatus =
+  | 'pending'
+  | 'paid'
+  | 'processing'
+  | 'completed'
+  | 'retry_scheduled'
+  | 'failed'
+  | 'failed_permanent'
+  | 'refund_pending'
+  | 'refunded'
+  | 'manual_review';
 
 export type PaymentStatus = 'unpaid' | 'paid' | 'refunded';
 

@@ -171,6 +171,28 @@ export async function confirmAndProcessPaymentTransaction({
   if (effectiveStatus === 'approved') {
     const releaseOutcome = await releaseVerifiedPaidConsultation(transaction.id, adminDb);
     reportUnlocked = releaseOutcome.success;
+  } else if (effectiveStatus === 'refunded') {
+    const nowIso = new Date().toISOString();
+    await adminDb
+      .from('customer_plate_consultations')
+      .update({
+        status: 'refunded',
+        payment_status: 'refunded',
+        updated_at: nowIso,
+      })
+      .eq('id', transaction.consultation_id);
+
+    await adminDb
+      .from('consultation_delivery_jobs')
+      .update({
+        status: 'failed_permanent',
+        last_error_code: 'TRANSACTION_REFUNDED',
+        last_error_message_safe: 'Transação estornada; entrega cancelada.',
+        failed_at: nowIso,
+        updated_at: nowIso,
+      })
+      .eq('transaction_id', transaction.id)
+      .in('status', ['pending', 'processing', 'retry_scheduled']);
   }
 
   // 5. Trilha de Auditoria

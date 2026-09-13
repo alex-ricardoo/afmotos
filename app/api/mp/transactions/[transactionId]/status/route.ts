@@ -84,17 +84,48 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
     let nextAction: 'view_report' | 'wait' | 'retry' | 'contact_support' = 'wait';
     let retryable = false;
+    let customerTitle = 'Aguardando Confirmação do Pagamento';
+    let customerMessage = 'Estamos aguardando a confirmação do pagamento pelo Mercado Pago.';
 
     if (reportAvailable) {
       nextAction = 'view_report';
+      customerTitle = 'Seu laudo está disponível';
+      customerMessage = 'Seu laudo veicular foi gerado com sucesso e já está liberado para visualização.';
+    } else if (status === 'refunded' || consultationStatus === 'refunded') {
+      nextAction = 'contact_support';
+      customerTitle = 'Pagamento Estornado';
+      customerMessage =
+        'Seu pagamento foi estornado integralmente. O prazo para o valor constar depende do método de pagamento e da instituição financeira.';
+    } else if (consultationStatus === 'failed_permanent' || consultationStatus === 'refund_pending') {
+      nextAction = 'contact_support';
+      customerTitle = 'Consulta Indisponível';
+      customerMessage =
+        'Não foi possível concluir sua consulta neste momento devido a uma indisponibilidade nas bases oficiais. Solicitamos o estorno integral do seu pagamento.';
+    } else if (consultationStatus === 'retry_scheduled') {
+      nextAction = 'wait';
+      retryable = true;
+      customerTitle = 'Preparando seu Laudo';
+      customerMessage =
+        'Estamos enfrentando uma instabilidade temporária para preparar seu laudo. Nossa equipe já está acompanhando; tentaremos novamente automaticamente em instantes.';
+    } else if (consultationStatus === 'manual_review') {
+      nextAction = 'contact_support';
+      customerTitle = 'Verificação Necessária';
+      customerMessage =
+        'Sua consulta precisa de uma verificação adicional. Nossa equipe foi avisada e retornará pelo canal de atendimento.';
+    } else if (status === 'approved') {
+      nextAction = 'wait';
+      customerTitle = 'Pagamento Confirmado! Gerando Laudo...';
+      customerMessage = 'Pagamento confirmado! Estamos consultando as bases oficiais de dados do veículo.';
     } else if (status === 'rejected' || status === 'cancelled') {
       nextAction = 'retry';
       retryable = true;
+      customerTitle = 'Pagamento Não Concluído';
+      customerMessage = 'O pagamento não foi autorizado ou foi cancelado no Mercado Pago.';
     } else if (status === 'provider_error' || status === 'pending_reconciliation') {
       nextAction = 'contact_support';
       retryable = true;
-    } else {
-      nextAction = 'wait';
+      customerTitle = 'Verificação de Pagamento';
+      customerMessage = 'Estamos verificando a confirmação do seu pagamento junto à operadora.';
     }
 
     const response: TransactionStatusResponse = {
@@ -109,6 +140,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       reportUrl: reportAvailable ? `/cliente/consultas/${consultation.id}` : undefined,
       retryable,
       nextAction,
+      customerTitle,
+      customerMessage,
     };
 
     return NextResponse.json(response);

@@ -17,7 +17,80 @@ export type PaymentTransactionStatus =
 
 export type ConsultationPaymentStatus = 'unpaid' | 'paid' | 'refunded';
 export type ConsultationLifecycleStatus =
-  'pending' | 'paid' | 'processing' | 'completed' | 'failed';
+  | 'pending'
+  | 'paid'
+  | 'processing'
+  | 'completed'
+  | 'retry_scheduled'
+  | 'failed'
+  | 'failed_permanent'
+  | 'refund_pending'
+  | 'refunded'
+  | 'manual_review';
+
+export type ProviderFailureClass = 'transient' | 'permanent' | 'unknown';
+
+export type DeliveryJobStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'retry_scheduled'
+  | 'failed_permanent';
+
+export interface ConsultationDeliveryJobRecord {
+  id: string;
+  consultation_id: string;
+  transaction_id: string;
+  job_type: string;
+  status: DeliveryJobStatus;
+  attempt_count: number;
+  max_attempts: number;
+  next_retry_at: string;
+  locked_at: string | null;
+  locked_by: string | null;
+  lock_expires_at: string | null;
+  provider: string;
+  last_error_code: string | null;
+  last_error_message_safe: string | null;
+  last_http_status: number | null;
+  last_failure_class: ProviderFailureClass | null;
+  last_attempt_at: string | null;
+  completed_at: string | null;
+  failed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PaymentRefundStatus =
+  | 'none'
+  | 'requested'
+  | 'pending'
+  | 'confirmed'
+  | 'failed'
+  | 'manual_review';
+
+export interface PaymentRefundRecord {
+  id: string;
+  transaction_id: string;
+  consultation_id: string;
+  provider: string;
+  provider_payment_id: string;
+  provider_refund_id: string | null;
+  amount_cents: number;
+  currency: string;
+  status: PaymentRefundStatus;
+  reason_code: string;
+  reason_safe: string;
+  idempotency_key: string;
+  request_attempts: number;
+  requested_at: string;
+  confirmed_at: string | null;
+  failed_at: string | null;
+  last_error_code: string | null;
+  last_error_safe: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface PaymentTransactionRecord {
   id: string;
@@ -76,6 +149,8 @@ export interface TransactionStatusResponse {
   reportUrl?: string;
   retryable: boolean;
   nextAction: 'view_report' | 'wait' | 'retry' | 'contact_support';
+  customerTitle?: string;
+  customerMessage?: string;
 }
 
 export type WebhookRejectionReason =
