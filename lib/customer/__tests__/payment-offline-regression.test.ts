@@ -5,10 +5,9 @@ import path from 'node:path';
 
 const projectRoot = process.cwd();
 
-describe('Mercado Pago Rollback & Payment Offline Regression Tests', () => {
-  it('garante que nenhum endpoint Mercado Pago existe ou está ativo', () => {
+describe('Mercado Pago Checkout Pro & Bricks Elimination Regression Tests', () => {
+  it('garante que nenhum endpoint proibido de Bricks/diagnósticos antigos existe', () => {
     const forbiddenEndpoints = [
-      'app/api/webhooks/mercadopago/route.ts',
       'app/api/internal/mercadopago/diagnostic-variations/route.ts',
       'app/api/internal/mercadopago/health/route.ts',
       'app/api/mp/process-payment/route.ts',
@@ -20,17 +19,51 @@ describe('Mercado Pago Rollback & Payment Offline Regression Tests', () => {
       assert.equal(
         fs.existsSync(fullPath),
         false,
-        `Endpoint proibido não deve existir no repositório: ${endpoint}`,
+        `Endpoint proibido de Bricks não deve existir no repositório: ${endpoint}`,
       );
     }
   });
 
-  it('garante que o módulo lib/mercadopago foi completamente removido', () => {
-    const mpDir = path.join(projectRoot, 'lib/mercadopago');
-    assert.equal(fs.existsSync(mpDir), false, 'Diretório lib/mercadopago deve ter sido removido');
+  it('garante que os novos endpoints oficiais de Checkout Pro existem', () => {
+    const requiredEndpoints = [
+      'app/api/mp/checkout-pro/preferences/route.ts',
+      'app/api/mp/transactions/[transactionId]/status/route.ts',
+      'app/api/webhooks/mercadopago/route.ts',
+      'app/cliente/pagamento/retorno/[transactionId]/page.tsx',
+    ];
+
+    for (const endpoint of requiredEndpoints) {
+      const fullPath = path.join(projectRoot, endpoint);
+      assert.equal(
+        fs.existsSync(fullPath),
+        true,
+        `Endpoint essencial de Checkout Pro deve existir: ${endpoint}`,
+      );
+    }
   });
 
-  it('garante que o componente Payment Brick e correlatos foram removidos', () => {
+  it('garante que o módulo oficial lib/mercadopago está estruturado', () => {
+    const mpDir = path.join(projectRoot, 'lib/mercadopago');
+    assert.equal(fs.existsSync(mpDir), true, 'Diretório lib/mercadopago deve existir para Checkout Pro');
+
+    const requiredModules = [
+      'client.ts',
+      'preference-builder.ts',
+      'webhook-service.ts',
+      'payment-status-mapper.ts',
+      'consultation-releaser.ts',
+      'security.ts',
+      'observability.ts',
+      'types.ts',
+    ];
+
+    for (const mod of requiredModules) {
+      const fullPath = path.join(mpDir, mod);
+      assert.equal(fs.existsSync(fullPath), true, `Módulo essencial deve existir: ${mod}`);
+    }
+  });
+
+  it('garante que os componentes de Checkout Bricks foram completamente removidos', () => {
     const removedComponents = [
       'components/customer/payment-brick.tsx',
       'components/customer/payment-security-notice.tsx',
@@ -46,12 +79,12 @@ describe('Mercado Pago Rollback & Payment Offline Regression Tests', () => {
       assert.equal(
         fs.existsSync(fullPath),
         false,
-        `Componente Mercado Pago não deve existir: ${comp}`,
+        `Componente legado de Checkout Bricks não deve existir: ${comp}`,
       );
     }
   });
 
-  it('garante que a página de pagamento exibe indisponibilidade segura sem cobrança ou liberação indevida', () => {
+  it('garante que a página de pagamento possui validação estrita e aciona Checkout Pro', () => {
     const paymentPagePath = path.join(
       projectRoot,
       'app/cliente/pagamento/[consultationId]/page.tsx',
@@ -59,12 +92,6 @@ describe('Mercado Pago Rollback & Payment Offline Regression Tests', () => {
     assert.equal(fs.existsSync(paymentPagePath), true, 'Página de pagamento deve existir');
 
     const content = fs.readFileSync(paymentPagePath, 'utf-8');
-
-    // Mensagem transparente de indisponibilidade
-    assert.ok(
-      content.includes('Pagamentos online estão temporariamente indisponíveis'),
-      'Página deve conter o aviso explícito de pagamentos online indisponíveis',
-    );
 
     // Validação estrita de autorização
     assert.ok(
@@ -78,73 +105,33 @@ describe('Mercado Pago Rollback & Payment Offline Regression Tests', () => {
       'Página deve redirecionar consultas já concluídas para o laudo',
     );
 
-    // Ausência de botões de cobrança ou simulação
-    assert.equal(
-      content.includes('confirmPayment'),
-      false,
-      'Página não deve invocar confirmPayment nem simulação automática',
-    );
+    // Ausência de componentes de cartão/Bricks locais
     assert.equal(content.includes('PaymentBrick'), false, 'Página não deve conter PaymentBrick');
     assert.equal(
       content.includes('createCardPayment'),
       false,
-      'Página não deve invocar chamadas de cobrança',
+      'Página não deve invocar chamadas de cobrança direta de cartão',
+    );
+
+    // Presença do botão de Checkout Pro
+    assert.ok(
+      content.includes('CheckoutProButton'),
+      'Página deve conter o botão oficial de Checkout Pro',
     );
   });
 
-  it('garante que não existem imports de pacotes Mercado Pago em código de produção', () => {
-    const dirsToScan = ['app', 'components', 'lib'];
-    const forbiddenPatterns = [
-      /from\s+['"]mercadopago['"]/,
-      /from\s+['"]mercadopago-v2['"]/,
-      /from\s+['"]@mercadopago\/sdk-react['"]/,
-      /from\s+['"].*mercadopago.*['"]/,
-    ];
-
-    function scanDir(dir: string) {
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
-      for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-          if (entry.name !== 'node_modules' && entry.name !== '.next') {
-            scanDir(fullPath);
-          }
-        } else if (/\.(ts|tsx|js|jsx)$/.test(entry.name)) {
-          // Ignore the regression test file itself
-          if (fullPath.includes('payment-offline-regression.test.ts')) continue;
-
-          const content = fs.readFileSync(fullPath, 'utf-8');
-          for (const pattern of forbiddenPatterns) {
-            assert.equal(
-              pattern.test(content),
-              false,
-              `Arquivo ${fullPath} contém importação proibida: ${pattern}`,
-            );
-          }
-        }
-      }
-    }
-
-    for (const d of dirsToScan) {
-      const fullDir = path.join(projectRoot, d);
-      if (fs.existsSync(fullDir)) {
-        scanDir(fullDir);
-      }
-    }
-  });
-
-  it('garante que a dependência mercadopago não consta no package.json', () => {
+  it('garante que a SDK do frontend @mercadopago/sdk-react não consta no package.json e mercadopago está fixado', () => {
     const pkgPath = path.join(projectRoot, 'package.json');
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
     assert.equal(
-      'mercadopago' in (pkg.dependencies || {}),
-      false,
-      'mercadopago não deve constar em dependencies',
+      pkg.dependencies?.mercadopago,
+      '2.12.0',
+      'mercadopago deve estar fixado na versão 2.12.0 no backend',
     );
     assert.equal(
       '@mercadopago/sdk-react' in (pkg.dependencies || {}),
       false,
-      '@mercadopago/sdk-react não deve constar em dependencies',
+      '@mercadopago/sdk-react não deve constar em dependencies (frontend seguro)',
     );
     assert.equal(
       'mercadopago-v2' in (pkg.dependencies || {}),
