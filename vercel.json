@@ -1,12 +1,3 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/process-delivery-jobs",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/reconcile-pending-refunds",
-      "schedule": "*/5 * * * *"
-    }
-  ]
+  "crons": []
 }

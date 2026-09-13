@@ -12,6 +12,7 @@ import {
   RefreshCw,
   MessageCircle,
   ArrowRight,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   type TransactionStatusResponse,
@@ -28,8 +29,6 @@ interface PaymentReturnStatusProps {
   whatsappUrl?: string | null;
 }
 
-const BACKOFF_INTERVALS_MS = [0, 3000, 8000, 15000];
-
 export function PaymentReturnStatus({
   transactionId,
   consultationId,
@@ -41,9 +40,14 @@ export function PaymentReturnStatus({
   const [status, setStatus] = useState<PaymentTransactionStatus>(initialStatus);
   const [consultationStatus, setConsultationStatus] = useState(initialConsultationStatus);
   const [reportUrl, setReportUrl] = useState(`/cliente/consultas/${consultationId}`);
-  const [pollingStep, setPollingStep] = useState(0);
+  const [nextRetryAt, setNextRetryAt] = useState<string | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [isProcessingDelivery, setIsProcessingDelivery] = useState(false);
   const [isManualChecking, setIsManualChecking] = useState(false);
-  const initialReconcileAttempted = useRef(false);
+
+  const initialDeliveryAttempted = useRef(false);
+  const retryTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const isTerminal =
     (status === 'approved' && consultationStatus === 'completed') ||
@@ -51,13 +55,14 @@ export function PaymentReturnStatus({
     status === 'cancelled' ||
     status === 'refunded' ||
     consultationStatus === 'refunded' ||
-    consultationStatus === 'failed_permanent';
+    consultationStatus === 'failed_permanent' ||
+    consultationStatus === 'manual_review';
 
-  // Consulta padrão de leitura de status no backend
+  // 1. Consulta autoritativa de status no backend
   const checkStatus = useCallback(async () => {
     try {
       const res = await fetch(`/api/mp/transactions/${transactionId}/status`);
-      if (!res.ok) return;
+      if (!res.ok) return null;
 
       const data: TransactionStatusResponse = await res.json();
       if (data.success) {
@@ -66,19 +71,64 @@ export function PaymentReturnStatus({
         if (data.reportUrl) {
           setReportUrl(data.reportUrl);
         }
+        if (data.nextRetryAt) {
+          setNextRetryAt(data.nextRetryAt);
+        }
+        return data;
       }
     } catch (err) {
-      console.error('[PaymentReturnStatus] Erro no polling de status:', err);
+      console.error('[PaymentReturnStatus] Erro ao buscar status:', err);
     }
+    return null;
   }, [transactionId]);
 
-  // Fallback de Reconciliação Server-Side sob demanda
-  const reconcileStatus = useCallback(async () => {
+  // 2. Disparo de Processamento / Retentativa de Entrega em Tela
+  const triggerProcessDelivery = useCallback(async () => {
+    if (isProcessingDelivery || isTerminal) return;
+
+    setIsProcessingDelivery(true);
+    try {
+      const res = await fetch(`/api/cliente/consultas/${consultationId}/process-delivery`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        await checkStatus();
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        if (data.status === 'completed') {
+          setConsultationStatus('completed');
+          setReportUrl(`/cliente/consultas/${consultationId}`);
+          setNextRetryAt(null);
+        } else if (data.status === 'retry_scheduled') {
+          setConsultationStatus('retry_scheduled');
+          if (data.nextRetryAt) {
+            setNextRetryAt(data.nextRetryAt);
+          }
+        } else if (data.status) {
+          setConsultationStatus(data.status);
+        }
+      } else {
+        await checkStatus();
+      }
+    } catch (err) {
+      console.error('[PaymentReturnStatus] Erro ao acionar entrega em tela:', err);
+      await checkStatus();
+    } finally {
+      setIsProcessingDelivery(false);
+    }
+  }, [consultationId, isProcessingDelivery, isTerminal, checkStatus]);
+
+  // 3. Fallback de Reconciliação Server-Side do Pagamento
+  const reconcilePayment = useCallback(async () => {
     try {
       const res = await fetch(`/api/mp/transactions/${transactionId}/reconcile`, {
         method: 'POST',
       });
-      if (!res.ok) return;
+      if (!res.ok) return null;
 
       const data: ReconciliationResponse = await res.json();
       if (data.success) {
@@ -89,42 +139,102 @@ export function PaymentReturnStatus({
         if (data.reportUrl) {
           setReportUrl(data.reportUrl);
         }
+        return data;
       }
     } catch (err) {
-      console.error('[PaymentReturnStatus] Erro na reconciliação de status:', err);
+      console.error('[PaymentReturnStatus] Erro na reconciliação de pagamento:', err);
     }
+    return null;
   }, [transactionId]);
 
-  // Reconciliação imediata na montagem se o pagamento ainda estiver pendente
+  // 4. Execução imediata na montagem: se pagamento aprovado e laudo pendente, tenta entrega uma vez
   useEffect(() => {
-    if (!initialReconcileAttempted.current && status !== 'approved' && !isTerminal) {
-      initialReconcileAttempted.current = true;
-      reconcileStatus();
+    if (initialDeliveryAttempted.current) return;
+    initialDeliveryAttempted.current = true;
+
+    async function handleInitialMount() {
+      if (status === 'approved' && consultationStatus !== 'completed' && !isTerminal) {
+        await triggerProcessDelivery();
+      } else if (status !== 'approved' && !isTerminal) {
+        const rec = await reconcilePayment();
+        if (rec && rec.status === 'approved' && !rec.reportUnlocked) {
+          await triggerProcessDelivery();
+        }
+      }
     }
-  }, [status, isTerminal, reconcileStatus]);
 
-  // Polling automático com backoff progressivo (0s, 3s, 8s, 15s)
+    handleInitialMount();
+  }, [status, consultationStatus, isTerminal, reconcilePayment, triggerProcessDelivery]);
+
+  // 5. Agendamento inteligente de Retry baseado no nextRetryAt retornado pelo servidor
   useEffect(() => {
-    if (isTerminal || pollingStep >= BACKOFF_INTERVALS_MS.length) return;
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
 
-    const intervalTime = BACKOFF_INTERVALS_MS[pollingStep] ?? 15000;
-    const timer = setTimeout(async () => {
-      await checkStatus();
-      setPollingStep((prev) => prev + 1);
-    }, intervalTime);
+    if (isTerminal || consultationStatus !== 'retry_scheduled' || !nextRetryAt) {
+      return;
+    }
 
-    return () => clearTimeout(timer);
-  }, [isTerminal, pollingStep, checkStatus]);
+    const targetTime = new Date(nextRetryAt).getTime();
+    const initialDelay = targetTime - Date.now();
 
-  // Ação manual: força reconciliação antes de checar status
+    if (initialDelay <= 0) {
+      retryTimerRef.current = setTimeout(() => {
+        triggerProcessDelivery();
+      }, 0);
+      return;
+    }
+
+    countdownTimerRef.current = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
+      setRemainingSeconds(remaining);
+      if (remaining <= 0 && countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
+    }, 1000);
+
+    retryTimerRef.current = setTimeout(() => {
+      triggerProcessDelivery();
+    }, initialDelay + 500);
+
+    return () => {
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+    };
+  }, [consultationStatus, nextRetryAt, isTerminal, triggerProcessDelivery]);
+
+  // 6. Ação Manual: "Verificar Status"
   const handleManualRefresh = async () => {
     setIsManualChecking(true);
-    await reconcileStatus();
-    await checkStatus();
-    setIsManualChecking(false);
+    try {
+      if (status !== 'approved') {
+        await reconcilePayment();
+      }
+      const updatedStatus = await checkStatus();
+      if (
+        (updatedStatus?.status === 'approved' || status === 'approved') &&
+        updatedStatus?.consultationStatus !== 'completed' &&
+        !isTerminal
+      ) {
+        await triggerProcessDelivery();
+      }
+    } finally {
+      setIsManualChecking(false);
+    }
   };
 
-  // 1. Estado: Aprovado e Laudo Pronto
+  // -------------------------------------------------------------
+  // RENDERIZAÇÃO VISUAL BASEADA NOS ESTADOS OFICIAIS
+  // -------------------------------------------------------------
+
+  // 1. Estado: Aprovado e Laudo Pronto (Completed)
   if (status === 'approved' && consultationStatus === 'completed') {
     return (
       <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-emerald-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
@@ -134,11 +244,11 @@ export function PaymentReturnStatus({
 
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Pagamento Confirmado com Sucesso!
+            Seu laudo está disponível
           </h1>
           <p className="text-sm text-zinc-300">
             A consulta da placa <span className="font-mono text-white font-semibold">{plate}</span>{' '}
-            foi processada e seu laudo veicular já está liberado.
+            foi processada com sucesso e os dados oficiais já estão liberados.
           </p>
         </div>
 
@@ -167,17 +277,15 @@ export function PaymentReturnStatus({
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Pagamento Estornado com Sucesso
-          </h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Pagamento Estornado</h1>
           <p className="text-sm text-zinc-300">
-            Seu pagamento para a placa{' '}
+            Seu pagamento para a consulta da placa{' '}
             <span className="font-mono text-white font-semibold">{plate}</span> foi estornado
             integralmente no Mercado Pago.
           </p>
           <p className="text-xs text-zinc-400 bg-zinc-900/80 p-3 rounded-lg border border-zinc-800">
-            O prazo para o valor constar depende do método de pagamento utilizado (PIX é instantâneo;
-            cartão de crédito segue as regras do seu banco).
+            O prazo para o valor aparecer depende do método de pagamento e da sua instituição
+            financeira.
           </p>
         </div>
 
@@ -207,24 +315,23 @@ export function PaymentReturnStatus({
     );
   }
 
-  // 3. Estado: Falha Definitiva com Estorno em Andamento (Refund Pending / Failed Permanent)
+  // 3. Estado: Falha Definitiva / Estorno Solicitado (Refund Pending ou Failed Permanent)
   if (consultationStatus === 'failed_permanent' || consultationStatus === 'refund_pending') {
     return (
       <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
         <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-          <Clock className="h-9 w-9" />
+          <AlertTriangle className="h-9 w-9" />
         </div>
 
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-white tracking-tight">Consulta Indisponível</h1>
           <p className="text-sm text-zinc-300">
-            Não foi possível concluir a busca do histórico veicular para a placa{' '}
-            <span className="font-mono text-white font-semibold">{plate}</span> devido a uma
-            indisponibilidade momentânea nos registros oficiais.
+            Não foi possível concluir sua consulta neste momento devido a uma indisponibilidade nas
+            bases oficiais de dados.
           </p>
           <p className="text-xs text-amber-300 bg-amber-950/40 p-3 rounded-lg border border-amber-800/40">
-            Para sua segurança, já solicitamos o <strong>estorno integral automático</strong> do seu
-            pagamento junto ao Mercado Pago. Você não sofrerá nenhuma cobrança.
+            Solicitamos o <strong>estorno integral automático</strong> do seu pagamento junto ao
+            Mercado Pago e atualizaremos esta página assim que for confirmado.
           </p>
         </div>
 
@@ -241,7 +348,7 @@ export function PaymentReturnStatus({
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
             )}
-            Atualizar Status
+            Verificar Status
           </Button>
 
           {whatsappUrl && (
@@ -260,7 +367,7 @@ export function PaymentReturnStatus({
     );
   }
 
-  // 4. Estado: Instabilidade Transitória (Retry Scheduled)
+  // 4. Estado: Instabilidade Temporária com Retentativa em Tela (Retry Scheduled)
   if (consultationStatus === 'retry_scheduled') {
     return (
       <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-b from-sky-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
@@ -269,15 +376,21 @@ export function PaymentReturnStatus({
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-white tracking-tight">Preparando seu Laudo...</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Instabilidade Temporária na Consulta
+          </h1>
           <p className="text-sm text-zinc-300">
-            Confirmamos seu pagamento com sucesso. Estamos enfrentando uma instabilidade temporária
-            na comunicação com as bases oficiais para a placa{' '}
+            Estamos enfrentando uma instabilidade temporária para consultar a placa{' '}
             <span className="font-mono text-white font-semibold">{plate}</span>.
           </p>
-          <p className="text-xs text-sky-300 bg-sky-950/40 p-3 rounded-lg border border-sky-800/40">
-            Nossa equipe já está acompanhando e o sistema tentará gerar o documento novamente de forma
-            automática.
+          <p className="text-xs text-sky-300 bg-sky-950/40 p-3 rounded-lg border border-sky-800/40 leading-relaxed">
+            <strong>Você não precisa pagar novamente.</strong> Tentaremos novamente de forma
+            automática enquanto esta página estiver aberta.
+            {remainingSeconds !== null && remainingSeconds > 0 && (
+              <span className="block mt-2 font-mono text-sky-200">
+                Próxima tentativa em: {remainingSeconds}s...
+              </span>
+            )}
           </p>
         </div>
 
@@ -285,16 +398,16 @@ export function PaymentReturnStatus({
           <Button
             type="button"
             variant="outline"
-            disabled={isManualChecking}
+            disabled={isManualChecking || isProcessingDelivery}
             onClick={handleManualRefresh}
             className="flex-1 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 flex items-center justify-center gap-2"
           >
-            {isManualChecking ? (
+            {isManualChecking || isProcessingDelivery ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
             )}
-            Atualizar Agora
+            Verificar Status
           </Button>
 
           {whatsappUrl && (
@@ -305,7 +418,7 @@ export function PaymentReturnStatus({
                 className="w-full border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 flex items-center justify-center gap-2"
               >
                 <MessageCircle className="h-4 w-4 text-emerald-400" />
-                Suporte WhatsApp
+                Falar com Suporte
               </Button>
             </a>
           )}
@@ -314,7 +427,7 @@ export function PaymentReturnStatus({
     );
   }
 
-  // 5. Estado: Pagamento Aprovado, gerando Laudo
+  // 5. Estado: Pagamento Confirmado, gerando Laudo Inicial (Pending Delivery / Processing)
   if (status === 'approved') {
     return (
       <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
@@ -324,12 +437,11 @@ export function PaymentReturnStatus({
 
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Pagamento Aprovado! Gerando Laudo...
+            Pagamento Confirmado. Estamos Preparando seu Laudo.
           </h1>
           <p className="text-sm text-zinc-300">
-            Confirmamos seu pagamento com sucesso. Estamos consultando as bases oficiais de dados do
-            veículo para a placa <span className="font-mono text-white font-semibold">{plate}</span>
-            .
+            Confirmamos seu pagamento com sucesso. Estamos consultando as bases oficiais para a
+            placa <span className="font-mono text-white font-semibold">{plate}</span>.
           </p>
           <p className="text-xs text-zinc-400">Isso geralmente leva menos de 10 segundos.</p>
         </div>
@@ -338,16 +450,16 @@ export function PaymentReturnStatus({
           <Button
             type="button"
             variant="outline"
-            disabled={isManualChecking}
+            disabled={isManualChecking || isProcessingDelivery}
             onClick={handleManualRefresh}
             className="border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800"
           >
-            {isManualChecking ? (
+            {isManualChecking || isProcessingDelivery ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
             )}
-            Atualizar Agora
+            Verificar Status
           </Button>
         </div>
       </div>
@@ -365,7 +477,7 @@ export function PaymentReturnStatus({
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-white tracking-tight">Pagamento Não Concluído</h1>
           <p className="text-sm text-zinc-300">
-            O pagamento para a placa{' '}
+            O pagamento para a consulta da placa{' '}
             <span className="font-mono text-white font-semibold">{plate}</span> não foi autorizado
             ou foi cancelado no Mercado Pago. Nenhuma cobrança foi mantida.
           </p>
@@ -394,7 +506,7 @@ export function PaymentReturnStatus({
     );
   }
 
-  // 7. Estado: Aguardando Confirmação
+  // 7. Estado: Aguardando Confirmação do Pagamento
   return (
     <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
       <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
@@ -403,15 +515,14 @@ export function PaymentReturnStatus({
 
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-white tracking-tight">
-          Aguardando Confirmação do Pagamento
+          Estamos Aguardando a Confirmação do seu Pagamento.
         </h1>
         <p className="text-sm text-zinc-300 font-medium">
-          Estamos confirmando seu pagamento com segurança. Isso pode levar alguns instantes.
+          Estamos verificando a confirmação do pagamento com o Mercado Pago.
         </p>
         <p className="text-xs text-zinc-400 bg-zinc-900/80 p-3 rounded-lg border border-zinc-800">
-          Assim que o Mercado Pago validar a liquidação, seu laudo será desbloqueado
-          automaticamente. Você também pode clicar em &quot;Verificar Status&quot; ou acompanhar pela tela
-          de Minhas Consultas.
+          Assim que for aprovado, seu laudo será gerado automaticamente. Você também pode clicar em
+          &quot;Verificar Status&quot; ou acompanhar pela tela de Minhas Consultas.
         </p>
       </div>
 
@@ -438,7 +549,7 @@ export function PaymentReturnStatus({
               className="w-full border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 flex items-center justify-center gap-2"
             >
               <MessageCircle className="h-4 w-4 text-emerald-400" />
-              Suporte WhatsApp
+              Falar com Suporte
             </Button>
           </a>
         )}

@@ -102,9 +102,17 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       },
     });
 
+    const { processEligibleDeliveryJob } = await import('@/lib/vehicle-delivery/delivery-service');
+    const outcome = await processEligibleDeliveryJob(job.id, 'admin', {
+      force: true,
+      dbClient: adminDb,
+    });
+
     return NextResponse.json({
-      success: true,
-      message: 'Job reagendado para execução imediata.',
+      success: outcome.success,
+      status: outcome.status,
+      delivered: outcome.delivered,
+      message: outcome.message,
     });
   } catch (err: any) {
     console.error('[POST /api/admin/delivery/jobs/[jobId]/retry] Erro:', err);

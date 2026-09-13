@@ -73,9 +73,10 @@ export default async function PaymentReturnPage({ params }: ReturnPageProps) {
   }
 
   const supportPhone = settings?.whatsapp_phone || null;
+  const shortRef = consultation.id.slice(0, 8).toUpperCase();
   const whatsappUrl = supportPhone
     ? `https://wa.me/55${supportPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
-        `Olá! Gostaria de suporte sobre o pagamento da consulta da placa ${consultation.plate} (Transação: ${transaction.id}).`,
+        `Olá! Preciso de ajuda com uma consulta veicular.\nReferência: ${shortRef}\nStatus: acompanhamento de laudo veicular`,
       )}`
     : null;
 

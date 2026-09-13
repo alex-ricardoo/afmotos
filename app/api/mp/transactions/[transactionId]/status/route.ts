@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { reconcileSingleRefund } from '@/lib/mercadopago/refund-service';
 import {
   type TransactionStatusResponse,
   type PaymentTransactionStatus,
   type ConsultationPaymentStatus,
   type ConsultationLifecycleStatus,
 } from '@/lib/mercadopago/types';
+
+export const dynamic = 'force-dynamic';
 
 interface RouteContext {
   params: Promise<{
@@ -17,6 +21,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     const { transactionId } = await params;
     const supabase = await createClient();
+    const adminDb = createAdminClient();
 
     // 1. Autenticação de Sessão
     const {
@@ -32,7 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     }
 
     // 2. Busca a transação
-    const { data: transaction, error: txError } = await supabase
+    const { data: transaction, error: txError } = await adminDb
       .from('payment_transactions')
       .select('id, consultation_id, user_id, status, status_detail, failure_code')
       .eq('id', transactionId)
@@ -48,7 +53,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     // Validação de Propriedade da Transação
     const isOwner = transaction.user_id === user.id;
     if (!isOwner) {
-      const { data: adminProfile } = await supabase
+      const { data: adminProfile } = await adminDb
         .from('admin_profiles')
         .select('id')
         .eq('auth_user_id', user.id)
@@ -63,7 +68,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     }
 
     // 3. Busca a consulta correspondente
-    const { data: consultation, error: consultationError } = await supabase
+    const { data: consultation, error: consultationError } = await adminDb
       .from('customer_plate_consultations')
       .select('id, status, payment_status, vehicle_data')
       .eq('id', transaction.consultation_id)
@@ -76,7 +81,39 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    // 4. Derivação de estados higienizados
+    // 4. Reconciliação sob demanda de Refund se houver estorno pendente (Parte 9)
+    if (consultation.status === 'refund_pending') {
+      const { data: activeRefund } = await adminDb
+        .from('payment_refunds')
+        .select('id, status')
+        .eq('transaction_id', transaction.id)
+        .in('status', ['requested', 'pending'])
+        .maybeSingle();
+
+      if (activeRefund) {
+        try {
+          const recResult = await reconcileSingleRefund(activeRefund.id, adminDb);
+          if (recResult.status === 'confirmed') {
+            consultation.status = 'refunded';
+            consultation.payment_status = 'refunded';
+            transaction.status = 'refunded';
+          }
+        } catch (e) {
+          console.warn('[status route] Falha ao reconciliar refund sob demanda:', e);
+        }
+      }
+    }
+
+    // 5. Busca o job de entrega mais recente
+    const { data: job } = await adminDb
+      .from('consultation_delivery_jobs')
+      .select('id, status, attempt_count, max_attempts, next_retry_at')
+      .eq('consultation_id', consultation.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // 6. Derivação de estados e mensagens oficiais (Parte 10)
     const status = transaction.status as PaymentTransactionStatus;
     const consultationStatus = consultation.status as ConsultationLifecycleStatus;
     const paymentStatus = consultation.payment_status as ConsultationPaymentStatus;
@@ -84,47 +121,68 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
     let nextAction: 'view_report' | 'wait' | 'retry' | 'contact_support' = 'wait';
     let retryable = false;
-    let customerTitle = 'Aguardando Confirmação do Pagamento';
-    let customerMessage = 'Estamos aguardando a confirmação do pagamento pelo Mercado Pago.';
+    let customerTitle = 'Estamos aguardando a confirmação do seu pagamento.';
+    let customerMessage = 'Estamos aguardando a confirmação do seu pagamento pelo Mercado Pago.';
+    let nextRetryAt: string | null = null;
+    let remainingRetrySeconds: number | undefined;
+    let retryAttempt: number | undefined;
+    let maxRetryAttempts: number | undefined;
+    let canProcessDelivery = false;
+
+    if (job) {
+      retryAttempt = job.attempt_count;
+      maxRetryAttempts = job.max_attempts;
+      if (job.status === 'retry_scheduled' && job.next_retry_at) {
+        nextRetryAt = job.next_retry_at;
+        const diffMs = new Date(job.next_retry_at).getTime() - Date.now();
+        remainingRetrySeconds = Math.max(0, Math.ceil(diffMs / 1000));
+      }
+    }
 
     if (reportAvailable) {
       nextAction = 'view_report';
-      customerTitle = 'Seu laudo está disponível';
-      customerMessage = 'Seu laudo veicular foi gerado com sucesso e já está liberado para visualização.';
+      customerTitle = 'Seu laudo está disponível.';
+      customerMessage =
+        'Seu laudo veicular foi gerado com sucesso e já está liberado para visualização.';
     } else if (status === 'refunded' || consultationStatus === 'refunded') {
       nextAction = 'contact_support';
-      customerTitle = 'Pagamento Estornado';
+      customerTitle = 'Pagamento estornado';
       customerMessage =
-        'Seu pagamento foi estornado integralmente. O prazo para o valor constar depende do método de pagamento e da instituição financeira.';
-    } else if (consultationStatus === 'failed_permanent' || consultationStatus === 'refund_pending') {
+        'Seu pagamento foi estornado integralmente. O prazo para o valor aparecer depende do método de pagamento e da instituição financeira.';
+    } else if (
+      consultationStatus === 'failed_permanent' ||
+      consultationStatus === 'refund_pending'
+    ) {
       nextAction = 'contact_support';
-      customerTitle = 'Consulta Indisponível';
+      customerTitle = 'Não foi possível concluir sua consulta';
       customerMessage =
-        'Não foi possível concluir sua consulta neste momento devido a uma indisponibilidade nas bases oficiais. Solicitamos o estorno integral do seu pagamento.';
-    } else if (consultationStatus === 'retry_scheduled') {
+        'Não foi possível concluir sua consulta neste momento. Solicitamos o estorno integral do seu pagamento e atualizaremos esta página quando ele for confirmado.';
+    } else if (consultationStatus === 'retry_scheduled' || job?.status === 'retry_scheduled') {
       nextAction = 'wait';
       retryable = true;
-      customerTitle = 'Preparando seu Laudo';
+      canProcessDelivery = true;
+      customerTitle = 'Instabilidade temporária na consulta';
       customerMessage =
-        'Estamos enfrentando uma instabilidade temporária para preparar seu laudo. Nossa equipe já está acompanhando; tentaremos novamente automaticamente em instantes.';
+        'Estamos enfrentando uma instabilidade temporária para consultar a placa. Você não precisa pagar novamente; tentaremos novamente automaticamente enquanto esta página estiver aberta.';
     } else if (consultationStatus === 'manual_review') {
       nextAction = 'contact_support';
-      customerTitle = 'Verificação Necessária';
+      customerTitle = 'Verificação necessária';
       customerMessage =
-        'Sua consulta precisa de uma verificação adicional. Nossa equipe foi avisada e retornará pelo canal de atendimento.';
+        'Sua consulta precisa de uma verificação adicional. Nossa equipe foi avisada e retornará pelo suporte.';
     } else if (status === 'approved') {
       nextAction = 'wait';
-      customerTitle = 'Pagamento Confirmado! Gerando Laudo...';
-      customerMessage = 'Pagamento confirmado! Estamos consultando as bases oficiais de dados do veículo.';
+      canProcessDelivery = true;
+      customerTitle = 'Pagamento confirmado. Estamos preparando seu laudo.';
+      customerMessage = 'Pagamento confirmado. Estamos preparando seu laudo veicular.';
     } else if (status === 'rejected' || status === 'cancelled') {
       nextAction = 'retry';
       retryable = true;
-      customerTitle = 'Pagamento Não Concluído';
+      customerTitle = 'Pagamento não concluído';
       customerMessage = 'O pagamento não foi autorizado ou foi cancelado no Mercado Pago.';
     } else if (status === 'provider_error' || status === 'pending_reconciliation') {
       nextAction = 'contact_support';
       retryable = true;
-      customerTitle = 'Verificação de Pagamento';
+      customerTitle = 'Verificação de pagamento';
       customerMessage = 'Estamos verificando a confirmação do seu pagamento junto à operadora.';
     }
 
@@ -142,6 +200,11 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       nextAction,
       customerTitle,
       customerMessage,
+      nextRetryAt,
+      remainingRetrySeconds,
+      retryAttempt,
+      maxRetryAttempts,
+      canProcessDelivery,
     };
 
     return NextResponse.json(response);

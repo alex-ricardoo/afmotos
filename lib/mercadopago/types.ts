@@ -151,6 +151,11 @@ export interface TransactionStatusResponse {
   nextAction: 'view_report' | 'wait' | 'retry' | 'contact_support';
   customerTitle?: string;
   customerMessage?: string;
+  nextRetryAt?: string | null;
+  remainingRetrySeconds?: number;
+  retryAttempt?: number;
+  maxRetryAttempts?: number;
+  canProcessDelivery?: boolean;
 }
 
 export type WebhookRejectionReason =
