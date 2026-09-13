@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getVehicleConsultationPrice } from '@/lib/settings/server-queries';
 import { buildPreferenceBody } from '@/lib/mercadopago/preference-builder';
+import { resolveCheckoutProUrls } from '@/lib/mercadopago/checkout-pro-urls';
 import {
+
   getPreferenceClient,
   getCredentialMode,
   isTestMode,
@@ -240,9 +242,25 @@ export async function POST(request: NextRequest) {
       unitPrice: { type: 'number', value: canonicalPrice },
     });
 
-    // 6. Criação de transação local para rastreamento e idempotência
+    // 5.1. Resolução e validação estrita de URLs do Checkout Pro (falha fechado antes de criar transação)
     const transactionId = crypto.randomUUID();
     currentTransactionId = transactionId;
+
+    const resolvedUrls = resolveCheckoutProUrls({ transactionId });
+
+    logCheckoutProEvent('checkout_pro.urls_resolved', {
+      flowId,
+      consultationId,
+      appUrlOrigin: resolvedUrls.appUrlOrigin,
+      backUrlScheme: resolvedUrls.backUrlScheme,
+      backUrlHost: resolvedUrls.backUrlHost,
+      notificationUrlPresent: resolvedUrls.notificationUrlPresent,
+      notificationUrlOrigin: resolvedUrls.notificationUrlOrigin,
+      autoReturnConfigured: resolvedUrls.autoReturnConfigured,
+      environment: resolvedUrls.environment,
+    });
+
+    // 6. Criação de transação local para rastreamento e idempotência
     const idempotencyKey = crypto.randomUUID();
     const adminDb = createAdminClient();
 
@@ -252,6 +270,7 @@ export async function POST(request: NextRequest) {
       transactionId,
       amount: { type: 'number', value: canonicalPrice },
     });
+
 
     const { error: insertTxError } = await adminDb.from('payment_transactions').insert({
       id: transactionId,

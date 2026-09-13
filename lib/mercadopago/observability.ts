@@ -14,6 +14,7 @@ export type CheckoutProLogEvent =
   | 'checkout_pro.preference_consultation_loaded'
   | 'checkout_pro.preference_price_lookup_started'
   | 'checkout_pro.preference_price_resolved'
+  | 'checkout_pro.urls_resolved'
   | 'checkout_pro.preference_transaction_create_started'
   | 'checkout_pro.preference_transaction_create_succeeded'
   | 'checkout_pro.preference_transaction_create_failed'
@@ -71,7 +72,17 @@ export interface LogContext {
   causeCount?: number;
   requestId?: string;
 
+  // Campos de resolução de URLs do Checkout Pro (sanitizados)
+  appUrlOrigin?: string;
+  backUrlScheme?: 'https' | 'http';
+  backUrlHost?: string;
+  notificationUrlPresent?: boolean;
+  notificationUrlOrigin?: string;
+  autoReturnConfigured?: boolean;
+  reasonCode?: string;
+
   // Compatibilidade com webhooks/reconciliação
+
   status?: string;
   statusDetail?: string;
   paymentId?: string;
@@ -202,7 +213,23 @@ export function logCheckoutProEvent(
     sanitizedContext.requestId = context.requestId;
   }
 
+  // Campos de resolução de URLs (sempre sanitizados, sem paths ou query params)
+  if (context.appUrlOrigin) sanitizedContext.appUrlOrigin = context.appUrlOrigin;
+  if (context.backUrlScheme) sanitizedContext.backUrlScheme = context.backUrlScheme;
+  if (context.backUrlHost) sanitizedContext.backUrlHost = context.backUrlHost;
+  if (typeof context.notificationUrlPresent === 'boolean') {
+    sanitizedContext.notificationUrlPresent = context.notificationUrlPresent;
+  }
+  if (context.notificationUrlOrigin) {
+    sanitizedContext.notificationUrlOrigin = context.notificationUrlOrigin;
+  }
+  if (typeof context.autoReturnConfigured === 'boolean') {
+    sanitizedContext.autoReturnConfigured = context.autoReturnConfigured;
+  }
+  if (context.reasonCode) sanitizedContext.reasonCode = context.reasonCode;
+
   // Propriedades herdadas para compatibilidade de webhooks/reconciliação
+
   if (context.paymentId) sanitizedContext.paymentId = maskIdentifier(context.paymentId);
   if (context.status) sanitizedContext.status = context.status;
   if (context.statusDetail) sanitizedContext.statusDetail = context.statusDetail;

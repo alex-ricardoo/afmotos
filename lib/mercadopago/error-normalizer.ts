@@ -22,6 +22,12 @@ export interface NormalizedCheckoutProError {
   safeClientCode: string;
 }
 
+export type CheckoutProUrlReasonCode =
+  | 'CHECKOUT_PRO_INVALID_PRODUCTION_APP_URL'
+  | 'CHECKOUT_PRO_INVALID_PRODUCTION_WEBHOOK_URL'
+  | 'CHECKOUT_PRO_INVALID_PREVIEW_URL'
+  | 'CHECKOUT_PRO_INVALID_URL';
+
 export class CheckoutProLocalConfigError extends Error {
   constructor(message: string) {
     super(message);
@@ -29,7 +35,19 @@ export class CheckoutProLocalConfigError extends Error {
   }
 }
 
+export class CheckoutProUrlResolutionError extends CheckoutProLocalConfigError {
+
+  readonly reasonCode: CheckoutProUrlReasonCode;
+
+  constructor(message: string, reasonCode: CheckoutProUrlReasonCode) {
+    super(message);
+    this.name = 'CheckoutProUrlResolutionError';
+    this.reasonCode = reasonCode;
+  }
+}
+
 export class CheckoutProValidationError extends Error {
+
   readonly httpStatus: 400 | 401 | 403 | 404 | 422;
   readonly code: string;
 
@@ -66,7 +84,22 @@ export function normalizeCheckoutProError(err: unknown): NormalizedCheckoutProEr
   let isNetwork = false;
 
   // 1. Instância de classes conhecidas
+  if (err instanceof CheckoutProUrlResolutionError) {
+    return {
+      category: 'local_configuration_error',
+      httpStatus: 503,
+      errorName: err.reasonCode,
+      errorOrigin: 'local',
+      providerHttpStatus: undefined,
+      providerMessageSanitized: sanitizeProviderMessage(err.message),
+      causeCount: 0,
+      safeClientMessage: 'Serviço de pagamento temporariamente indisponível. Tente novamente mais tarde.',
+      safeClientCode: 'CONFIGURATION_ERROR',
+    };
+  }
+
   if (err instanceof CheckoutProLocalConfigError) {
+
     return {
       category: 'local_configuration_error',
       httpStatus: 503,
