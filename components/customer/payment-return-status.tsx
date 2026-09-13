@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import {
   type TransactionStatusResponse,
+  type ReconciliationResponse,
   type PaymentTransactionStatus,
 } from '@/lib/mercadopago/types';
 
@@ -27,6 +28,8 @@ interface PaymentReturnStatusProps {
   whatsappUrl?: string | null;
 }
 
+const BACKOFF_INTERVALS_MS = [0, 3000, 8000, 15000];
+
 export function PaymentReturnStatus({
   transactionId,
   consultationId,
@@ -38,14 +41,16 @@ export function PaymentReturnStatus({
   const [status, setStatus] = useState<PaymentTransactionStatus>(initialStatus);
   const [consultationStatus, setConsultationStatus] = useState(initialConsultationStatus);
   const [reportUrl, setReportUrl] = useState(`/cliente/consultas/${consultationId}`);
-  const [pollingCount, setPollingCount] = useState(0);
+  const [pollingStep, setPollingStep] = useState(0);
   const [isManualChecking, setIsManualChecking] = useState(false);
+  const initialReconcileAttempted = useRef(false);
 
   const isTerminal =
     (status === 'approved' && consultationStatus === 'completed') ||
     status === 'rejected' ||
     status === 'cancelled';
 
+  // Consulta padrão de leitura de status no backend
   const checkStatus = useCallback(async () => {
     try {
       const res = await fetch(`/api/mp/transactions/${transactionId}/status`);
@@ -64,21 +69,54 @@ export function PaymentReturnStatus({
     }
   }, [transactionId]);
 
-  // Polling automático controlado
-  useEffect(() => {
-    if (isTerminal || pollingCount >= 15) return;
+  // Fallback de Reconciliação Server-Side sob demanda
+  const reconcileStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/mp/transactions/${transactionId}/reconcile`, {
+        method: 'POST',
+      });
+      if (!res.ok) return;
 
-    const intervalTime = status === 'approved' ? 2500 : 4000;
-    const timer = setTimeout(() => {
-      setPollingCount((prev) => prev + 1);
-      checkStatus();
+      const data: ReconciliationResponse = await res.json();
+      if (data.success) {
+        setStatus(data.status);
+        if (data.status === 'approved') {
+          setConsultationStatus('completed');
+        }
+        if (data.reportUrl) {
+          setReportUrl(data.reportUrl);
+        }
+      }
+    } catch (err) {
+      console.error('[PaymentReturnStatus] Erro na reconciliação de status:', err);
+    }
+  }, [transactionId]);
+
+  // Reconciliação imediata na montagem se o pagamento ainda estiver pendente
+  useEffect(() => {
+    if (!initialReconcileAttempted.current && status !== 'approved' && !isTerminal) {
+      initialReconcileAttempted.current = true;
+      reconcileStatus();
+    }
+  }, [status, isTerminal, reconcileStatus]);
+
+  // Polling automático com backoff progressivo (0s, 3s, 8s, 15s)
+  useEffect(() => {
+    if (isTerminal || pollingStep >= BACKOFF_INTERVALS_MS.length) return;
+
+    const intervalTime = BACKOFF_INTERVALS_MS[pollingStep] ?? 15000;
+    const timer = setTimeout(async () => {
+      await checkStatus();
+      setPollingStep((prev) => prev + 1);
     }, intervalTime);
 
     return () => clearTimeout(timer);
-  }, [isTerminal, pollingCount, status, checkStatus]);
+  }, [isTerminal, pollingStep, checkStatus]);
 
+  // Ação manual: força reconciliação antes de checar status
   const handleManualRefresh = async () => {
     setIsManualChecking(true);
+    await reconcileStatus();
     await checkStatus();
     setIsManualChecking(false);
   };
@@ -101,15 +139,15 @@ export function PaymentReturnStatus({
           </p>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-2">
           <Link href={reportUrl}>
             <Button
               type="button"
-              className="w-full py-6 text-base font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-6 rounded-xl text-base shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
             >
               <FileText className="h-5 w-5" />
-              <span>Visualizar Laudo Completo</span>
-              <ArrowRight className="h-5 w-5" />
+              Visualizar Laudo Completo
+              <ArrowRight className="h-5 w-5 ml-1" />
             </Button>
           </Link>
         </div>
@@ -117,8 +155,8 @@ export function PaymentReturnStatus({
     );
   }
 
-  // 2. Estado: Pagamento Aprovado mas Laudo em Processamento
-  if (status === 'approved' && consultationStatus !== 'completed') {
+  // 2. Estado: Pagamento Aprovado, gerando Laudo
+  if (status === 'approved') {
     return (
       <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
         <div className="mx-auto w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
@@ -197,7 +235,7 @@ export function PaymentReturnStatus({
     );
   }
 
-  // 4. Estado: Aguardando Confirmação (Pix / Boleto / Em Análise) ou Timeout
+  // 4. Estado: Aguardando Confirmação (com mensagem de segurança orientativa)
   return (
     <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] to-transparent p-8 sm:p-10 space-y-6 text-center max-w-xl mx-auto shadow-2xl">
       <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
@@ -208,13 +246,13 @@ export function PaymentReturnStatus({
         <h1 className="text-2xl font-bold text-white tracking-tight">
           Aguardando Confirmação do Pagamento
         </h1>
-        <p className="text-sm text-zinc-300">
-          Se você pagou via Pix ou Boleto, a notificação pode levar alguns instantes para ser
-          processada pela rede bancária.
+        <p className="text-sm text-zinc-300 font-medium">
+          Estamos confirmando seu pagamento com segurança. Isso pode levar alguns instantes.
         </p>
         <p className="text-xs text-zinc-400 bg-zinc-900/80 p-3 rounded-lg border border-zinc-800">
           Assim que o Mercado Pago validar a liquidação, seu laudo será desbloqueado
-          automaticamente. Você também pode acompanhar pela tela de Minhas Consultas.
+          automaticamente. Você também pode clicar em &quot;Verificar Status&quot; ou acompanhar pela tela
+          de Minhas Consultas.
         </p>
       </div>
 

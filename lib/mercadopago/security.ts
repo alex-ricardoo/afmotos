@@ -30,6 +30,35 @@ export function isValidMercadoPagoRedirectUrl(urlStr: string): boolean {
 }
 
 /**
+ * Valida se uma string é um digest SHA-256 hexadecimal válido de 64 caracteres.
+ */
+export function isValidSha256Hex(val: unknown): boolean {
+  if (typeof val !== 'string') return false;
+  return /^[0-9a-fA-F]{64}$/.test(val.trim());
+}
+
+/**
+ * Executa comparação em tempo constante de hashes hexadecimais (SHA-256) decodificados em bytes.
+ */
+export function timingSafeCompareHexBuffers(expectedHex: string, receivedHex: string): boolean {
+  if (!isValidSha256Hex(expectedHex) || !isValidSha256Hex(receivedHex)) {
+    return false;
+  }
+
+  const cleanExpected = expectedHex.trim().toLowerCase();
+  const cleanReceived = receivedHex.trim().toLowerCase();
+
+  const bufExpected = Buffer.from(cleanExpected, 'hex');
+  const bufReceived = Buffer.from(cleanReceived, 'hex');
+
+  if (bufExpected.length !== bufReceived.length || bufExpected.length !== 32) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(bufExpected, bufReceived);
+}
+
+/**
  * Executa comparação em tempo constante de strings para prevenir timing attacks.
  */
 export function timingSafeCompare(a: string, b: string): boolean {
@@ -125,4 +154,3 @@ export function truncateHash(val: string | null | undefined): string | undefined
   if (!val || typeof val !== 'string') return undefined;
   return crypto.createHash('sha256').update(val).digest('hex').slice(0, 8);
 }
-

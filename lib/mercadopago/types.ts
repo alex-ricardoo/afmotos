@@ -78,22 +78,36 @@ export interface TransactionStatusResponse {
   nextAction: 'view_report' | 'wait' | 'retry' | 'contact_support';
 }
 
-export interface WebhookNotificationBody {
-  action?: string;
-  api_version?: string;
-  data?: {
-    id?: string;
-  };
-  date_created?: string;
-  id?: number | string;
-  live_mode?: boolean;
-  type?: string;
-  user_id?: number | string;
-}
+export type WebhookRejectionReason =
+  | 'missing_webhook_secret'
+  | 'invalid_json'
+  | 'missing_resource_id'
+  | 'missing_signature'
+  | 'missing_request_id'
+  | 'missing_signature_timestamp'
+  | 'missing_signature_digest'
+  | 'invalid_digest_format'
+  | 'digest_length_mismatch'
+  | 'signature_mismatch';
 
 export interface WebhookVerificationResult {
   isValid: boolean;
   reason?: string;
+  reasonCode?: WebhookRejectionReason;
   timestamp?: string;
   resourceId?: string;
+  manifestHash?: string;
+  manifestLength?: number;
+  receivedDigestLength?: number;
+  expectedDigestLength?: number;
+}
+
+export interface ReconciliationResponse {
+  success: boolean;
+  transactionId: string;
+  status: PaymentTransactionStatus;
+  statusDetail: string | null;
+  reportUnlocked: boolean;
+  reportUrl?: string;
+  message: string;
 }

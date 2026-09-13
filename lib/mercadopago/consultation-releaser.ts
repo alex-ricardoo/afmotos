@@ -1,6 +1,6 @@
-import { createAdminClient } from '@/lib/supabase/admin';
-import { findExistingConsultation, executeVehiclePlateLookup } from '@/lib/vehicle-lookup/service';
-import { logCheckoutProEvent } from './observability';
+import { createAdminClient } from '../supabase/admin.ts';
+import { findExistingConsultation, executeVehiclePlateLookup } from '../vehicle-lookup/service.ts';
+import { logCheckoutProEvent } from './observability.ts';
 
 export interface ReleaseResult {
   success: boolean;
@@ -16,8 +16,9 @@ export interface ReleaseResult {
  */
 export async function releaseVerifiedPaidConsultation(
   transactionId: string,
+  customDb?: unknown,
 ): Promise<ReleaseResult> {
-  const adminDb = createAdminClient();
+  const adminDb = (customDb as ReturnType<typeof createAdminClient>) || createAdminClient();
 
   // 1. Carrega a transação de pagamento
   const { data: transaction, error: txError } = await adminDb

@@ -34,8 +34,10 @@ export type CheckoutProLogEvent =
   | 'checkout_pro.return_page_loaded'
   | 'checkout_pro.status_polled'
   | 'checkout_pro.webhook_received'
+  | 'checkout_pro.webhook_signature_manifest_built'
   | 'checkout_pro.webhook_signature_verified'
   | 'checkout_pro.webhook_signature_rejected'
+  | 'checkout_pro.webhook_duplicate_ignored'
   | 'checkout_pro.payment_fetch_started'
   | 'checkout_pro.payment_fetch_succeeded'
   | 'checkout_pro.payment_fetch_failed'
@@ -44,7 +46,41 @@ export type CheckoutProLogEvent =
   | 'checkout_pro.consultation_release_succeeded'
   | 'checkout_pro.consultation_release_failed'
   | 'checkout_pro.reconciliation_started'
-  | 'checkout_pro.reconciliation_completed';
+  | 'checkout_pro.reconciliation_completed'
+  | 'checkout_pro.reconcile_requested'
+  | 'checkout_pro.reconcile_completed'
+  | 'checkout_pro.reconcile_failed';
+
+export function getRuntimeEnvironment(): 'production' | 'preview' | 'local' {
+  if (process.env.VERCEL_ENV === 'production') return 'production';
+  if (process.env.VERCEL_ENV === 'preview') return 'preview';
+  return 'local';
+}
+
+export function maskId(value: string | number | null | undefined): string | null {
+  if (!value) return null;
+  const str = String(value).trim();
+  if (str.length <= 8) return str;
+  return `${str.slice(0, 4)}...${str.slice(-4)}`;
+}
+
+export function shortHash(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return truncateHash(value) || null;
+}
+
+export function sanitizeError(error: unknown): { name: string; message: string } {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: sanitizeProviderMessage(error.message),
+    };
+  }
+  return {
+    name: 'UnknownError',
+    message: sanitizeProviderMessage(String(error)),
+  };
+}
 
 export interface LogContext {
   flowId?: string;
@@ -52,6 +88,7 @@ export interface LogContext {
   transactionId?: string;
   durationMs?: number;
   environment?: string;
+  runtimeEnvironment?: 'production' | 'preview' | 'local';
   amount?: { type: string; value: number } | number;
   credentialMode?: 'test' | 'production' | 'invalid';
   sdkVersion?: string;
@@ -81,7 +118,25 @@ export interface LogContext {
   autoReturnConfigured?: boolean;
   reasonCode?: string;
 
-  // Compatibilidade com webhooks/reconciliação
+  // Campos para Webhooks e Reconciliação
+  httpMethod?: string;
+  resourceIdSource?: 'payload.data.id' | 'query.data.id' | 'query.id' | 'missing';
+  resourceIdMasked?: string | null;
+  requestIdPresent?: boolean;
+  requestIdHash?: string | null;
+  signaturePresent?: boolean;
+  signatureTsPresent?: boolean;
+  signatureV1Present?: boolean;
+  signatureV1Length?: number | null;
+  payloadType?: string | null;
+  payloadAction?: string | null;
+  bodyValidJson?: boolean;
+  manifestVersion?: string;
+  manifestHash?: string | null;
+  manifestLength?: number;
+  receivedDigestLength?: number;
+  expectedDigestLength?: number;
+  timestampPresent?: boolean;
 
   status?: string;
   statusDetail?: string;
@@ -93,27 +148,20 @@ export interface LogContext {
 
 /**
  * Emite um log estruturado e estritamente sanitizado para observabilidade do Checkout Pro.
- * Nunca registra:
- * - Access Token
- * - Webhook Secret
- * - Preferência completa
- * - Valores de metadata
- * - E-mail completo
- * - CPF
- * - Token
- * - Headers completos
- * - Raw response
- * - URL de checkout completa
  */
 export function logCheckoutProEvent(
   event: CheckoutProLogEvent,
   context: LogContext = {},
   level: 'info' | 'warn' | 'error' = 'info',
 ): void {
+  const runtimeEnv = getRuntimeEnvironment();
   const sanitizedContext: Record<string, unknown> = {
     event,
     timestamp: new Date().toISOString(),
-    environment: context.environment || process.env.MERCADO_PAGO_CHECKOUT_MODE || 'development',
+    environment: context.environment || runtimeEnv,
+    runtimeEnvironment: runtimeEnv,
+    vercelEnv: process.env.VERCEL_ENV ?? null,
+    nodeEnv: process.env.NODE_ENV ?? null,
   };
 
   if (context.flowId) sanitizedContext.flowId = context.flowId;
@@ -142,7 +190,8 @@ export function logCheckoutProEvent(
 
   // Items
   if (typeof context.itemCount === 'number') sanitizedContext.itemCount = context.itemCount;
-  if (typeof context.itemQuantity === 'number') sanitizedContext.itemQuantity = context.itemQuantity;
+  if (typeof context.itemQuantity === 'number')
+    sanitizedContext.itemQuantity = context.itemQuantity;
 
   // Unit price (type e value)
   if (context.unitPrice !== undefined) {
@@ -228,7 +277,37 @@ export function logCheckoutProEvent(
   }
   if (context.reasonCode) sanitizedContext.reasonCode = context.reasonCode;
 
-  // Propriedades herdadas para compatibilidade de webhooks/reconciliação
+  // Propriedades herdadas e específicas para webhooks/reconciliação
+  if (context.httpMethod) sanitizedContext.httpMethod = context.httpMethod;
+  if (context.resourceIdSource) sanitizedContext.resourceIdSource = context.resourceIdSource;
+  if (context.resourceIdMasked !== undefined)
+    sanitizedContext.resourceIdMasked = context.resourceIdMasked;
+  if (typeof context.requestIdPresent === 'boolean')
+    sanitizedContext.requestIdPresent = context.requestIdPresent;
+  if (context.requestIdHash !== undefined) sanitizedContext.requestIdHash = context.requestIdHash;
+  if (typeof context.signaturePresent === 'boolean')
+    sanitizedContext.signaturePresent = context.signaturePresent;
+  if (typeof context.signatureTsPresent === 'boolean')
+    sanitizedContext.signatureTsPresent = context.signatureTsPresent;
+  if (typeof context.signatureV1Present === 'boolean')
+    sanitizedContext.signatureV1Present = context.signatureV1Present;
+  if (typeof context.signatureV1Length === 'number' || context.signatureV1Length === null) {
+    sanitizedContext.signatureV1Length = context.signatureV1Length;
+  }
+  if (context.payloadType) sanitizedContext.payloadType = context.payloadType;
+  if (context.payloadAction) sanitizedContext.payloadAction = context.payloadAction;
+  if (typeof context.bodyValidJson === 'boolean')
+    sanitizedContext.bodyValidJson = context.bodyValidJson;
+  if (context.manifestVersion) sanitizedContext.manifestVersion = context.manifestVersion;
+  if (context.manifestHash !== undefined) sanitizedContext.manifestHash = context.manifestHash;
+  if (typeof context.manifestLength === 'number')
+    sanitizedContext.manifestLength = context.manifestLength;
+  if (typeof context.receivedDigestLength === 'number')
+    sanitizedContext.receivedDigestLength = context.receivedDigestLength;
+  if (typeof context.expectedDigestLength === 'number')
+    sanitizedContext.expectedDigestLength = context.expectedDigestLength;
+  if (typeof context.timestampPresent === 'boolean')
+    sanitizedContext.timestampPresent = context.timestampPresent;
 
   if (context.paymentId) sanitizedContext.paymentId = maskIdentifier(context.paymentId);
   if (context.status) sanitizedContext.status = context.status;

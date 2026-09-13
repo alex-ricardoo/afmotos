@@ -1,8 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPaymentClient } from './client.ts';
 import { fetchAuthoritativePayment } from './webhook-service.ts';
-import { mapMercadoPagoStatus, canTransitionStatus } from './payment-status-mapper.ts';
-import { releaseVerifiedPaidConsultation } from './consultation-releaser.ts';
+import { confirmAndProcessPaymentTransaction } from './payment-processing-service.ts';
 import { logCheckoutProEvent } from './observability.ts';
 import { type PaymentTransactionStatus } from './types.ts';
 
@@ -14,15 +13,17 @@ export interface ReconciliationResult {
   reconciled: boolean;
   reportUnlocked?: boolean;
   message: string;
+  error?: string;
 }
 
 /**
- * Reconcilia de forma autoritativa uma transação de pagamento pendente ou ambígua
- * consultando diretamente a API oficial do Mercado Pago.
+ * Reconcilia de forma autoritativa uma transação de pagamento consultando
+ * diretamente a API oficial do Mercado Pago e reutilizando a rotina transacional central.
  */
 export async function reconcilePaymentTransaction(
   transactionId: string,
-  adminUserId: string,
+  actorId?: string,
+  actorType: 'admin' | 'customer' | 'system' = 'customer',
 ): Promise<ReconciliationResult> {
   const adminDb = createAdminClient();
 
@@ -49,9 +50,31 @@ export async function reconcilePaymentTransaction(
   }
 
   const previousStatus = transaction.status as PaymentTransactionStatus;
+
+  // Se a transação já estiver aprovada e a consulta concluída, responde imediatamente
+  if (previousStatus === 'approved') {
+    const { data: consultation } = await adminDb
+      .from('customer_plate_consultations')
+      .select('status, vehicle_data')
+      .eq('id', transaction.consultation_id)
+      .maybeSingle();
+
+    if (consultation?.status === 'completed' && consultation?.vehicle_data) {
+      return {
+        success: true,
+        transactionId,
+        previousStatus,
+        currentStatus: 'approved',
+        reconciled: true,
+        reportUnlocked: true,
+        message: 'Transação já aprovada e laudo veicular liberado.',
+      };
+    }
+  }
+
   let paymentIdToFetch = transaction.mp_payment_id;
 
-  // 2. Se não possuir mp_payment_id gravado, tenta buscar pelo external_reference no MP
+  // 2. Se não possuir mp_payment_id gravado, busca via search por external_reference no MP
   if (!paymentIdToFetch) {
     try {
       const paymentClient = getPaymentClient();
@@ -77,8 +100,7 @@ export async function reconcilePaymentTransaction(
       previousStatus,
       currentStatus: previousStatus,
       reconciled: false,
-      message:
-        'Nenhum identificador de pagamento encontrado para reconciliação com o Mercado Pago.',
+      message: 'Nenhum pagamento correspondente identificado no Mercado Pago no momento.',
     };
   }
 
@@ -95,61 +117,32 @@ export async function reconcilePaymentTransaction(
       currentStatus: previousStatus,
       reconciled: false,
       message: `Erro ao consultar Mercado Pago: ${errMsg}`,
+      error: errMsg,
     };
   }
 
-  // 4. Mapeamento e transição de status
-  const newStatus = mapMercadoPagoStatus(paymentData.status);
-  let reportUnlocked = false;
-
-  if (canTransitionStatus(previousStatus, newStatus)) {
-    await adminDb
-      .from('payment_transactions')
-      .update({
-        mp_payment_id: paymentData.id,
-        status: newStatus,
-        status_detail: paymentData.statusDetail,
-        payment_method_id: paymentData.paymentMethodId || transaction.payment_method_id,
-        payment_type_id: paymentData.paymentTypeId || transaction.payment_type_id,
-        payer_email: paymentData.payerEmail || transaction.payer_email,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', transaction.id);
-
-    if (newStatus === 'approved') {
-      const releaseOutcome = await releaseVerifiedPaidConsultation(transaction.id);
-      reportUnlocked = releaseOutcome.success;
-    }
-  }
-
-  // 5. Trilha de auditoria administrativa
-  await adminDb.from('consultation_audit_logs').insert({
-    consultation_id: transaction.consultation_id,
-    transaction_id: transaction.id,
-    actor_id: adminUserId,
-    actor_type: 'admin',
-    event: 'admin_reconciliation_executed',
-    details: {
-      mp_payment_id: paymentData.id,
-      previous_status: previousStatus,
-      new_status: newStatus,
-      report_unlocked: reportUnlocked,
-    },
+  // 4. Executa a confirmação centralizada compartilhada
+  const confirmation = await confirmAndProcessPaymentTransaction({
+    transaction,
+    paymentData,
+    actorType,
+    actorId,
   });
 
   logCheckoutProEvent('checkout_pro.reconciliation_completed', {
     transactionId: transaction.id,
     paymentId: paymentData.id,
-    status: newStatus,
+    status: confirmation.currentStatus,
   });
 
   return {
-    success: true,
+    success: confirmation.success,
     transactionId,
     previousStatus,
-    currentStatus: newStatus,
-    reconciled: true,
-    reportUnlocked,
-    message: `Reconciliação concluída com sucesso. Status atual: ${newStatus}.`,
+    currentStatus: confirmation.currentStatus,
+    reconciled: confirmation.success,
+    reportUnlocked: confirmation.reportUnlocked,
+    message: confirmation.message,
+    error: confirmation.error,
   };
 }

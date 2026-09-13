@@ -3,36 +3,55 @@ import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   validateWebhookSignature,
+  resolveMercadoPagoWebhookResourceId,
+  parseSignatureHeader,
   fetchAuthoritativePayment,
 } from '@/lib/mercadopago/webhook-service';
-import { mapMercadoPagoStatus, canTransitionStatus } from '@/lib/mercadopago/payment-status-mapper';
-import { releaseVerifiedPaidConsultation } from '@/lib/mercadopago/consultation-releaser';
-import { logCheckoutProEvent } from '@/lib/mercadopago/observability';
-import { type PaymentTransactionStatus } from '@/lib/mercadopago/types';
+import { confirmAndProcessPaymentTransaction } from '@/lib/mercadopago/payment-processing-service';
+import {
+  logCheckoutProEvent,
+  maskId,
+  shortHash,
+} from '@/lib/mercadopago/observability';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   const flowId = crypto.randomUUID();
   const adminDb = createAdminClient();
 
-  logCheckoutProEvent('checkout_pro.webhook_received', { flowId });
-
-  // 1. Extrai dados do corpo e da query
+  // 1. Extrai dados do corpo e da query de forma resiliente
   let bodyJson: Record<string, unknown> = {};
+  let bodyValidJson = true;
+
   try {
-    bodyJson = (await request.json()) || {};
+    const rawBody = await request.text();
+    if (rawBody && rawBody.trim().length > 0) {
+      bodyJson = JSON.parse(rawBody);
+    } else {
+      bodyJson = {};
+    }
   } catch {
     bodyJson = {};
+    bodyValidJson = false;
   }
 
   const { searchParams } = new URL(request.url);
-  const resourceId = String(
-    (bodyJson.data as Record<string, unknown>)?.id ||
-      searchParams.get('data.id') ||
-      searchParams.get('id') ||
-      bodyJson.id ||
-      '',
-  ).trim();
+
+  // Determina a fonte do identificador de recurso para observabilidade
+  let resourceIdSource: 'payload.data.id' | 'query.data.id' | 'query.id' | 'missing' = 'missing';
+  if ((bodyJson.data as Record<string, unknown>)?.id !== undefined) {
+    resourceIdSource = 'payload.data.id';
+  } else if (searchParams.get('data.id')) {
+    resourceIdSource = 'query.data.id';
+  } else if (searchParams.get('id')) {
+    resourceIdSource = 'query.id';
+  }
+
+  const resourceId = resolveMercadoPagoWebhookResourceId(request, bodyJson);
+
+  const signatureHeader = request.headers.get('x-signature');
+  const requestId = request.headers.get('x-request-id');
+  const parsedSig = parseSignatureHeader(signatureHeader);
 
   const eventType = String(
     bodyJson.type ||
@@ -44,8 +63,36 @@ export async function POST(request: NextRequest) {
 
   const eventId = String(bodyJson.id || searchParams.get('id') || crypto.randomUUID());
 
+  // Log seguro do recebimento do webhook (RF-03)
+  logCheckoutProEvent('checkout_pro.webhook_received', {
+    flowId,
+    httpMethod: 'POST',
+    resourceIdSource,
+    resourceIdMasked: maskId(resourceId),
+    requestIdPresent: Boolean(requestId),
+    requestIdHash: shortHash(requestId),
+    signaturePresent: Boolean(signatureHeader),
+    signatureTsPresent: Boolean(parsedSig.ts),
+    signatureV1Present: Boolean(parsedSig.v1),
+    signatureV1Length: parsedSig.v1?.length ?? null,
+    payloadType: typeof bodyJson.type === 'string' ? bodyJson.type : null,
+    payloadAction: typeof bodyJson.action === 'string' ? bodyJson.action : null,
+    bodyValidJson,
+  });
+
   // 2. Validação Criptográfica da Assinatura HMAC
   const signatureCheck = validateWebhookSignature(request.headers, resourceId);
+
+  // Emissão do manifesto construído (RF-03)
+  logCheckoutProEvent('checkout_pro.webhook_signature_manifest_built', {
+    flowId,
+    manifestVersion: 'mercadopago-v1-id-request-id-ts',
+    manifestHash: signatureCheck.manifestHash ?? null,
+    manifestLength: signatureCheck.manifestLength,
+    resourceIdSource,
+    requestIdPresent: Boolean(requestId),
+    timestampPresent: Boolean(parsedSig.ts),
+  });
 
   // Registra o evento recebido na tabela webhook_events para auditoria imediata
   const { data: webhookRecord } = await adminDb
@@ -59,8 +106,8 @@ export async function POST(request: NextRequest) {
       processing_status: 'pending',
       payload: bodyJson,
       headers: {
-        'x-request-id': request.headers.get('x-request-id'),
-        'x-signature-ts': signatureCheck.timestamp,
+        'x-request-id': requestId ? shortHash(requestId) : null,
+        'x-signature-ts': signatureCheck.timestamp || null,
       },
     })
     .select('id')
@@ -71,6 +118,11 @@ export async function POST(request: NextRequest) {
       'checkout_pro.webhook_signature_rejected',
       {
         flowId,
+        reasonCode: signatureCheck.reasonCode,
+        manifestVersion: 'mercadopago-v1-id-request-id-ts',
+        resourceIdMasked: maskId(resourceId),
+        receivedDigestLength: signatureCheck.receivedDigestLength,
+        expectedDigestLength: signatureCheck.expectedDigestLength,
         errorMessage: signatureCheck.reason,
       },
       'warn',
@@ -95,10 +147,49 @@ export async function POST(request: NextRequest) {
 
   logCheckoutProEvent('checkout_pro.webhook_signature_verified', {
     flowId,
-    paymentId: resourceId,
+    manifestVersion: 'mercadopago-v1-id-request-id-ts',
+    resourceIdMasked: maskId(resourceId),
+    requestIdHash: shortHash(requestId),
+    durationMs: Date.now() - startTime,
   });
 
-  // 3. Filtro por eventos de pagamento
+  // 3. Deduplicação e Idempotência (RF-05)
+  if (resourceId) {
+    const { data: existingProcessedEvent } = await adminDb
+      .from('webhook_events')
+      .select('id')
+      .eq('mp_resource_id', resourceId)
+      .eq('processing_status', 'processed')
+      .neq('id', webhookRecord?.id || crypto.randomUUID())
+      .limit(1)
+      .maybeSingle();
+
+    if (existingProcessedEvent) {
+      logCheckoutProEvent('checkout_pro.webhook_duplicate_ignored', {
+        flowId,
+        paymentId: resourceId,
+      });
+
+      if (webhookRecord?.id) {
+        await adminDb
+          .from('webhook_events')
+          .update({
+            processing_status: 'ignored',
+            processing_error: 'Evento duplicado já processado anteriormente.',
+            processed_at: new Date().toISOString(),
+          })
+          .eq('id', webhookRecord.id);
+      }
+
+      return NextResponse.json({
+        received: true,
+        status: 'ignored',
+        reason: 'duplicate',
+      });
+    }
+  }
+
+  // 4. Filtro por eventos de pagamento
   const isPaymentEvent =
     eventType.includes('payment') ||
     (typeof bodyJson.action === 'string' && bodyJson.action.startsWith('payment'));
@@ -116,7 +207,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, status: 'ignored' });
   }
 
-  // 4. Busca Autoritativa do Pagamento na API do Mercado Pago
+  if (!resourceId) {
+    return NextResponse.json({ received: true, status: 'ignored' });
+  }
+
+  // 5. Busca Autoritativa do Pagamento na API do Mercado Pago
   let paymentData;
   try {
     logCheckoutProEvent('checkout_pro.payment_fetch_started', {
@@ -159,7 +254,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 5. Localiza a transação correspondente em payment_transactions
+  // 6. Localiza a transação correspondente em payment_transactions
   let transaction = null;
 
   if (paymentData.externalReference) {
@@ -181,7 +276,6 @@ export async function POST(request: NextRequest) {
   }
 
   if (!transaction) {
-    // Transação não gerada por esta instância da AF Motos ou referência desconhecida
     if (webhookRecord?.id) {
       await adminDb
         .from('webhook_events')
@@ -195,36 +289,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, status: 'ignored' });
   }
 
-  // 6. Normalização e Atualização Atômica de Estado
-  const newStatus = mapMercadoPagoStatus(paymentData.status);
-  const currentStatus = transaction.status as PaymentTransactionStatus;
+  // 7. Confirmação Centralizada e Atômica (Compartilhada com Reconcile)
+  const confirmationOutcome = await confirmAndProcessPaymentTransaction({
+    transaction,
+    paymentData,
+    actorType: 'webhook',
+    flowId,
+  });
 
-  if (canTransitionStatus(currentStatus, newStatus)) {
-    await adminDb
-      .from('payment_transactions')
-      .update({
-        mp_payment_id: paymentData.id,
-        status: newStatus,
-        status_detail: paymentData.statusDetail,
-        payment_method_id: paymentData.paymentMethodId || transaction.payment_method_id,
-        payment_type_id: paymentData.paymentTypeId || transaction.payment_type_id,
-        payer_email: paymentData.payerEmail || transaction.payer_email,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', transaction.id);
+  if (!confirmationOutcome.success) {
+    if (webhookRecord?.id) {
+      await adminDb
+        .from('webhook_events')
+        .update({
+          processing_status: 'failed',
+          processing_error: confirmationOutcome.error,
+          processed_at: new Date().toISOString(),
+        })
+        .eq('id', webhookRecord.id);
+    }
 
-    logCheckoutProEvent('checkout_pro.transaction_updated', {
-      flowId,
-      transactionId: transaction.id,
-      paymentId: paymentData.id,
-      status: newStatus,
-      statusDetail: paymentData.statusDetail || undefined,
-    });
-  }
-
-  // 7. Liberação da Consulta Veicular (se verificado como approved)
-  if (newStatus === 'approved') {
-    await releaseVerifiedPaidConsultation(transaction.id);
+    return NextResponse.json({ error: confirmationOutcome.message }, { status: 422 });
   }
 
   // 8. Atualiza o status de processamento do evento de webhook
