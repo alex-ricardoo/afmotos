@@ -1,10 +1,12 @@
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { getVehicleConsultationPrice } from '@/lib/settings/server-queries';
-import { getMercadoPagoPublicKey, isDevPaymentSimulationEnabled } from '@/lib/mercadopago/client';
-import { CustomerPaymentFlow } from '@/components/customer/customer-payment-flow';
 import { getSiteSettings } from '@/lib/queries/settings';
+import { VehicleConsultationOrderSummary } from '@/components/customer/vehicle-consultation-order-summary';
+import { VehicleConsultationBenefits } from '@/components/customer/vehicle-consultation-benefits';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, ArrowLeft, MessageCircle } from 'lucide-react';
 
 interface PaymentPageProps {
   params: Promise<{
@@ -13,8 +15,8 @@ interface PaymentPageProps {
 }
 
 export const metadata = {
-  title: 'Pagamento Seguro da Consulta | Área do Cliente | AF Motos',
-  description: 'Confirmação e pagamento seguro do histórico veicular oficial.',
+  title: 'Pagamento da Consulta | Área do Cliente | AF Motos',
+  description: 'Informações sobre o pagamento da consulta veicular.',
 };
 
 export default async function PaymentPage({ params }: PaymentPageProps) {
@@ -29,58 +31,31 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     redirect(`/cliente/login?returnUrl=/cliente/pagamento/${consultationId}`);
   }
 
-  // 1. Fetch consultation, price, settings, and customer profile in parallel
-  const adminSupabase = createAdminClient();
-
   const [
     { data: consultation, error: consultationError },
     price,
     settings,
-    { data: customerProfile },
   ] = await Promise.all([
-    adminSupabase
+    supabase
       .from('customer_plate_consultations')
-      .select(
-        `
-        id,
-        user_id,
-        plate,
-        status,
-        payment_status,
-        auto_refund_attempted,
-        lookup_error_message,
-        vehicle_data
-      `,
-      )
+      .select('id, user_id, plate, status, payment_status')
       .eq('id', consultationId)
       .maybeSingle(),
     getVehicleConsultationPrice(),
     getSiteSettings(),
-    supabase
-      .from('customer_profiles')
-      .select(
-        'full_name, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip',
-      )
-      .eq('id', user.id)
-      .maybeSingle(),
   ]);
 
   if (consultationError || !consultation) {
     notFound();
   }
 
-  // 2. Authorization validation:
-  // - Owner is permitted
-  // - Admins are permitted (to support, inspect, and test)
-  // - Local development mode allows cross-user testing for developer convenience
+  // Validação de acesso: apenas o proprietário da consulta ou administradores
   const isOwner = consultation.user_id === user.id;
-  const isDev = process.env.NODE_ENV === 'development';
-
-  if (!isOwner && !isDev) {
+  if (!isOwner) {
     const { data: adminProfile } = await supabase
       .from('admin_profiles')
       .select('id')
-      .eq('id', user.id)
+      .eq('auth_user_id', user.id)
       .maybeSingle();
 
     if (!adminProfile) {
@@ -88,36 +63,105 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     }
   }
 
-  const publicKey = getMercadoPagoPublicKey() || '';
+  // Se a consulta já foi concluída/paga, direciona diretamente para o laudo
+  if (consultation.status === 'completed' || consultation.payment_status === 'paid') {
+    redirect(`/cliente/consultas/${consultation.id}`);
+  }
 
-  const preference = {
-    consultationId: consultation.id,
-    plate: consultation.plate,
-    amount: price,
-    publicKey,
-    payerEmail: user.email || '',
-    payerName: customerProfile?.full_name || user.user_metadata?.full_name || '',
-    payerAddress: customerProfile?.address_zip
-      ? {
-          zipCode: customerProfile.address_zip.replace(/\D/g, ''),
-          streetName: customerProfile.address_street || '',
-          streetNumber: customerProfile.address_number || '',
-          neighborhood: customerProfile.address_neighborhood || '',
-          city: customerProfile.address_city || '',
-          federalUnit: (customerProfile.address_state || '').toUpperCase(),
-          complement: customerProfile.address_complement || '',
-        }
-      : undefined,
-  };
+  const supportPhone = settings?.whatsapp_phone || null;
+  const whatsappUrl = supportPhone
+    ? `https://wa.me/55${supportPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
+        `Olá! Gostaria de suporte sobre a consulta da placa ${consultation.plate} (ID: ${consultation.id}).`,
+      )}`
+    : null;
 
   return (
-    <div className="py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
-      <CustomerPaymentFlow
-        preference={preference}
-        initialConsultation={consultation}
-        supportPhone={settings?.whatsapp_phone || null}
-        allowDevSimulation={isDevPaymentSimulationEnabled()}
-      />
+    <div className="py-6 sm:py-10 max-w-5xl mx-auto px-4 sm:px-6 space-y-8">
+      {/* Botão de retorno seguro */}
+      <div>
+        <Link
+          href="/cliente/consultas"
+          className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar para Minhas Consultas
+        </Link>
+      </div>
+
+      {/* Grid de Conteúdo */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Coluna Esquerda: Resumo da Consulta e Benefícios */}
+        <div className="lg:col-span-5 space-y-6">
+          <VehicleConsultationOrderSummary
+            plate={consultation.plate}
+            amount={price}
+          />
+          <VehicleConsultationBenefits />
+        </div>
+
+        {/* Coluna Direita: Estado Claro de Indisponibilidade de Pagamento Online */}
+        <div className="lg:col-span-7">
+          <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] to-transparent p-6 sm:p-8 space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 shrink-0 text-amber-400">
+                <AlertTriangle className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <div className="space-y-1">
+                <h1 className="text-xl font-bold text-white tracking-tight">
+                  Pagamentos online estão temporariamente indisponíveis
+                </h1>
+                <p className="text-xs text-amber-400/90 font-medium">
+                  Manutenção programada dos canais de pagamento
+                </p>
+              </div>
+            </div>
+
+            <div className="text-sm text-zinc-300 space-y-3 leading-relaxed border-t border-zinc-800/80 pt-4">
+              <p>
+                Estamos aprimorando nossa infraestrutura financeira para oferecer uma experiência de checkout
+                mais ágil, transparente e segura.
+              </p>
+              <p>
+                Por esse motivo, o processamento automatizado de novas cobranças via cartão, PIX e boleto está
+                momentaneamente suspenso nesta página.
+              </p>
+              <p className="text-xs text-zinc-400 bg-zinc-900/60 p-3 rounded-lg border border-zinc-800">
+                🔒 <strong>Importante:</strong> Sua consulta para a placa{' '}
+                <span className="font-mono text-white font-semibold">{consultation.plate}</span> está salva
+                em sua conta com status pendente. Nenhuma cobrança foi realizada e nenhum dado financeiro foi retido.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                >
+                  <Button
+                    type="button"
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Falar com Atendimento
+                  </Button>
+                </a>
+              )}
+              <Link href="/cliente/consultas" className="flex-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 hover:text-white"
+                >
+                  Ver Minhas Consultas
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
