@@ -14,10 +14,10 @@ const lastRequestTimestamps = new Map<string, number>();
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ consultationId: string }> },
+  context: { params: Promise<{ id: string }> },
 ) {
   const startTime = Date.now();
-  const { consultationId } = await context.params;
+  const { id: consultationId } = await context.params;
 
   try {
     // 1. Autenticação do Usuário
@@ -204,7 +204,7 @@ export async function POST(
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error(
-      '[POST /api/cliente/consultas/[consultationId]/process-delivery] Erro:',
+      '[POST /api/cliente/consultas/[id]/process-delivery] Erro:',
       errorMsg,
     );
     return NextResponse.json(

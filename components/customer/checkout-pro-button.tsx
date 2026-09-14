@@ -7,10 +7,15 @@ import { Loader2, ShieldCheck, ExternalLink } from 'lucide-react';
 
 interface CheckoutProButtonProps {
   consultationId: string;
+  amountText?: string;
   className?: string;
 }
 
-export function CheckoutProButton({ consultationId, className }: CheckoutProButtonProps) {
+export function CheckoutProButton({
+  consultationId,
+  amountText,
+  className,
+}: CheckoutProButtonProps) {
   const [loading, setLoading] = useState(false);
 
   const handleStartCheckout = async () => {
@@ -50,29 +55,46 @@ export function CheckoutProButton({ consultationId, className }: CheckoutProButt
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <Button
         type="button"
         onClick={handleStartCheckout}
         disabled={loading}
-        className={`w-full py-6 text-base font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all rounded-xl flex items-center justify-center gap-2 group ${className || ''}`}
+        className={`relative overflow-hidden w-full py-6 sm:py-7 text-base sm:text-lg font-black text-white bg-gradient-to-r from-[#009ee3] via-[#008fe3] to-[#0070ba] hover:from-[#0ab1fc] hover:via-[#009ee3] hover:to-[#007eb5] border-t border-white/30 shadow-[0_10px_35px_-8px_rgba(0,158,227,0.55)] hover:shadow-[0_14px_45px_-4px_rgba(0,158,227,0.7)] transition-all duration-300 rounded-2xl flex items-center justify-center gap-2.5 group active:scale-[0.99] cursor-pointer ${className || ''}`}
       >
+        {/* Efeito sutil de brilho/sheen animado no hover */}
+        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 ease-out pointer-events-none" />
+
         {loading ? (
           <>
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span>Iniciando Checkout Seguro...</span>
+            <Loader2 className="h-5 w-5 animate-spin shrink-0 text-white" />
+            <span className="tracking-tight">Iniciando Checkout Seguro...</span>
           </>
         ) : (
           <>
-            <span>Pagar com Mercado Pago</span>
-            <ExternalLink className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <ShieldCheck className="h-5 w-5 shrink-0 text-sky-100 transition-transform group-hover:scale-110" />
+            <span className="tracking-tight">
+              {amountText ? `Pagar ${amountText} com Mercado Pago` : 'Pagar com Mercado Pago'}
+            </span>
+            <ExternalLink className="h-4 w-4 shrink-0 text-sky-100 transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5" />
           </>
         )}
       </Button>
 
-      <div className="flex items-center justify-center gap-2 text-xs text-zinc-400">
-        <ShieldCheck className="h-4 w-4 text-emerald-400" />
-        <span>Ambiente seguro do Mercado Pago (Pix, Cartão, Débito e Boleto)</span>
+      {/* Selos de Confiança e Garantia */}
+      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-800/80">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1 text-center sm:text-left text-zinc-400">
+          <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span className="text-[11px] font-medium leading-tight">Criptografia SSL</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1 text-center sm:text-left text-zinc-400">
+          <span className="flex h-2 w-2 rounded-full bg-sky-400 shrink-0" />
+          <span className="text-[11px] font-medium leading-tight">Liberação Imediata</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1 text-center sm:text-left text-zinc-400">
+          <span className="flex h-2 w-2 rounded-full bg-amber-400 shrink-0" />
+          <span className="text-[11px] font-medium leading-tight">Garantia Oficial</span>
+        </div>
       </div>
     </div>
   );
