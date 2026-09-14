@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
-import { resolvePublicSiteSettings } from '@/lib/site-settings';
+import { resolvePublicSiteSettings } from '../site-settings.ts';
 
 /**
  * Fetches and returns the public site settings from the database.
@@ -7,7 +6,14 @@ import { resolvePublicSiteSettings } from '@/lib/site-settings';
  * to ensure no admin-only fields are exposed.
  */
 export async function getPublicSiteSettings() {
-  const supabase = await createClient();
+  let supabase;
+  try {
+    const { createClient } = await import('../supabase/server.ts');
+    supabase = await createClient();
+  } catch {
+    const { createAdminClient } = await import('../supabase/admin.ts');
+    supabase = createAdminClient();
+  }
 
   const { data, error } = await supabase
     .from('site_settings')
@@ -24,12 +30,19 @@ export async function getPublicSiteSettings() {
   return resolvePublicSiteSettings(data);
 }
 
+import { getVehicleHistoryPricingConfig } from './pricing-service.ts';
+
 /**
- * Retorna o preço oficial da consulta veicular configurado em site_settings.
+ * Retorna o preço oficial da consulta veicular configurado em vehicle_history_pricing_versions
+ * com sincronização com site_settings.
  * Fallback seguro: 39.90.
  */
 export async function getVehicleConsultationPrice(): Promise<number> {
   try {
+    const pricingConfig = await getVehicleHistoryPricingConfig();
+    if (pricingConfig?.publicPriceCents && pricingConfig.publicPriceCents > 0) {
+      return pricingConfig.publicPriceCents / 100;
+    }
     const settings = await getPublicSiteSettings();
     if (settings?.vehicleHistory?.price && settings.vehicleHistory.price > 0) {
       return settings.vehicleHistory.price;

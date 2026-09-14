@@ -11,6 +11,7 @@ import {
   Building,
   Download,
   RotateCcw,
+  FileSearch,
 } from 'lucide-react';
 import {
   OverviewReportData,
@@ -20,6 +21,7 @@ import {
   CustomersReportData,
   ReportDateRange,
 } from '@/lib/reports/types';
+import { VehicleHistoryReportResult } from '@/lib/reports/vehicle-history-queries';
 import { cn } from '@/lib/utils';
 import { ReportPeriodFilter } from './report-period-filter';
 import { ReportExportDialog } from './report-export-dialog';
@@ -29,6 +31,7 @@ import { FinancialTab } from './tabs/financial-tab';
 import { InventoryTab } from './tabs/inventory-tab';
 import { CustomersTab } from './tabs/customers-tab';
 import { AccountantTab } from './tabs/accountant-tab';
+import { VehicleHistoryTab } from './tabs/vehicle-history-tab';
 
 interface ReportsDashboardProps {
   overviewData: OverviewReportData;
@@ -36,6 +39,7 @@ interface ReportsDashboardProps {
   financialData: FinancialReportData;
   inventoryData: InventoryReportData;
   customersData: CustomersReportData;
+  vehicleHistoryData?: VehicleHistoryReportResult;
   dateRange: ReportDateRange;
 }
 
@@ -43,6 +47,7 @@ const TABS = [
   { id: 'overview', label: 'Visão Geral', icon: LayoutDashboard },
   { id: 'sales', label: 'Vendas', icon: Receipt },
   { id: 'financial', label: 'Financeiro', icon: Wallet },
+  { id: 'historico-veicular', label: 'Histórico Veicular', icon: FileSearch },
   { id: 'inventory', label: 'Estoque', icon: Bike },
   { id: 'customers', label: 'Clientes & Comercial', icon: Users },
   { id: 'accountant', label: 'Contador', icon: Building },
@@ -54,6 +59,7 @@ export function ReportsDashboard({
   financialData,
   inventoryData,
   customersData,
+  vehicleHistoryData,
   dateRange,
 }: ReportsDashboardProps) {
   const router = useRouter();
@@ -144,6 +150,9 @@ export function ReportsDashboard({
         {activeTab === 'overview' && <OverviewTab data={overviewData} />}
         {activeTab === 'sales' && <SalesTab data={salesData} />}
         {activeTab === 'financial' && <FinancialTab data={financialData} />}
+        {activeTab === 'historico-veicular' && vehicleHistoryData && (
+          <VehicleHistoryTab data={vehicleHistoryData} />
+        )}
         {activeTab === 'inventory' && <InventoryTab data={inventoryData} />}
         {activeTab === 'customers' && <CustomersTab data={customersData} />}
         {activeTab === 'accountant' && <AccountantTab dateRange={dateRange} />}
