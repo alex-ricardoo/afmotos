@@ -7,17 +7,14 @@ import { VehicleConsultationOrderSummary } from '@/components/customer/vehicle-c
 import { VehicleConsultationBenefits } from '@/components/customer/vehicle-consultation-benefits';
 import { CheckoutProButton } from '@/components/customer/checkout-pro-button';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft, Lock, MessageCircle, Sparkles } from 'lucide-react';
 import {
-  ArrowLeft,
-  CreditCard,
-  Lock,
-  MessageCircle,
-  Receipt,
-  ShieldCheck,
-  Sparkles,
-  Wallet,
-  Zap,
-} from 'lucide-react';
+  PixBrandIcon,
+  MercadoPagoBrandIcon,
+  CreditCardBrandIcon,
+  CaixaDebitBrandIcon,
+  BoletoBrandIcon,
+} from '@/components/customer/payment-brand-icons';
 
 interface PaymentPageProps {
   params: Promise<{
@@ -116,39 +113,42 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
 
         {/* Coluna Direita: Checkout Pro Mercado Pago */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="relative overflow-hidden rounded-3xl border border-zinc-700/70 bg-gradient-to-b from-zinc-900/95 via-zinc-900/90 to-zinc-950/95 p-6 sm:p-8 space-y-6 shadow-2xl shadow-black/80 backdrop-blur-xl">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-zinc-700/70 bg-gradient-to-b from-zinc-900/95 via-zinc-900/90 to-zinc-950/95 p-4 sm:p-7 space-y-5 sm:space-y-6 shadow-2xl shadow-black/80 backdrop-blur-xl">
             {/* Ambient Lighting Glows */}
             <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-48 bg-[#009EE3]/15 blur-3xl pointer-events-none rounded-full" />
             <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-500/5 blur-2xl pointer-events-none rounded-full" />
 
-            {/* Cabeçalho do Card */}
-            <div className="relative flex items-start gap-4">
-              <div className="relative p-3.5 rounded-2xl bg-gradient-to-br from-blue-500/20 via-sky-500/10 to-transparent border border-blue-500/30 text-sky-400 shrink-0 shadow-inner shadow-blue-500/20">
-                <ShieldCheck className="h-7 w-7" aria-hidden="true" />
-                <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/25 border border-emerald-400/50 text-emerald-400">
-                  <Lock className="h-2.5 w-2.5" />
+            {/* Cabeçalho do Card com Logo Oficial Mercado Pago */}
+            <div className="relative flex items-center gap-3 sm:gap-4">
+              <div className="relative p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white border border-white/90 text-[#009EE3] shrink-0 shadow-lg shadow-black/40">
+                <MercadoPagoBrandIcon
+                  className="h-6 w-6 sm:h-7 sm:w-7 text-[#009EE3]"
+                  aria-hidden="true"
+                />
+                <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 border-2 border-zinc-950 text-white shadow-sm">
+                  <Lock className="h-2 w-2" />
                 </span>
               </div>
-              <div className="space-y-1">
+              <div className="min-w-0 flex-1 space-y-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight leading-tight">
                     Finalizar Pagamento Seguro
                   </h1>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/15 text-sky-400 border border-blue-500/30">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-blue-500/15 text-sky-400 border border-blue-500/30 shrink-0">
                     Oficial
                   </span>
                 </div>
                 <p className="text-xs text-zinc-400 font-medium flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
+                  <span className="relative flex h-2 w-2 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
-                  Processado diretamente pelo Mercado Pago
+                  <span className="truncate">Processado via Mercado Pago</span>
                 </p>
               </div>
             </div>
 
-            {/* Formas de Pagamento no Mercado Pago */}
+            {/* Formas de Pagamento com SVGs Oficiais */}
             <div className="relative space-y-3 border-t border-zinc-800/80 pt-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-zinc-300 font-medium">
@@ -159,65 +159,65 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                {/* Pix */}
-                <div className="group/item flex items-center gap-2.5 p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-emerald-500/40 hover:bg-emerald-500/[0.03] transition-all">
-                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center shrink-0 text-emerald-400 group-hover/item:scale-105 transition-transform">
-                    <Zap className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-zinc-200 group-hover/item:text-white transition-colors truncate">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+                {/* Pix Oficial */}
+                <div className="group/item flex items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-[#32BCAD]/50 hover:bg-[#32BCAD]/[0.03] transition-all">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-8 w-8 rounded-lg bg-[#32BCAD]/15 border border-[#32BCAD]/30 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
+                      <PixBrandIcon className="h-4.5 w-4.5 text-[#32BCAD]" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-zinc-200 group-hover/item:text-white transition-colors">
                       Pix Instantâneo
                     </p>
-                    <span className="inline-block text-[10px] font-semibold text-emerald-400 truncate">
-                      Aprovação imediata
-                    </span>
                   </div>
+                  <span className="shrink-0 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                    Aprovação imediata
+                  </span>
                 </div>
 
-                {/* Cartão de Crédito */}
-                <div className="group/item flex items-center gap-2.5 p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-sky-500/40 hover:bg-sky-500/[0.03] transition-all">
-                  <div className="h-8 w-8 rounded-lg bg-sky-500/10 border border-sky-500/25 flex items-center justify-center shrink-0 text-sky-400 group-hover/item:scale-105 transition-transform">
-                    <CreditCard className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-zinc-200 group-hover/item:text-white transition-colors truncate">
+                {/* Cartão de Crédito com Bandeiras */}
+                <div className="group/item flex items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-sky-500/40 hover:bg-sky-500/[0.03] transition-all">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-8 w-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
+                      <CreditCardBrandIcon className="h-4.5 w-4.5 text-sky-400" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-zinc-200 group-hover/item:text-white transition-colors">
                       Cartão de Crédito
                     </p>
-                    <span className="inline-block text-[10px] font-semibold text-sky-400 truncate">
-                      Em até 12x
-                    </span>
                   </div>
+                  <span className="shrink-0 text-[10px] font-semibold text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-md">
+                    Em até 12x
+                  </span>
                 </div>
 
                 {/* Cartão de Débito - Caixa */}
-                <div className="group/item flex items-center gap-2.5 p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-indigo-500/40 hover:bg-indigo-500/[0.03] transition-all">
-                  <div className="h-8 w-8 rounded-lg bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center shrink-0 text-indigo-400 group-hover/item:scale-105 transition-transform">
-                    <Wallet className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-zinc-200 group-hover/item:text-white transition-colors truncate">
+                <div className="group/item flex items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-[#005ca9]/50 hover:bg-[#005ca9]/[0.04] transition-all">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-8 w-8 rounded-lg bg-[#005ca9]/20 border border-[#005ca9]/40 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
+                      <CaixaDebitBrandIcon className="h-4.5 w-4.5" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-zinc-200 group-hover/item:text-white transition-colors">
                       Cartão de Débito
                     </p>
-                    <span className="inline-block text-[10px] font-semibold text-indigo-300 truncate">
-                      Exclusivo Caixa Virtual
-                    </span>
                   </div>
+                  <span className="shrink-0 text-[10px] font-semibold text-sky-300 bg-[#005ca9]/20 border border-[#005ca9]/35 px-2 py-0.5 rounded-md">
+                    Exclusivo Caixa Virtual
+                  </span>
                 </div>
 
-                {/* Boleto / Saldo */}
-                <div className="group/item flex items-center gap-2.5 p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-amber-500/40 hover:bg-amber-500/[0.03] transition-all">
-                  <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center shrink-0 text-amber-400 group-hover/item:scale-105 transition-transform">
-                    <Receipt className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-zinc-200 group-hover/item:text-white transition-colors truncate">
+                {/* Boleto Bancário com Código de Barras */}
+                <div className="group/item flex items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-amber-500/40 hover:bg-amber-500/[0.03] transition-all">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
+                      <BoletoBrandIcon className="h-4.5 w-4.5 text-amber-400" />
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-zinc-200 group-hover/item:text-white transition-colors">
                       Boleto / Saldo MP
                     </p>
-                    <span className="inline-block text-[10px] font-semibold text-amber-400 truncate">
-                      À vista ou conta
-                    </span>
                   </div>
+                  <span className="shrink-0 text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                    À vista ou conta
+                  </span>
                 </div>
               </div>
             </div>
@@ -228,13 +228,13 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
             </div>
 
             {/* Links Auxiliares */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t border-zinc-800/60">
+            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pt-3 border-t border-zinc-800/60">
               {whatsappUrl && (
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full border-emerald-500/20 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-900/30 hover:border-emerald-500/40 hover:text-emerald-200 flex items-center justify-center gap-2 text-xs py-5 rounded-xl transition-all cursor-pointer"
+                    className="w-full border-emerald-500/20 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-900/30 hover:border-emerald-500/40 hover:text-emerald-200 flex items-center justify-center gap-2 text-xs py-4 sm:py-5 rounded-xl transition-all cursor-pointer"
                   >
                     <MessageCircle className="h-4 w-4 text-emerald-400 shrink-0" />
                     <span>Dúvidas? Atendimento WhatsApp</span>
@@ -245,7 +245,7 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full text-zinc-400 hover:text-white hover:bg-white/5 text-xs py-5 rounded-xl transition-all cursor-pointer"
+                  className="w-full text-zinc-400 hover:text-white hover:bg-white/5 text-xs py-3 sm:py-5 rounded-xl transition-all cursor-pointer"
                 >
                   Pagar mais tarde
                 </Button>
