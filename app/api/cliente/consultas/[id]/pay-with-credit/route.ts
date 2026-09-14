@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { reserveConsultationCredit } from '@/lib/credits/credit-service';
-import { releaseVerifiedPaidConsultation } from '@/lib/mercadopago/consultation-releaser';
+import { reserveConsultationCredit, releaseConsultationCredit } from '@/lib/credits/credit-service';
+import {
+  enqueueDeliveryJob,
+  executeSingleDeliveryJob,
+} from '@/lib/vehicle-delivery/delivery-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +13,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   try {
     const { id: consultationId } = await context.params;
 
-    // 1. Auth
+    // 1. Autenticar usuário
     const supabase = await createClient();
     const {
       data: { user },
@@ -23,10 +26,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     const adminDb = createAdminClient();
 
-    // 2. Validate Consultation
+    // 2. Validar Consulta e Ownership
     const { data: consultation, error: consError } = await adminDb
       .from('customer_plate_consultations')
-      .select('id, user_id, status')
+      .select('id, user_id, status, payment_coverage_type, credit_status, credit_reservation_id')
       .eq('id', consultationId)
       .maybeSingle();
 
@@ -45,7 +48,26 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       );
     }
 
-    // 3. Reserve Credit (Atomic)
+    // 3. Mutex: Confirmar que não há transação aprovada ou em processo no Mercado Pago
+    const { data: existingTx } = await adminDb
+      .from('payment_transactions')
+      .select('id, status')
+      .eq('consultation_id', consultationId)
+      .in('status', ['approved', 'in_process'])
+      .limit(1)
+      .maybeSingle();
+
+    if (existingTx) {
+      return NextResponse.json(
+        {
+          error:
+            'Esta consulta já possui transação de pagamento aprovada ou em processamento no Mercado Pago.',
+        },
+        { status: 409 },
+      );
+    }
+
+    // 4. Reservar 1 crédito atomicamente via RPC
     const reserveResult = await reserveConsultationCredit(user.id, consultationId, adminDb);
     if (!reserveResult.success) {
       return NextResponse.json(
@@ -60,55 +82,68 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       );
     }
 
-    // 4. Create Pseudo Transaction
-    const transactionId = crypto.randomUUID();
-    const { error: txError } = await adminDb.from('payment_transactions').insert({
-      id: transactionId,
-      consultation_id: consultationId,
-      user_id: user.id,
-      status: 'approved',
-      payment_method_id: 'credit',
-      payment_type_id: 'credit',
-      transaction_amount: 0,
-      currency_id: 'BRL',
-      mp_payment_id: `credit_${consultationId}`,
+    // 5. Criar delivery job de forma idempotente (SEM criar payment_transactions)
+    const enqueueResult = await enqueueDeliveryJob({
+      consultationId,
+      transactionId: null,
+      dbClient: adminDb,
     });
 
-    if (txError) {
-      console.error('[PAY-WITH-CREDIT] Erro ao criar transação pseudo-pagamento:', txError);
+    if (!enqueueResult.success && !enqueueResult.alreadyExists) {
+      console.error('[PAY-WITH-CREDIT] Erro ao enfileirar job de entrega:', enqueueResult.error);
+      // Rollback defensivo: libera a reserva para não prender o crédito do usuário
+      await releaseConsultationCredit(user.id, consultationId, adminDb);
+
       return NextResponse.json(
-        { success: false, error: 'Erro ao registrar pagamento com crédito.' },
+        {
+          success: false,
+          code: 'DELIVERY_JOB_CREATION_FAILED',
+          error:
+            'Não foi possível iniciar o processamento da consulta. Seu crédito foi preservado e liberado.',
+        },
         { status: 500 },
       );
     }
 
-    // Atualiza status da consulta para evitar inconsistências antes de lançar na fila
-    await adminDb
-      .from('customer_plate_consultations')
-      .update({
-        payment_coverage_type: 'credit',
-      })
-      .eq('id', consultationId);
+    // 6. Execução Imediata (Tentativa #1) em background/inline
+    try {
+      const { data: jobRecord } = await adminDb
+        .from('consultation_delivery_jobs')
+        .select('*')
+        .eq('id', enqueueResult.jobId)
+        .maybeSingle();
 
-    // 5. Release Consultation (Triggers Delivery)
-    const releaseResult = await releaseVerifiedPaidConsultation(transactionId, adminDb);
-
-    if (!releaseResult.success) {
-      console.error('[PAY-WITH-CREDIT] Erro ao liberar consulta com crédito:', releaseResult.error);
-      return NextResponse.json(
-        { success: false, error: 'Erro ao despachar o laudo veicular.' },
-        { status: 500 },
+      if (jobRecord && (jobRecord.status === 'pending' || jobRecord.status === 'retry_scheduled')) {
+        await executeSingleDeliveryJob(jobRecord, adminDb);
+      }
+    } catch (execErr) {
+      console.warn(
+        '[PAY-WITH-CREDIT] Tentativa imediata em background encontrou pendência, job continuará na fila:',
+        execErr,
       );
     }
 
+    // 7. Retorno Canônico
     return NextResponse.json(
-      { success: true, message: 'Pago com sucesso usando 1 crédito.' },
+      {
+        success: true,
+        paymentCoverageType: 'platform_credit',
+        creditStatus: 'reserved',
+        consultationId,
+        reservationId: reserveResult.reservationId || consultation.credit_reservation_id,
+        status: 'processing',
+      },
       { status: 200 },
     );
   } catch (error: unknown) {
     console.error('[PAY-WITH-CREDIT] Erro não tratado:', error);
     return NextResponse.json(
-      { success: false, error: 'Erro interno ao processar pagamento com crédito.' },
+      {
+        success: false,
+        code: 'INTERNAL_SERVER_ERROR',
+        error:
+          'Erro interno ao processar uso do crédito. Seu saldo foi verificado e mantido em segurança.',
+      },
       { status: 500 },
     );
   }

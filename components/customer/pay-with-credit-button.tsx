@@ -20,11 +20,7 @@ interface PayWithCreditButtonProps {
   plate?: string;
 }
 
-export function PayWithCreditButton({
-  consultationId,
-  balance,
-  plate,
-}: PayWithCreditButtonProps) {
+export function PayWithCreditButton({ consultationId, balance, plate }: PayWithCreditButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -40,11 +36,14 @@ export function PayWithCreditButton({
       const data = await res.json();
 
       if (data.success) {
-        toast.success('Crédito aplicado com sucesso! Redirecionando para seu laudo...');
+        toast.success('Seu crédito foi reservado. Estamos preparando o laudo.');
         setIsOpen(false);
         router.push(`/cliente/consultas/${consultationId}`);
       } else {
-        toast.error(data.error || 'Não foi possível utilizar o crédito do pacote.');
+        toast.error(
+          data.error ||
+            'Não foi possível concluir a consulta neste momento. Seu crédito não foi consumido e continua disponível.',
+        );
         setLoading(false);
       }
     } catch (err) {
@@ -77,10 +76,13 @@ export function PayWithCreditButton({
                 )}
               </div>
               <h3 className="text-sm sm:text-base font-bold text-zinc-100 mt-1">
-                Você possui <span className="text-amber-400">{balance} {balance === 1 ? 'crédito' : 'créditos'}</span>
+                Você possui{' '}
+                <span className="text-amber-400">
+                  {balance} {balance === 1 ? 'crédito' : 'créditos'}
+                </span>
               </h3>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Libere este laudo veicular imediatamente sem custos adicionais.
+                Utilize 1 crédito para liberar este laudo veicular com segurança.
               </p>
             </div>
           </div>
@@ -124,7 +126,9 @@ export function PayWithCreditButton({
 
             <div className="flex items-center justify-between text-xs">
               <span className="text-zinc-400">Saldo disponível atual:</span>
-              <span className="font-semibold text-zinc-200">{balance} {balance === 1 ? 'crédito' : 'créditos'}</span>
+              <span className="font-semibold text-zinc-200">
+                {balance} {balance === 1 ? 'crédito' : 'créditos'}
+              </span>
             </div>
 
             <div className="flex items-center justify-between text-xs">
@@ -134,14 +138,19 @@ export function PayWithCreditButton({
 
             <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-xs">
               <span className="text-zinc-300 font-medium">Saldo após liberação:</span>
-              <span className="font-bold text-emerald-400">{remainingAfter} {remainingAfter === 1 ? 'crédito' : 'créditos'}</span>
+              <span className="font-bold text-emerald-400">
+                {remainingAfter} {remainingAfter === 1 ? 'crédito' : 'créditos'}
+              </span>
             </div>
           </div>
 
           {/* Garantia / Benefício */}
-          <div className="flex items-center gap-2.5 text-[11px] text-zinc-300 bg-emerald-950/20 border border-emerald-500/20 px-3 py-2.5 rounded-xl">
-            <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
-            <span>Liberação instantânea: o laudo oficial em PDF e os dados da vistoria ficam disponíveis imediatamente.</span>
+          <div className="flex items-center gap-2.5 text-[11px] text-zinc-300 bg-amber-950/20 border border-amber-500/20 px-3 py-2.5 rounded-xl">
+            <ShieldCheck className="h-4 w-4 text-amber-400 shrink-0" />
+            <span>
+              1 crédito será reservado para esta consulta. Ele só será consumido após a entrega do
+              laudo. Se não for possível concluir a consulta, o crédito será devolvido.
+            </span>
           </div>
 
           {/* Rodapé de Ações */}
@@ -179,4 +188,3 @@ export function PayWithCreditButton({
     </>
   );
 }
-

@@ -307,6 +307,10 @@ export async function getCustomerConsultationWithDto(consultationId: string): Pr
     auto_refund_attempted: data.auto_refund_attempted,
     lookup_error_message: data.lookup_error_message,
     latest_payment_transaction_id: data.latest_payment_transaction_id,
+    payment_coverage_type: data.payment_coverage_type,
+    credit_status: data.credit_status,
+    credit_reservation_id: data.credit_reservation_id,
+    credit_package_id: data.credit_package_id,
   };
 
   let dto: import('@/lib/vehicle-lookup/types').InternalVehicleConsultationDto | null = null;

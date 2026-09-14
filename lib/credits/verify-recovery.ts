@@ -11,15 +11,27 @@ export interface RecoveryCheckResult {
   consultationStatus: string | null;
   paymentCoverageType: string | null;
   creditStatus: string | null;
+  creditReservationId: string | null;
   hasDeliveryJob: boolean;
   deliveryJobDetails: unknown;
+  hasPaymentTransactions: boolean;
+  paymentTransactions: unknown[];
   isCleanRollback: boolean;
+  hasOrphanReservation: boolean;
   recommendedAction: 'SAFE_TO_RETRY' | 'MANUAL_REVIEW_REQUIRED';
 }
 
 /**
  * Procedimento seguro de auditoria e verificação de integridade pós-falha.
- * Não altera nenhum dado no banco. Apenas inspeciona o estado atual.
+ * Não altera nenhum dado no banco. Apenas inspeciona o estado atual dos 8 pontos canônicos:
+ * 1. customer_plate_consultations.credit_status
+ * 2. customer_plate_consultations.credit_reservation_id
+ * 3. customer_plate_consultations.payment_coverage_type
+ * 4. customer_credit_reservations
+ * 5. customer_credit_ledger
+ * 6. customer_credit_balances
+ * 7. consultation_delivery_jobs
+ * 8. payment_transactions
  */
 export async function verifyConsultationRecoveryState(
   consultationId: string = '6dc6bde8-ddf1-4b26-a697-bc89bb69a559',
@@ -28,31 +40,33 @@ export async function verifyConsultationRecoveryState(
 ): Promise<RecoveryCheckResult> {
   const adminDb = (dbClient as ReturnType<typeof createAdminClient>) || createAdminClient();
 
-  // 1. Verificar se existe reservation
+  // 1. Verificar dados da consulta
+  const { data: consultation } = await adminDb
+    .from('customer_plate_consultations')
+    .select('id, user_id, status, payment_coverage_type, credit_status, credit_reservation_id')
+    .eq('id', consultationId)
+    .maybeSingle();
+
+  const effectiveUserId = consultation?.user_id || userId;
+
+  // 2. Verificar se existe reservation
   const { data: reservation } = await adminDb
     .from('customer_credit_reservations')
     .select('*')
     .eq('consultation_id', consultationId)
     .maybeSingle();
 
-  // 2. Verificar se existe ledger reserve
+  // 3. Verificar se existe ledger
   const { data: ledgerEntries } = await adminDb
     .from('customer_credit_ledger')
     .select('*')
     .eq('consultation_id', consultationId);
 
-  // 3. Verificar saldo agregado
+  // 4. Verificar saldo agregado
   const { data: balance } = await adminDb
     .from('customer_credit_balances')
     .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  // 4. Verificar dados da consulta
-  const { data: consultation } = await adminDb
-    .from('customer_plate_consultations')
-    .select('id, user_id, status, payment_coverage_type, credit_status')
-    .eq('id', consultationId)
+    .eq('user_id', effectiveUserId)
     .maybeSingle();
 
   // 5. Verificar se existe job de entrega
@@ -62,20 +76,34 @@ export async function verifyConsultationRecoveryState(
     .eq('consultation_id', consultationId)
     .maybeSingle();
 
+  // 6. Verificar payment_transactions (não deve haver para crédito)
+  const { data: paymentTransactions } = await adminDb
+    .from('payment_transactions')
+    .select('*')
+    .eq('consultation_id', consultationId);
+
   const hasReservation = Boolean(reservation);
   const hasLedgerReserve = Boolean(ledgerEntries && ledgerEntries.length > 0);
   const hasDeliveryJob = Boolean(deliveryJob);
+  const hasPaymentTransactions = Boolean(paymentTransactions && paymentTransactions.length > 0);
   const coverageChanged =
     consultation?.payment_coverage_type === 'platform_credit' ||
     consultation?.credit_status === 'reserved';
 
-  // O rollback é considerado limpo e completo quando nenhuma mutação parcial sobreviveu
   const isCleanRollback =
-    !hasReservation && !hasLedgerReserve && !coverageChanged && !hasDeliveryJob;
+    !hasReservation &&
+    !hasLedgerReserve &&
+    !coverageChanged &&
+    !hasDeliveryJob &&
+    !hasPaymentTransactions;
+
+  // Reserva órfã: existe reserva ativa, mas nenhum delivery job e a consulta continua pending
+  const hasOrphanReservation =
+    hasReservation && !hasDeliveryJob && consultation?.status === 'pending';
 
   return {
     consultationId,
-    userId,
+    userId: effectiveUserId,
     hasReservation,
     reservationDetails: reservation || null,
     hasLedgerReserve,
@@ -84,9 +112,17 @@ export async function verifyConsultationRecoveryState(
     consultationStatus: consultation?.status || null,
     paymentCoverageType: consultation?.payment_coverage_type || null,
     creditStatus: consultation?.credit_status || null,
+    creditReservationId: consultation?.credit_reservation_id || null,
     hasDeliveryJob,
     deliveryJobDetails: deliveryJob || null,
+    hasPaymentTransactions,
+    paymentTransactions: paymentTransactions || [],
     isCleanRollback,
-    recommendedAction: isCleanRollback ? 'SAFE_TO_RETRY' : 'MANUAL_REVIEW_REQUIRED',
+    hasOrphanReservation,
+    recommendedAction: hasOrphanReservation
+      ? 'MANUAL_REVIEW_REQUIRED'
+      : isCleanRollback
+        ? 'SAFE_TO_RETRY'
+        : 'MANUAL_REVIEW_REQUIRED',
   };
 }

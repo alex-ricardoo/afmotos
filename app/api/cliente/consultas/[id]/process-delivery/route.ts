@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   createOrGetDeliveryJob,
+  createOrGetDeliveryJobForConsultation,
   processEligibleDeliveryJob,
 } from '@/lib/vehicle-delivery/delivery-service';
 import { logCheckoutProEvent } from '@/lib/mercadopago/observability';
@@ -161,8 +162,9 @@ export async function POST(
     lastRequestTimestamps.set(rateLimitKey, now);
 
     // 7. Garante que o job exista
-    const targetTxId = txId || consultation.id;
-    const jobRes = await createOrGetDeliveryJob(targetTxId, adminDb);
+    const jobRes = txId
+      ? await createOrGetDeliveryJob(txId, adminDb)
+      : await createOrGetDeliveryJobForConsultation(consultation.id, null, adminDb);
 
     if (!jobRes.success || !jobRes.job) {
       return NextResponse.json(
