@@ -14,6 +14,8 @@ import {
   Download,
   Car,
   Loader2,
+  Coins,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { DashboardData, ConsultationStatus } from '@/lib/customer/types';
@@ -23,6 +25,7 @@ import { Button } from '@/components/ui/button';
 
 interface ClientDashboardProps {
   data: DashboardData;
+  creditBalance?: number;
 }
 
 function getGreeting(name: string) {
@@ -77,7 +80,7 @@ function getStatusBadge(status: ConsultationStatus) {
   }
 }
 
-export function ClientDashboard({ data }: ClientDashboardProps) {
+export function ClientDashboard({ data, creditBalance = 0 }: ClientDashboardProps) {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const handleDownloadPdf = async (item: { id: string; plate_normalized: string }) => {
@@ -98,35 +101,33 @@ export function ClientDashboard({ data }: ClientDashboardProps) {
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       toast.success('Laudo baixado com sucesso!');
     } catch {
-      toast.error('Erro ao gerar laudo em PDF.');
+      toast.error('Não foi possível gerar o PDF. Tente novamente mais tarde.');
     } finally {
       setDownloadingId(null);
     }
   };
-  const firstName = data.profile.full_name.split(' ')[0] || 'Cliente';
+
+  const greeting = getGreeting(data.profile.full_name?.split(' ')[0] || 'Cliente');
 
   return (
-    <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-300">
-      {/* Top Welcome Bar & Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-zinc-950 via-[#0e121a] to-zinc-950 border border-zinc-800/90 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#c9a44c] to-transparent opacity-70" />
-
-        <div className="space-y-1">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+      {/* Header Section with Welcome and Quick Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-800/80">
+        <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#c9a44c]" />
-            <span className="text-[11px] font-bold text-[#c9a44c] uppercase tracking-wider">
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              {greeting}
+            </h1>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#c9a44c]/10 text-[#e3c56c] border border-[#c9a44c]/20">
               Painel do Cliente
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight font-heading">
-            {getGreeting(firstName)}
-          </h1>
-          <p className="text-xs text-zinc-400 max-w-md">
-            Consulte novas placas e visualize os laudos veiculares da sua conta.
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+            Acompanhe suas consultas veiculares e emita laudos oficiais com rapidez.
           </p>
         </div>
 
-        <Link href="/cliente/consultas/nova" className="shrink-0">
+        <Link href="/cliente/consultas/nova">
           <Button className="w-full sm:w-auto h-11 px-5 bg-gradient-to-r from-[#c9a44c] via-[#d4b35e] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#c9a44c]/15 transition-all flex items-center justify-center gap-2 cursor-pointer">
             <PlusCircle className="w-4 h-4" />
             <span>Nova Consulta Veicular</span>
@@ -134,8 +135,8 @@ export function ClientDashboard({ data }: ClientDashboardProps) {
         </Link>
       </div>
 
-      {/* Metrics Strip (Compact 2/3 Column Grid) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+      {/* Metrics Strip (Responsive 4-Column Grid) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Consultas Totais */}
         <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 p-3.5 sm:p-4 backdrop-blur-xl shadow-sm">
           <div className="flex items-center justify-between">
@@ -175,10 +176,31 @@ export function ClientDashboard({ data }: ClientDashboardProps) {
           </div>
         </Link>
 
-        {/* Card 3: Meu Perfil (Takes full width on mobile or 3rd column on desktop) */}
+        {/* Card 3: Créditos Disponíveis (B2B) */}
+        <Link
+          href="/cliente/creditos"
+          className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 hover:border-[#c9a44c]/50 p-3.5 sm:p-4 backdrop-blur-xl shadow-sm transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-[#e3c56c] transition-colors truncate">
+              Meus Créditos
+            </span>
+            <Coins className="w-4 h-4 text-[#e3c56c] shrink-0" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-black text-[#e3c56c] font-mono leading-none">
+              {creditBalance}
+            </span>
+            <span className="text-[10px] text-zinc-500 group-hover:text-[#e3c56c] truncate hidden sm:inline transition-colors">
+              {creditBalance > 0 ? 'disponíveis →' : 'comprar pacote →'}
+            </span>
+          </div>
+        </Link>
+
+        {/* Card 4: Meu Perfil */}
         <Link
           href="/cliente/perfil"
-          className="col-span-2 sm:col-span-1 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 hover:border-[#c9a44c]/40 p-3.5 sm:p-4 backdrop-blur-xl shadow-sm transition-colors group flex sm:flex-col justify-between items-center sm:items-start"
+          className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 hover:border-[#c9a44c]/40 p-3.5 sm:p-4 backdrop-blur-xl shadow-sm transition-colors group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between w-full">
             <span className="text-[10px] sm:text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-[#c9a44c] transition-colors">
@@ -186,14 +208,40 @@ export function ClientDashboard({ data }: ClientDashboardProps) {
             </span>
             <User className="w-4 h-4 text-zinc-400 group-hover:text-[#c9a44c] transition-colors shrink-0" />
           </div>
-          <div className="mt-0 sm:mt-2 text-right sm:text-left">
-            <span className="text-xs sm:text-sm font-bold text-white block truncate max-w-[140px] sm:max-w-none">
+          <div className="mt-2">
+            <span className="text-xs sm:text-sm font-bold text-white block truncate">
               {data.profile.full_name}
             </span>
             <span className="text-[10px] text-[#c9a44c] font-medium hidden sm:inline">
               Gerenciar dados →
             </span>
           </div>
+        </Link>
+      </div>
+
+      {/* Banner Promocional de Pacotes de Créditos B2B */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-[#c9a44c]/30 bg-gradient-to-r from-zinc-950 via-[#c9a44c]/10 to-zinc-950 p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1.5 max-w-xl">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
+              Vantagem B2B
+            </span>
+            <span className="text-xs font-bold text-zinc-300">Para Lojistas, Revendedores e Compradores Frequentes</span>
+          </div>
+          <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
+            Consulte veículos com desconto em pacotes de créditos pré-pagos
+          </h2>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Feche pacotes de 5 a 50+ consultas negociadas diretamente no WhatsApp. Liberação imediata e você não precisa pagar cartão a cada placa.
+          </p>
+        </div>
+
+        <Link href="/cliente/creditos" className="shrink-0 w-full sm:w-auto">
+          <Button className="w-full sm:w-auto bg-[#c9a44c] hover:bg-[#b48d3c] text-zinc-950 font-extrabold text-xs h-10 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+            <Coins className="w-4 h-4" />
+            <span>Conhecer Pacotes de Créditos</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
         </Link>
       </div>
 

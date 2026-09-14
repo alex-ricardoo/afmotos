@@ -322,6 +322,15 @@ export async function executeSingleDeliveryJob(
           })
           .eq('id', consultation.id);
 
+        if (consultation.payment_coverage_type === 'platform_credit' || (consultation as any).credit_reservation_id) {
+          try {
+            const { consumeConsultationCredit } = await import('../credits/credit-service.ts');
+            await consumeConsultationCredit(consultation.id, cached.is_mock, runtimeEnvironment, adminDb);
+          } catch (creditErr) {
+            console.error('[executeSingleDeliveryJob] Erro ao consumir crédito reservado:', creditErr);
+          }
+        }
+
         await adminDb
           .from('consultation_delivery_jobs')
           .update({
@@ -540,6 +549,15 @@ export async function executeSingleDeliveryJob(
           updated_at: nowIso,
         })
         .eq('id', consultation.id);
+
+      if (consultation.payment_coverage_type === 'platform_credit' || (consultation as any).credit_reservation_id) {
+        try {
+          const { consumeConsultationCredit } = await import('../credits/credit-service.ts');
+          await consumeConsultationCredit(consultation.id, lookupResult.record.is_mock, runtimeEnvironment, adminDb);
+        } catch (creditErr) {
+          console.error('[executeSingleDeliveryJob] Erro ao consumir crédito reservado:', creditErr);
+        }
+      }
 
       await adminDb
         .from('consultation_delivery_jobs')

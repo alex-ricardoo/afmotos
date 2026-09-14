@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getCustomerDashboardData } from '@/lib/customer/queries';
+import { getUserCreditBalance } from '@/lib/credits/credit-service';
 import { ClientDashboard } from '@/components/customer/client-dashboard';
 
 export const metadata = {
@@ -18,7 +19,10 @@ export default async function CustomerDashboardPage() {
     redirect('/cliente/login');
   }
 
-  const dashboardData = await getCustomerDashboardData();
+  const [dashboardData, creditBalance] = await Promise.all([
+    getCustomerDashboardData(),
+    getUserCreditBalance(user.id),
+  ]);
 
   if (!dashboardData) {
     return (
@@ -28,5 +32,5 @@ export default async function CustomerDashboardPage() {
     );
   }
 
-  return <ClientDashboard data={dashboardData} />;
+  return <ClientDashboard data={dashboardData} creditBalance={creditBalance} />;
 }

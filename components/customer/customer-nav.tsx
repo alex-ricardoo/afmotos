@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Sparkles,
   Globe,
+  Coins,
 } from 'lucide-react';
 import { logoutCustomer } from '@/lib/customer/actions';
 import { Button } from '@/components/ui/button';
@@ -64,18 +65,28 @@ export function CustomerNav({ user }: CustomerNavProps) {
       href: '/cliente',
       icon: LayoutDashboard,
       exact: true,
+      badge: null,
     },
     {
       name: 'Minhas Consultas',
       href: '/cliente/consultas',
       icon: Search,
       exact: false,
+      badge: null,
+    },
+    {
+      name: 'Pacotes de Créditos',
+      href: '/cliente/creditos',
+      icon: Coins,
+      exact: false,
+      badge: 'B2B',
     },
     {
       name: 'Meu Perfil',
       href: '/cliente/perfil',
       icon: User,
       exact: false,
+      badge: null,
     },
   ];
 
@@ -179,6 +190,11 @@ export function CustomerNav({ user }: CustomerNavProps) {
                   <div className="flex items-center gap-3">
                     <Icon className={`w-4 h-4 ${active ? 'text-[#c9a44c]' : 'text-zinc-400'}`} />
                     <span>{item.name}</span>
+                    {item.badge && (
+                      <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
+                        {item.badge}
+                      </span>
+                    )}
                   </div>
                   <ChevronRight className="w-4 h-4 opacity-40" />
                 </Link>
@@ -299,7 +315,7 @@ export function CustomerNav({ user }: CustomerNavProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     active
                       ? 'bg-gradient-to-r from-[#c9a44c]/15 to-[#c9a44c]/5 text-white shadow-sm border border-[#c9a44c]/30'
                       : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/50'
@@ -308,12 +324,19 @@ export function CustomerNav({ user }: CustomerNavProps) {
                   {active && (
                     <span className="absolute left-0 top-2 bottom-2 w-1 bg-[#c9a44c] rounded-r-full" />
                   )}
-                  <Icon
-                    className={`w-4 h-4 shrink-0 transition-colors ${
-                      active ? 'text-[#c9a44c]' : 'text-zinc-400'
-                    }`}
-                  />
-                  <span>{item.name}</span>
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      className={`w-4 h-4 shrink-0 transition-colors ${
+                        active ? 'text-[#c9a44c]' : 'text-zinc-400'
+                      }`}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                  {item.badge && (
+                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

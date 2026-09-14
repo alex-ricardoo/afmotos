@@ -31,7 +31,7 @@ export async function releaseVerifiedPaidConsultation(
     return { success: false, error: 'Transação de pagamento não encontrada.' };
   }
 
-  // Precondição estrita: status deve ser approved e possuir mp_payment_id
+  // Precondição estrita: status deve ser approved e possuir mp_payment_id (ou ser pago com crédito)
   if (transaction.status !== 'approved') {
     return {
       success: false,
@@ -39,7 +39,7 @@ export async function releaseVerifiedPaidConsultation(
     };
   }
 
-  if (!transaction.mp_payment_id) {
+  if (transaction.payment_method_id !== 'credit' && !transaction.mp_payment_id) {
     return { success: false, error: 'Transação aprovada sem mp_payment_id oficial.' };
   }
 

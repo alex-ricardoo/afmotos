@@ -1,0 +1,13 @@
+-- ==============================================================================
+-- DEPRECATED AND SUPERSEDED MIGRATION
+-- Original timestamp: 20260914100000
+-- ==============================================================================
+-- This preliminary migration failed execution on Supabase due to an external
+-- dependency on `public.moddatetime()` which is not installed in the project.
+--
+-- This migration has been fully superseded by:
+-- `supabase/migrations/20260914120000_create_secure_b2b_credit_packages.sql`
+--
+-- This file is intentionally left empty of executable DDL to prevent CLI migration
+-- sequence breaks or duplicate object definitions.
+-- ==============================================================================

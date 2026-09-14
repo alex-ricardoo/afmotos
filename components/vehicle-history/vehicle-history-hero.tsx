@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, ArrowRight, FileDown, Link2, Loader2, MessageCircle } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldCheck, ArrowRight, FileDown, Link2, Loader2, MessageCircle, Coins, Sparkles } from 'lucide-react';
 import { MercosulPlateInput } from './mercosul-plate-input';
 import { VehicleHistorySettings } from '@/types/site-settings';
 import { isValidBrazilianPlate } from '@/lib/vehicle-lookup/plate';
@@ -133,6 +134,16 @@ export function VehicleHistoryHero({ settings, siteName, defaultPhone }: Vehicle
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col items-center text-center space-y-5 sm:space-y-6">
+          {/* Lojista / B2B Discount Pill */}
+          <Link
+            href="/cliente/creditos"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-200 text-xs font-semibold transition-all duration-200 group shadow-md backdrop-blur-md"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>É lojista ou frotista? <strong>Pacotes com até 15% OFF</strong> na Área do Cliente</span>
+            <ArrowRight className="w-3 h-3 text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </Link>
+
           {/* CRO Headline */}
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.15] max-w-4xl font-heading drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
             Evite perder dinheiro.{' '}
@@ -207,6 +218,17 @@ export function VehicleHistoryHero({ settings, siteName, defaultPhone }: Vehicle
                 >
                   Ver tabela de preços e o que está incluso no laudo ↓
                 </button>
+
+                <div className="pt-2 mt-1 border-t border-zinc-800/80 w-full text-center">
+                  <Link
+                    href="/cliente/creditos"
+                    className="inline-flex items-center justify-center gap-1.5 text-xs text-amber-400/90 hover:text-amber-300 font-semibold transition-colors group"
+                  >
+                    <Coins className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Precisa de várias consultas? <strong>Ver pacotes na Área do Cliente</strong></span>
+                    <ArrowRight className="w-3 h-3 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
               </div>
             </div>
 
