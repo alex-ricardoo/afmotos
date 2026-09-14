@@ -4,7 +4,14 @@
 --              a sessão autenticada com admin_profiles.auth_user_id = auth.uid()
 --              (e não admin_profiles.id = auth.uid()).
 --              Garante validação estrita de is_active = true e role in ('admin', 'super_admin').
+--              Corrige auditoria contábil de créditos exclusivamente em customer_credit_ledger
+--              e assegura compatibilidade de colunas em consultation_audit_logs.
 -- ==============================================================================
+
+-- 0. Compatibilidade de colunas na tabela consultation_audit_logs
+ALTER TABLE public.consultation_audit_logs 
+  ADD COLUMN IF NOT EXISTS event_name TEXT,
+  ADD COLUMN IF NOT EXISTS metadata JSONB;
 
 -- 1. Helper canônico SQL para validação de administrador ativo
 CREATE OR REPLACE FUNCTION public.is_active_admin()
@@ -151,7 +158,7 @@ BEGIN
         p_expires_at
     ) RETURNING id INTO v_package_id;
 
-    -- 5. Insert Ledger Entry
+    -- 5. Insert Immutable Ledger Entry (Auditoria contábil completa de créditos B2B)
     INSERT INTO public.customer_credit_ledger (
         user_id,
         package_id,
@@ -206,25 +213,6 @@ BEGIN
         updated_at = timezone('utc', now())
     RETURNING available_credits, reserved_credits, consumed_credits
     INTO v_avail, v_res, v_cons;
-
-    -- 7. Audit Log
-    INSERT INTO public.consultation_audit_logs (
-        actor_id,
-        actor_type,
-        event_name,
-        metadata
-    ) VALUES (
-        v_admin_id,
-        'admin',
-        'credit_package_granted',
-        jsonb_build_object(
-            'user_id', p_user_id,
-            'package_id', v_package_id,
-            'package_name', p_package_name,
-            'credits_granted', p_credits_granted,
-            'idempotency_key', p_idempotency_key
-        )
-    );
 
     RETURN jsonb_build_object(
         'success', true,
@@ -375,7 +363,7 @@ BEGIN
         );
     END IF;
 
-    -- 4. Ledger Entry
+    -- 4. Ledger Entry (Auditoria contábil completa de ajustes de créditos B2B)
     INSERT INTO public.customer_credit_ledger (
         user_id,
         package_id,
@@ -407,24 +395,6 @@ BEGIN
             'adjustment_type', p_adjustment_type,
             'quantity', p_quantity,
             'admin_id', v_admin_id
-        )
-    );
-
-    -- 5. Audit Log
-    INSERT INTO public.consultation_audit_logs (
-        actor_id,
-        actor_type,
-        event_name,
-        metadata
-    ) VALUES (
-        v_admin_id,
-        'admin',
-        'credit_package_adjusted',
-        jsonb_build_object(
-            'package_id', p_package_id,
-            'adjustment_type', p_adjustment_type,
-            'quantity', p_quantity,
-            'idempotency_key', p_idempotency_key
         )
     );
 
