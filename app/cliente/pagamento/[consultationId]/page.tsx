@@ -231,7 +231,11 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
               
               {/* Pagamento com Crédito (B2B) */}
               {creditBalance > 0 && (
-                <PayWithCreditButton consultationId={consultation.id} balance={creditBalance} />
+                <PayWithCreditButton
+                  consultationId={consultation.id}
+                  balance={creditBalance}
+                  plate={consultation.plate}
+                />
               )}
             </div>
 
