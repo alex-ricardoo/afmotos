@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { VehicleHistoryPricingCard } from './vehicle-history-pricing-card';
 
 interface VehicleHistoryTabProps {
   form: UseFormReturn<any>;
@@ -84,10 +85,20 @@ export function VehicleHistoryTab({ form }: VehicleHistoryTabProps) {
           />
         </div>
 
-        {/* Pricing Block */}
+        {/* Bloco de Precificação e Custo com Versionamento e Margem */}
+        <VehicleHistoryPricingCard
+          onPriceUpdated={(newPrice) => {
+            form.setValue('settings.vehicleHistory.price', newPrice, {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
+          }}
+        />
+
+        {/* Posicionamento Comercial e Frases de Destaque */}
         <div className="p-5 rounded-2xl bg-zinc-900/40 border border-zinc-800 space-y-4">
           <h4 className="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-2">
-            <Sparkles className="w-4 h-4" /> Precificação e Posicionamento Comercial
+            <Sparkles className="w-4 h-4" /> Posicionamento Comercial e Frases de Apoio
           </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -95,22 +106,10 @@ export function VehicleHistoryTab({ form }: VehicleHistoryTabProps) {
               control={form.control}
               name="settings.vehicleHistory.price"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white">Preço da Consulta (R$)</FormLabel>
+                <FormItem className="hidden">
                   <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="39.99"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      className="bg-zinc-950 border-zinc-800 text-white"
-                    />
+                    <Input type="hidden" {...field} />
                   </FormControl>
-                  <FormDescription className="text-zinc-400 text-xs">
-                    Valor cobrado por cada relatório veicular.
-                  </FormDescription>
-                  <FormMessage />
                 </FormItem>
               )}
             />

@@ -13,6 +13,7 @@ import {
   isCacheEntryEligibleForPaidProduction,
   type RuntimeEnvironment,
 } from './cache-eligibility.ts';
+import { getVehicleHistoryPricingConfig } from '../settings/pricing-service.ts';
 
 export interface EnqueueDeliveryJobParams {
   consultationId: string;
@@ -326,10 +327,31 @@ export async function executeSingleDeliveryJob(
             vehicle_data: cached.raw_response,
             source_consultation_id: cached.id,
             status: 'completed',
+            provider_cost_status: 'not_applicable',
+            provider_cost_snapshot_cents: 0,
             processed_at: nowIso,
             updated_at: nowIso,
           })
           .eq('id', consultation.id);
+
+        try {
+          await adminDb.from('vehicle_lookup_provider_costs').insert({
+            customer_consultation_id: consultation.id,
+            vehicle_consultation_id: cached.id,
+            delivery_job_id: job.id,
+            provider: cached.provider || 'apibrasil',
+            request_mode: cached.mode || 'live',
+            is_mock: cached.is_mock,
+            charge_status: 'not_applicable',
+            cost_snapshot_cents: 0,
+            actual_cost_cents: 0,
+            currency: 'BRL',
+            idempotency_key: `delivery_cache_${job.id}`,
+            incurred_at: null,
+          });
+        } catch {
+          // ignora eventual idempotência duplicada
+        }
 
         if (
           consultation.payment_coverage_type === 'platform_credit' ||
@@ -501,6 +523,15 @@ export async function executeSingleDeliveryJob(
     },
   });
 
+  const pricingConfig = await getVehicleHistoryPricingConfig(adminDb).catch(() => null);
+  const costSnapshotCents = pricingConfig?.apiBrasilLiveCostCents ?? 3000;
+  const pricingVersionId =
+    pricingConfig?.versionId &&
+    pricingConfig.versionId !== 'legacy-fallback' &&
+    pricingConfig.versionId !== 'hard-fallback'
+      ? pricingConfig.versionId
+      : null;
+
   try {
     const lookupResult = await executeVehiclePlateLookup(
       {
@@ -508,6 +539,10 @@ export async function executeSingleDeliveryJob(
         userId: consultation.user_id,
         confirmedPlate: plateToLookup,
         requireLiveOnly: isProd,
+        pricingVersionId,
+        costSnapshotCents,
+        customerConsultationId: consultation.id,
+        deliveryJobId: job.id,
       },
       adminDb,
     );
@@ -565,6 +600,10 @@ export async function executeSingleDeliveryJob(
           vehicle_data: lookupResult.record.raw_response,
           source_consultation_id: lookupResult.record.id,
           status: 'completed',
+          pricing_version_id: pricingVersionId,
+          public_price_snapshot_cents: pricingConfig?.publicPriceCents ?? 3990,
+          provider_cost_snapshot_cents: lookupResult.record.is_mock ? 0 : costSnapshotCents,
+          provider_cost_status: lookupResult.record.is_mock ? 'not_applicable' : 'incurred',
           processed_at: nowIso,
           updated_at: nowIso,
         })
@@ -626,6 +665,40 @@ export async function executeSingleDeliveryJob(
     }
   } catch (err: unknown) {
     const classified = classifyProviderFailure(err);
+
+    if (
+      classified.failureCode === 'APIBRASIL_INSUFFICIENT_CREDITS' ||
+      classified.httpStatus === 402
+    ) {
+      try {
+        await adminDb.from('vehicle_lookup_provider_costs').insert({
+          customer_consultation_id: consultation.id,
+          delivery_job_id: job.id,
+          provider: 'apibrasil',
+          request_mode: 'live',
+          is_mock: false,
+          charge_status: 'not_incurred',
+          cost_snapshot_cents: costSnapshotCents,
+          actual_cost_cents: 0,
+          currency: 'BRL',
+          pricing_version_id: pricingVersionId,
+          provider_http_status: classified.httpStatus || 402,
+          provider_error_code: classified.failureCode,
+          idempotency_key: `delivery_insufficient_${job.id}_att_${job.attempt_count}`,
+          incurred_at: null,
+        });
+
+        await adminDb
+          .from('customer_plate_consultations')
+          .update({
+            provider_cost_status: 'not_incurred',
+            provider_cost_snapshot_cents: 0,
+          })
+          .eq('id', consultation.id);
+      } catch {
+        // ignora eventual duplicata de chave
+      }
+    }
 
     await adminDb.from('consultation_audit_logs').insert({
       consultation_id: consultation.id,

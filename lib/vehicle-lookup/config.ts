@@ -8,7 +8,7 @@ export interface VehicleLookupConfig {
   estimatedCostPerLookup: number;
 }
 
-export function getVehicleLookupConfig(): VehicleLookupConfig {
+export function getVehicleLookupConfig(overriddenCost?: number | null): VehicleLookupConfig {
   const token =
     process.env.APIBRASIL_TOKEN ||
     process.env.API_BRASIL_TOKEN ||
@@ -18,6 +18,11 @@ export function getVehicleLookupConfig(): VehicleLookupConfig {
   const modeEnv = (process.env.VEHICLE_LOOKUP_MODE || (token ? 'live' : 'mock')).toLowerCase().trim();
   const mode: VehicleLookupMode = modeEnv === 'mock' ? 'mock' : 'live';
 
+  const defaultCost =
+    typeof overriddenCost === 'number' && overriddenCost >= 0
+      ? overriddenCost
+      : parseFloat(process.env.VEHICLE_LOOKUP_ESTIMATED_COST || '') || 30.0;
+
   return {
     mode,
     apiBrasilToken: token,
@@ -25,6 +30,6 @@ export function getVehicleLookupConfig(): VehicleLookupConfig {
       process.env.APIBRASIL_BASE_URL ||
       'https://gateway.apibrasil.io/api/v2/consulta/veiculos/credits',
     timeoutMs: 120_000, // 120s timeout matching cURL --max-time 120
-    estimatedCostPerLookup: 30.0,
+    estimatedCostPerLookup: defaultCost,
   };
 }

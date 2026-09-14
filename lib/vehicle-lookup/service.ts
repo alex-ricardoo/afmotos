@@ -11,6 +11,8 @@ import type {
   VehicleConsultationStatus,
 } from './types.ts';
 
+import { getVehicleHistoryPricingConfig } from '../settings/pricing-service.ts';
+
 export class InsufficientBalanceError extends Error {
   balance?: string;
   rechargeUrl?: string;
@@ -42,6 +44,10 @@ export interface ExecuteLookupParams {
   sellRequestId?: string | null;
   forceRefresh?: boolean;
   requireLiveOnly?: boolean;
+  pricingVersionId?: string | null;
+  costSnapshotCents?: number | null;
+  customerConsultationId?: string | null;
+  deliveryJobId?: string | null;
 }
 
 export interface LookupExecutionResult {
@@ -202,7 +208,14 @@ export async function executeVehiclePlateLookup(
     );
   }
 
-  const config = getVehicleLookupConfig();
+  const pricingConfig = await getVehicleHistoryPricingConfig(supabase).catch(() => null);
+  const activeCostCents =
+    params.costSnapshotCents ?? pricingConfig?.apiBrasilLiveCostCents ?? 3000;
+  const activePricingVersionId =
+    params.pricingVersionId ?? pricingConfig?.versionId ?? null;
+  const defaultCostBrl = activeCostCents / 100;
+
+  const config = getVehicleLookupConfig(defaultCostBrl);
   const currentMode: VehicleLookupMode = config.mode;
 
   // 1. Cache-first check (unless forceRefresh is explicitly requested)
@@ -223,7 +236,7 @@ export async function executeVehiclePlateLookup(
   let rawPayload: Record<string, unknown>;
   let isMock = false;
   let isChargeable = true;
-  let chargedAmount = config.estimatedCostPerLookup; // R$ 30,00
+  let chargedAmount = defaultCostBrl;
   let executionStatus: VehicleConsultationStatus = 'COMPLETED';
   let balanceBefore: number | null = null;
   let balanceAfter: number | null = null;
@@ -321,7 +334,7 @@ export async function executeVehiclePlateLookup(
         balanceBefore = rawPayload.balance;
       }
 
-      taxCharged = typeof rawPayload.tax === 'number' ? rawPayload.tax : 30.0;
+      taxCharged = typeof rawPayload.tax === 'number' ? rawPayload.tax : defaultCostBrl;
       if (balanceBefore != null && taxCharged != null) {
         balanceAfter = balanceBefore - taxCharged;
       }
@@ -397,6 +410,47 @@ export async function executeVehiclePlateLookup(
 
   if (insertError || !inserted) {
     throw new Error(`Erro ao salvar histórico veicular no banco de dados: ${insertError?.message}`);
+  }
+
+  // 5. Registrar custo do provedor em vehicle_lookup_provider_costs
+  try {
+    const actualCostCents = isMock
+      ? 0
+      : taxCharged != null
+        ? Math.round(taxCharged * 100)
+        : activeCostCents;
+
+    await supabase.from('vehicle_lookup_provider_costs').insert({
+      customer_consultation_id: params.customerConsultationId || null,
+      vehicle_consultation_id: inserted.id,
+      delivery_job_id: params.deliveryJobId || null,
+      provider: 'apibrasil',
+      provider_request_reference:
+        typeof rawPayload.protocolo === 'string'
+          ? rawPayload.protocolo
+          : typeof rawPayload.protocol === 'string'
+            ? rawPayload.protocol
+            : null,
+      request_mode: currentMode,
+      is_mock: isMock,
+      charge_status: isMock ? 'not_applicable' : 'incurred',
+      cost_snapshot_cents: isMock ? 0 : activeCostCents,
+      actual_cost_cents: actualCostCents,
+      currency: 'BRL',
+      pricing_version_id:
+        activePricingVersionId &&
+        activePricingVersionId !== 'legacy-fallback' &&
+        activePricingVersionId !== 'hard-fallback'
+          ? activePricingVersionId
+          : null,
+      provider_http_status: 200,
+      provider_balance_before: balanceBefore,
+      provider_balance_after: balanceAfter,
+      idempotency_key: `vpc_${inserted.id}`,
+      incurred_at: isMock ? null : new Date().toISOString(),
+    });
+  } catch (costErr) {
+    console.warn('[executeVehiclePlateLookup] Aviso ao registrar custo do provedor:', costErr);
   }
 
   return {

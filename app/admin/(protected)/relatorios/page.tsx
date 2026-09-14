@@ -6,6 +6,7 @@ import {
   getInventoryReportData,
   getCustomersReportData,
 } from '@/lib/reports/queries';
+import { getVehicleHistoryReportData } from '@/lib/reports/vehicle-history-queries';
 import { ReportsDashboard } from '@/components/admin/reports/reports-dashboard';
 import { ReportPeriodPreset } from '@/lib/reports/types';
 
@@ -35,12 +36,20 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const dateRange = resolveDateRange(preset, customStart, customEnd);
 
   // Parallel server-side data fetching
-  const [overviewData, salesData, financialData, inventoryData, customersData] = await Promise.all([
+  const [
+    overviewData,
+    salesData,
+    financialData,
+    inventoryData,
+    customersData,
+    vehicleHistoryData,
+  ] = await Promise.all([
     getOverviewReportData(dateRange),
     getSalesReportData(dateRange),
     getFinancialReportData(dateRange),
     getInventoryReportData(dateRange),
     getCustomersReportData(dateRange),
+    getVehicleHistoryReportData(dateRange),
   ]);
 
   return (
@@ -50,6 +59,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       financialData={financialData}
       inventoryData={inventoryData}
       customersData={customersData}
+      vehicleHistoryData={vehicleHistoryData}
       dateRange={dateRange}
     />
   );

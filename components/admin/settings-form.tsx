@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -22,6 +22,8 @@ import {
   Sparkles,
   Info,
   FileSearch,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -137,6 +139,46 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('identity');
   const [loading, setLoading] = useState(false);
+
+  // Suporte a scroll horizontal com setas (padrão laudo veicular)
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = useCallback(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 6);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    checkScroll();
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll);
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [checkScroll]);
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const scrollAmount = direction === 'left' ? -260 : 260;
+    el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0) {
+      const el = tabsContainerRef.current;
+      if (!el) return;
+      el.scrollLeft += e.deltaY;
+    }
+  };
 
   const rawSettings = initialData?.settings || {};
 
@@ -323,31 +365,75 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
 
   return (
     <div className="space-y-6 pb-6">
-      {/* Barra de Abas / Navegação de Categorias */}
-      <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-1.5 shadow-md backdrop-blur-md">
-        <nav className="flex flex-wrap items-center gap-1.5">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+      {/* Barra de Abas / Navegação de Categorias em Linha Única com Controles de Scroll */}
+      <div className="relative group bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-1.5 shadow-md backdrop-blur-md">
+        {/* Botão de Scroll para Esquerda */}
+        {canScrollLeft && (
+          <div className="absolute left-1.5 top-1.5 bottom-1.5 z-10 flex items-center">
+            <button
+              type="button"
+              onClick={() => handleScroll('left')}
+              className="h-full px-2.5 rounded-xl bg-zinc-900/95 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 shadow-lg shadow-black/80 flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95 backdrop-blur-md"
+              aria-label="Rolar abas para esquerda"
+              title="Rolar abas para esquerda"
+            >
+              <ChevronLeft className="w-4 h-4 text-[#c9a44c]" />
+            </button>
+          </div>
+        )}
 
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  'flex-1 min-w-[120px] sm:min-w-[130px] flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none whitespace-nowrap',
-                  isActive
-                    ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 shadow-md shadow-amber-500/10 font-bold'
-                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60',
-                )}
-              >
-                <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-zinc-950' : 'text-zinc-400')} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+        {/* Trilha de Abas com Scroll Horizontal */}
+        <div
+          ref={tabsContainerRef}
+          onWheel={handleWheel}
+          className="overflow-x-auto scrollbar-none scroll-smooth px-1"
+        >
+          <nav className="flex items-center gap-1.5 min-w-max py-0.5">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={(e) => {
+                    setActiveTab(tab.id);
+                    e.currentTarget.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'nearest',
+                      inline: 'center',
+                    });
+                  }}
+                  className={cn(
+                    'flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer select-none whitespace-nowrap shrink-0',
+                    isActive
+                      ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 shadow-md shadow-amber-500/10 font-bold'
+                      : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60',
+                  )}
+                >
+                  <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-zinc-950' : 'text-zinc-400')} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Botão de Scroll para Direita */}
+        {canScrollRight && (
+          <div className="absolute right-1.5 top-1.5 bottom-1.5 z-10 flex items-center">
+            <button
+              type="button"
+              onClick={() => handleScroll('right')}
+              className="h-full px-2.5 rounded-xl bg-zinc-900/95 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 shadow-lg shadow-black/80 flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95 backdrop-blur-md"
+              aria-label="Rolar abas para direita"
+              title="Rolar abas para direita"
+            >
+              <ChevronRight className="w-4 h-4 text-[#c9a44c]" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Formulário Principal */}
