@@ -19,6 +19,7 @@ import {
   BarChart3,
   FileSearch,
   CircleDollarSign,
+  Coins,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -34,6 +35,7 @@ const navigation = [
   { name: 'Relatórios', href: '/admin/relatorios', icon: BarChart3 },
   { name: 'Consulta Veicular', href: '/admin/consulta-placa', icon: FileSearch },
   { name: 'Pagamentos & Estornos', href: '/admin/pagamentos-consultas', icon: CircleDollarSign },
+  { name: 'Créditos B2B', href: '/admin/credits', icon: Coins },
   { name: 'Tabela FIPE', href: '/admin/fipe', icon: Scale },
   { name: 'Configurações', href: '/admin/configuracoes', icon: Settings },
 ];

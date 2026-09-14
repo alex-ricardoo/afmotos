@@ -36,7 +36,7 @@ export type DeliveryJobStatus =
 export interface ConsultationDeliveryJobRecord {
   id: string;
   consultation_id: string;
-  transaction_id: string;
+  transaction_id: string | null;
   job_type: string;
   status: DeliveryJobStatus;
   attempt_count: number;

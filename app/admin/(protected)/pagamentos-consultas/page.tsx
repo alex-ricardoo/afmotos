@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { Metadata } from 'next';
+import { Coins } from 'lucide-react';
 import { requireAdminUser } from '@/lib/auth/admin-guard';
 import { getAdminPaymentSummary, getAdminPaymentsList } from '@/lib/admin/payments-service';
 import { PaymentsDashboardClient } from '@/components/admin/payments/payments-dashboard-client';
@@ -73,6 +75,14 @@ export default async function AdminPaymentsConsultationsPage({ searchParams }: P
             alertas de crédito e estornos seguros.
           </p>
         </div>
+
+        <Link
+          href="/admin/credits"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#c9a44c]/20 to-[#c9a44c]/10 hover:from-[#c9a44c]/30 hover:to-[#c9a44c]/20 border border-[#c9a44c]/40 text-[#e3c56c] text-xs font-bold transition-all shadow-xs shrink-0"
+        >
+          <Coins className="w-4 h-4 text-[#e3c56c]" />
+          <span>Gerenciar Créditos B2B</span>
+        </Link>
       </div>
 
       {/* Conteúdo Interativo com Suspense */}

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import {
   Check,
   ArrowRight,
@@ -11,6 +12,7 @@ import {
   Lock,
   Sparkles,
   FileCheck2,
+  Coins,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import {
@@ -70,6 +72,38 @@ export function VehicleHistoryPricing({
     const url = buildVehicleHistoryB2BWhatsAppUrl(phone);
     window.open(url, '_blank', 'noopener,noreferrer');
   };
+
+  const b2bTiers = [
+    {
+      qty: 5,
+      name: 'Inicial',
+      discount: '5% OFF',
+      unitPrice: (rawPrice * 0.95).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      highlight: false,
+    },
+    {
+      qty: 15,
+      name: 'Lojista',
+      discount: '8% OFF',
+      unitPrice: (rawPrice * 0.92).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      highlight: true,
+      badge: 'Mais Vendido',
+    },
+    {
+      qty: 30,
+      name: 'Frotista',
+      discount: '12% OFF',
+      unitPrice: (rawPrice * 0.88).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      highlight: false,
+    },
+    {
+      qty: '50+',
+      name: 'Enterprise',
+      discount: '15% OFF',
+      unitPrice: (rawPrice * 0.85).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      highlight: false,
+    },
+  ];
 
   return (
     <section
@@ -275,28 +309,195 @@ export function VehicleHistoryPricing({
           </div>
         </div>
 
-        {/* Discreet B2B / Volume Option */}
-        <div className="p-4 rounded-2xl bg-[#0D111A] border border-[#1F293D] flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <Users className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">Procura várias opções ou é lojista?</p>
-              <p className="text-[11px] text-zinc-400">
-                Temos pacotes de consultas com desconto progressivo por lote.
+        {/* Showcase B2B / Volume / Pacotes para Lojistas (Mobile First) */}
+        <div className="relative rounded-3xl p-4 sm:p-7 lg:p-8 bg-gradient-to-b from-[#111726] via-[#0d121f] to-[#090d16] border border-amber-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_30px_rgba(245,158,11,0.08)] overflow-hidden space-y-5 sm:space-y-6 mb-12 sm:mb-0">
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Top Header Bar */}
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-xs font-bold w-fit">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="text-amber-300">Pacotes B2B & Lojistas</span>
+                <span className="text-zinc-600">•</span>
+                <span className="text-emerald-400">Até 15% OFF</span>
+              </div>
+
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight font-heading">
+                Pacotes de Créditos Pré-Pagos
+              </h3>
+              <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
+                Avalia veículos frequentemente? Compre créditos com desconto progressivo e consulte placas em 1 clique direto na sua <strong>Área do Cliente</strong> sem precisar passar cartão a cada consulta.
               </p>
+            </div>
+
+            {/* Quick CTAs on desktop header */}
+            <div className="hidden lg:flex flex-col items-end gap-1.5 shrink-0">
+              <Link
+                href="/cliente/creditos"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 transition-all active:scale-[0.98]"
+              >
+                <span>Ver Pacotes no Painel</span>
+                <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
+              </Link>
+              <span className="text-[10px] text-zinc-400">
+                🔒 Área restrita do cliente
+              </span>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleB2BClick}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-zinc-200 hover:text-white text-xs font-bold transition-colors cursor-pointer shrink-0 border border-slate-700"
-          >
-            <WhatsAppIcon className="w-4 h-4 fill-current text-emerald-400" />
-            <span>Consultar Pacotes</span>
-          </button>
+          {/* MOBILE VIEW: Clean Stacked Horizontal Tier Strips (sm:hidden) */}
+          <div className="space-y-2.5 sm:hidden relative z-10">
+            {b2bTiers.map((tier) => (
+              <div
+                key={tier.name}
+                className={`relative rounded-2xl p-3 sm:p-3.5 flex items-center justify-between border transition-all ${
+                  tier.highlight
+                    ? 'bg-gradient-to-r from-amber-500/15 via-[#161f33] to-[#101726] border-amber-500/60 shadow-md shadow-amber-500/10'
+                    : 'bg-[#090d16]/90 border-zinc-800'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col items-center justify-center font-black text-white shrink-0">
+                    <span className="text-sm font-heading leading-none text-amber-300">{tier.qty}</span>
+                    <span className="text-[9px] text-zinc-400 font-normal leading-none mt-0.5">un</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-bold text-white">{tier.name}</span>
+                      {tier.badge && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-semibold whitespace-nowrap leading-none">
+                          ★ {tier.badge}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-zinc-400">
+                      {tier.qty === '50+' ? 'Demanda sob medida' : `${tier.qty} laudos veiculares`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <div className="flex items-center gap-1.5 justify-end">
+                    <span className="text-xs font-black text-white font-mono">
+                      {tier.unitPrice}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black whitespace-nowrap">
+                      {tier.discount}
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-zinc-400 block">por consulta</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* DESKTOP & TABLET VIEW: 4-Column Grid (hidden sm:grid) */}
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 relative z-10">
+            {b2bTiers.map((tier) => (
+              <div
+                key={tier.name}
+                className={`relative rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 ${
+                  tier.highlight
+                    ? 'bg-gradient-to-b from-amber-500/15 via-[#161f33] to-[#101726] border-2 border-amber-500/60 shadow-lg shadow-amber-500/10'
+                    : 'bg-[#090d16]/90 hover:bg-[#0e1422] border border-zinc-800/90'
+                }`}
+              >
+                {tier.badge && (
+                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold uppercase tracking-wider shadow-sm whitespace-nowrap">
+                    ★ {tier.badge}
+                  </span>
+                )}
+
+                <div className="space-y-1">
+                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
+                    {tier.name}
+                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl sm:text-2xl font-black text-white font-heading">
+                      {tier.qty}
+                    </span>
+                    <span className="text-xs text-zinc-400 font-medium">consultas</span>
+                  </div>
+                </div>
+
+                <div className="pt-3 mt-3 border-t border-zinc-800/80 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-zinc-400 block">A partir de</span>
+                    <span className="text-xs sm:text-sm font-black text-white font-mono">
+                      {tier.unitPrice}
+                    </span>
+                    <span className="text-[10px] text-zinc-400"> /un</span>
+                  </div>
+                  <span className="px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black text-xs whitespace-nowrap">
+                    {tier.discount}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Value Guarantees (Clean grid on mobile) */}
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-2 py-1 text-xs text-zinc-300">
+            <div className="flex items-center gap-2">
+              <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
+              <span>Uso em 1 clique sem passar cartão</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
+              <span>Créditos nunca expiram</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
+              <span>Devolução automática em falha</span>
+            </div>
+          </div>
+
+          {/* Action Buttons (Compact, single-line, mobile-first) */}
+          <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+            <Link
+              href="/cliente/creditos"
+              className="w-full sm:flex-1 min-h-[42px] sm:min-h-[46px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 transition-all active:scale-[0.98] text-center cursor-pointer"
+            >
+              <span className="whitespace-nowrap">Ver Pacotes com Desconto</span>
+              <ArrowRight className="w-4 h-4 stroke-[2.5] shrink-0" />
+            </Link>
+
+            <button
+              type="button"
+              onClick={handleB2BClick}
+              className="w-full sm:w-auto min-h-[42px] sm:min-h-[46px] py-2.5 px-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-zinc-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            >
+              <WhatsAppIcon className="w-3.5 h-3.5 fill-current text-emerald-400 shrink-0" />
+              <span className="whitespace-nowrap">Falar no WhatsApp</span>
+            </button>
+          </div>
+
+          {/* Micro Footer Notice */}
+          <div className="relative z-10 pt-2 text-center border-t border-zinc-800/60">
+            <p className="text-[11px] text-zinc-400 flex items-center justify-center gap-1.5 flex-wrap">
+              <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>
+                Para acessar simulações e solicitar a liberação de créditos, é necessário ter uma conta.{' '}
+                <Link
+                  href="/cliente/cadastro?returnUrl=%2Fcliente%2Fcreditos"
+                  className="text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2"
+                >
+                  Cadastre-se grátis
+                </Link>{' '}
+                ou{' '}
+                <Link
+                  href="/cliente/login?returnUrl=%2Fcliente%2Fcreditos"
+                  className="text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2"
+                >
+                  faça login
+                </Link>
+                .
+              </span>
+            </p>
+          </div>
         </div>
       </div>
     </section>

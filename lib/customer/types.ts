@@ -52,6 +52,10 @@ export interface CustomerPlateConsultation {
   latest_payment_transaction_id?: string | null;
   auto_refund_attempted?: boolean | null;
   lookup_error_message?: string | null;
+  payment_coverage_type?: string | null;
+  credit_status?: string | null;
+  credit_reservation_id?: string | null;
+  credit_package_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -130,6 +134,10 @@ export interface ConsultationDetail {
   latest_payment_transaction_id?: string | null;
   auto_refund_attempted?: boolean | null;
   lookup_error_message?: string | null;
+  payment_coverage_type?: string | null;
+  credit_status?: string | null;
+  credit_reservation_id?: string | null;
+  credit_package_id?: string | null;
 }
 
 export interface ActionResult<T = unknown> {

@@ -6,6 +6,8 @@ import { getSiteSettings } from '@/lib/queries/settings';
 import { VehicleConsultationOrderSummary } from '@/components/customer/vehicle-consultation-order-summary';
 import { VehicleConsultationBenefits } from '@/components/customer/vehicle-consultation-benefits';
 import { CheckoutProButton } from '@/components/customer/checkout-pro-button';
+import { PayWithCreditButton } from '@/components/customer/pay-with-credit-button';
+import { getUserCreditBalance } from '@/lib/credits/credit-service';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Lock, MessageCircle, Sparkles } from 'lucide-react';
 import {
@@ -39,7 +41,7 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     redirect(`/cliente/login?returnUrl=/cliente/pagamento/${consultationId}`);
   }
 
-  const [{ data: consultation, error: consultationError }, price, settings] = await Promise.all([
+  const [{ data: consultation, error: consultationError }, price, settings, creditBalance] = await Promise.all([
     supabase
       .from('customer_plate_consultations')
       .select('id, user_id, plate, status, payment_status')
@@ -47,6 +49,7 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
       .maybeSingle(),
     getVehicleConsultationPrice(),
     getSiteSettings(),
+    getUserCreditBalance(user.id),
   ]);
 
   if (consultationError || !consultation) {
@@ -225,6 +228,15 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
             {/* Botão Oficial do Checkout Pro com valor integrado no CTA */}
             <div className="pt-2">
               <CheckoutProButton consultationId={consultation.id} amountText={formattedPrice} />
+              
+              {/* Pagamento com Crédito (B2B) */}
+              {creditBalance > 0 && (
+                <PayWithCreditButton
+                  consultationId={consultation.id}
+                  balance={creditBalance}
+                  plate={consultation.plate}
+                />
+              )}
             </div>
 
             {/* Links Auxiliares */}

@@ -208,9 +208,16 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
           </div>
           <h2 className="text-xl font-bold text-white">Consulta da Placa {formattedPlate}</h2>
           <p className="text-sm text-zinc-400">
-            {consultation.status === 'pending'
-              ? 'Esta consulta está aguardando a confirmação do pagamento para liberar o laudo completo.'
-              : 'O relatório desta consulta está sendo processado. Aguarde alguns instantes.'}
+            {consultation.status === 'failed_permanent'
+              ? consultation.payment_coverage_type === 'platform_credit'
+                ? 'Não foi possível concluir a consulta neste momento. Seu crédito não foi consumido e continua disponível.'
+                : 'Não foi possível concluir a consulta veicular. Se o pagamento foi aprovado, o estorno foi acionado.'
+              : consultation.payment_coverage_type === 'platform_credit' &&
+                  (consultation as { credit_status?: string }).credit_status === 'reserved'
+                ? 'Seu crédito foi reservado. Estamos preparando o laudo.'
+                : consultation.status === 'pending'
+                  ? 'Esta consulta está aguardando a confirmação do pagamento para liberar o laudo completo.'
+                  : 'O relatório desta consulta está sendo processado. Aguarde alguns instantes.'}
           </p>
 
           {consultation.status === 'pending' && (

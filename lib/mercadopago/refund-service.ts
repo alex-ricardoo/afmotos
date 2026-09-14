@@ -40,6 +40,8 @@ export interface RefundEligibilityParams {
     mp_payment_id?: string | null;
     amount?: number;
     transaction_amount?: number;
+    payment_method_id?: string;
+    user_id?: string;
   };
   consultation: {
     id: string;
@@ -77,7 +79,7 @@ export function evaluateRefundEligibility({
     };
   }
 
-  if (!transaction.mp_payment_id) {
+  if (transaction.payment_method_id !== 'credit' && !transaction.mp_payment_id) {
     return {
       eligible: false,
       reason: 'Identificador oficial do Mercado Pago (mp_payment_id) ausente na transação.',
@@ -251,6 +253,60 @@ export async function initiateRefundForFailedDelivery({
         reason_code: reasonCode,
       },
     });
+  }
+
+  // 4b. Intercepta estorno de crédito interno
+  if (transaction.payment_method_id === 'credit') {
+    const { releaseConsultationCredit } = await import('../credits/credit-service.ts');
+    // Em payment_transactions o campo user_id armazena o dono
+    const released = await releaseConsultationCredit(transaction.user_id, consultationId, adminDb);
+    
+    if (released) {
+      const nowIso = new Date().toISOString();
+      await adminDb
+        .from('payment_transactions')
+        .update({
+          status: 'refunded',
+          refund_status: 'refunded',
+          refund_amount: Number(transaction.transaction_amount),
+          refunded_at: nowIso,
+          updated_at: nowIso,
+        })
+        .eq('id', transaction.id);
+
+      await adminDb
+        .from('customer_plate_consultations')
+        .update({
+          status: 'refunded',
+          payment_status: 'refunded',
+          updated_at: nowIso,
+        })
+        .eq('id', consultation.id);
+        
+      await adminDb.from('consultation_audit_logs').insert({
+        consultation_id: consultation.id,
+        transaction_id: transaction.id,
+        actor_type: 'system',
+        event: 'credit_refund_confirmed',
+        details: { reason_code: reasonCode }
+      });
+
+      return {
+        success: true,
+        refundId: 'credit-refund-' + transaction.id,
+        status: 'confirmed',
+        alreadyProcessed: false,
+        message: 'Crédito estornado com sucesso.',
+      };
+    } else {
+      return {
+        success: false,
+        refundId: '',
+        status: 'failed',
+        alreadyProcessed: false,
+        message: 'Falha ao estornar crédito via RPC.',
+      };
+    }
   }
 
   const amountCents = Math.round(Number(transaction.transaction_amount) * 100);

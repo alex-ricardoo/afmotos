@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, MessageCircle, ArrowRight, Lock } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldCheck, MessageCircle, ArrowRight, Lock, Sparkles } from 'lucide-react';
 import { VehicleHistorySettings } from '@/types/site-settings';
 import { useVehicleHistory } from './vehicle-history-context';
 
@@ -94,6 +95,20 @@ export function VehicleHistoryCtaFinal({ settings, defaultPhone }: VehicleHistor
           <span className="text-zinc-600 hidden sm:inline">•</span>
           <span>PDF Oficial para Imprimir</span>
         </p>
+
+        {/* B2B / Lojista Callout */}
+        <div className="pt-4 border-t border-[#1F293D]/70 max-w-lg mx-auto">
+          <p className="text-xs text-zinc-400">
+            É lojista, frotista ou precisa de várias consultas?{' '}
+            <Link
+              href="/cliente/creditos"
+              className="text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2 transition-colors inline-flex items-center gap-1"
+            >
+              Ver pacotes com até 15% OFF na Área do Cliente
+              <ArrowRight className="w-3 h-3 inline" />
+            </Link>
+          </p>
+        </div>
       </div>
     </section>
   );

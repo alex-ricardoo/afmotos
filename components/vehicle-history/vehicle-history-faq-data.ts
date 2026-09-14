@@ -47,4 +47,10 @@ export const VEHICLE_HISTORY_FAQS: VehicleHistoryFaqItem[] = [
     answer:
       'Sim! Funciona para qualquer veículo com placa nacional (Mercosul ou placa cinza antiga), sem distinção de modelo.',
   },
+  {
+    id: 'pacotes-b2b-lojistas',
+    question: 'Vocês oferecem pacotes de consultas com desconto para lojistas ou frotistas?',
+    answer:
+      'Sim! Para lojistas de motos e carros, revendas, despachantes e frotistas, oferecemos pacotes pré-pagos de 5, 15, 30 e 50+ consultas com descontos progressivos de 5%, 8%, 12% até 15% OFF. Os créditos nunca expiram e permitem consultar qualquer veículo em 1 clique sem precisar passar cartão a cada placa. Para acessar os detalhes, basta criar sua conta gratuita e acessar a aba "Pacotes de Créditos" na sua Área do Cliente.',
+  },
 ];

@@ -79,6 +79,7 @@ export default async function CustomerLoginPage({ searchParams }: LoginPageProps
                   src="/logo.jpg"
                   alt="AF Motos"
                   fill
+                  sizes="44px"
                   className="object-cover"
                   priority
                 />

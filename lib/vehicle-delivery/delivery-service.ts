@@ -16,7 +16,7 @@ import {
 
 export interface EnqueueDeliveryJobParams {
   consultationId: string;
-  transactionId: string;
+  transactionId?: string | null;
   dbClient?: unknown;
 }
 
@@ -141,7 +141,7 @@ export async function enqueueDeliveryJob({
     .from('consultation_delivery_jobs')
     .insert({
       consultation_id: consultationId,
-      transaction_id: transactionId,
+      transaction_id: transactionId || null,
       job_type: 'vehicle_report_delivery',
       status: 'pending',
       attempt_count: 0,
@@ -177,28 +177,37 @@ export async function enqueueDeliveryJob({
     };
   }
 
-  // 3. Atualiza a consulta do cliente para 'paid'
-  await adminDb
-    .from('customer_plate_consultations')
-    .update({
-      payment_status: 'paid',
-      status: 'paid',
-      payment_date: new Date().toISOString(),
-      latest_payment_transaction_id: transactionId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', consultationId);
+  // 3. Atualiza a consulta do cliente
+  if (transactionId) {
+    await adminDb
+      .from('customer_plate_consultations')
+      .update({
+        payment_status: 'paid',
+        status: 'paid',
+        payment_date: new Date().toISOString(),
+        latest_payment_transaction_id: transactionId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', consultationId);
+  } else {
+    await adminDb
+      .from('customer_plate_consultations')
+      .update({
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', consultationId);
+  }
 
   // 4. Log e Auditoria
   logVehicleDeliveryEvent('job_created', {
     jobIdMasked: maskId(newJob.id),
     consultationIdMasked: maskId(consultationId),
-    transactionIdMasked: maskId(transactionId),
+    transactionIdMasked: transactionId ? maskId(transactionId) : 'none',
   });
 
   await adminDb.from('consultation_audit_logs').insert({
     consultation_id: consultationId,
-    transaction_id: transactionId,
+    transaction_id: transactionId || null,
     actor_type: 'system',
     event: 'delivery_job_created',
     details: {
@@ -321,6 +330,26 @@ export async function executeSingleDeliveryJob(
             updated_at: nowIso,
           })
           .eq('id', consultation.id);
+
+        if (
+          consultation.payment_coverage_type === 'platform_credit' ||
+          Boolean((consultation as { credit_reservation_id?: string | null }).credit_reservation_id)
+        ) {
+          try {
+            const { consumeConsultationCredit } = await import('../credits/credit-service.ts');
+            await consumeConsultationCredit(
+              consultation.id,
+              cached.is_mock,
+              runtimeEnvironment,
+              adminDb,
+            );
+          } catch (creditErr) {
+            console.error(
+              '[executeSingleDeliveryJob] Erro ao consumir crédito reservado:',
+              creditErr,
+            );
+          }
+        }
 
         await adminDb
           .from('consultation_delivery_jobs')
@@ -541,6 +570,26 @@ export async function executeSingleDeliveryJob(
         })
         .eq('id', consultation.id);
 
+      if (
+        consultation.payment_coverage_type === 'platform_credit' ||
+        Boolean((consultation as { credit_reservation_id?: string | null }).credit_reservation_id)
+      ) {
+        try {
+          const { consumeConsultationCredit } = await import('../credits/credit-service.ts');
+          await consumeConsultationCredit(
+            consultation.id,
+            lookupResult.record.is_mock,
+            runtimeEnvironment,
+            adminDb,
+          );
+        } catch (creditErr) {
+          console.error(
+            '[executeSingleDeliveryJob] Erro ao consumir crédito reservado:',
+            creditErr,
+          );
+        }
+      }
+
       await adminDb
         .from('consultation_delivery_jobs')
         .update({
@@ -686,7 +735,14 @@ export async function executeSingleDeliveryJob(
  */
 async function handleJobPermanentFailure(
   job: ConsultationDeliveryJobRecord,
-  consultation: { id: string; user_id?: string; status?: string },
+  consultation: {
+    id: string;
+    user_id?: string;
+    status?: string;
+    payment_coverage_type?: string | null;
+    credit_reservation_id?: string | null;
+    credit_status?: string | null;
+  },
   failureCode: string,
   errorMessageSafe: string,
   httpStatus: number | null,
@@ -736,7 +792,7 @@ async function handleJobPermanentFailure(
   if (isInsufficientCredits) {
     await adminDb.from('consultation_audit_logs').insert({
       consultation_id: consultation.id,
-      transaction_id: job.transaction_id,
+      transaction_id: job.transaction_id || null,
       actor_type: 'system',
       event: 'support_attention_required',
       details: {
@@ -747,17 +803,36 @@ async function handleJobPermanentFailure(
     });
   }
 
-  // Disparo automático do estorno total no Mercado Pago
-  try {
-    await initiateRefundForFailedDelivery({
-      transactionId: job.transaction_id,
-      consultationId: consultation.id,
-      reasonCode: failureCode,
-      reasonSafe: errorMessageSafe,
-      dbClient: adminDb,
-    });
-  } catch (refundErr) {
-    console.error('[handleJobPermanentFailure] Erro ao disparar estorno automático:', refundErr);
+  const isCreditCovered =
+    consultation.payment_coverage_type === 'platform_credit' ||
+    Boolean(consultation.credit_reservation_id);
+
+  if (isCreditCovered) {
+    // Liberação compensatória do crédito reservado
+    try {
+      const { releaseConsultationCredit } = await import('../credits/credit-service.ts');
+      await releaseConsultationCredit(consultation.user_id || '', consultation.id, adminDb);
+      logVehicleDeliveryEvent('credit_released_on_permanent_failure', {
+        jobIdMasked: maskId(job.id),
+        consultationIdMasked: maskId(consultation.id),
+        failureCode,
+      });
+    } catch (creditErr) {
+      console.error('[handleJobPermanentFailure] Erro ao liberar crédito reservado:', creditErr);
+    }
+  } else if (job.transaction_id) {
+    // Disparo automático do estorno total no Mercado Pago apenas se houver transação real
+    try {
+      await initiateRefundForFailedDelivery({
+        transactionId: job.transaction_id,
+        consultationId: consultation.id,
+        reasonCode: failureCode,
+        reasonSafe: errorMessageSafe,
+        dbClient: adminDb,
+      });
+    } catch (refundErr) {
+      console.error('[handleJobPermanentFailure] Erro ao disparar estorno automático:', refundErr);
+    }
   }
 
   return { success: false, status: 'failed_permanent', error: errorMessageSafe };
@@ -875,6 +950,36 @@ export async function createOrGetDeliveryJob(
   const enqueueRes = await enqueueDeliveryJob({
     consultationId: transaction.consultation_id,
     transactionId: transaction.id,
+    dbClient: adminDb,
+  });
+
+  if (!enqueueRes.success && !enqueueRes.alreadyExists) {
+    return { success: false, error: enqueueRes.error || 'Falha ao enfileirar job.' };
+  }
+
+  const { data: job } = await adminDb
+    .from('consultation_delivery_jobs')
+    .select('*')
+    .eq('id', enqueueRes.jobId)
+    .maybeSingle();
+
+  return { success: true, job: job as ConsultationDeliveryJobRecord };
+}
+
+/**
+ * Cria ou recupera de forma idempotente o job de entrega associado diretamente a uma consulta,
+ * suportando consultas pagas com créditos da plataforma sem transação de pagamento externa.
+ */
+export async function createOrGetDeliveryJobForConsultation(
+  consultationId: string,
+  transactionId?: string | null,
+  customDb?: unknown,
+): Promise<{ success: boolean; job?: ConsultationDeliveryJobRecord; error?: string }> {
+  const adminDb = (customDb as ReturnType<typeof createAdminClient>) || createAdminClient();
+
+  const enqueueRes = await enqueueDeliveryJob({
+    consultationId,
+    transactionId: transactionId || null,
     dbClient: adminDb,
   });
 
