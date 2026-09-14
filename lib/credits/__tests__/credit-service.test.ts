@@ -176,4 +176,67 @@ describe('B2B Credit Packages & Service Logic', () => {
     assert.equal(capturedParams.p_consultation_id, 'cons-fail');
     assert.equal(capturedParams.p_reason_code, 'DELIVERY_FAILED_PERMANENT');
   });
+
+  it('should pass authenticated dbClient to grant_credit_package RPC and map result', async () => {
+    let calledWithClient = false;
+    let rpcParams: any = null;
+
+    const fakeAuthenticatedClient = {
+      rpc: async (fn: string, params: any) => {
+        calledWithClient = true;
+        rpcParams = params;
+        return {
+          data: {
+            success: true,
+            code: 'GRANT_SUCCESS',
+            message_safe: 'Pacote concedido com sucesso.',
+            package_id: 'pkg-real-123',
+            available_credits: 10,
+            reserved_credits: 0,
+            consumed_credits: 0,
+          },
+          error: null,
+        };
+      },
+    };
+
+    const result = await grantCreditsToUser({
+      userId: 'user-b2b-456',
+      amount: 10,
+      adminId: 'admin-auth-id-789',
+      description: 'Concessão manual via painel',
+      dbClient: fakeAuthenticatedClient,
+    });
+
+    assert.equal(calledWithClient, true);
+    assert.equal(result.success, true);
+    assert.equal(result.availableCredits, 10);
+    assert.equal(rpcParams.p_user_id, 'user-b2b-456');
+    assert.equal(rpcParams.p_credits_granted, 10);
+  });
+
+  it('should correctly handle UNAUTHORIZED error from grant_credit_package RPC', async () => {
+    const fakeClient = {
+      rpc: async () => ({
+        data: {
+          success: false,
+          code: 'UNAUTHORIZED',
+          message_safe: 'Apenas administradores ativos podem conceder pacotes de créditos.',
+        },
+        error: null,
+      }),
+    };
+
+    const result = await grantCreditsToUser({
+      userId: 'user-b2b-456',
+      amount: 5,
+      adminId: 'unauthorized-user',
+      dbClient: fakeClient,
+    });
+
+    assert.equal(result.success, false);
+    assert.equal(result.code, 'UNAUTHORIZED');
+    assert.equal(result.error, 'Apenas administradores ativos podem conceder pacotes de créditos.');
+  });
 });
+
