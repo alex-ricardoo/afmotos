@@ -118,7 +118,8 @@ describe('B2B Credit Packages & Service Logic', () => {
     };
 
     const success = await reserveConsultationCredit('user-1', 'consultation-10', fakeDb as any);
-    assert.equal(success, true);
+    assert.equal(success.success, true);
+    assert.equal(success.reservationId, 'res-999');
     assert.equal(capturedParams.p_consultation_id, 'consultation-10');
     assert.equal(capturedParams.p_override_user_id, 'user-1');
     assert.match(capturedParams.p_idempotency_key, /^res_consultation-10$/);
