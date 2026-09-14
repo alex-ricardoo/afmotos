@@ -7,7 +7,6 @@ import {
   FileCheck,
   TrendingUp,
   ArrowRight,
-  ShieldCheck,
   Zap,
   CheckCircle2,
 } from 'lucide-react';
@@ -28,24 +27,24 @@ const STEPS = [
   {
     num: '02',
     stepLabel: 'Passo 2',
-    badge: '100% Online',
-    title: 'Pagamento Seguro',
-    desc: 'Pague com facilidade e segurança diretamente na plataforma via Pix imediato ou Cartão com liberação instantânea.',
+    badge: 'Mercado Pago Oficial',
+    title: 'Checkout Seguro Mercado Pago',
+    desc: 'Pague com total segurança no ambiente oficial do Mercado Pago via Pix instantâneo, Cartão de Crédito em até 12x, Débito Caixa ou Boleto/Saldo MP.',
     icon: CreditCard,
-    iconColor: 'text-emerald-400',
-    iconBg: 'bg-emerald-500/10 border-emerald-500/25',
-    pill: 'Pix ou Cartão seguro',
+    iconColor: 'text-[#009ee3]',
+    iconBg: 'bg-[#009ee3]/10 border-[#009ee3]/25',
+    pill: 'Pix, Cartão até 12x, Débito & Boleto',
   },
   {
     num: '03',
     stepLabel: 'Passo 3',
-    badge: 'Liberação Imediata',
-    title: 'Laudo na Área do Cliente',
-    desc: 'Acesse o relatório completo interativo e baixe o arquivo em PDF oficial a qualquer momento no seu painel exclusivo.',
+    badge: 'Plataforma Vitalícia',
+    title: 'Laudos Salvos & PDF para Imprimir',
+    desc: 'Acesse sua Área do Cliente exclusiva onde todos os seus laudos ficam salvos. Consulte múltiplos veículos a qualquer momento e baixe o laudo em PDF para imprimir.',
     icon: FileCheck,
     iconColor: 'text-amber-400',
     iconBg: 'bg-amber-500/10 border-amber-500/25',
-    pill: 'PDF oficial para download',
+    pill: 'Múltiplas consultas & PDF oficial',
   },
 ];
 
@@ -53,7 +52,9 @@ interface VehicleHistoryHowItWorksProps {
   siteName?: string;
 }
 
-export function VehicleHistoryHowItWorks({ siteName = 'AF Motos' }: VehicleHistoryHowItWorksProps = {}) {
+export function VehicleHistoryHowItWorks({
+  siteName = 'AF Motos',
+}: VehicleHistoryHowItWorksProps = {}) {
   const { scrollToSection } = useVehicleHistory();
 
   return (
@@ -74,7 +75,8 @@ export function VehicleHistoryHowItWorks({ siteName = 'AF Motos' }: VehicleHisto
           </h2>
 
           <p className="text-xs sm:text-sm text-zinc-300 max-w-lg mx-auto leading-relaxed">
-            Consulte qualquer veículo no Brasil e receba o diagnóstico completo diretamente no seu celular em minutos.
+            Consulte qualquer veículo no Brasil e receba o diagnóstico oficial da {siteName}{' '}
+            diretamente no seu celular em minutos.
           </p>
         </div>
 
@@ -102,7 +104,9 @@ export function VehicleHistoryHowItWorks({ siteName = 'AF Motos' }: VehicleHisto
                       </span>
                     </div>
 
-                    <div className={`w-9 h-9 rounded-xl ${item.iconBg} flex items-center justify-center border transition-transform duration-300 group-hover:scale-110`}>
+                    <div
+                      className={`w-9 h-9 rounded-xl ${item.iconBg} flex items-center justify-center border transition-transform duration-300 group-hover:scale-110`}
+                    >
                       <Icon className={`w-4 h-4 ${item.iconColor}`} />
                     </div>
                   </div>
@@ -115,9 +119,7 @@ export function VehicleHistoryHowItWorks({ siteName = 'AF Motos' }: VehicleHisto
                       </h3>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                      {item.desc}
-                    </p>
+                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
                   </div>
 
                   {/* Card Footer Pill */}
@@ -149,7 +151,11 @@ export function VehicleHistoryHowItWorks({ siteName = 'AF Motos' }: VehicleHisto
                   Diferencial na Compra e Venda de Veículos
                 </h4>
                 <p className="text-xs text-zinc-300 leading-relaxed max-w-2xl">
-                  Ter o laudo oficial em PDF e o link interativo guardados <strong className="text-amber-300">comprova procedência</strong>, afasta compradores desconfiados e <strong className="text-white">valoriza seu veículo</strong> para fechar negócio pelo preço justo!
+                  Ter o laudo oficial em PDF e o link interativo guardados{' '}
+                  <strong className="text-amber-300">comprova procedência</strong>, afasta
+                  compradores desconfiados e{' '}
+                  <strong className="text-white">valoriza seu veículo</strong> para fechar negócio
+                  pelo preço justo!
                 </p>
               </div>
             </div>

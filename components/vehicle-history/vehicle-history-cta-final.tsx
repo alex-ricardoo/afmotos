@@ -3,21 +3,16 @@
 import React from 'react';
 import { ShieldCheck, MessageCircle, ArrowRight, Lock } from 'lucide-react';
 import { VehicleHistorySettings } from '@/types/site-settings';
-import { buildVehicleHistoryWhatsAppUrl } from '@/lib/utils/whatsapp';
 import { useVehicleHistory } from './vehicle-history-context';
 
 interface VehicleHistoryCtaFinalProps {
   settings: VehicleHistorySettings;
-  siteName: string;
+  siteName?: string;
   defaultPhone: string;
 }
 
-export function VehicleHistoryCtaFinal({
-  settings,
-  siteName,
-  defaultPhone,
-}: VehicleHistoryCtaFinalProps) {
-  const { plate, isValid, formattedPlate, scrollToSection } = useVehicleHistory();
+export function VehicleHistoryCtaFinal({ settings, defaultPhone }: VehicleHistoryCtaFinalProps) {
+  const { isValid, formattedPlate, scrollToSection } = useVehicleHistory();
   const phone = settings.whatsappPhoneOverride || defaultPhone;
   const formattedPrice = settings.price.toLocaleString('pt-BR', {
     style: 'currency',
@@ -57,8 +52,10 @@ export function VehicleHistoryCtaFinal({
           </h2>
           {/* Strict max 3 lines paragraph */}
           <p className="text-sm sm:text-base text-zinc-300 max-w-xl mx-auto leading-relaxed">
-            Consulte 100% online e acesse o diagnóstico completo com download do laudo oficial em PDF por apenas <strong className="text-amber-400 font-bold">{formattedPrice}</strong>.
-            Evite prejuízos irreversíveis e feche seu negócio com total tranquilidade.
+            Consulte 100% online via Mercado Pago e acesse sua plataforma exclusiva de laudos salvos
+            com download em PDF para imprimir por apenas{' '}
+            <strong className="text-amber-400 font-bold">{formattedPrice}</strong>. Evite prejuízos
+            irreversíveis e feche seu negócio com total tranquilidade.
           </p>
         </div>
 
@@ -70,7 +67,9 @@ export function VehicleHistoryCtaFinal({
             onClick={handleSolicitarClick}
             className="w-full sm:w-auto min-h-[52px] px-8 py-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/50"
           >
-            <span>{isValid ? `Consultar Placa ${formattedPlate}` : 'Consultar Histórico Agora'}</span>
+            <span>
+              {isValid ? `Consultar Placa ${formattedPlate}` : 'Consultar Histórico Agora'}
+            </span>
             <ArrowRight className="w-5 h-5 stroke-[3]" />
           </button>
 
@@ -85,12 +84,17 @@ export function VehicleHistoryCtaFinal({
           </button>
         </div>
 
-        <p className="text-xs text-zinc-500 flex items-center justify-center gap-1.5">
-          <Lock className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Bases Oficiais Senatran & Detran • Atendimento ágil {siteName}</span>
+        <p className="text-xs text-zinc-400 flex flex-wrap items-center justify-center gap-2">
+          <span className="flex items-center gap-1 text-emerald-400">
+            <Lock className="w-3.5 h-3.5" />
+            <span>Checkout Seguro Mercado Pago</span>
+          </span>
+          <span className="text-zinc-600 hidden sm:inline">•</span>
+          <span>Laudos Salvos Vitalícios</span>
+          <span className="text-zinc-600 hidden sm:inline">•</span>
+          <span>PDF Oficial para Imprimir</span>
         </p>
       </div>
     </section>
   );
 }
-

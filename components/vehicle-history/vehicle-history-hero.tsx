@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, ArrowRight, FileDown, Link2, AlertTriangle, Loader2, MessageCircle } from 'lucide-react';
+import { ShieldCheck, ArrowRight, FileDown, Link2, Loader2, MessageCircle } from 'lucide-react';
 import { MercosulPlateInput } from './mercosul-plate-input';
 import { VehicleHistorySettings } from '@/types/site-settings';
 import { isValidBrazilianPlate } from '@/lib/vehicle-lookup/plate';
@@ -19,11 +19,7 @@ interface VehicleHistoryHeroProps {
   defaultPhone: string;
 }
 
-export function VehicleHistoryHero({
-  settings,
-  siteName,
-  defaultPhone,
-}: VehicleHistoryHeroProps) {
+export function VehicleHistoryHero({ settings, siteName, defaultPhone }: VehicleHistoryHeroProps) {
   const router = useRouter();
   const { plate, setPlateInput, scrollToSection } = useVehicleHistory();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -72,7 +68,9 @@ export function VehicleHistoryHero({
     }
 
     if (!isValidBrazilianPlate(plate)) {
-      setErrorMessage('Informe uma placa válida no padrão Mercosul (ABC1D23) ou antigo (ABC-1234).');
+      setErrorMessage(
+        'Informe uma placa válida no padrão Mercosul (ABC1D23) ou antigo (ABC-1234).',
+      );
       return;
     }
 
@@ -135,7 +133,6 @@ export function VehicleHistoryHero({
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col items-center text-center space-y-5 sm:space-y-6">
-
           {/* CRO Headline */}
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.15] max-w-4xl font-heading drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
             Evite perder dinheiro.{' '}
@@ -146,8 +143,9 @@ export function VehicleHistoryHero({
 
           {/* Sub-headline: strictly max 3 lines */}
           <p className="text-base sm:text-lg lg:text-xl text-zinc-200 max-w-2xl leading-relaxed font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-            Descubra leilão escondido, dívidas bancárias e bloqueios judiciais em segundos.
-            Consulte 100% online com liberação imediata, painel interativo e download do laudo oficial em PDF.
+            Descubra leilão escondido, dívidas bancárias e bloqueios judiciais em segundos. Checkout
+            oficial Mercado Pago, laudos salvos para sempre na sua conta e download em PDF para
+            imprimir.
           </p>
 
           {/* Plate Input Box & Primary CTA */}
@@ -157,7 +155,6 @@ export function VehicleHistoryHero({
                 <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 block">
                   Digite a placa para checar o histórico
                 </label>
-               
               </div>
 
               {/* Mercosul Plate Input */}
@@ -217,25 +214,24 @@ export function VehicleHistoryHero({
             <div className="pt-2 flex flex-wrap items-center justify-center gap-y-2 gap-x-3 sm:gap-x-4 text-xs font-medium text-zinc-400">
               <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Mais barato que concorrentes</span>
+                <span>Mercado Pago Oficial</span>
               </span>
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <Link2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>Painel 100% Online</span>
+                <span>Laudos Salvos no Painel</span>
               </span>
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <FileDown className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Download em PDF</span>
+                <span>PDF para Imprimir</span>
               </span>
               <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                <span>Suporte Humano</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                <span>Múltiplas Consultas</span>
               </span>
             </div>
-
           </div>
         </div>
       </div>

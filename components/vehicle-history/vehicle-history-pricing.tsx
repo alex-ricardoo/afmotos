@@ -10,15 +10,18 @@ import {
   Zap,
   Lock,
   Sparkles,
-  TrendingDown,
   FileCheck2,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
-import { VehicleHistorySettings } from '@/types/site-settings';
 import {
-  buildVehicleHistoryWhatsAppUrl,
-  buildVehicleHistoryB2BWhatsAppUrl,
-} from '@/lib/utils/whatsapp';
+  MercadoPagoBrandIcon,
+  PixBrandIcon,
+  CreditCardBrandIcon,
+  CaixaDebitBrandIcon,
+  BoletoBrandIcon,
+} from '@/components/customer/payment-brand-icons';
+import { VehicleHistorySettings } from '@/types/site-settings';
+import { buildVehicleHistoryB2BWhatsAppUrl } from '@/lib/utils/whatsapp';
 import { useVehicleHistory } from './vehicle-history-context';
 
 interface VehicleHistoryPricingProps {
@@ -32,8 +35,10 @@ const CHECKLIST_ITEMS = [
   'Alienação Fiduciária (Dívidas ativas com Bancos)',
   'Bloqueios na Justiça (Renajud) & Alerta de Furto',
   'Débitos Estaduais, IPVA e Multas em aberto',
-  'Laudo Oficial em PDF + Acesso vitalício na Área do Cliente',
-  'Suporte especializado com consultores para tirar dúvidas',
+  'Área do Cliente: laudos salvos com acesso vitalício',
+  'Download do Laudo Oficial em PDF pronto para imprimir',
+  'Plataforma multi-veículos: consulte quantas placas precisar',
+  'Ambiente Mercado Pago: Pix imediato, Cartão até 12x, Débito e Boleto',
 ];
 
 export function VehicleHistoryPricing({
@@ -41,14 +46,14 @@ export function VehicleHistoryPricing({
   siteName,
   defaultPhone,
 }: VehicleHistoryPricingProps) {
-  const { plate, isValid, formattedPlate, scrollToSection } = useVehicleHistory();
+  const { isValid, formattedPlate, scrollToSection } = useVehicleHistory();
   const phone = settings.whatsappPhoneOverride || defaultPhone;
-  const rawPrice = settings.price || 39.90;
+  const rawPrice = settings.price || 39.9;
   const formattedPrice = rawPrice.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
-  const competitorPrice = 64.90;
+  const competitorPrice = 64.9;
   const savings = Math.max(0, competitorPrice - rawPrice);
   const formattedSavings = savings.toLocaleString('pt-BR', {
     style: 'currency',
@@ -67,7 +72,10 @@ export function VehicleHistoryPricing({
   };
 
   return (
-    <section id="precos-historico" className="py-12 sm:py-20 bg-[#080B11] border-t border-[#1F293D] relative overflow-hidden">
+    <section
+      id="precos-historico"
+      className="py-12 sm:py-20 bg-[#080B11] border-t border-[#1F293D] relative overflow-hidden"
+    >
       {/* Subtle Glow Background */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-80 bg-amber-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
 
@@ -100,7 +108,8 @@ export function VehicleHistoryPricing({
                 Risco sem o Laudo
               </span>
               <p className="text-xs text-zinc-300 leading-snug">
-                Prejuízo de <strong className="text-red-300">R$ 5.000 a R$ 25.000</strong> com leilão maquiado, processo ou golpe.
+                Prejuízo de <strong className="text-red-300">R$ 5.000 a R$ 25.000</strong> com
+                leilão maquiado, processo ou golpe.
               </p>
             </div>
           </div>
@@ -115,12 +124,11 @@ export function VehicleHistoryPricing({
                 <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
                   Aqui na {siteName}
                 </span>
-                <span className="text-[10px] text-zinc-400 line-through">
-                  Outros: R$ 64,90
-                </span>
+                <span className="text-[10px] text-zinc-400 line-through">Outros: R$ 64,90</span>
               </div>
               <p className="text-xs text-zinc-200 leading-snug">
-                Mesmo laudo oficial por apenas <strong className="text-amber-400 font-mono text-sm">{formattedPrice}</strong>.
+                Mesmo laudo oficial por apenas{' '}
+                <strong className="text-amber-400 font-mono text-sm">{formattedPrice}</strong>.
               </p>
             </div>
           </div>
@@ -162,7 +170,8 @@ export function VehicleHistoryPricing({
             <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center p-3 sm:p-0 rounded-xl bg-slate-950/60 sm:bg-transparent border border-slate-800/80 sm:border-0">
               <div className="text-left sm:text-right">
                 <span className="text-[11px] text-zinc-400 block sm:inline">
-                  Em outros sites: <span className="line-through font-semibold text-zinc-500">R$ 64,90</span>
+                  Em outros sites:{' '}
+                  <span className="line-through font-semibold text-zinc-500">R$ 64,90</span>
                 </span>
                 <span className="text-[10px] font-bold text-emerald-400 block sm:hidden">
                   Preço exclusivo AF Motos
@@ -190,9 +199,7 @@ export function VehicleHistoryPricing({
                   <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
                     <Check className="w-3.5 h-3.5 stroke-[3]" />
                   </div>
-                  <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                    {item}
-                  </span>
+                  <span className="text-xs sm:text-sm text-zinc-200 font-medium">{item}</span>
                 </div>
               ))}
             </div>
@@ -207,16 +214,54 @@ export function VehicleHistoryPricing({
               className="w-full min-h-[52px] py-3.5 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base sm:text-lg shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/50"
             >
               <span className="whitespace-nowrap">
-                {isValid ? `Consultar Placa ${formattedPlate} Agora` : 'Consultar Minha Placa Agora'}
+                {isValid
+                  ? `Consultar Placa ${formattedPlate} Agora`
+                  : 'Consultar Minha Placa Agora'}
               </span>
               <ArrowRight className="w-5 h-5 stroke-[3] shrink-0" />
             </button>
+
+            {/* Banner Oficial Mercado Pago & Formas de Pagamento */}
+            <div className="rounded-2xl bg-[#090D15]/90 border border-zinc-800 p-3 sm:p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#009ee3] shadow-sm shrink-0">
+                    <MercadoPagoBrandIcon className="h-3.5 w-3.5 text-[#009ee3]" />
+                  </div>
+                  <span className="text-xs font-bold text-white">
+                    Processado via Mercado Pago Oficial
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  Ambiente 100% Criptografado
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-zinc-800/80">
+                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800/60 text-[11px] font-medium text-zinc-300">
+                  <PixBrandIcon className="h-3.5 w-3.5 text-[#00bdae] shrink-0" />
+                  <span className="truncate">Pix Instantâneo</span>
+                </div>
+                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800/60 text-[11px] font-medium text-zinc-300">
+                  <CreditCardBrandIcon className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+                  <span className="truncate">Cartão até 12x</span>
+                </div>
+                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800/60 text-[11px] font-medium text-zinc-300">
+                  <CaixaDebitBrandIcon className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                  <span className="truncate">Débito Caixa</span>
+                </div>
+                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800/60 text-[11px] font-medium text-zinc-300">
+                  <BoletoBrandIcon className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                  <span className="truncate">Boleto / Saldo MP</span>
+                </div>
+              </div>
+            </div>
 
             {/* Micro-Trust Badges */}
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-400 pt-1">
               <span className="flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                Pagamento 100% online seguro
+                Segurança Mercado Pago
               </span>
               <span className="flex items-center gap-1.5">
                 <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -237,9 +282,7 @@ export function VehicleHistoryPricing({
               <Users className="w-4 h-4 text-emerald-400" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white">
-                Procura várias opções ou é lojista?
-              </p>
+              <p className="text-xs font-bold text-white">Procura várias opções ou é lojista?</p>
               <p className="text-[11px] text-zinc-400">
                 Temos pacotes de consultas com desconto progressivo por lote.
               </p>
