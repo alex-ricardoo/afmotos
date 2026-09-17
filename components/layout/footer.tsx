@@ -280,6 +280,14 @@ export function Footer({ settings }: { settings?: any }) {
 
               <li>
                 <Link
+                  href="/termos-de-uso"
+                  className="hover:text-amber-500 transition-colors duration-200"
+                >
+                  Termos de Uso
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/politica-de-privacidade"
                   className="hover:text-amber-500 transition-colors duration-200"
                 >
@@ -370,6 +378,12 @@ export function Footer({ settings }: { settings?: any }) {
             © {new Date().getFullYear()} {siteName}. Todos os direitos reservados.
           </p>
           <div className="flex items-center gap-4 sm:gap-6 flex-wrap justify-center sm:justify-end">
+            <Link
+              href="/termos-de-uso"
+              className="hover:text-amber-500 cursor-pointer transition-colors duration-200"
+            >
+              Termos de Uso
+            </Link>
             <Link
               href="/politica-de-privacidade"
               className="hover:text-amber-500 cursor-pointer transition-colors duration-200"

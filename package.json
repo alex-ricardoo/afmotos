@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test lib/uploads/__tests__/*.test.ts lib/seo/__tests__/*.test.ts lib/utils/__tests__/*.test.ts lib/vehicle-lookup/__tests__/*.test.ts lib/customer/__tests__/*.test.ts lib/auth/__tests__/*.test.ts lib/mercadopago/__tests__/*.test.ts lib/vehicle-delivery/__tests__/*.test.ts lib/admin/__tests__/*.test.ts lib/credits/__tests__/*.test.ts lib/settings/__tests__/*.test.ts lib/reports/__tests__/*.test.ts"
+    "test": "node --experimental-strip-types --test lib/uploads/__tests__/*.test.ts lib/seo/__tests__/*.test.ts lib/utils/__tests__/*.test.ts lib/vehicle-lookup/__tests__/*.test.ts lib/customer/__tests__/*.test.ts lib/auth/__tests__/*.test.ts lib/mercadopago/__tests__/*.test.ts lib/vehicle-delivery/__tests__/*.test.ts lib/admin/__tests__/*.test.ts lib/credits/__tests__/*.test.ts lib/settings/__tests__/*.test.ts lib/reports/__tests__/*.test.ts lib/legal/__tests__/*.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
