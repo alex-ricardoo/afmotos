@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import {
   Mail,
@@ -70,13 +71,34 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
   const [phone, setPhone] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const passwordStrength = mode === 'register' ? getPasswordStrength(password) : null;
 
+  const isFormValid =
+    mode === 'login'
+      ? email.trim().length > 0 && password.trim().length > 0
+      : fullName.trim().length > 0 &&
+        email.trim().length > 0 &&
+        phone.trim().length > 0 &&
+        dateOfBirth.trim().length > 0 &&
+        password.trim().length > 0 &&
+        acceptTerms;
+
+  const isSubmitDisabled = isPending || !isFormValid;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+
+    if (mode === 'register' && !acceptTerms) {
+      setErrorMsg(
+        'É obrigatório ler e concordar com os Termos de Uso e com a Política de Privacidade para criar uma conta.',
+      );
+      toast.error('Marque o aceite dos Termos de Uso e da Política de Privacidade.');
+      return;
+    }
 
     startTransition(async () => {
       if (mode === 'login') {
@@ -100,6 +122,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
           phone,
           date_of_birth: dateOfBirth,
           password,
+          accept_terms: true as true,
         });
 
         if (res.error) {
@@ -301,11 +324,57 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
           )}
         </div>
 
+        {/* Checkbox de Aceite dos Termos de Uso e Política de Privacidade (Cadastro) */}
+        {mode === 'register' && (
+          <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-3.5 hover:border-zinc-700/80 transition-all">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="accept_terms_checkbox"
+                checked={acceptTerms}
+                onCheckedChange={(checked) => setAcceptTerms(Boolean(checked))}
+                disabled={isPending}
+                className="mt-0.5 border-zinc-700 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500 data-[state=checked]:text-black shrink-0"
+              />
+              <div className="space-y-1">
+                <label
+                  htmlFor="accept_terms_checkbox"
+                  className="block text-xs text-zinc-200 font-medium cursor-pointer select-none leading-snug"
+                >
+                  Concordo com os Termos e Políticas
+                </label>
+                <p className="text-[11px] text-zinc-400 leading-relaxed">
+                  Declaro que li e aceito os{' '}
+                  <Link
+                    href="/termos-de-uso"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2 transition-colors"
+                  >
+                    Termos de Uso
+                  </Link>{' '}
+                  e a{' '}
+                  <Link
+                    href="/politica-de-privacidade"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-amber-400 hover:text-amber-300 font-semibold underline underline-offset-2 transition-colors"
+                  >
+                    Política de Privacidade
+                  </Link>{' '}
+                  da AF Motos (LGPD).
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Submit Button */}
         <Button
           type="submit"
-          disabled={isPending}
-          className="w-full h-12 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center gap-2 cursor-pointer"
+          disabled={isSubmitDisabled}
+          className="w-full h-12 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100"
         >
           {isPending ? (
             <span className="flex items-center gap-2">
@@ -313,9 +382,32 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
               <span>{mode === 'login' ? 'Entrando...' : 'Criando conta...'}</span>
             </span>
           ) : (
-            <span>{mode === 'login' ? 'Entrar no Meu Painel' : 'Criar Minha Conta Grátis'}</span>
+            <span>{mode === 'login' ? 'Entrar no Meu Painel' : 'Criar Conta'}</span>
           )}
         </Button>
+
+        {/* Aviso informativo discreto no Login */}
+        {mode === 'login' && (
+          <p className="text-[11px] text-zinc-500 text-center leading-relaxed pt-1">
+            Ao acessar a plataforma, você declara estar ciente da nossa{' '}
+            <Link
+              href="/politica-de-privacidade"
+              target="_blank"
+              className="text-zinc-400 hover:text-amber-400 underline underline-offset-2"
+            >
+              Política de Privacidade
+            </Link>{' '}
+            e dos{' '}
+            <Link
+              href="/termos-de-uso"
+              target="_blank"
+              className="text-zinc-400 hover:text-amber-400 underline underline-offset-2"
+            >
+              Termos de Uso
+            </Link>{' '}
+            aplicáveis.
+          </p>
+        )}
       </form>
 
       {/* Switch Mode Footer */}

@@ -2,10 +2,16 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getCustomerProfile } from '@/lib/customer/queries';
 import { ProfileForm } from '@/components/customer/profile-form';
+import { CustomerPrivacySection } from '@/components/customer/customer-privacy-section';
+import {
+  getUserComplianceStatus,
+  getPublishedDocument,
+  getCustomerPrivacyRequests,
+} from '@/lib/legal/queries';
 
 export const metadata = {
   title: 'Meu Perfil | Área do Cliente | AF Motos',
-  description: 'Gerencie seus dados pessoais e de contato na AF Motos.',
+  description: 'Gerencie seus dados pessoais, endereço e privacidade na AF Motos.',
 };
 
 export default async function CustomerProfilePage() {
@@ -18,7 +24,13 @@ export default async function CustomerProfilePage() {
     redirect('/cliente/login?returnUrl=/cliente/perfil');
   }
 
-  const profile = await getCustomerProfile();
+  const [profile, compliance, termsDoc, privacyDoc, requests] = await Promise.all([
+    getCustomerProfile(),
+    getUserComplianceStatus(user.id),
+    getPublishedDocument('terms_of_use'),
+    getPublishedDocument('privacy_policy'),
+    getCustomerPrivacyRequests(user.id),
+  ]);
 
   if (!profile) {
     return (
@@ -29,15 +41,23 @@ export default async function CustomerProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Meu Perfil</h1>
         <p className="text-xs text-zinc-400 mt-0.5">
-          Atualize seus dados cadastrais, telefone e endereço
+          Atualize seus dados cadastrais, telefone, endereço e consulte sua governança de privacidade
         </p>
       </div>
 
       <ProfileForm profile={profile} />
+
+      <CustomerPrivacySection
+        compliance={compliance}
+        termsDoc={termsDoc}
+        privacyDoc={privacyDoc}
+        requests={requests}
+        userEmail={user.email || profile.email}
+      />
     </div>
   );
 }

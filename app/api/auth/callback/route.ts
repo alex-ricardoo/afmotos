@@ -34,14 +34,26 @@ export async function GET(request: Request) {
         });
       }
 
+      // Check legal compliance (Terms of Use & Privacy Policy LGPD)
+      let destination = next;
+      try {
+        const { getUserComplianceStatus } = await import('@/lib/legal/queries');
+        const compliance = await getUserComplianceStatus(data.user.id);
+        if (!compliance.isCompliant) {
+          destination = `/cliente/aceite-documentos?returnUrl=${encodeURIComponent(next)}`;
+        }
+      } catch (err) {
+        console.error('[OAuth Callback] Error checking legal compliance:', err);
+      }
+
       const forwardedHost = request.headers.get('x-forwarded-host');
       const isLocalEnv = process.env.NODE_ENV === 'development';
       if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`);
+        return NextResponse.redirect(`${origin}${destination}`);
       } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+        return NextResponse.redirect(`https://${forwardedHost}${destination}`);
       } else {
-        return NextResponse.redirect(`${origin}${next}`);
+        return NextResponse.redirect(`${origin}${destination}`);
       }
     }
   }

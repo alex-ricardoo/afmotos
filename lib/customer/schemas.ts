@@ -33,6 +33,13 @@ export const registerCustomerSchema = z.object({
   password: z
     .string()
     .min(8, 'Senha deve ter pelo menos 8 caracteres'),
+  accept_terms: z
+    .boolean({
+      message: 'É obrigatório aceitar os Termos de Uso e a Política de Privacidade para criar uma conta.',
+    })
+    .refine((val) => val === true, {
+      message: 'É obrigatório aceitar os Termos de Uso e a Política de Privacidade para criar uma conta.',
+    }),
 });
 
 export type RegisterCustomerInput = z.infer<typeof registerCustomerSchema>;

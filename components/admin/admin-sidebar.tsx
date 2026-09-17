@@ -20,6 +20,7 @@ import {
   FileSearch,
   CircleDollarSign,
   Coins,
+  ShieldCheck,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -37,6 +38,7 @@ const navigation = [
   { name: 'Pagamentos & Estornos', href: '/admin/pagamentos-consultas', icon: CircleDollarSign },
   { name: 'Créditos B2B', href: '/admin/credits', icon: Coins },
   { name: 'Tabela FIPE', href: '/admin/fipe', icon: Scale },
+  { name: 'Documentos Legais & LGPD', href: '/admin/configuracoes/documentos-legais', icon: ShieldCheck },
   { name: 'Configurações', href: '/admin/configuracoes', icon: Settings },
 ];
 

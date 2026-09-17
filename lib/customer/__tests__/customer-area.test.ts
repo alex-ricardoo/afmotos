@@ -17,9 +17,23 @@ describe('Customer Area Validation Schemas', () => {
         phone: '(11) 98765-4321',
         date_of_birth: '1995-05-15',
         password: 'password123',
+        accept_terms: true,
       };
       const res = registerCustomerSchema.safeParse(valid);
       assert.equal(res.success, true);
+    });
+
+    it('rejects registration without accept_terms', () => {
+      const invalid = {
+        full_name: 'Alex Ricardo',
+        email: 'alex@example.com',
+        phone: '(11) 98765-4321',
+        date_of_birth: '1995-05-15',
+        password: 'password123',
+      };
+      const res = registerCustomerSchema.safeParse(invalid);
+      assert.equal(res.success, false);
+      assert.match(res.error?.issues[0]?.message || '', /É obrigatório aceitar os Termos de Uso/);
     });
 
     it('rejects short full name', () => {

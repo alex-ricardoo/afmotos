@@ -15,6 +15,7 @@ import {
 import type { ActionResult } from './types';
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { hashClientIp, categorizeUserAgent } from '@/lib/legal/crypto';
 
 /**
  * Register a new customer via email/password and create customer_profiles row.
@@ -74,6 +75,53 @@ export async function registerCustomer(data: RegisterCustomerInput): Promise<Act
   if (profileError) {
     console.error('[registerCustomer] profileError:', profileError);
     return { error: 'Erro ao salvar dados do perfil. Tente novamente.' };
+  }
+
+  // Record acceptance for active published legal documents (Terms and Privacy)
+  try {
+    const headerList = await headers();
+    const forwardedFor = headerList.get('x-forwarded-for');
+    const realIp = headerList.get('x-real-ip');
+    const clientIp = forwardedFor || realIp || null;
+    const ipHash = hashClientIp(clientIp);
+    const userAgent = headerList.get('user-agent');
+    const userAgentCategory = categorizeUserAgent(userAgent);
+    const locale = headerList.get('accept-language')?.split(',')[0] || 'pt-BR';
+
+    const { data: activeVersions } = await adminClient
+      .from('legal_document_versions')
+      .select('id, version, legal_documents!inner(slug)')
+      .in('legal_documents.slug', ['privacy_policy', 'terms_of_use'])
+      .eq('status', 'published');
+
+    if (activeVersions && activeVersions.length > 0) {
+      const acceptanceRows = activeVersions.map((v: any) => ({
+        user_id: authData.user!.id,
+        document_version_id: v.id,
+        document_slug: v.legal_documents.slug,
+        version: v.version,
+        acceptance_source: 'signup',
+        ip_hash: ipHash,
+        user_agent_category: userAgentCategory,
+        locale,
+      }));
+
+      await adminClient
+        .from('legal_document_acceptances')
+        .upsert(acceptanceRows, {
+          onConflict: 'user_id, document_version_id',
+          ignoreDuplicates: true,
+        });
+
+      console.info('[LEGAL_DOCUMENTS] legal_document.acceptance_recorded', {
+        userIdMasked: `${authData.user.id.slice(0, 4)}...`,
+        acceptanceSource: 'signup',
+        versionsCount: acceptanceRows.length,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (acceptanceErr) {
+    console.warn('[registerCustomer] legal acceptance warning:', acceptanceErr);
   }
 
   return { success: true };

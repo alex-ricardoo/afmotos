@@ -37,13 +37,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/termos-de-uso',
-        destination: '/politica-de-privacidade',
-        permanent: true,
-      },
-      {
         source: '/termos',
-        destination: '/politica-de-privacidade',
+        destination: '/termos-de-uso',
         permanent: true,
       },
       {
