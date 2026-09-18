@@ -1,0 +1,436 @@
+- generic [active] [ref=f5e1]:
+  - banner [ref=f5e2]:
+    - generic [ref=f5e3]:
+      - link "AF Motos AF Motos Compra e Venda de Motos" [ref=f5e4] [cursor=pointer]:
+        - /url: /
+        - img "AF Motos" [ref=f5e6]
+        - generic [ref=f5e7]:
+          - generic [ref=f5e8]: AF Motos
+          - generic [ref=f5e10]: Compra e Venda de Motos
+      - button "Abrir menu de navegação" [ref=f5e12] [cursor=pointer]
+  - main [ref=f5e13]:
+    - generic [ref=f5e14]:
+      - generic [ref=f5e17]:
+        - generic [ref=f5e18]: LGPD e Segurança da Informação
+        - heading "Política de Privacidade e Proteção de Dados" [level=1] [ref=f5e23]
+        - paragraph [ref=f5e24]: Transparência, integridade e governança de dados pessoais na AF Motos em estrita conformidade com a LGPD (Lei nº 13.709/2018).
+        - generic [ref=f5e25]:
+          - generic [ref=f5e30]:
+            - text: "Última atualização:"
+            - strong [ref=f5e31]: 14/09/2026
+          - generic [ref=f5e36]:
+            - text: "Versão vigente:"
+            - strong [ref=f5e37]: v1.0.0
+          - 'generic "SHA-256: d96661852dd82890a4bb9f7df1e1210b16ffe6e04f90cf0df4c9d0b8d92699c0" [ref=f5e38]': "SHA-256: d9666185...d92699c0"
+        - generic [ref=f5e43]:
+          - button "Imprimir Documento" [ref=f5e44] [cursor=pointer]
+          - link "Ver Termos de Uso" [ref=f5e46] [cursor=pointer]:
+            - /url: /termos-de-uso
+      - main [ref=f5e52]:
+        - generic [ref=f5e53]:
+          - generic [ref=f5e54]: Resumo da Nossa Conduta
+          - paragraph [ref=f5e59]:
+            - text: A
+            - strong [ref=f5e60]: AF Motos
+            - text: preza pela máxima transparência, lealdade e segurança. Todas as informações coletadas possuem finalidades legítimas, bases legais explícitas sob a LGPD e são protegidas por rigorosas salvaguardas técnicas.
+          - generic [ref=f5e61]:
+            - generic [ref=f5e62]: Criptografia HTTPS/TLS e armazenamento seguro no Supabase com RLS
+            - generic [ref=f5e67]: Não comercializamos dados e não realizamos disparos de spam
+        - generic [ref=f5e72]:
+          - generic [ref=f5e73]:
+            - heading "1. Quem somos e escopo da política" [level=2] [ref=f5e74]:
+              - generic [ref=f5e75]: "1."
+              - generic [ref=f5e76]: Quem somos e escopo da política
+            - generic [ref=f5e77]:
+              - paragraph [ref=f5e78]:
+                - text: A presente Política de Privacidade e Proteção de Dados Pessoais regula a coleta, utilização, armazenamento, compartilhamento e proteção de informações pela
+                - strong [ref=f5e79]: AF Motos
+                - text: em todos os seus serviços físicos e digitais, incluindo o Portal do Cliente, consultas de histórico veicular por placa e canais de atendimento.
+              - paragraph [ref=f5e80]: Nosso compromisso é tratar dados com estrita lealdade, necessidade e transparência, em observância à Lei Geral de Proteção de Dados (Lei nº 13.709/2018 - LGPD), ao Marco Civil da Internet (Lei nº 12.965/2014) e ao Código de Defesa do Consumidor (Lei nº 8.078/1990).
+              - paragraph [ref=f5e81]:
+                - strong [ref=f5e82]: "Nota de responsabilidade:"
+                - text: Esta política visa assegurar clareza e governança de dados. Ela não constitui declaração de imunidade absoluta contra ameaças cibernéticas imprevisíveis, mas atesta a implementação de salvaguardas técnicas e administrativas condizentes com o estado da arte.
+          - generic [ref=f5e83]:
+            - heading "2. Quais dados pessoais podemos tratar" [level=2] [ref=f5e84]:
+              - generic [ref=f5e85]: "2."
+              - generic [ref=f5e86]: Quais dados pessoais podemos tratar
+            - generic [ref=f5e87]:
+              - paragraph [ref=f5e88]: "Tratamos apenas os dados estritamente necessários para a prestação dos serviços contratados:"
+              - list [ref=f5e89]:
+                - listitem [ref=f5e90]:
+                  - strong [ref=f5e91]: "Identificação e Contato:"
+                  - text: Nome completo, e-mail, telefone celular/WhatsApp e data de nascimento.
+                - listitem [ref=f5e92]:
+                  - strong [ref=f5e93]: "Autenticação:"
+                  - text: E-mail e senha criptografada gerenciados pelo Supabase Auth, além de tokens efêmeros de sessão.
+                - listitem [ref=f5e94]:
+                  - strong [ref=f5e95]: "Negociações e Atendimento:"
+                  - text: Informações de motos oferecidas para compra, venda, anúncio ou consignação enviadas por formulário.
+                - listitem [ref=f5e96]:
+                  - strong [ref=f5e97]: "Consultas Veiculares:"
+                  - text: Placa do veículo consultada, Renavam, Chassi e restrições públicas oficiais vinculadas ao automóvel.
+                - listitem [ref=f5e98]:
+                  - strong [ref=f5e99]: "Dados de Faturamento:"
+                  - text: Valores transacionados, forma de pagamento e identificadores de transação do Mercado Pago.
+                  - emphasis [ref=f5e100]: Não armazenamos dados completos de cartão de crédito.
+                - listitem [ref=f5e101]:
+                  - strong [ref=f5e102]: "Registros Técnicos de Auditoria:"
+                  - text: Data/hora de acesso (UTC), hash de IP irreversível com salt institucional e categoria do dispositivo.
+          - generic [ref=f5e103]:
+            - heading "3. Como coletamos os dados" [level=2] [ref=f5e104]:
+              - generic [ref=f5e105]: "3."
+              - generic [ref=f5e106]: Como coletamos os dados
+            - generic [ref=f5e107]:
+              - paragraph [ref=f5e108]: "Os dados tratados chegam até a plataforma através de:"
+              - list [ref=f5e109]:
+                - listitem [ref=f5e110]:
+                  - strong [ref=f5e111]: "Fornecimento direto por você:"
+                  - text: Ao criar sua conta, preencher propostas de compra/venda ou nos contatar via WhatsApp.
+                - listitem [ref=f5e112]:
+                  - strong [ref=f5e113]: "Geração pela sua atividade:"
+                  - text: Consultas de placas realizadas em seu painel e movimentação de pacotes de crédito.
+                - listitem [ref=f5e114]:
+                  - strong [ref=f5e115]: "Integrações de fontes públicas autorizadas:"
+                  - text: Dados veiculares oficiais retornados por provedores integrados (API Brasil) a seu pedido.
+                - listitem [ref=f5e116]:
+                  - strong [ref=f5e117]: "Autenticação Google OAuth:"
+                  - text: Ao optar por login com Google, recebemos unicamente nome, e-mail e foto autorizados por você.
+          - generic [ref=f5e118]:
+            - heading "4. Para que usamos os dados" [level=2] [ref=f5e119]:
+              - generic [ref=f5e120]: "4."
+              - generic [ref=f5e121]: Para que usamos os dados
+            - generic [ref=f5e122]:
+              - paragraph [ref=f5e123]: "Utilizamos os dados pessoais com finalidades legítimas e bem definidas:"
+              - list [ref=f5e124]:
+                - listitem [ref=f5e125]: Autenticar seu acesso e gerenciar sua conta de cliente com segurança.
+                - listitem [ref=f5e126]: Processar consultas veiculares por placa, gerar e disponibilizar laudos oficiais em PDF.
+                - listitem [ref=f5e127]: Intermediar transações de compra, venda, anúncio e consignação de motos.
+                - listitem [ref=f5e128]: Viabilizar pagamentos via Mercado Pago e controlar saldos de pacotes de créditos B2B.
+                - listitem [ref=f5e129]: Prestar suporte técnico, responder dúvidas e atender chamados de pós-venda.
+                - listitem [ref=f5e130]: Prevenir fraudes cibernéticas e proteger a infraestrutura do sistema.
+                - listitem [ref=f5e131]: Cumprir obrigações legais, fiscais e regulatórias (Marco Civil da Internet e legislação tributária).
+          - generic [ref=f5e132]:
+            - heading "5. Bases legais do tratamento" [level=2] [ref=f5e133]:
+              - generic [ref=f5e134]: "5."
+              - generic [ref=f5e135]: Bases legais do tratamento
+            - generic [ref=f5e136]:
+              - paragraph [ref=f5e137]: "O tratamento de dados não repousa unicamente no consentimento. A LGPD estabelece 10 bases legais no Art. 7º, e enquadramos cada atividade de forma precisa:"
+              - table [ref=f5e139]:
+                - rowgroup [ref=f5e140]:
+                  - row [ref=f5e141]:
+                    - columnheader "Finalidade Concreta" [ref=f5e142]
+                    - columnheader "Base Legal Aplicada (LGPD)" [ref=f5e143]
+                - rowgroup [ref=f5e144]:
+                  - row [ref=f5e145]:
+                    - cell "Cadastro, emissão de relatórios e créditos" [ref=f5e146]
+                    - cell "Execução de Contrato (Art. 7º, V)" [ref=f5e147]
+                  - row [ref=f5e148]:
+                    - cell "Guarda de registros de acesso por 6 meses" [ref=f5e149]
+                    - cell "Obrigação Legal - Marco Civil (Art. 7º, II)" [ref=f5e150]
+                  - row [ref=f5e151]:
+                    - cell "Prevenção a fraudes e segurança dos laudos" [ref=f5e152]
+                    - cell "Legítimo Interesse (Art. 7º, IX) e Exercício de Direitos (Art. 7º, VI)" [ref=f5e153]
+                  - row [ref=f5e154]:
+                    - cell "Atendimento de dúvidas voluntárias e marketing" [ref=f5e155]
+                    - cell "Consentimento (Art. 7º, I) ou Procedimentos Preliminares (Art. 7º, V)" [ref=f5e156]
+          - generic [ref=f5e157]:
+            - heading "6. Dados de cadastro e autenticação" [level=2] [ref=f5e158]:
+              - generic [ref=f5e159]: "6."
+              - generic [ref=f5e160]: Dados de cadastro e autenticação
+            - paragraph [ref=f5e162]: Ao registrar-se no Portal do Cliente, exigimos nome, e-mail, telefone e data de nascimento para assegurar a identificação do titular e a capacidade civil para contratar consultas pagas. As senhas são submetidas a hashing criptográfico de alta segurança pelo Supabase Auth. Você é responsável por manter a confidencialidade de suas credenciais.
+          - generic [ref=f5e163]:
+            - heading "7. Dados de pagamentos e transações" [level=2] [ref=f5e164]:
+              - generic [ref=f5e165]: "7."
+              - generic [ref=f5e166]: Dados de pagamentos e transações
+            - paragraph [ref=f5e168]:
+              - text: A
+              - strong [ref=f5e169]: AF Motos
+              - text: não armazena números de cartões de crédito, códigos de segurança ou senhas bancárias. Todo o processamento de pagamentos (PIX, boleto e cartão) é operado pelo gateway homologado Mercado Pago sob certificação PCI-DSS. Recebemos apenas a confirmação de aprovação, IDs da transação e metadados necessários para liberação do serviço e emissão de comprovantes fiscais.
+          - generic [ref=f5e170]:
+            - heading "8. Consultas de histórico veicular e dados relacionados à placa" [level=2] [ref=f5e171]:
+              - generic [ref=f5e172]: "8."
+              - generic [ref=f5e173]: Consultas de histórico veicular e dados relacionados à placa
+            - generic [ref=f5e174]:
+              - paragraph [ref=f5e175]: As consultas por placa têm natureza cadastral e visam verificar a procedência veicular, histórico de roubo/furto, restrições judiciais e gravames. A pesquisa é solicitada sob a responsabilidade do usuário, devendo ser empregada com boa-fé para prevenção de fraudes em negociações automotivas legítimas.
+              - paragraph [ref=f5e176]: Informações que possam envolver dados pessoais de terceiros (como proprietários anteriores contidos nas bases de registro) são apresentadas de forma anonimizada ou mascarada nos laudos públicos, preservando a intimidade e a privacidade.
+          - generic [ref=f5e177]:
+            - heading "9. Pacotes de crédito e relacionamento comercial" [level=2] [ref=f5e178]:
+              - generic [ref=f5e179]: "9."
+              - generic [ref=f5e180]: Pacotes de crédito e relacionamento comercial
+            - paragraph [ref=f5e182]: Para clientes e lojistas que adquirem pacotes de créditos de consulta veicular, mantemos um extrato auditável de aquisições, vigência e consumo de créditos no Portal do Cliente, contendo o registro da placa consultada e data/hora para prestação de contas transparente.
+          - generic [ref=f5e183]:
+            - heading "10. Compartilhamento com operadores e fornecedores" [level=2] [ref=f5e184]:
+              - generic [ref=f5e185]: "10."
+              - generic [ref=f5e186]: Compartilhamento com operadores e fornecedores
+            - generic [ref=f5e187]:
+              - paragraph [ref=f5e188]: "Não vendemos nem alugamos suas informações a terceiros. O compartilhamento ocorre exclusivamente com operadores essenciais para o funcionamento da plataforma:"
+              - list [ref=f5e189]:
+                - listitem [ref=f5e190]:
+                  - strong [ref=f5e191]: "Mercado Pago:"
+                  - text: Processamento de pagamentos, conciliação e suporte a estornos.
+                - listitem [ref=f5e192]:
+                  - strong [ref=f5e193]: "API Brasil:"
+                  - text: Fornecimento de dados veiculares de órgãos oficiais de trânsito.
+                - listitem [ref=f5e194]:
+                  - strong [ref=f5e195]: "Supabase Inc.:"
+                  - text: Infraestrutura de banco de dados PostgreSQL com RLS e autenticação.
+                - listitem [ref=f5e196]:
+                  - strong [ref=f5e197]: "Vercel Inc.:"
+                  - text: Hospedagem em nuvem e distribuição de conteúdo.
+                - listitem [ref=f5e198]:
+                  - strong [ref=f5e199]: "Autoridades Públicas:"
+                  - text: Mediante determinação judicial válida ou obrigação legal expressa.
+                - listitem [ref=f5e200]:
+                  - strong [ref=f5e201]: "Assessoria Jurídica/Contábil:"
+                  - text: Para cumprimento de exigências fiscais e defesa em processos.
+          - generic [ref=f5e202]:
+            - heading "11. Mercado Pago" [level=2] [ref=f5e203]:
+              - generic [ref=f5e204]: "11."
+              - generic [ref=f5e205]: Mercado Pago
+            - paragraph [ref=f5e207]:
+              - text: Ao realizar pagamentos, o titular interage com a infraestrutura de pagamentos do Mercado Pago. Os dados bancários fornecidos são tratados sob os padrões de segurança do provedor. Recomendamos consultar os termos do provedor em
+              - link "mercadopago.com.br/privacidade" [ref=f5e208] [cursor=pointer]:
+                - /url: https://www.mercadopago.com.br/privacidade
+              - text: .
+          - generic [ref=f5e209]:
+            - heading "12. API Brasil e provedores de dados veiculares" [level=2] [ref=f5e210]:
+              - generic [ref=f5e211]: "12."
+              - generic [ref=f5e212]: API Brasil e provedores de dados veiculares
+            - paragraph [ref=f5e214]:
+              - text: As consultas dependem das bases integradas da API Brasil e dos registros oficiais de trânsito (Detran, Senatran, Renajud). A
+              - strong [ref=f5e215]: AF Motos
+              - text: não altera ou produz dados cadastrais dos veículos, atuando como intermediadora da visualização e emissão do laudo técnico.
+          - generic [ref=f5e216]:
+            - heading "13. Supabase, hospedagem e serviços de tecnologia" [level=2] [ref=f5e217]:
+              - generic [ref=f5e218]: "13."
+              - generic [ref=f5e219]: Supabase, hospedagem e serviços de tecnologia
+            - paragraph [ref=f5e221]: Nossos bancos de dados operam na nuvem gerenciada do Supabase com Row Level Security (RLS) habilitado no nível do motor PostgreSQL. Isso assegura que nenhum usuário comum tenha acesso a consultas ou cadastros de terceiros, mesmo diante de eventuais falhas lógicas da aplicação.
+          - generic [ref=f5e222]:
+            - heading "14. WhatsApp e canais de atendimento" [level=2] [ref=f5e223]:
+              - generic [ref=f5e224]: "14."
+              - generic [ref=f5e225]: WhatsApp e canais de atendimento
+            - paragraph [ref=f5e227]: O contato via WhatsApp é iniciado de forma voluntária pelo usuário ao clicar nos botões do site. As conversas trocadas no aplicativo ocorrem com criptografia de ponta a ponta fornecida pela Meta / WhatsApp, sendo os dados de contato utilizados exclusivamente para esclarecer dúvidas sobre motos, compras e consultas solicitadas.
+          - generic [ref=f5e228]:
+            - heading "15. Cookies, métricas e tecnologias similares" [level=2] [ref=f5e229]:
+              - generic [ref=f5e230]: "15."
+              - generic [ref=f5e231]: Cookies, métricas e tecnologias similares
+            - generic [ref=f5e232]:
+              - paragraph [ref=f5e233]:
+                - text: Utilizamos
+                - strong [ref=f5e234]: exclusivamente cookies estritamente necessários
+                - text: para autenticação de sessão e segurança (via Supabase Auth e Next.js SSR), evitando fraudes e permitindo que você navegue conectado em sua conta.
+              - paragraph [ref=f5e235]:
+                - strong [ref=f5e236]: Não utilizamos rastreadores de publicidade de terceiros
+                - text: (como Meta Pixel ou Google Analytics). Se ferramentas analíticas não essenciais forem incorporadas no futuro, você poderá gerenciar seu consentimento de forma granular no Portal do Cliente.
+          - generic [ref=f5e237]:
+            - heading "16. Segurança e medidas de proteção" [level=2] [ref=f5e238]:
+              - generic [ref=f5e239]: "16."
+              - generic [ref=f5e240]: Segurança e medidas de proteção
+            - list [ref=f5e242]:
+              - listitem [ref=f5e243]: Criptografia de ponta a ponta em trânsito com protocolo HTTPS/TLS 1.3 forçado.
+              - listitem [ref=f5e244]: Controle de acesso rigoroso por RLS e privilégios mínimos no banco de dados.
+              - listitem [ref=f5e245]: Armazenamento de endereços IP de auditoria sob formato de hash SHA-256 irreversível com salt.
+              - listitem [ref=f5e246]: Isolamento de credenciais e senhas criptografadas com algoritmos de alta entropia.
+              - listitem [ref=f5e247]: Controle estrito de privilégios de acesso restritos a administradores ativos comprovados.
+          - generic [ref=f5e248]:
+            - heading "17. Retenção, eliminação e anonimização" [level=2] [ref=f5e249]:
+              - generic [ref=f5e250]: "17."
+              - generic [ref=f5e251]: Retenção, eliminação e anonimização
+            - paragraph [ref=f5e253]: Os dados são conservados pelo período necessário para atingir as finalidades para as quais foram coletados, observados os prazos legais e regulatórios expressos (como a guarda de logs por 6 meses conforme o Marco Civil da Internet e 5 anos para documentos com efeitos fiscais e contratuais sob o Código Civil). Esgotadas as finalidades ou havendo solicitação aplicável do titular, os dados serão eliminados com segurança ou anonimizados irreversivelmente.
+          - generic [ref=f5e254]:
+            - heading "18. Direitos do titular de dados (Art. 18 da LGPD)" [level=2] [ref=f5e255]:
+              - generic [ref=f5e256]: "18."
+              - generic [ref=f5e257]: Direitos do titular de dados (Art. 18 da LGPD)
+            - generic [ref=f5e258]:
+              - paragraph [ref=f5e259]: "A LGPD assegura a você, como titular de dados pessoais, os seguintes direitos:"
+              - list [ref=f5e260]:
+                - listitem [ref=f5e261]:
+                  - strong [ref=f5e262]: "Confirmação e Acesso:"
+                  - text: Confirmar a existência de tratamento e acessar seus dados.
+                - listitem [ref=f5e263]:
+                  - strong [ref=f5e264]: "Correção:"
+                  - text: Solicitar a correção de dados incompletos, inexatos ou desatualizados.
+                - listitem [ref=f5e265]:
+                  - strong [ref=f5e266]: "Anonimização ou Eliminação:"
+                  - text: De dados desnecessários ou tratados em desconformidade.
+                - listitem [ref=f5e267]:
+                  - strong [ref=f5e268]: "Portabilidade:"
+                  - text: Solicitar a transferência de seus dados cadastrais conforme regulamento da ANPD.
+                - listitem [ref=f5e269]:
+                  - strong [ref=f5e270]: "Informação sobre Compartilhamento:"
+                  - text: Saber com quais entidades seus dados foram compartilhados.
+                - listitem [ref=f5e271]:
+                  - strong [ref=f5e272]: "Revogação do Consentimento:"
+                  - text: Revogar autorizações anteriormente concedidas.
+                - listitem [ref=f5e273]:
+                  - strong [ref=f5e274]: "Peticionamento:"
+                  - text: Apresentar reclamação perante a Autoridade Nacional de Proteção de Dados (ANPD).
+          - generic [ref=f5e275]:
+            - heading "19. Como exercer seus direitos" [level=2] [ref=f5e276]:
+              - generic [ref=f5e277]: "19."
+              - generic [ref=f5e278]: Como exercer seus direitos
+            - generic [ref=f5e280]:
+              - paragraph [ref=f5e281]: "Você pode solicitar atendimento gratuito sobre seus dados a qualquer momento:"
+              - generic [ref=f5e282]:
+                - generic [ref=f5e283]: "Pelo Portal do Cliente:"
+                - paragraph [ref=f5e284]:
+                  - text: Acesse seu perfil em
+                  - code [ref=f5e285]: /cliente/perfil
+                  - text: na aba "Privacidade e Documentos" e clique no botão
+                  - strong [ref=f5e286]: "\"Solicitar atendimento sobre meus dados\""
+                  - text: para gerar um protocolo oficial com rastreamento.
+                - link "Ir para o Portal do Cliente →" [ref=f5e288] [cursor=pointer]:
+                  - /url: /cliente/perfil
+              - paragraph [ref=f5e289]:
+                - text: Alternativamente, envie um e-mail com o assunto
+                - emphasis [ref=f5e290]: "\"Solicitação LGPD\""
+                - text: para
+                - link "afmotos2026@gmail.com" [ref=f5e291] [cursor=pointer]:
+                  - /url: mailto:afmotos2026@gmail.com
+                - text: .
+          - generic [ref=f5e292]:
+            - heading "20. Crianças e adolescentes" [level=2] [ref=f5e293]:
+              - generic [ref=f5e294]: "20."
+              - generic [ref=f5e295]: Crianças e adolescentes
+            - paragraph [ref=f5e297]: Nossos serviços digitais são direcionados a pessoas com capacidade civil plena ou jovens a partir de 14 anos com assistência para consultas e pesquisas. Não realizamos coleta intencional de dados de crianças menores de 12 anos. Caso identifique cadastro indevido de menor de idade, favor contatar nossa equipe para imediata exclusão.
+          - generic [ref=f5e298]:
+            - heading "21. Transferências internacionais de dados" [level=2] [ref=f5e299]:
+              - generic [ref=f5e300]: "21."
+              - generic [ref=f5e301]: Transferências internacionais de dados
+            - paragraph [ref=f5e303]: Nossos provedores de tecnologia em nuvem (Supabase e Vercel) operam servidores em centros de dados seguros localizados em conformidade com normas internacionais de proteção de dados, mediante salvaguardas contratuais adequadas e mecanismos de criptografia de ponta a ponta.
+          - generic [ref=f5e304]:
+            - heading "22. Alterações nesta política" [level=2] [ref=f5e305]:
+              - generic [ref=f5e306]: "22."
+              - generic [ref=f5e307]: Alterações nesta política
+            - paragraph [ref=f5e309]: Esta Política de Privacidade poderá ser revisada periodicamente para acompanhar novas funcionalidades ou exigências legais. Quando houver alterações materiais que impactem os direitos dos usuários, exibiremos um aviso destacado no Portal do Cliente no próximo acesso com indicação clara da nova versão para ciência e aceite.
+          - generic [ref=f5e310]:
+            - heading "23. Contato do controlador e encarregado de dados" [level=2] [ref=f5e311]:
+              - generic [ref=f5e312]: "23."
+              - generic [ref=f5e313]: Contato do controlador e encarregado de dados
+            - generic [ref=f5e315]:
+              - paragraph [ref=f5e316]: "Para exercer seus direitos ou esclarecer quaisquer dúvidas sobre o tratamento de seus dados, contate nosso canal oficial:"
+              - generic [ref=f5e317]:
+                - paragraph [ref=f5e318]:
+                  - strong [ref=f5e319]: "Controlador:"
+                  - text: AF Motos
+                - paragraph [ref=f5e320]:
+                  - strong [ref=f5e321]: "Endereço:"
+                  - text: Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655
+                - paragraph [ref=f5e322]:
+                  - strong [ref=f5e323]: "Encarregado (DPO) / E-mail:"
+                  - text: afmotos2026@gmail.com
+                - paragraph [ref=f5e324]:
+                  - strong [ref=f5e325]: "WhatsApp Oficial:"
+                  - text: (81) 9 8590-1175
+        - generic [ref=f5e326]:
+          - generic [ref=f5e327]:
+            - heading "Quer exercer seus direitos de privacidade?" [level=3] [ref=f5e328]
+            - paragraph [ref=f5e329]: Confirmação, acesso, correção ou eliminação de dados podem ser solicitados formalmente com protocolo direto em seu perfil.
+          - link "Solicitar Atendimento de Dados" [ref=f5e331] [cursor=pointer]:
+            - /url: /cliente/perfil
+  - region "Notifications alt+T"
+  - generic:
+    - generic: Falar no WhatsApp
+    - link "Falar conosco pelo WhatsApp" [ref=f5e335] [cursor=pointer]:
+      - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20AF%20Motos%20e%20gostaria%20de%20saber%20mais%20sobre%20as%20motos%20dispon%C3%ADveis.
+  - contentinfo [ref=f5e340]:
+    - region "Diferenciais e Garantias AF Motos" [ref=f5e341]:
+      - generic [ref=f5e343]:
+        - link "Todas com Histórico Veicular Procedência 100% garantida" [ref=f5e344] [cursor=pointer]:
+          - /url: /historico-veicular
+          - generic [ref=f5e351]:
+            - generic [ref=f5e352]: Todas com Histórico Veicular
+            - generic [ref=f5e353]: Procedência 100% garantida
+        - link "Atendimento Direto no WhatsApp Sem intermediários" [ref=f5e354] [cursor=pointer]:
+          - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20AF%20Motos.
+          - generic [ref=f5e359]:
+            - generic [ref=f5e360]: Atendimento Direto no WhatsApp
+            - generic [ref=f5e361]: Sem intermediários
+        - generic [ref=f5e368]:
+          - generic [ref=f5e369]: Documentação 100% Clara
+          - generic [ref=f5e370]: Transferência orientada
+        - generic [ref=f5e376]:
+          - generic [ref=f5e377]: Negociação Transparente
+          - generic [ref=f5e378]: Preço justo & troca
+    - generic [ref=f5e380]:
+      - generic [ref=f5e381]:
+        - link "AF Motos AF Motos Compra e venda de motos com procedência" [ref=f5e382] [cursor=pointer]:
+          - /url: /
+          - img "AF Motos" [ref=f5e384]
+          - generic [ref=f5e385]:
+            - generic [ref=f5e386]: AF Motos
+            - generic [ref=f5e388]: Compra e venda de motos com procedência
+        - paragraph [ref=f5e389]: Compra e venda de motos com atendimento direto e transparente pelo WhatsApp.
+        - generic [ref=f5e390]:
+          - generic [ref=f5e391]: Siga a AF Motos
+          - link "Acessar nosso Instagram" [ref=f5e393] [cursor=pointer]:
+            - /url: https://www.instagram.com/af_motos2026/
+        - link "Falar no WhatsApp" [ref=f5e398] [cursor=pointer]:
+          - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20AF%20Motos.
+      - generic [ref=f5e402]:
+        - heading "Motos & Catálogo" [level=4] [ref=f5e403]
+        - list [ref=f5e404]:
+          - listitem [ref=f5e405]:
+            - link "Início" [ref=f5e406] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=f5e407]:
+            - link "Sobre a AF Motos" [ref=f5e408] [cursor=pointer]:
+              - /url: /sobre
+          - listitem [ref=f5e409]:
+            - link "Motos Disponíveis" [ref=f5e410] [cursor=pointer]:
+              - /url: /motos
+          - listitem [ref=f5e411]:
+            - link "Motos Vendidas" [ref=f5e412] [cursor=pointer]:
+              - /url: /motos-vendidas
+      - generic [ref=f5e413]:
+        - heading "Serviços" [level=4] [ref=f5e414]
+        - list [ref=f5e415]:
+          - listitem [ref=f5e416]:
+            - link "Venda sua Moto" [ref=f5e417] [cursor=pointer]:
+              - /url: /vender-minha-moto
+          - listitem [ref=f5e418]:
+            - link "Anuncie sua Moto" [ref=f5e419] [cursor=pointer]:
+              - /url: /anunciar-sua-moto
+          - listitem [ref=f5e420]:
+            - link "Histórico Veicular" [ref=f5e421] [cursor=pointer]:
+              - /url: /historico-veicular
+          - listitem [ref=f5e422]:
+            - link "Termos de Uso" [ref=f5e423] [cursor=pointer]:
+              - /url: /termos-de-uso
+          - listitem [ref=f5e424]:
+            - link "Privacidade & Dados" [ref=f5e425] [cursor=pointer]:
+              - /url: /politica-de-privacidade
+      - generic [ref=f5e426]:
+        - heading "Atendimento & Loja" [level=4] [ref=f5e427]
+        - list [ref=f5e428]:
+          - listitem [ref=f5e429]:
+            - link "(81) 9 8590-1175" [ref=f5e430] [cursor=pointer]:
+              - /url: tel:81985901175
+          - listitem [ref=f5e434]:
+            - link "afmotos2026@gmail.com" [ref=f5e435] [cursor=pointer]:
+              - /url: mailto:afmotos2026@gmail.com
+          - listitem [ref=f5e440]:
+            - link "Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655 Ver no Google Maps" [ref=f5e441] [cursor=pointer]:
+              - /url: https://www.google.com/maps/search/?api=1&query=Rua%20Milton%20Adolfo%20de%20Jesus%2C%2068%2C%20S%C3%A3o%20Francisco%2C%20Cabo%20de%20Santo%20Agostinho%2C%20PE%2C%2054530-655
+              - generic [ref=f5e445]:
+                - generic [ref=f5e446]: Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655
+                - generic [ref=f5e447]: Ver no Google Maps
+          - listitem [ref=f5e453]:
+            - generic [ref=f5e457]:
+              - paragraph [ref=f5e458]: "Segunda a Sexta: 08:00 às 18:00"
+              - paragraph [ref=f5e459]: "Sábado: 08:00 às 13:00"
+              - paragraph [ref=f5e460]: "Domingo: Fechado"
+    - generic [ref=f5e462]:
+      - paragraph [ref=f5e463]: © 2026 AF Motos. Todos os direitos reservados.
+      - generic [ref=f5e464]:
+        - link "Termos de Uso" [ref=f5e465] [cursor=pointer]:
+          - /url: /termos-de-uso
+        - link "Política de Privacidade" [ref=f5e466] [cursor=pointer]:
+          - /url: /politica-de-privacidade
+        - link "Área Restrita" [ref=f5e467] [cursor=pointer]:
+          - /url: /admin/login
+        - link "Desenvolvido por alex._ricardo" [ref=f5e468] [cursor=pointer]:
+          - /url: https://instagram.com/alex._ricardo
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f5e474] [cursor=pointer]
+  - alert [ref=f5e478]
