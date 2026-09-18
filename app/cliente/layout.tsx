@@ -18,7 +18,7 @@ export default async function CustomerLayout({ children }: { children: React.Rea
 
   // If unauthenticated (e.g. login or cadastro), render children cleanly without customer sidebar
   if (!user) {
-    return <div className="min-h-screen bg-[#070709] text-zinc-100">{children}</div>;
+    return <div className="min-h-screen bg-slate-950 text-slate-100">{children}</div>;
   }
 
   const [profile, compliance] = await Promise.all([
@@ -46,7 +46,7 @@ export default async function CustomerLayout({ children }: { children: React.Rea
   );
 
   return (
-    <div className="min-h-screen bg-[#070709] text-zinc-100 flex flex-col lg:flex-row selection:bg-[#c9a44c]/30 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row selection:bg-amber-500 selection:text-slate-950">
       {/* Ambient background glow */}
       <div className="pointer-events-none fixed -top-40 -left-40 w-96 h-96 bg-[#c9a44c]/5 rounded-full blur-3xl z-0" />
       <div className="pointer-events-none fixed -bottom-40 -right-40 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl z-0" />
