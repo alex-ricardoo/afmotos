@@ -1,0 +1,271 @@
+- generic [active] [ref=f4e1]:
+  - banner [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - link "AF Motos AF Motos Compra e Venda de Motos" [ref=f4e4] [cursor=pointer]:
+        - /url: /
+        - img "AF Motos" [ref=f4e6]
+        - generic [ref=f4e7]:
+          - generic [ref=f4e8]: AF Motos
+          - generic [ref=f4e10]: Compra e Venda de Motos
+      - button "Abrir menu de navegação" [ref=f4e12] [cursor=pointer]
+  - main [ref=f4e13]:
+    - generic [ref=f4e14]:
+      - generic [ref=f4e17]:
+        - generic [ref=f4e18]: Termos & Condições de Uso
+        - heading "Termos e Condições de Uso" [level=1] [ref=f4e23]
+        - paragraph [ref=f4e24]: Regras, direitos, responsabilidades e condições contratuais para utilização da plataforma e serviços veiculares da AF Motos.
+        - generic [ref=f4e25]:
+          - generic [ref=f4e30]:
+            - text: "Última atualização:"
+            - strong [ref=f4e31]: 14/09/2026
+          - generic [ref=f4e36]:
+            - text: "Versão vigente:"
+            - strong [ref=f4e37]: v1.0.0
+          - 'generic "SHA-256: 5b2ac8eb3c42df1b002412281fe821d518dbf84a6db9ad726f4e2cb0fcb16e8e" [ref=f4e38]': "SHA-256: 5b2ac8eb...fcb16e8e"
+        - generic [ref=f4e43]:
+          - button "Imprimir Documento" [ref=f4e44] [cursor=pointer]
+          - link "Ver Política de Privacidade" [ref=f4e46] [cursor=pointer]:
+            - /url: /politica-de-privacidade
+      - main [ref=f4e52]:
+        - generic [ref=f4e53]:
+          - generic [ref=f4e54]: Resumo da Nossa Conduta
+          - paragraph [ref=f4e59]:
+            - text: A
+            - strong [ref=f4e60]: AF Motos
+            - text: preza pela máxima transparência, lealdade e segurança. Todas as informações coletadas possuem finalidades legítimas, bases legais explícitas sob a LGPD e são protegidas por rigorosas salvaguardas técnicas.
+          - generic [ref=f4e61]:
+            - generic [ref=f4e62]: Criptografia HTTPS/TLS e armazenamento seguro no Supabase com RLS
+            - generic [ref=f4e67]: Não comercializamos dados e não realizamos disparos de spam
+        - generic [ref=f4e72]:
+          - generic [ref=f4e73]:
+            - heading "1. Objeto e funcionamento da plataforma" [level=2] [ref=f4e74]:
+              - generic [ref=f4e75]: "1."
+              - generic [ref=f4e76]: Objeto e funcionamento da plataforma
+            - generic [ref=f4e77]:
+              - paragraph [ref=f4e78]:
+                - text: Estes Termos e Condições Gerais de Uso ("Termos") regem a navegação, contratação de serviços, compra de créditos e utilização das ferramentas disponibilizadas pela
+                - strong [ref=f4e79]: AF Motos
+                - text: em seu website e Portal do Cliente.
+              - paragraph [ref=f4e80]: A plataforma opera como um ecossistema digital para anúncio, venda, consignação e locação de motocicletas, além de fornecer serviços especializados de consulta veicular por placa e emissão de laudos de procedência.
+              - paragraph [ref=f4e81]: Ao criar uma conta ou utilizar os serviços disponíveis, o usuário declara ter lido, compreendido e aceito integralmente estes Termos e a nossa Política de Privacidade.
+          - generic [ref=f4e82]:
+            - heading "2. Cadastro e responsabilidade pelas informações" [level=2] [ref=f4e83]:
+              - generic [ref=f4e84]: "2."
+              - generic [ref=f4e85]: Cadastro e responsabilidade pelas informações
+            - generic [ref=f4e86]:
+              - paragraph [ref=f4e87]: Para acessar a área do cliente e usufruir dos serviços de consulta e créditos, o usuário deve realizar cadastro fornecendo dados verdadeiros, exatos e atualizados.
+              - paragraph [ref=f4e88]: É expressamente vedada a criação de contas com dados falsos, documentos de terceiros ou identidades simuladas.
+              - paragraph [ref=f4e89]: O usuário é o único responsável pela guarda de suas credenciais de acesso (e-mail e senha). Qualquer ação realizada na plataforma com credenciais válidas do usuário será juridicamente imputada a ele. Em caso de perda, furto ou suspeita de uso indevido, o usuário deve alterar a senha imediatamente ou notificar o suporte da AF Motos.
+          - generic [ref=f4e90]:
+            - heading "3. Uso legítimo de consultas de histórico veicular" [level=2] [ref=f4e91]:
+              - generic [ref=f4e92]: "3."
+              - generic [ref=f4e93]: Uso legítimo de consultas de histórico veicular
+            - generic [ref=f4e94]:
+              - paragraph [ref=f4e95]: As consultas de histórico veicular por placa destinam-se exclusivamente a apoiar tomadas de decisão comerciais lícitas, verificação preventiva de procedência mecânica/documental e proteção contra fraudes em negociações automotivas.
+              - paragraph [ref=f4e96]: O usuário compromete-se a utilizar os dados obtidos em consonância com a boa-fé e com os princípios da Lei Geral de Proteção de Dados (LGPD). É estritamente proibido o uso das informações para perseguição pessoal, vigilância ilícita, assédio ou qualquer atividade lesiva a terceiros.
+          - generic [ref=f4e97]:
+            - heading "4. Proibição de uso ilícito, fraude, scraping e engenharia reversa" [level=2] [ref=f4e98]:
+              - generic [ref=f4e99]: "4."
+              - generic [ref=f4e100]: Proibição de uso ilícito, fraude, scraping e engenharia reversa
+            - generic [ref=f4e101]:
+              - paragraph [ref=f4e102]: "É terminantemente vedado ao usuário:"
+              - list [ref=f4e103]:
+                - listitem [ref=f4e104]: Empregar robôs, spiders, crawlers, scripts automatizados ou scrapers para extração maciça de dados da plataforma.
+                - listitem [ref=f4e105]: Burlar mecanismos de autenticação, taxas de limite (rate limits), tokens de compartilhamento ou permissões RLS.
+                - listitem [ref=f4e106]: Praticar engenharia reversa, descompilação ou cópia indevida dos códigos-fonte e componentes da AF Motos.
+                - listitem [ref=f4e107]: Revender relatórios veiculares de forma fraudulenta ou repassar acessos a terceiros não autorizados.
+                - listitem [ref=f4e108]: Injetar vírus, malwares ou executar ataques de negação de serviço (DDoS) contra nossa infraestrutura.
+          - generic [ref=f4e109]:
+            - heading "5. Pagamentos, créditos e pacotes B2B" [level=2] [ref=f4e110]:
+              - generic [ref=f4e111]: "5."
+              - generic [ref=f4e112]: Pagamentos, créditos e pacotes B2B
+            - generic [ref=f4e113]:
+              - paragraph [ref=f4e114]: Os serviços podem ser adquiridos mediante pagamento avulso ou por meio de Pacotes de Créditos B2B disponibilizados na área do cliente.
+              - paragraph [ref=f4e115]: Todos os pagamentos são intermediados de forma segura pelo gateway Mercado Pago (PIX ou Cartão de Crédito). A liberação do laudo ou a adição de saldo à carteira do usuário ocorre de forma automática e instantânea logo após a confirmação irrevogável do pagamento enviada pela instituição bancária.
+              - paragraph [ref=f4e116]: Os créditos adquiridos em pacotes corporativos são de titularidade da conta contratante e possuem condições claras de vigência e consumo discriminadas no momento da compra.
+          - generic [ref=f4e117]:
+            - heading "6. Condições de entrega de laudos e dependência de fornecedores externos" [level=2] [ref=f4e118]:
+              - generic [ref=f4e119]: "6."
+              - generic [ref=f4e120]: Condições de entrega de laudos e dependência de fornecedores externos
+            - generic [ref=f4e121]:
+              - paragraph [ref=f4e122]: Os relatórios veiculares gerados dependem diretamente dos dados catalogados pelos órgãos públicos governamentais (Senatran, Detrans estaduais, Renajud e Polícia Rodoviária Federal) através de provedores integrados de dados.
+              - paragraph [ref=f4e123]:
+                - text: A
+                - strong [ref=f4e124]: AF Motos
+                - text: empenha os melhores recursos técnicos para processar e formatar as informações com máxima agilidade. Contudo, a plataforma atua como prestadora de tecnologia integradora e não pode ser responsabilizada por falhas, incorreções, imprecisões cadastrais ou inconsistências originadas exclusivamente nos cadastros mantidos pelos órgãos governamentais emissores.
+          - generic [ref=f4e125]:
+            - heading "7. Indisponibilidade temporária, retries e estornos" [level=2] [ref=f4e126]:
+              - generic [ref=f4e127]: "7."
+              - generic [ref=f4e128]: Indisponibilidade temporária, retries e estornos
+            - generic [ref=f4e129]:
+              - paragraph [ref=f4e130]: Se por motivo de instabilidade passageira nos servidores dos órgãos de trânsito uma consulta paga sofrer atraso, nosso sistema ativará automaticamente uma rotina resiliente de retentativas (retries) para concluir a entrega do laudo.
+              - paragraph [ref=f4e131]:
+                - strong [ref=f4e132]: "Política de Estorno:"
+                - text: Caso ocorra uma falha técnica definitiva e permanente do provedor sem a entrega do laudo solicitado, o valor pago será integralmente estornado via Mercado Pago ou o crédito consumido será imediatamente restabelecido na carteira do cliente.
+              - paragraph [ref=f4e133]: Não haverá estorno caso o laudo tenha sido regularmente processado e disponibilizado para download, mesmo que o veículo pesquisado não possua débitos ou restrições registradas na base oficial.
+          - generic [ref=f4e134]:
+            - heading "8. Limitações do serviço e boa-fé" [level=2] [ref=f4e135]:
+              - generic [ref=f4e136]: "8."
+              - generic [ref=f4e137]: Limitações do serviço e boa-fé
+            - paragraph [ref=f4e139]: O relatório veicular constitui instrumento complementar e informativo para auxílio em negociações. Ele não substitui a vistoria presencial da moto, checagem física de gravação de chassi/motor em oficina especializada ou a consulta formal junto ao Detran no ato de transferência civil do veículo.
+          - generic [ref=f4e140]:
+            - heading "9. Propriedade intelectual" [level=2] [ref=f4e141]:
+              - generic [ref=f4e142]: "9."
+              - generic [ref=f4e143]: Propriedade intelectual
+            - paragraph [ref=f4e145]:
+              - text: Todos os elementos visuais, marcas, logotipos, layouts, estruturas de banco de dados, textos e códigos-fonte da plataforma pertencem exclusivamente à
+              - strong [ref=f4e146]: AF Motos
+              - text: ou a seus licenciantes. É vedada a reprodução, distribuição ou exploração comercial de qualquer conteúdo do site sem prévia e expressa autorização por escrito.
+          - generic [ref=f4e147]:
+            - heading "10. Suporte e canais de atendimento" [level=2] [ref=f4e148]:
+              - generic [ref=f4e149]: "10."
+              - generic [ref=f4e150]: Suporte e canais de atendimento
+            - paragraph [ref=f4e152]: Disponibilizamos canais de suporte técnico e comercial através do WhatsApp oficial e e-mail institucional durante o horário comercial para esclarecimento de dúvidas sobre laudos, compras de crédito e motos em estoque.
+          - generic [ref=f4e153]:
+            - heading "11. Suspensão e encerramento de conta por abuso" [level=2] [ref=f4e154]:
+              - generic [ref=f4e155]: "11."
+              - generic [ref=f4e156]: Suspensão e encerramento de conta por abuso
+            - paragraph [ref=f4e158]:
+              - text: A
+              - strong [ref=f4e159]: AF Motos
+              - text: reserva-se o direito de suspender cautelarmente ou encerrar em definitivo o acesso de qualquer usuário que descumprir as regras destes Termos, violar a LGPD, tentar fraudar sistemas de pagamento ou adotar comportamentos incompatíveis com a segurança e lisura da plataforma, sem prejuízo da adoção das medidas jurídicas cabíveis.
+          - generic [ref=f4e160]:
+            - heading "12. Responsabilidade do usuário no uso de dados e relatórios" [level=2] [ref=f4e161]:
+              - generic [ref=f4e162]: "12."
+              - generic [ref=f4e163]: Responsabilidade do usuário no uso de dados e relatórios
+            - paragraph [ref=f4e165]: O usuário assume integral e exclusiva responsabilidade pela custódia, utilização e compartilhamento dos laudos e relatórios gerados em sua conta. O compartilhamento público via link de laudo deve ser restrito às partes interessadas na negociação, sendo vedada a exposição indiscriminada ou difamatória de dados.
+          - generic [ref=f4e166]:
+            - heading "13. Alterações destes termos e vigência" [level=2] [ref=f4e167]:
+              - generic [ref=f4e168]: "13."
+              - generic [ref=f4e169]: Alterações destes termos e vigência
+            - paragraph [ref=f4e171]: Estes Termos de Uso poderão ser modificados a qualquer tempo para acompanhar a evolução dos serviços ou adaptações legais. As alterações entrarão em vigor a partir de sua publicação. Quando houver alterações substantivas que exijam nova concordância expressa, os usuários serão convidados a aceitar a nova versão vigente ao acessarem a plataforma.
+          - generic [ref=f4e172]:
+            - heading "14. Disposições finais e canal de contato" [level=2] [ref=f4e173]:
+              - generic [ref=f4e174]: "14."
+              - generic [ref=f4e175]: Disposições finais e canal de contato
+            - generic [ref=f4e177]:
+              - paragraph [ref=f4e178]: A eventual tolerância quanto a qualquer descumprimento destes Termos não implicará renúncia de direitos ou novação. Estes Termos regem-se pela legislação brasileira.
+              - generic [ref=f4e179]:
+                - paragraph [ref=f4e180]:
+                  - strong [ref=f4e181]: "Empresa Responsável:"
+                  - text: AF Motos
+                - paragraph [ref=f4e182]:
+                  - strong [ref=f4e183]: "Endereço:"
+                  - text: Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655
+                - paragraph [ref=f4e184]:
+                  - strong [ref=f4e185]: "E-mail:"
+                  - text: afmotos2026@gmail.com
+                - paragraph [ref=f4e186]:
+                  - strong [ref=f4e187]: "WhatsApp Oficial:"
+                  - text: (81) 9 8590-1175
+        - generic [ref=f4e188]:
+          - generic [ref=f4e189]:
+            - heading "Quer exercer seus direitos de privacidade?" [level=3] [ref=f4e190]
+            - paragraph [ref=f4e191]: Confirmação, acesso, correção ou eliminação de dados podem ser solicitados formalmente com protocolo direto em seu perfil.
+          - link "Solicitar Atendimento de Dados" [ref=f4e193] [cursor=pointer]:
+            - /url: /cliente/perfil
+  - region "Notifications alt+T"
+  - generic:
+    - generic: Falar no WhatsApp
+    - link "Falar conosco pelo WhatsApp" [ref=f4e197] [cursor=pointer]:
+      - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20AF%20Motos%20e%20gostaria%20de%20saber%20mais%20sobre%20as%20motos%20dispon%C3%ADveis.
+  - contentinfo [ref=f4e202]:
+    - region "Diferenciais e Garantias AF Motos" [ref=f4e203]:
+      - generic [ref=f4e205]:
+        - link "Todas com Histórico Veicular Procedência 100% garantida" [ref=f4e206] [cursor=pointer]:
+          - /url: /historico-veicular
+          - generic [ref=f4e213]:
+            - generic [ref=f4e214]: Todas com Histórico Veicular
+            - generic [ref=f4e215]: Procedência 100% garantida
+        - link "Atendimento Direto no WhatsApp Sem intermediários" [ref=f4e216] [cursor=pointer]:
+          - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20AF%20Motos.
+          - generic [ref=f4e221]:
+            - generic [ref=f4e222]: Atendimento Direto no WhatsApp
+            - generic [ref=f4e223]: Sem intermediários
+        - generic [ref=f4e230]:
+          - generic [ref=f4e231]: Documentação 100% Clara
+          - generic [ref=f4e232]: Transferência orientada
+        - generic [ref=f4e238]:
+          - generic [ref=f4e239]: Negociação Transparente
+          - generic [ref=f4e240]: Preço justo & troca
+    - generic [ref=f4e242]:
+      - generic [ref=f4e243]:
+        - link "AF Motos AF Motos Compra e venda de motos com procedência" [ref=f4e244] [cursor=pointer]:
+          - /url: /
+          - img "AF Motos" [ref=f4e246]
+          - generic [ref=f4e247]:
+            - generic [ref=f4e248]: AF Motos
+            - generic [ref=f4e250]: Compra e venda de motos com procedência
+        - paragraph [ref=f4e251]: Compra e venda de motos com atendimento direto e transparente pelo WhatsApp.
+        - generic [ref=f4e252]:
+          - generic [ref=f4e253]: Siga a AF Motos
+          - link "Acessar nosso Instagram" [ref=f4e255] [cursor=pointer]:
+            - /url: https://www.instagram.com/af_motos2026/
+        - link "Falar no WhatsApp" [ref=f4e260] [cursor=pointer]:
+          - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20AF%20Motos.
+      - generic [ref=f4e264]:
+        - heading "Motos & Catálogo" [level=4] [ref=f4e265]
+        - list [ref=f4e266]:
+          - listitem [ref=f4e267]:
+            - link "Início" [ref=f4e268] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=f4e269]:
+            - link "Sobre a AF Motos" [ref=f4e270] [cursor=pointer]:
+              - /url: /sobre
+          - listitem [ref=f4e271]:
+            - link "Motos Disponíveis" [ref=f4e272] [cursor=pointer]:
+              - /url: /motos
+          - listitem [ref=f4e273]:
+            - link "Motos Vendidas" [ref=f4e274] [cursor=pointer]:
+              - /url: /motos-vendidas
+      - generic [ref=f4e275]:
+        - heading "Serviços" [level=4] [ref=f4e276]
+        - list [ref=f4e277]:
+          - listitem [ref=f4e278]:
+            - link "Venda sua Moto" [ref=f4e279] [cursor=pointer]:
+              - /url: /vender-minha-moto
+          - listitem [ref=f4e280]:
+            - link "Anuncie sua Moto" [ref=f4e281] [cursor=pointer]:
+              - /url: /anunciar-sua-moto
+          - listitem [ref=f4e282]:
+            - link "Histórico Veicular" [ref=f4e283] [cursor=pointer]:
+              - /url: /historico-veicular
+          - listitem [ref=f4e284]:
+            - link "Termos de Uso" [ref=f4e285] [cursor=pointer]:
+              - /url: /termos-de-uso
+          - listitem [ref=f4e286]:
+            - link "Privacidade & Dados" [ref=f4e287] [cursor=pointer]:
+              - /url: /politica-de-privacidade
+      - generic [ref=f4e288]:
+        - heading "Atendimento & Loja" [level=4] [ref=f4e289]
+        - list [ref=f4e290]:
+          - listitem [ref=f4e291]:
+            - link "(81) 9 8590-1175" [ref=f4e292] [cursor=pointer]:
+              - /url: tel:81985901175
+          - listitem [ref=f4e296]:
+            - link "afmotos2026@gmail.com" [ref=f4e297] [cursor=pointer]:
+              - /url: mailto:afmotos2026@gmail.com
+          - listitem [ref=f4e302]:
+            - link "Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655 Ver no Google Maps" [ref=f4e303] [cursor=pointer]:
+              - /url: https://www.google.com/maps/search/?api=1&query=Rua%20Milton%20Adolfo%20de%20Jesus%2C%2068%2C%20S%C3%A3o%20Francisco%2C%20Cabo%20de%20Santo%20Agostinho%2C%20PE%2C%2054530-655
+              - generic [ref=f4e307]:
+                - generic [ref=f4e308]: Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655
+                - generic [ref=f4e309]: Ver no Google Maps
+          - listitem [ref=f4e315]:
+            - generic [ref=f4e319]:
+              - paragraph [ref=f4e320]: "Segunda a Sexta: 08:00 às 18:00"
+              - paragraph [ref=f4e321]: "Sábado: 08:00 às 13:00"
+              - paragraph [ref=f4e322]: "Domingo: Fechado"
+    - generic [ref=f4e324]:
+      - paragraph [ref=f4e325]: © 2026 AF Motos. Todos os direitos reservados.
+      - generic [ref=f4e326]:
+        - link "Termos de Uso" [ref=f4e327] [cursor=pointer]:
+          - /url: /termos-de-uso
+        - link "Política de Privacidade" [ref=f4e328] [cursor=pointer]:
+          - /url: /politica-de-privacidade
+        - link "Área Restrita" [ref=f4e329] [cursor=pointer]:
+          - /url: /admin/login
+        - link "Desenvolvido por alex._ricardo" [ref=f4e330] [cursor=pointer]:
+          - /url: https://instagram.com/alex._ricardo
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f4e336] [cursor=pointer]

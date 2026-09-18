@@ -1,0 +1,68 @@
+- generic [active] [ref=f9e1]:
+  - generic [ref=f9e5]:
+    - generic [ref=f9e6]:
+      - link "Voltar ao site da AF Motos" [ref=f9e7] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f9e11]: Portal do Cliente
+    - generic [ref=f9e14]:
+      - generic [ref=f9e16]:
+        - generic [ref=f9e17]:
+          - generic [ref=f9e18]:
+            - img "AF Motos" [ref=f9e20]
+            - generic [ref=f9e21]:
+              - generic [ref=f9e22]: AF MOTOS
+              - generic [ref=f9e23]: Área do Cliente
+          - generic [ref=f9e24]:
+            - heading "Seus laudos oficiais e histórico veicular com total segurança." [level=2] [ref=f9e25]
+            - paragraph [ref=f9e26]: Consulte qualquer placa, acompanhe dados de leilão, gravame e débitos, e baixe o laudo oficial em PDF autenticado.
+          - generic [ref=f9e27]:
+            - generic [ref=f9e28]:
+              - generic [ref=f9e29]: Exemplo de Laudo Ativo
+              - generic [ref=f9e34]: Liberado
+            - generic [ref=f9e35]:
+              - generic [ref=f9e36]: BRASIL
+              - generic [ref=f9e39]: BRA-2E12
+              - generic [ref=f9e40]: BR
+            - generic [ref=f9e41]:
+              - generic [ref=f9e42]: Sem Leilão / Sinistro
+              - generic [ref=f9e47]: Veículo Quitado
+          - generic [ref=f9e52]:
+            - generic [ref=f9e57]:
+              - heading "Liberação Imediata" [level=4] [ref=f9e58]
+              - paragraph [ref=f9e59]: Pague via PIX e acesse os dados em tempo real no seu painel.
+            - generic [ref=f9e65]:
+              - heading "Download Oficial em PDF" [level=4] [ref=f9e66]
+              - paragraph [ref=f9e67]: Laudo timbrado com autenticidade para imprimir ou enviar.
+        - generic [ref=f9e68]: Ambiente seguro com criptografia 256-bit (LGPD)
+      - generic [ref=f9e73]:
+        - generic [ref=f9e74]:
+          - heading "Acesse sua Conta" [level=1] [ref=f9e80]
+          - paragraph [ref=f9e81]: Entre para consultar histórico veicular, verificar pendências e emitir seus laudos oficiais.
+        - generic [ref=f9e82]:
+          - button "Entrar com o Google" [ref=f9e83] [cursor=pointer]
+          - generic [ref=f9e85]: ou com e-mail
+          - generic [ref=f9e88]:
+            - generic [ref=f9e89]:
+              - generic [ref=f9e90]: E-mail
+              - textbox "seu@email.com" [ref=f9e95]
+            - generic [ref=f9e96]:
+              - generic [ref=f9e97]: Senha
+              - generic [ref=f9e99]:
+                - textbox "Sua senha" [ref=f9e103]
+                - button [ref=f9e104] [cursor=pointer]
+            - button "Entrar no Meu Painel" [disabled]
+            - paragraph [ref=f9e108]:
+              - text: Ao acessar a plataforma, você declara estar ciente da nossa
+              - link "Política de Privacidade" [ref=f9e109] [cursor=pointer]:
+                - /url: /politica-de-privacidade
+              - text: e dos
+              - link "Termos de Uso" [ref=f9e110] [cursor=pointer]:
+                - /url: /termos-de-uso
+              - text: aplicáveis.
+          - paragraph [ref=f9e112]:
+            - text: Não tem uma conta?
+            - link "Cadastre-se grátis" [ref=f9e113] [cursor=pointer]:
+              - /url: /cliente/cadastro?returnUrl=%2Fcliente
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f9e119] [cursor=pointer]
+  - alert [ref=f9e123]

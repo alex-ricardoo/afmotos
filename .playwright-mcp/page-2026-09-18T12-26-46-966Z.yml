@@ -1,0 +1,15 @@
+- generic [active] [ref=f6e1]:
+  - status "Carregando..." [ref=f6e2]:
+    - generic [ref=f6e3]:
+      - img "AF Motos" [ref=f6e6]
+      - paragraph [ref=f6e10]: Carregando
+    - generic [ref=f6e13]: Carregando conteúdo da página...
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f6e19] [cursor=pointer]:
+    - generic [ref=f6e22]:
+      - text: Compiling
+      - generic [ref=f6e23]:
+        - generic [ref=f6e24]: .
+        - generic [ref=f6e25]: .
+        - generic [ref=f6e26]: .
+  - alert [ref=f6e27]

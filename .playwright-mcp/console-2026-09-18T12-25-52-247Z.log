@@ -1,0 +1,3 @@
+[    3258ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:776
+[    3402ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:776
+[    5279ms] [WARNING] Image with src "https://i.ibb.co/fVyrXMJ6/Save-Clip-App-720100711-18084492455168989-8214954766893209509-n.webp" has "fill" and parent element with invalid "position". Provided "static" should be one of absolute,fixed,relative. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:776
