@@ -84,69 +84,157 @@ export function VehicleHistoryPricing({
           const unitPrice = isWa
             ? 'Sob consulta'
             : (unitCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          const totalPrice = isWa
+            ? 'Sob consulta'
+            : (off.price_cents / 100).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              });
           const discount = isWa
             ? 'Sob Medida'
             : off.discount_percent
-              ? `${off.discount_percent}% OFF`
+              ? `${Math.round(off.discount_percent)}% OFF`
               : 'Especial';
 
+          const cleanName = off.name.replace(/^pacote\s+/i, '');
+
+          const defaultTagline = isWa
+            ? 'Condições sob medida para frotas e concessionárias'
+            : off.credits_quantity >= 30
+              ? 'Máxima economia para alto giro de placas'
+              : off.credits_quantity >= 15
+                ? 'O favorito de revendas, lojistas e corretores'
+                : 'Ideal para avaliações pontuais com economia';
+
+          const defaultPerks = isWa
+            ? [
+                'Volume a partir de 50 consultas',
+                'Faturamento corporativo via boleto PJ',
+                'Atendimento comercial prioritário',
+              ]
+            : [
+                `${off.credits_quantity} laudos veiculares completos`,
+                'Liberação imediata no Mercado Pago',
+                'Créditos sem data de expiração',
+              ];
+
+          const isPopular = Boolean(
+            off.highlight || off.is_featured || off.credits_quantity === 15,
+          );
+          const badge =
+            off.badge ||
+            (isPopular
+              ? 'Mais Vendido'
+              : isWa
+                ? 'Corporativo'
+                : off.credits_quantity >= 30
+                  ? 'Custo-Benefício'
+                  : undefined);
+
           return {
+            id: off.id,
             qty: isWa ? `${off.credits_quantity}+` : off.credits_quantity,
-            name: off.name,
+            name: cleanName,
+            fullName: off.name,
+            tagline: off.tagline || defaultTagline,
             discount,
             unitPrice,
-            highlight: Boolean(off.highlight || off.is_featured),
-            badge: off.badge || (off.highlight ? 'Mais Vendido' : undefined),
+            totalPrice,
+            perks: off.perks && off.perks.length > 0 ? off.perks.slice(0, 3) : defaultPerks,
+            highlight: isPopular,
+            badge,
             contactOnly: isWa,
           };
         })
       : [
           {
+            id: 'starter',
             qty: 5,
-            name: 'Inicial',
+            name: 'Essencial',
+            fullName: 'Pacote Essencial',
+            tagline: 'Ideal para avaliações pontuais com economia',
             discount: '5% OFF',
             unitPrice: (rawPrice * 0.95).toLocaleString('pt-BR', {
               style: 'currency',
               currency: 'BRL',
             }),
+            totalPrice: (rawPrice * 0.95 * 5).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }),
+            perks: [
+              '5 laudos veiculares completos',
+              'Liberação imediata no Mercado Pago',
+              'Créditos sem data de expiração',
+            ],
             highlight: false,
             badge: undefined,
             contactOnly: false,
           },
           {
+            id: 'pro',
             qty: 15,
-            name: 'Lojista',
+            name: 'Profissional',
+            fullName: 'Pacote Profissional',
+            tagline: 'O favorito de revendas, lojistas e corretores',
             discount: '8% OFF',
             unitPrice: (rawPrice * 0.92).toLocaleString('pt-BR', {
               style: 'currency',
               currency: 'BRL',
             }),
+            totalPrice: (rawPrice * 0.92 * 15).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }),
+            perks: [
+              '15 laudos veiculares completos',
+              'Maior economia por consulta',
+              'Créditos sem data de expiração',
+            ],
             highlight: true,
             badge: 'Mais Vendido',
             contactOnly: false,
           },
           {
+            id: 'business',
             qty: 30,
-            name: 'Frotista',
+            name: 'Premium',
+            fullName: 'Pacote Premium',
+            tagline: 'Máxima economia para alto giro de placas',
             discount: '12% OFF',
             unitPrice: (rawPrice * 0.88).toLocaleString('pt-BR', {
               style: 'currency',
               currency: 'BRL',
             }),
-            highlight: false,
-            badge: undefined,
-            contactOnly: false,
-          },
-          {
-            qty: '50+',
-            name: 'Enterprise',
-            discount: '15% OFF',
-            unitPrice: (rawPrice * 0.85).toLocaleString('pt-BR', {
+            totalPrice: (rawPrice * 0.88 * 30).toLocaleString('pt-BR', {
               style: 'currency',
               currency: 'BRL',
             }),
+            perks: [
+              '30 laudos veiculares completos',
+              'Menor custo por laudo veicular',
+              'Créditos sem data de expiração',
+            ],
             highlight: false,
-            badge: undefined,
+            badge: 'Custo-Benefício',
+            contactOnly: false,
+          },
+          {
+            id: 'enterprise',
+            qty: '50+',
+            name: 'Enterprise',
+            fullName: 'Pacote Enterprise',
+            tagline: 'Condições sob medida para frotas e concessionárias',
+            discount: 'Sob Medida',
+            unitPrice: 'Sob consulta',
+            totalPrice: 'Sob consulta',
+            perks: [
+              'Volume a partir de 50 consultas',
+              'Faturamento corporativo via boleto PJ',
+              'Atendimento comercial prioritário',
+            ],
+            highlight: false,
+            badge: 'Corporativo',
             contactOnly: true,
           },
         ];
@@ -162,9 +250,9 @@ export function VehicleHistoryPricing({
       {/* Subtle Glow Background */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-80 bg-amber-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
         {/* Section Header */}
-        <div className="text-center max-w-xl mx-auto space-y-2">
+        <div className="text-center max-w-2xl mx-auto space-y-2.5">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Investimento Inteligente</span>
@@ -174,13 +262,13 @@ export function VehicleHistoryPricing({
             O menor custo para evitar a maior dor de cabeça
           </h2>
 
-          <p className="text-xs sm:text-sm text-zinc-300 max-w-md mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-zinc-300 max-w-lg mx-auto leading-relaxed">
             Blindar sua compra antes de transferir dinheiro custa menos de uma troca de óleo.
           </p>
         </div>
 
         {/* Compact Loss Aversion & Competitor Comparison Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-1 rounded-2xl bg-[#0F1420] border border-[#1F293D]">
+        <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-3 p-1 rounded-2xl bg-[#0F1420] border border-[#1F293D]">
           {/* Risk Pill */}
           <div className="flex items-center gap-3 p-3.5 rounded-xl bg-red-950/25 border border-red-500/20">
             <div className="w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
@@ -218,7 +306,7 @@ export function VehicleHistoryPricing({
         </div>
 
         {/* Master Plan Checkout Card */}
-        <div className="relative rounded-3xl p-5 sm:p-8 bg-gradient-to-b from-[#131A26] to-[#0D121D] border-2 border-amber-500/40 shadow-2xl shadow-black/80 backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto relative rounded-3xl p-5 sm:p-8 bg-gradient-to-b from-[#131A26] to-[#0D121D] border-2 border-amber-500/40 shadow-2xl shadow-black/80 backdrop-blur-xl">
           {/* Card Header & Price Display */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#1F293D]">
             <div className="space-y-1">
@@ -358,8 +446,8 @@ export function VehicleHistoryPricing({
           </div>
         </div>
 
-        {/* Showcase B2B / Volume / Pacotes para Lojistas (Mobile First) */}
-        <div className="relative rounded-3xl p-4 sm:p-7 lg:p-8 bg-gradient-to-b from-[#111726] via-[#0d121f] to-[#090d16] border border-amber-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_30px_rgba(245,158,11,0.08)] overflow-hidden space-y-5 sm:space-y-6 mb-12 sm:mb-0">
+        {/* Showcase B2B / Volume / Pacotes para Lojistas (Desktop & Mobile) */}
+        <div className="relative rounded-3xl p-5 sm:p-7 lg:p-8 bg-gradient-to-b from-[#111726] via-[#0d121f] to-[#090d16] border border-amber-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_30px_rgba(245,158,11,0.08)] overflow-hidden space-y-6 mb-12 sm:mb-0">
           {/* Subtle Ambient Radial Glow */}
           <div className="absolute -top-24 -right-24 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -377,7 +465,7 @@ export function VehicleHistoryPricing({
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight font-heading">
                 Pacotes de Créditos com Compra Online
               </h3>
-              <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-300 max-w-3xl leading-relaxed">
                 Avalia veículos frequentemente? Compre pacotes com desconto progressivo direto pelo{' '}
                 <strong>Mercado Pago</strong> e consulte placas em 1 clique na sua{' '}
                 <strong>Área do Cliente</strong> com liberação automática instantânea dos créditos.
@@ -400,145 +488,268 @@ export function VehicleHistoryPricing({
             </div>
           </div>
 
-          {/* MOBILE VIEW: Clean Stacked Horizontal Tier Strips (sm:hidden) */}
-          <div className="space-y-2.5 sm:hidden relative z-10">
+          {/* MOBILE VIEW: Senior High-Usability Cards (sm:hidden) */}
+          <div className="space-y-4 sm:hidden relative z-10">
             {b2bTiers.map((tier) => (
               <div
                 key={tier.name}
-                className={`relative rounded-2xl p-3 sm:p-3.5 flex items-center justify-between border transition-all ${
+                className={`relative rounded-2xl p-4 sm:p-5 transition-all duration-300 ${
                   tier.highlight
-                    ? 'bg-gradient-to-r from-amber-500/15 via-[#161f33] to-[#101726] border-amber-500/60 shadow-md shadow-amber-500/10'
-                    : 'bg-[#090d16]/90 border-zinc-800'
+                    ? 'bg-gradient-to-b from-[#182033] via-[#111726] to-[#0a0e17] border-2 border-[#c9a44c] shadow-[0_10px_35px_rgba(201,164,76,0.22)] ring-1 ring-[#c9a44c]/40'
+                    : 'bg-[#0d131f]/95 border border-zinc-800 shadow-md'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col items-center justify-center font-black text-white shrink-0">
-                    <span className="text-sm font-heading leading-none text-amber-300">
-                      {tier.qty}
+                {/* Top Header: Title + Discount */}
+                <div className="flex items-center justify-between gap-2 pb-3 border-b border-zinc-800/80">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                      {tier.fullName}
                     </span>
-                    <span className="text-[9px] text-zinc-400 font-normal leading-none mt-0.5">
-                      un
-                    </span>
+                    {tier.highlight && (
+                      <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[9px] font-black uppercase tracking-wider">
+                        ★ Mais Vendido
+                      </span>
+                    )}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-xs font-bold text-white">{tier.name}</span>
-                      {tier.badge && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-semibold whitespace-nowrap leading-none">
-                          ★ {tier.badge}
-                        </span>
-                      )}
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-black whitespace-nowrap shrink-0 ${
+                      tier.highlight
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                        : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
+                    }`}
+                  >
+                    {tier.discount}
+                  </span>
+                </div>
+
+                {/* Main Body: Quantity & Price */}
+                <div className="py-3 flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-3xl font-black text-white font-heading tracking-tight">
+                        {tier.qty}
+                      </span>
+                      <span className="text-xs font-bold text-zinc-400">
+                        {typeof tier.qty === 'number' && tier.qty === 1 ? 'consulta' : 'consultas'}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-zinc-400">
-                      {tier.contactOnly || String(tier.qty).includes('50')
-                        ? 'Demanda sob medida'
-                        : `${tier.qty} laudos veiculares`}
+                    <p className="text-[11px] text-zinc-400 leading-snug">{tier.tagline}</p>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] text-zinc-400 block uppercase font-medium">
+                      {tier.contactOnly ? 'Condição' : 'Por consulta'}
                     </span>
+                    <div className="flex items-baseline justify-end gap-1">
+                      <span
+                        className={`text-xl font-black font-mono tracking-tight ${
+                          tier.contactOnly ? 'text-emerald-400' : 'text-white'
+                        }`}
+                      >
+                        {tier.unitPrice}
+                      </span>
+                      {!tier.contactOnly && <span className="text-[10px] text-zinc-400">/un</span>}
+                    </div>
+                    {!tier.contactOnly && (
+                      <span className="text-[10px] text-zinc-400 block font-medium">
+                        Total {tier.totalPrice}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <div className="flex items-center gap-1.5 justify-end">
-                    <span className="text-xs font-black text-white font-mono">
-                      {tier.unitPrice}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black whitespace-nowrap">
-                      {tier.discount}
-                    </span>
-                  </div>
-                  <span className="text-[9px] text-zinc-400 block">
-                    {tier.contactOnly ? 'sob medida' : 'por consulta'}
-                  </span>
+                {/* Perks Checklist */}
+                <div className="pt-2.5 border-t border-zinc-800/80 space-y-1.5 pb-3">
+                  {tier.perks.map((perk, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-zinc-300">
+                      <div className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </div>
+                      <span className="text-[11px] text-zinc-300">{perk}</span>
+                    </div>
+                  ))}
                 </div>
+
+                {/* Action Button inside Mobile Card */}
+                {tier.contactOnly ? (
+                  <button
+                    type="button"
+                    onClick={handleB2BClick}
+                    className="w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer shadow-sm"
+                  >
+                    <WhatsAppIcon className="w-4 h-4 fill-current text-emerald-400 shrink-0" />
+                    <span>Falar no WhatsApp (+50 consultas)</span>
+                  </button>
+                ) : (
+                  <Link
+                    href="/cliente/creditos#pacotes"
+                    className={`w-full h-11 rounded-xl font-black text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer shadow-sm ${
+                      tier.highlight
+                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-amber-500/20'
+                        : 'bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white'
+                    }`}
+                  >
+                    <span>Comprar Pacote ({tier.qty} consultas)</span>
+                    <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                  </Link>
+                )}
               </div>
             ))}
           </div>
 
-          {/* DESKTOP & TABLET VIEW: 4-Column Grid (hidden sm:grid) */}
-          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 relative z-10">
+          {/* DESKTOP & TABLET VIEW: Spacious 4-Column Grid (hidden sm:grid) */}
+          <div className="hidden sm:grid sm:grid-cols-2 xl:grid-cols-4 gap-5 relative z-10 items-stretch">
             {b2bTiers.map((tier) => (
               <div
                 key={tier.name}
-                className={`relative rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 ${
+                className={`relative rounded-2xl p-5 lg:p-6 flex flex-col justify-between transition-all duration-300 ${
                   tier.highlight
-                    ? 'bg-gradient-to-b from-amber-500/15 via-[#161f33] to-[#101726] border-2 border-amber-500/60 shadow-lg shadow-amber-500/10'
-                    : 'bg-[#090d16]/90 hover:bg-[#0e1422] border border-zinc-800/90'
+                    ? 'bg-gradient-to-b from-[#1c2438] via-[#121826] to-[#0a0e17] border-2 border-[#c9a44c] shadow-[0_12px_40px_rgba(201,164,76,0.22)] xl:-translate-y-2 ring-1 ring-[#c9a44c]/40'
+                    : 'bg-gradient-to-b from-[#111726] to-[#0A0E17] hover:bg-[#151d30] border border-slate-800/90 hover:border-slate-700 shadow-lg'
                 }`}
               >
-                {tier.badge && (
-                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold uppercase tracking-wider shadow-sm whitespace-nowrap">
-                    ★ {tier.badge}
-                  </span>
+                {/* Top Floating Badge for Highlighted Package Only */}
+                {tier.highlight && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
+                    <span className="inline-flex items-center gap-1.5 px-3.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md">
+                      ★ Mais Vendido
+                    </span>
+                  </div>
                 )}
 
-                <div className="space-y-1">
-                  <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
-                    {tier.name}
-                  </span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-xl sm:text-2xl font-black text-white font-heading">
-                      {tier.qty}
-                    </span>
-                    <span className="text-xs text-zinc-400 font-medium">consultas</span>
+                <div className="space-y-4 pt-1">
+                  {/* Header: Name + Discount Pill */}
+                  <div className="border-b border-zinc-800/70 pb-3.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-bold text-amber-400/80 uppercase tracking-wider block">
+                          Pacote
+                        </span>
+                        <h4 className="text-base lg:text-lg font-black text-white tracking-tight leading-tight">
+                          {tier.name}
+                        </h4>
+                      </div>
+                      <span
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-black whitespace-nowrap ${
+                          tier.highlight
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                            : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
+                        }`}
+                      >
+                        {tier.discount}
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline gap-1.5 mt-3">
+                      <span className="text-3xl lg:text-4xl font-black text-white font-heading tracking-tight">
+                        {tier.qty}
+                      </span>
+                      <span className="text-xs font-semibold text-zinc-400">
+                        {typeof tier.qty === 'number' && tier.qty === 1 ? 'consulta' : 'consultas'}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-zinc-400 mt-1.5 min-h-[36px] leading-relaxed">
+                      {tier.tagline}
+                    </p>
+                  </div>
+
+                  {/* Price Box */}
+                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] uppercase font-bold text-zinc-400">
+                      <span>{tier.contactOnly ? 'Condição' : 'Preço Unitário'}</span>
+                      {!tier.contactOnly && (
+                        <span className="text-emerald-400 font-extrabold">{tier.discount}</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-baseline gap-1.5">
+                      <span
+                        className={`font-black font-mono tracking-tight ${
+                          tier.contactOnly
+                            ? 'text-2xl text-emerald-400'
+                            : 'text-2xl lg:text-3xl text-white'
+                        }`}
+                      >
+                        {tier.unitPrice}
+                      </span>
+                      {!tier.contactOnly && (
+                        <span className="text-xs font-medium text-zinc-400">/unidade</span>
+                      )}
+                    </div>
+
+                    <div className="text-xs text-zinc-400 pt-1.5 border-t border-slate-800/80">
+                      {tier.contactOnly ? (
+                        <span className="text-zinc-300 font-medium">Faturamento PJ sob medida</span>
+                      ) : (
+                        <span>
+                          Total:{' '}
+                          <strong className="text-zinc-200 font-mono">{tier.totalPrice}</strong>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Perks */}
+                  <div className="border-t border-zinc-800/70 pt-3.5 space-y-2.5">
+                    {tier.perks.map((perk, i) => (
+                      <div key={i} className="flex items-start gap-2.5 text-xs text-zinc-300">
+                        <div className="w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                        <span className="leading-snug text-xs text-zinc-300">{perk}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="pt-3 mt-3 border-t border-zinc-800/80 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block">
-                      {tier.contactOnly ? 'Negociação' : 'A partir de'}
-                    </span>
-                    <span className="text-xs sm:text-sm font-black text-white font-mono">
-                      {tier.unitPrice}
-                    </span>
-                    {!tier.contactOnly && <span className="text-[10px] text-zinc-400"> /un</span>}
-                  </div>
-                  <span className="px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black text-xs whitespace-nowrap">
-                    {tier.discount}
-                  </span>
+                {/* Button inside card */}
+                <div className="pt-4 mt-4 border-t border-zinc-800/70">
+                  {tier.contactOnly ? (
+                    <button
+                      type="button"
+                      onClick={handleB2BClick}
+                      className="w-full h-11 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-zinc-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98]"
+                    >
+                      <WhatsAppIcon className="w-4 h-4 fill-current text-emerald-400 shrink-0" />
+                      <span>Falar no WhatsApp</span>
+                    </button>
+                  ) : (
+                    <Link
+                      href="/cliente/creditos#pacotes"
+                      className={`w-full h-11 px-4 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98] ${
+                        tier.highlight
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
+                          : 'bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white hover:text-amber-300'
+                      }`}
+                    >
+                      <span>Comprar Pacote</span>
+                      <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
           {/* Value Guarantees (Clean grid on mobile) */}
-          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-4 gap-2 py-1 text-xs text-zinc-300">
-            <div className="flex items-center gap-2">
+          <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-1 text-xs text-zinc-300">
+            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/60">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
-              <span>Pix imediato ou Cartão até 12x</span>
+              <span className="text-[11px]">Pix imediato ou Cartão até 12x</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/60">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
-              <span>Liberação automática imediata</span>
+              <span className="text-[11px]">Liberação automática imediata</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/60">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
-              <span>Créditos nunca expiram</span>
+              <span className="text-[11px]">Créditos nunca expiram</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/60">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
-              <span>Devolução automática em falha</span>
+              <span className="text-[11px]">Devolução automática em falha</span>
             </div>
-          </div>
-
-          {/* Action Buttons (Compact, single-line, mobile-first) */}
-          <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
-            <Link
-              href="/cliente/creditos#pacotes"
-              className="w-full sm:flex-1 min-h-[44px] sm:min-h-[48px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 transition-all active:scale-[0.98] text-center cursor-pointer"
-            >
-              <span className="whitespace-nowrap">Comprar Pacotes com Desconto Online</span>
-              <ArrowRight className="w-4 h-4 stroke-[2.5] shrink-0" />
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleB2BClick}
-              className="w-full sm:w-auto min-h-[44px] sm:min-h-[48px] py-2.5 px-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-zinc-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
-            >
-              <WhatsAppIcon className="w-3.5 h-3.5 fill-current text-emerald-400 shrink-0" />
-              <span className="whitespace-nowrap">Frotas e Grandes Volumes (50+)</span>
-            </button>
           </div>
 
           {/* Micro Footer Notice */}

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getPublicSiteSettings } from '@/lib/settings/server-queries';
+import { getPublicSiteSettings, getVehicleConsultationPrice } from '@/lib/settings/server-queries';
 import { VehicleHistoryProvider } from '@/components/vehicle-history/vehicle-history-context';
 import { VehicleHistoryStickyWhatsApp } from '@/components/vehicle-history/vehicle-history-sticky-whatsapp';
 import { VehicleHistoryHero } from '@/components/vehicle-history/vehicle-history-hero';
@@ -19,10 +19,14 @@ import { buildVehicleHistoryServiceSchema } from '@/lib/seo/schemas/vehicle-hist
 import { getVehicleHistorySettings } from '@/lib/site-settings';
 import { getActiveCreditOffers } from '@/lib/credits/offers-service';
 
-export const revalidate = 60; // Revalida a cada 1 minuto (ISR)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getPublicSiteSettings();
+  const [settings, consultationPrice] = await Promise.all([
+    getPublicSiteSettings(),
+    getVehicleConsultationPrice(),
+  ]);
   const vehicleHistory = settings?.vehicleHistory;
 
   if (!settings || (vehicleHistory && !vehicleHistory.isEnabled)) {
@@ -33,7 +37,14 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   const siteName = settings.siteName || SEO_CONFIG.defaultStoreName;
-  const priceFormatted = (vehicleHistory?.price || 39.99).toLocaleString('pt-BR', {
+  const effectivePrice =
+    consultationPrice > 0
+      ? consultationPrice
+      : typeof vehicleHistory?.price === 'number' && vehicleHistory.price > 0
+        ? vehicleHistory.price
+        : 39.99;
+
+  const priceFormatted = effectivePrice.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
@@ -50,9 +61,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HistoricoVeicularPage() {
-  const [settings, creditOffers] = await Promise.all([
+  const [settings, creditOffers, consultationPrice] = await Promise.all([
     getPublicSiteSettings(),
     getActiveCreditOffers(),
+    getVehicleConsultationPrice(),
   ]);
 
   if (!settings) {
@@ -60,6 +72,11 @@ export default async function HistoricoVeicularPage() {
   }
 
   const vehicleHistory = settings.vehicleHistory || getVehicleHistorySettings(null);
+
+  // Garante que o preço seja rigorosamente o preço oficial vigente configurado no banco
+  if (consultationPrice > 0) {
+    vehicleHistory.price = consultationPrice;
+  }
 
   if (!vehicleHistory.isEnabled) {
     return (
