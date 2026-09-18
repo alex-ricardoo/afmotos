@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { saveSettingsAction } from '@/lib/actions/settings';
 import { toast } from 'sonner';
@@ -19,6 +20,7 @@ import {
   CheckCircle2,
   Loader2,
   ArrowLeft,
+  ArrowRight,
   Sparkles,
   Info,
   FileSearch,
@@ -37,7 +39,6 @@ import { SocialTab } from './settings/social-tab';
 import { ContentTab } from './settings/content-tab';
 import { SeoTab } from './settings/seo-tab';
 import { AboutTab } from './settings/about-tab';
-import { VehicleHistoryTab } from './settings/vehicle-history-tab';
 import { aboutSettingsSchema, vehicleHistorySettingsSchema } from '@/lib/settings/schema';
 import { isValidCnpj, normalizeCnpj, formatCnpj } from '@/lib/utils/cnpj';
 
@@ -131,7 +132,6 @@ const TABS = [
   { id: 'social', label: 'Redes Sociais', icon: Share2 },
   { id: 'content', label: 'Conteúdo', icon: FileText },
   { id: 'about', label: 'Sobre a Loja', icon: Info },
-  { id: 'vehicle-history', label: 'Histórico Veicular', icon: FileSearch },
   { id: 'seo', label: 'SEO & Buscas', icon: Search },
 ] as const;
 
@@ -365,6 +365,36 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
 
   return (
     <div className="space-y-6 pb-6">
+      {/* Banner Informativo: Histórico Veicular agora no Menu Principal */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+            <FileSearch className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-white">
+                Histórico Veicular agora possui menu exclusivo
+              </span>
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Novo
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400 mt-0.5">
+              Valores de consulta, margens de lucro, estratégias e mensagens agora são configurados no submenu exclusivo.
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/admin/historico-veicular/configuracoes"
+          className="inline-flex items-center justify-center w-full sm:w-auto border border-zinc-800 bg-zinc-950 text-amber-400 hover:text-amber-300 hover:bg-zinc-900 text-xs font-bold rounded-xl h-9.5 px-4 shrink-0 transition-all cursor-pointer"
+        >
+          <span>Abrir Configuração & Preço</span>
+          <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+        </Link>
+      </div>
+
       {/* Barra de Abas / Navegação de Categorias em Linha Única com Controles de Scroll */}
       <div className="relative group bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-1.5 shadow-md backdrop-blur-md">
         {/* Botão de Scroll para Esquerda */}
@@ -447,7 +477,6 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
             {activeTab === 'social' && <SocialTab form={form} />}
             {activeTab === 'content' && <ContentTab form={form} />}
             {activeTab === 'about' && <AboutTab form={form} />}
-            {activeTab === 'vehicle-history' && <VehicleHistoryTab form={form} />}
             {activeTab === 'seo' && <SeoTab form={form} />}
           </div>
 

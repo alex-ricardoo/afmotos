@@ -12,7 +12,6 @@ import {
   Sparkles,
   FileCheck2,
 } from 'lucide-react';
-import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import {
   MercadoPagoBrandIcon,
   PixBrandIcon,
@@ -24,6 +23,7 @@ import { VehicleHistorySettings } from '@/types/site-settings';
 import { buildVehicleHistoryB2BWhatsAppUrl } from '@/lib/utils/whatsapp';
 import type { CreditPackageOffer } from '@/lib/credits/types';
 import { useVehicleHistory } from './vehicle-history-context';
+import { PricingCard, UtilityItem } from './pricing-card';
 
 interface VehicleHistoryPricingProps {
   settings: VehicleHistorySettings;
@@ -32,7 +32,7 @@ interface VehicleHistoryPricingProps {
   offers?: CreditPackageOffer[];
 }
 
-const CHECKLIST_ITEMS = [
+const B2C_FEATURES = [
   'Histórico de Leilão, Batidas Graves & Sinistro',
   'Alienação Fiduciária (Dívidas ativas com Bancos)',
   'Bloqueios na Justiça (Renajud) & Alerta de Furto',
@@ -43,6 +43,23 @@ const CHECKLIST_ITEMS = [
   'Ambiente Mercado Pago: Pix imediato, Cartão até 12x, Débito e Boleto',
 ];
 
+const PAYMENT_UTILITIES: UtilityItem[] = [
+  { icon: PixBrandIcon, label: 'Pix Instantâneo' },
+  { icon: CreditCardBrandIcon, label: 'Cartão até 12x' },
+  { icon: CaixaDebitBrandIcon, label: 'Débito Caixa' },
+  { icon: BoletoBrandIcon, label: 'Boleto / Saldo MP' },
+];
+
+/**
+ * VehicleHistoryPricing - Seção de Preços e Pacotes de Créditos
+ * 
+ * Decisões de UX/UI aplicadas:
+ * 1. Paleta Dark Mode Refinada: Fundo em bg-slate-950, superfícies de cards em bg-slate-900/80 com border-white/5.
+ * 2. Ancoragem de Preço e Perda: Barra comparativa superior demonstrando o risco financeiro de não consultar e a economia imediata.
+ * 3. Componentização com PricingCard: Reutilização consistente do componente para o laudo avulso e para os pacotes B2B.
+ * 4. Foco Mobile-First: Grid 2 colunas para meios de pagamento e garantias utilitárias, botões com altura mínima de 48px e active:scale-[0.98].
+ * 5. Cores Funcionais de Ação: Azul de conversão e segurança para compra/checkout e verde esmeralda para suporte comercial no WhatsApp.
+ */
 export function VehicleHistoryPricing({
   settings,
   siteName,
@@ -245,32 +262,32 @@ export function VehicleHistoryPricing({
   return (
     <section
       id="precos-historico"
-      className="py-12 sm:py-20 bg-[#080B11] border-t border-[#1F293D] relative overflow-hidden"
+      className="py-12 sm:py-20 bg-slate-950 border-t border-white/5 relative overflow-hidden"
     >
-      {/* Subtle Glow Background */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-80 bg-amber-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+      {/* Glow Sutil de Fundo */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-80 bg-amber-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
-        {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto space-y-2.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-bold uppercase tracking-wider">
+        {/* Cabeçalho da Seção */}
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Investimento Inteligente</span>
           </div>
 
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight font-heading">
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-50 tracking-tight font-heading">
             O menor custo para evitar a maior dor de cabeça
           </h2>
 
-          <p className="text-xs sm:text-sm text-zinc-300 max-w-lg mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
             Blindar sua compra antes de transferir dinheiro custa menos de uma troca de óleo.
           </p>
         </div>
 
-        {/* Compact Loss Aversion & Competitor Comparison Bar */}
-        <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-3 p-1 rounded-2xl bg-[#0F1420] border border-[#1F293D]">
-          {/* Risk Pill */}
-          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-red-950/25 border border-red-500/20">
+        {/* Barra de Aversão à Perda & Comparativo de Mercado */}
+        <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-3 p-1 rounded-2xl bg-slate-900/80 border border-white/5 shadow-xl shadow-black/30 backdrop-blur-sm">
+          {/* Card de Risco */}
+          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-red-950/20 border border-red-500/20">
             <div className="w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
               <AlertTriangle className="w-4 h-4 text-red-400" />
             </div>
@@ -278,15 +295,15 @@ export function VehicleHistoryPricing({
               <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider block">
                 Risco sem o Laudo
               </span>
-              <p className="text-xs text-zinc-300 leading-snug">
+              <p className="text-xs text-slate-300 leading-snug">
                 Prejuízo de <strong className="text-red-300">R$ 5.000 a R$ 25.000</strong> com
                 leilão maquiado, processo ou golpe.
               </p>
             </div>
           </div>
 
-          {/* Solution & Competitor Price Anchor Pill */}
-          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-950/25 border border-emerald-500/25">
+          {/* Card de Solução com Preço Âncora */}
+          <div className="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
@@ -295,9 +312,9 @@ export function VehicleHistoryPricing({
                 <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
                   Aqui na {siteName}
                 </span>
-                <span className="text-[10px] text-zinc-400 line-through">Outros: R$ 64,90</span>
+                <span className="text-[10px] text-slate-500 line-through">Outros: R$ 64,90</span>
               </div>
-              <p className="text-xs text-zinc-200 leading-snug">
+              <p className="text-xs text-slate-200 leading-snug">
                 Mesmo laudo oficial por apenas{' '}
                 <strong className="text-amber-400 font-mono text-sm">{formattedPrice}</strong>.
               </p>
@@ -305,457 +322,176 @@ export function VehicleHistoryPricing({
           </div>
         </div>
 
-        {/* Master Plan Checkout Card */}
-        <div className="max-w-3xl mx-auto relative rounded-3xl p-5 sm:p-8 bg-gradient-to-b from-[#131A26] to-[#0D121D] border-2 border-amber-500/40 shadow-2xl shadow-black/80 backdrop-blur-xl">
-          {/* Card Header & Price Display */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#1F293D]">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-extrabold text-[10px] uppercase tracking-wider">
-                  100% Oficial Senatran
-                </span>
-                {savings > 0 && (
-                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                    Economize {formattedSavings}
-                  </span>
-                )}
-              </div>
-
-              <h3 className="text-lg sm:text-2xl font-black text-white font-heading">
-                {isValid && formattedPlate ? (
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    Laudo do Veículo Placa {formattedPlate}
-                  </span>
-                ) : (
-                  'Laudo Oficial de Histórico Veicular'
-                )}
-              </h3>
-
-              <p className="text-xs text-zinc-400">
-                Válido para qualquer carro, moto ou caminhão em todo o Brasil.
-              </p>
-            </div>
-
-            {/* Price Box */}
-            <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center p-3 sm:p-0 rounded-xl bg-slate-950/60 sm:bg-transparent border border-slate-800/80 sm:border-0">
-              <div className="text-left sm:text-right">
-                <span className="text-[11px] text-zinc-400 block sm:inline">
-                  Em outros sites:{' '}
-                  <span className="line-through font-semibold text-zinc-500">R$ 64,90</span>
-                </span>
-                <span className="text-[10px] font-bold text-emerald-400 block sm:hidden">
-                  Preço exclusivo AF Motos
-                </span>
-              </div>
-
-              <div className="flex items-baseline gap-1">
-                <span className="text-xs font-bold text-amber-300 uppercase sm:hidden">Por</span>
-                <span className="text-3xl sm:text-4xl font-black text-amber-400 font-mono tracking-tight">
-                  {formattedPrice}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Included Features List */}
-          <div className="py-5">
-            <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-3">
-              O que você recebe no laudo oficial:
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-              {CHECKLIST_ITEMS.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+        {/* Master Plan Checkout Card (Laudo Oficial Avulso B2C) */}
+        <div className="max-w-3xl mx-auto">
+          <PricingCard
+            title={
+              isValid && formattedPlate
+                ? `Laudo do Veículo Placa ${formattedPlate}`
+                : 'Laudo Oficial de Histórico Veicular'
+            }
+            badge="100% Oficial Senatran"
+            tagline="Válido para qualquer carro, moto ou caminhão em todo o território nacional."
+            originalPrice="R$ 64,90"
+            currentPrice={formattedPrice}
+            unitPriceLabel="/consulta única"
+            priceSubtext={
+              savings > 0
+                ? `Você economiza ${formattedSavings} em relação a concorrentes do mercado`
+                : undefined
+            }
+            discountBadge={savings > 0 ? `Economize ${formattedSavings}` : undefined}
+            isPopular={true}
+            popularBadgeText="MAIS ESCOLHIDO"
+            features={B2C_FEATURES}
+            utilityGrid={PAYMENT_UTILITIES}
+            ctaText={
+              isValid
+                ? `Consultar Placa ${formattedPlate} Agora`
+                : 'Consultar Minha Placa Agora'
+            }
+            onCtaClick={handleB2CClick}
+            ctaVariant="primary"
+            ctaIcon="arrow"
+            footerNotice={
+              <div className="space-y-3 pt-2">
+                {/* Banner Oficial Mercado Pago */}
+                <div className="rounded-2xl bg-slate-950/70 border border-white/5 p-3 sm:p-3.5 space-y-2">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#009ee3] shadow-sm shrink-0">
+                        <MercadoPagoBrandIcon className="h-3.5 w-3.5 text-[#009ee3]" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-100">
+                        Processado via Mercado Pago Oficial
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      Ambiente Criptografado
+                    </span>
                   </div>
-                  <span className="text-xs sm:text-sm text-zinc-200 font-medium">{item}</span>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Action CTA & Micro-Guarantees */}
-          <div className="pt-2 space-y-3">
-            <button
-              type="button"
-              id="btn-pricing-consultar-avulso"
-              onClick={handleB2CClick}
-              className="w-full min-h-[52px] py-3.5 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black text-base sm:text-lg shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400/50"
-            >
-              <span className="whitespace-nowrap">
-                {isValid
-                  ? `Consultar Placa ${formattedPlate} Agora`
-                  : 'Consultar Minha Placa Agora'}
-              </span>
-              <ArrowRight className="w-5 h-5 stroke-[3] shrink-0" />
-            </button>
-
-            {/* Banner Oficial Mercado Pago & Formas de Pagamento */}
-            <div className="rounded-2xl bg-[#090D15]/90 border border-zinc-800 p-3 sm:p-3.5 space-y-2.5">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#009ee3] shadow-sm shrink-0">
-                    <MercadoPagoBrandIcon className="h-3.5 w-3.5 text-[#009ee3]" />
-                  </div>
-                  <span className="text-xs font-bold text-white">
-                    Processado via Mercado Pago Oficial
+                {/* Micro-Trust Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-slate-400">
+                  <span className="flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    Segurança Mercado Pago
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    Liberação instantânea no painel
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <FileCheck2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    PDF oficial para imprimir
                   </span>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  Ambiente 100% Criptografado
-                </span>
               </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-zinc-800/80">
-                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800/60 text-[11px] font-medium text-zinc-300">
-                  <PixBrandIcon className="h-3.5 w-3.5 text-[#00bdae] shrink-0" />
-                  <span className="truncate">Pix Instantâneo</span>
-                </div>
-                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800/60 text-[11px] font-medium text-zinc-300">
-                  <CreditCardBrandIcon className="h-3.5 w-3.5 text-sky-400 shrink-0" />
-                  <span className="truncate">Cartão até 12x</span>
-                </div>
-                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800/60 text-[11px] font-medium text-zinc-300">
-                  <CaixaDebitBrandIcon className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-                  <span className="truncate">Débito Caixa</span>
-                </div>
-                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-zinc-900/60 border border-zinc-800/60 text-[11px] font-medium text-zinc-300">
-                  <BoletoBrandIcon className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                  <span className="truncate">Boleto / Saldo MP</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Micro-Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-zinc-400 pt-1">
-              <span className="flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                Segurança Mercado Pago
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                Liberação instantânea no seu painel
-              </span>
-              <span className="flex items-center gap-1.5">
-                <FileCheck2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                PDF oficial para salvar e imprimir
-              </span>
-            </div>
-          </div>
+            }
+          />
         </div>
 
-        {/* Showcase B2B / Volume / Pacotes para Lojistas (Desktop & Mobile) */}
-        <div className="relative rounded-3xl p-5 sm:p-7 lg:p-8 bg-gradient-to-b from-[#111726] via-[#0d121f] to-[#090d16] border border-amber-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_30px_rgba(245,158,11,0.08)] overflow-hidden space-y-6 mb-12 sm:mb-0">
-          {/* Subtle Ambient Radial Glow */}
-          <div className="absolute -top-24 -right-24 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          {/* Top Header Bar */}
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
+        {/* Vitrine de Pacotes B2B / Volume para Lojistas e Frotas */}
+        <div className="relative rounded-3xl p-6 sm:p-8 bg-slate-900/80 backdrop-blur-sm border border-white/5 shadow-xl shadow-black/40 space-y-6">
+          {/* Header dos Pacotes B2B */}
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-xs font-bold w-fit">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="text-amber-300">Pacotes B2B & Lojistas</span>
-                <span className="text-zinc-600">•</span>
+                <span className="text-amber-400">Pacotes B2B & Lojistas</span>
+                <span className="text-slate-600">•</span>
                 <span className="text-emerald-400">Até {maxDiscount}% OFF</span>
               </div>
 
-              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight font-heading">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-50 tracking-tight font-heading">
                 Pacotes de Créditos com Compra Online
               </h3>
-              <p className="text-xs sm:text-sm text-zinc-300 max-w-3xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-400 max-w-3xl leading-relaxed">
                 Avalia veículos frequentemente? Compre pacotes com desconto progressivo direto pelo{' '}
-                <strong>Mercado Pago</strong> e consulte placas em 1 clique na sua{' '}
-                <strong>Área do Cliente</strong> com liberação automática instantânea dos créditos.
+                <strong className="text-slate-200">Mercado Pago</strong> e consulte placas em 1 clique na sua{' '}
+                <strong className="text-slate-200">Área do Cliente</strong> com liberação automática instantânea dos créditos.
                 Para frotas a partir de 50 consultas, conte com negociação sob medida via WhatsApp.
               </p>
             </div>
 
-            {/* Quick CTAs on desktop header */}
+            {/* CTA Desktop */}
             <div className="hidden lg:flex flex-col items-end gap-1.5 shrink-0">
               <Link
                 href="/cliente/creditos#pacotes"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 transition-all active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs shadow-lg shadow-blue-900/30 transition-transform active:scale-[0.98]"
               >
                 <span>Comprar Pacotes Online</span>
-                <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
+                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
               </Link>
-              <span className="text-[10px] text-zinc-400">
+              <span className="text-[10px] text-slate-400">
                 ⚡ Liberação automática no Mercado Pago
               </span>
             </div>
           </div>
 
-          {/* MOBILE VIEW: Senior High-Usability Cards (sm:hidden) */}
-          <div className="space-y-4 sm:hidden relative z-10">
+          {/* Grid de Cards dos Pacotes B2B (1 coluna no mobile, 2 em tablet, 4 em desktop) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-5 relative z-10 items-stretch">
             {b2bTiers.map((tier) => (
-              <div
+              <PricingCard
                 key={tier.name}
-                className={`relative rounded-2xl p-4 sm:p-5 transition-all duration-300 ${
-                  tier.highlight
-                    ? 'bg-gradient-to-b from-[#182033] via-[#111726] to-[#0a0e17] border-2 border-[#c9a44c] shadow-[0_10px_35px_rgba(201,164,76,0.22)] ring-1 ring-[#c9a44c]/40'
-                    : 'bg-[#0d131f]/95 border border-zinc-800 shadow-md'
-                }`}
-              >
-                {/* Top Header: Title + Discount */}
-                <div className="flex items-center justify-between gap-2 pb-3 border-b border-zinc-800/80">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-black uppercase tracking-wider text-amber-300">
-                      {tier.fullName}
-                    </span>
-                    {tier.highlight && (
-                      <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[9px] font-black uppercase tracking-wider">
-                        ★ Mais Vendido
-                      </span>
-                    )}
-                  </div>
-                  <span
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-black whitespace-nowrap shrink-0 ${
-                      tier.highlight
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
-                    }`}
-                  >
-                    {tier.discount}
-                  </span>
-                </div>
-
-                {/* Main Body: Quantity & Price */}
-                <div className="py-3 flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-black text-white font-heading tracking-tight">
-                        {tier.qty}
-                      </span>
-                      <span className="text-xs font-bold text-zinc-400">
-                        {typeof tier.qty === 'number' && tier.qty === 1 ? 'consulta' : 'consultas'}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-zinc-400 leading-snug">{tier.tagline}</p>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <span className="text-[10px] text-zinc-400 block uppercase font-medium">
-                      {tier.contactOnly ? 'Condição' : 'Por consulta'}
-                    </span>
-                    <div className="flex items-baseline justify-end gap-1">
-                      <span
-                        className={`text-xl font-black font-mono tracking-tight ${
-                          tier.contactOnly ? 'text-emerald-400' : 'text-white'
-                        }`}
-                      >
-                        {tier.unitPrice}
-                      </span>
-                      {!tier.contactOnly && <span className="text-[10px] text-zinc-400">/un</span>}
-                    </div>
-                    {!tier.contactOnly && (
-                      <span className="text-[10px] text-zinc-400 block font-medium">
-                        Total {tier.totalPrice}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Perks Checklist */}
-                <div className="pt-2.5 border-t border-zinc-800/80 space-y-1.5 pb-3">
-                  {tier.perks.map((perk, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs text-zinc-300">
-                      <div className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
-                        <Check className="w-2.5 h-2.5 stroke-[3]" />
-                      </div>
-                      <span className="text-[11px] text-zinc-300">{perk}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Action Button inside Mobile Card */}
-                {tier.contactOnly ? (
-                  <button
-                    type="button"
-                    onClick={handleB2BClick}
-                    className="w-full h-11 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer shadow-sm"
-                  >
-                    <WhatsAppIcon className="w-4 h-4 fill-current text-emerald-400 shrink-0" />
-                    <span>Falar no WhatsApp (+50 consultas)</span>
-                  </button>
-                ) : (
-                  <Link
-                    href="/cliente/creditos#pacotes"
-                    className={`w-full h-11 rounded-xl font-black text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer shadow-sm ${
-                      tier.highlight
-                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-amber-500/20'
-                        : 'bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white'
-                    }`}
-                  >
-                    <span>Comprar Pacote ({tier.qty} consultas)</span>
-                    <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
-                  </Link>
-                )}
-              </div>
+                title={tier.name}
+                badge={tier.badge}
+                tagline={tier.tagline}
+                discountBadge={tier.discount}
+                isPopular={tier.highlight}
+                popularBadgeText="MAIS VENDIDO"
+                currentPrice={tier.unitPrice}
+                unitPriceLabel={tier.contactOnly ? '' : '/unidade'}
+                priceSubtext={
+                  tier.contactOnly
+                    ? 'Faturamento PJ sob medida'
+                    : `Total do pacote: ${tier.totalPrice}`
+                }
+                features={tier.perks}
+                ctaText={
+                  tier.contactOnly
+                    ? 'Falar no WhatsApp'
+                    : `Comprar (${tier.qty} consultas)`
+                }
+                ctaHref={tier.contactOnly ? undefined : '/cliente/creditos#pacotes'}
+                onCtaClick={tier.contactOnly ? handleB2BClick : undefined}
+                ctaVariant={
+                  tier.contactOnly
+                    ? 'whatsapp'
+                    : tier.highlight
+                      ? 'primary'
+                      : 'secondary'
+                }
+                ctaIcon={tier.contactOnly ? 'whatsapp' : 'arrow'}
+              />
             ))}
           </div>
 
-          {/* DESKTOP & TABLET VIEW: Spacious 4-Column Grid (hidden sm:grid) */}
-          <div className="hidden sm:grid sm:grid-cols-2 xl:grid-cols-4 gap-5 relative z-10 items-stretch">
-            {b2bTiers.map((tier) => (
-              <div
-                key={tier.name}
-                className={`relative rounded-2xl p-5 lg:p-6 flex flex-col justify-between transition-all duration-300 ${
-                  tier.highlight
-                    ? 'bg-gradient-to-b from-[#1c2438] via-[#121826] to-[#0a0e17] border-2 border-[#c9a44c] shadow-[0_12px_40px_rgba(201,164,76,0.22)] xl:-translate-y-2 ring-1 ring-[#c9a44c]/40'
-                    : 'bg-gradient-to-b from-[#111726] to-[#0A0E17] hover:bg-[#151d30] border border-slate-800/90 hover:border-slate-700 shadow-lg'
-                }`}
-              >
-                {/* Top Floating Badge for Highlighted Package Only */}
-                {tier.highlight && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
-                    <span className="inline-flex items-center gap-1.5 px-3.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md">
-                      ★ Mais Vendido
-                    </span>
-                  </div>
-                )}
-
-                <div className="space-y-4 pt-1">
-                  {/* Header: Name + Discount Pill */}
-                  <div className="border-b border-zinc-800/70 pb-3.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] font-bold text-amber-400/80 uppercase tracking-wider block">
-                          Pacote
-                        </span>
-                        <h4 className="text-base lg:text-lg font-black text-white tracking-tight leading-tight">
-                          {tier.name}
-                        </h4>
-                      </div>
-                      <span
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-black whitespace-nowrap ${
-                          tier.highlight
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                            : 'bg-zinc-800 text-zinc-300 border border-zinc-700'
-                        }`}
-                      >
-                        {tier.discount}
-                      </span>
-                    </div>
-
-                    <div className="flex items-baseline gap-1.5 mt-3">
-                      <span className="text-3xl lg:text-4xl font-black text-white font-heading tracking-tight">
-                        {tier.qty}
-                      </span>
-                      <span className="text-xs font-semibold text-zinc-400">
-                        {typeof tier.qty === 'number' && tier.qty === 1 ? 'consulta' : 'consultas'}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-zinc-400 mt-1.5 min-h-[36px] leading-relaxed">
-                      {tier.tagline}
-                    </p>
-                  </div>
-
-                  {/* Price Box */}
-                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] uppercase font-bold text-zinc-400">
-                      <span>{tier.contactOnly ? 'Condição' : 'Preço Unitário'}</span>
-                      {!tier.contactOnly && (
-                        <span className="text-emerald-400 font-extrabold">{tier.discount}</span>
-                      )}
-                    </div>
-
-                    <div className="flex items-baseline gap-1.5">
-                      <span
-                        className={`font-black font-mono tracking-tight ${
-                          tier.contactOnly
-                            ? 'text-2xl text-emerald-400'
-                            : 'text-2xl lg:text-3xl text-white'
-                        }`}
-                      >
-                        {tier.unitPrice}
-                      </span>
-                      {!tier.contactOnly && (
-                        <span className="text-xs font-medium text-zinc-400">/unidade</span>
-                      )}
-                    </div>
-
-                    <div className="text-xs text-zinc-400 pt-1.5 border-t border-slate-800/80">
-                      {tier.contactOnly ? (
-                        <span className="text-zinc-300 font-medium">Faturamento PJ sob medida</span>
-                      ) : (
-                        <span>
-                          Total:{' '}
-                          <strong className="text-zinc-200 font-mono">{tier.totalPrice}</strong>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Perks */}
-                  <div className="border-t border-zinc-800/70 pt-3.5 space-y-2.5">
-                    {tier.perks.map((perk, i) => (
-                      <div key={i} className="flex items-start gap-2.5 text-xs text-zinc-300">
-                        <div className="w-4 h-4 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
-                        </div>
-                        <span className="leading-snug text-xs text-zinc-300">{perk}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Button inside card */}
-                <div className="pt-4 mt-4 border-t border-zinc-800/70">
-                  {tier.contactOnly ? (
-                    <button
-                      type="button"
-                      onClick={handleB2BClick}
-                      className="w-full h-11 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-zinc-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98]"
-                    >
-                      <WhatsAppIcon className="w-4 h-4 fill-current text-emerald-400 shrink-0" />
-                      <span>Falar no WhatsApp</span>
-                    </button>
-                  ) : (
-                    <Link
-                      href="/cliente/creditos#pacotes"
-                      className={`w-full h-11 px-4 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98] ${
-                        tier.highlight
-                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
-                          : 'bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white hover:text-amber-300'
-                      }`}
-                    >
-                      <span>Comprar Pacote</span>
-                      <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-                    </Link>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Value Guarantees (Clean grid on mobile) */}
-          <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-1 text-xs text-zinc-300">
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/60">
+          {/* Grid Utilitário 2x2 no Mobile de Garantias de Valor */}
+          <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-1 text-xs text-slate-300">
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-950/60 border border-white/5">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
-              <span className="text-[11px]">Pix imediato ou Cartão até 12x</span>
+              <span className="text-[11px] truncate">Pix imediato ou Cartão 12x</span>
             </div>
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/60">
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-950/60 border border-white/5">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
-              <span className="text-[11px]">Liberação automática imediata</span>
+              <span className="text-[11px] truncate">Liberação automática imediata</span>
             </div>
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/60">
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-950/60 border border-white/5">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
-              <span className="text-[11px]">Créditos nunca expiram</span>
+              <span className="text-[11px] truncate">Créditos nunca expiram</span>
             </div>
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/60">
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-950/60 border border-white/5">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
-              <span className="text-[11px]">Devolução automática em falha</span>
+              <span className="text-[11px] truncate">Devolução em caso de falha</span>
             </div>
           </div>
 
-          {/* Micro Footer Notice */}
-          <div className="relative z-10 pt-2 text-center border-t border-zinc-800/60">
-            <p className="text-[11px] text-zinc-400 flex items-center justify-center gap-1.5 flex-wrap">
-              <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          {/* Nota de Rodapé com Links */}
+          <div className="relative z-10 pt-2 text-center border-t border-white/5">
+            <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5 flex-wrap">
+              <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>
                 Os créditos adquiridos são vinculados com segurança ao seu usuário.{' '}
                 <Link

@@ -80,10 +80,10 @@ export default async function HistoricoVeicularPage() {
 
   if (!vehicleHistory.isEnabled) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 py-16 bg-[#080B11]">
-        <div className="p-8 rounded-3xl bg-[#131A26] border border-[#1F293D] max-w-md space-y-4">
-          <h1 className="text-2xl font-bold text-white">Serviço Temporariamente Indisponível</h1>
-          <p className="text-sm text-zinc-400">
+      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4 py-16 bg-slate-950">
+        <div className="p-8 rounded-3xl bg-slate-900/80 border border-white/5 max-w-md space-y-4 shadow-xl">
+          <h1 className="text-2xl font-bold text-slate-50">Serviço Temporariamente Indisponível</h1>
+          <p className="text-sm text-slate-400">
             O serviço de Histórico Veicular está em manutenção temporária. Por favor, volte mais
             tarde ou fale conosco pelo WhatsApp principal.
           </p>
@@ -105,7 +105,7 @@ export default async function HistoricoVeicularPage() {
 
   return (
     <VehicleHistoryProvider>
-      <div className="flex flex-col min-h-screen bg-[#080B11] text-zinc-100 selection:bg-amber-400 selection:text-slate-950 font-sans relative">
+      <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950 font-sans relative">
         {/* Structured Data (Schema.org) */}
         <JsonLd data={schemas} id="vehicle-history-schemas" />
 

@@ -86,7 +86,7 @@ const PILLARS = [
 
 export function VehicleHistoryBenefits() {
   return (
-    <section className="py-12 sm:py-20 bg-[#080B11] relative overflow-hidden">
+    <section className="py-12 sm:py-20 bg-slate-950 border-t border-white/5 relative overflow-hidden">
       {/* Subtle Ambient Radial Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
@@ -97,10 +97,10 @@ export function VehicleHistoryBenefits() {
             <ShieldAlert className="w-4 h-4" />
             <span>Proteção Completa</span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight font-heading leading-tight">
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-50 tracking-tight font-heading leading-tight">
             O que você descobre antes de transferir o dinheiro
           </h2>
-          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl mx-auto font-medium">
+          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-xl mx-auto font-medium">
             Identifique armadilhas e prejuízos escondidos com dados diretos das bases oficiais do governo e trânsito.
           </p>
         </div>
@@ -112,7 +112,7 @@ export function VehicleHistoryBenefits() {
             return (
               <div
                 key={idx}
-                className={`group relative overflow-hidden p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0F1420]/80 border border-[#1E2638] ${pillar.theme.border} transition-all duration-300 backdrop-blur-xl shadow-lg shadow-black/40 hover:-translate-y-1 hover:shadow-2xl flex flex-col justify-between`}
+                className={`group relative overflow-hidden p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-slate-900/80 border border-white/5 ${pillar.theme.border} transition-all duration-300 backdrop-blur-xl shadow-xl shadow-black/40 hover:-translate-y-1 hover:shadow-2xl flex flex-col justify-between`}
               >
                 {/* Top Corner Glow Accent */}
                 <div
@@ -136,10 +136,10 @@ export function VehicleHistoryBenefits() {
 
                   {/* Title & Description */}
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-white group-hover:text-amber-300 transition-colors tracking-tight">
+                    <h3 className="text-base sm:text-lg font-black text-slate-50 group-hover:text-amber-300 transition-colors tracking-tight">
                       {pillar.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-zinc-400 mt-1.5 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-400 mt-1.5 leading-relaxed">
                       {pillar.description}
                     </p>
                   </div>

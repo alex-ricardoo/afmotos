@@ -123,7 +123,74 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
   revalidatePath('/cliente/creditos');
   revalidatePath('/cliente', 'layout');
   revalidatePath('/admin/configuracoes');
+  revalidatePath('/admin/historico-veicular/configuracoes');
   return { success: true };
+}
+
+/**
+ * Server Action dedicada para salvar exclusivamente configurações do Histórico Veicular,
+ * preservando todas as demais configurações de loja intactas.
+ */
+export async function saveVehicleHistorySettingsAction(
+  vehicleHistoryData: Record<string, any>,
+  pricingMeta?: { apiBrasilLiveCost?: number; changeReason?: string },
+): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const { data: current, error: fetchErr } = await supabase
+    .from('site_settings')
+    .select('*')
+    .limit(1)
+    .maybeSingle();
+
+  if (fetchErr || !current) {
+    console.error('[saveVehicleHistorySettingsAction] Erro ao buscar configurações:', fetchErr);
+    return { error: 'Não foi possível carregar as configurações do sistema.' };
+  }
+
+  const existingSettings = (current.settings || {}) as SiteSettingsData;
+  const currentVehicleHistory = existingSettings.vehicleHistory || {};
+  const mergedVehicleHistory = {
+    ...currentVehicleHistory,
+    ...vehicleHistoryData,
+  };
+
+  // Se foram enviados metadados de custo ao vivo e motivo da alteração tarifária
+  if (pricingMeta && typeof vehicleHistoryData.price === 'number' && vehicleHistoryData.price > 0) {
+    try {
+      const { createVehicleHistoryPricingVersion } = await import('@/lib/settings/pricing-service');
+      const { createAdminClient } = await import('@/lib/supabase/admin');
+      const adminClient = createAdminClient();
+      const { data: userData } = await supabase.auth.getUser();
+      const costCents =
+        typeof pricingMeta.apiBrasilLiveCost === 'number' && pricingMeta.apiBrasilLiveCost >= 0
+          ? Math.round(pricingMeta.apiBrasilLiveCost * 100)
+          : 3000;
+
+      await createVehicleHistoryPricingVersion({
+        publicPriceCents: Math.round(vehicleHistoryData.price * 100),
+        apiBrasilLiveCostCents: costCents,
+        adminUserId: userData.user?.id || 'admin',
+        changeReason: pricingMeta.changeReason || 'Atualização via Configurações do Histórico Veicular',
+        dbClient: adminClient,
+      });
+    } catch (pvErr) {
+      console.warn('[saveVehicleHistorySettingsAction] Falha ao registrar pricing version:', pvErr);
+    }
+  }
+
+  return saveSettingsAction({
+    id: current.id,
+    site_name: current.site_name,
+    whatsapp_phone: current.whatsapp_phone,
+    cnpj: current.cnpj,
+    contact_email: current.contact_email,
+    address: current.address,
+    settings: {
+      ...existingSettings,
+      vehicleHistory: mergedVehicleHistory as any,
+    },
+  });
 }
 
 /**
