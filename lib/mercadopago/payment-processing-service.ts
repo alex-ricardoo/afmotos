@@ -21,7 +21,9 @@ export interface ProcessPaymentConfirmationParams {
     | PaymentTransactionRecord
     | {
         id: string;
-        consultation_id: string;
+        consultation_id?: string | null;
+        purpose?: string | null;
+        credit_package_order_id?: string | null;
         user_id: string;
         status: string;
         transaction_amount: number | string;
@@ -44,6 +46,7 @@ export interface ProcessPaymentConfirmationResult {
   currentStatus: PaymentTransactionStatus;
   statusChanged: boolean;
   reportUnlocked: boolean;
+  packageGranted?: boolean;
   message: string;
   error?: string;
 }
@@ -56,7 +59,7 @@ export interface ProcessPaymentConfirmationResult {
  * 1. Validação de correspondência de valor (em centavos) e referência externa.
  * 2. Prevenção de downgrade de estado (ex.: approved para pending).
  * 3. Persistência atômica do mp_payment_id e status normalizado no Supabase.
- * 4. Desbloqueio e execução da consulta veicular exatamente uma vez.
+ * 4. Desbloqueio e execução da consulta veicular OU concessão atômica de pacote de créditos.
  * 5. Registro na trilha de auditoria (consultation_audit_logs).
  */
 export async function confirmAndProcessPaymentTransaction({
@@ -70,9 +73,15 @@ export async function confirmAndProcessPaymentTransaction({
   const adminDb = (dbClient as ReturnType<typeof createAdminClient>) || createAdminClient();
   const previousStatus = transaction.status as PaymentTransactionStatus;
 
-  // 1. Validação de Referência Externa
-  if (paymentData.externalReference && paymentData.externalReference !== transaction.id) {
-    const mismatchMsg = `external_reference do provedor (${paymentData.externalReference}) diverge da transação interna (${transaction.id}).`;
+  // 1. Validação de Referência Externa (suporta tanto transaction.id quanto credit_package_order_id)
+  const matchesRef =
+    !paymentData.externalReference ||
+    paymentData.externalReference === transaction.id ||
+    (Boolean(transaction.credit_package_order_id) &&
+      paymentData.externalReference === transaction.credit_package_order_id);
+
+  if (!matchesRef) {
+    const mismatchMsg = `external_reference do provedor (${paymentData.externalReference}) diverge da transação interna (${transaction.id}) e do pedido de pacote (${transaction.credit_package_order_id || 'n/a'}).`;
     logCheckoutProEvent(
       'checkout_pro.transaction_updated',
       {
@@ -166,52 +175,132 @@ export async function confirmAndProcessPaymentTransaction({
     });
   }
 
-  // 4. Se o pagamento estiver aprovado, aciona a liberação atômica da consulta
+  // 4. Se o pagamento estiver aprovado, aciona a liberação apropriada pelo propósito (purpose)
+  const isCreditPackage =
+    transaction.purpose === 'credit_package' || Boolean(transaction.credit_package_order_id);
   const effectiveStatus = statusChanged ? newStatus : previousStatus;
+  let packageGranted = false;
+
   if (effectiveStatus === 'approved') {
-    const releaseOutcome = await releaseVerifiedPaidConsultation(transaction.id, adminDb);
-    reportUnlocked = releaseOutcome.success;
+    if (isCreditPackage && transaction.credit_package_order_id) {
+      // 4a. Atualiza o pedido de pacote para 'paid'
+      await adminDb
+        .from('credit_package_orders')
+        .update({
+          status: 'paid',
+          mp_payment_id: paymentData.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', transaction.credit_package_order_id);
+
+      // 4b. Concessão atômica e idempotente via RPC
+      const { error: rpcError } = await adminDb.rpc(
+        'grant_credit_package_from_paid_order',
+        {
+          p_order_id: transaction.credit_package_order_id,
+        },
+      );
+
+      if (rpcError) {
+        logCheckoutProEvent(
+          'credit_package.grant_failed',
+          {
+            flowId,
+            orderId: transaction.credit_package_order_id,
+            transactionId: transaction.id,
+            paymentId: paymentData.id,
+            errorMessage: rpcError.message,
+          },
+          'error',
+        );
+      } else {
+        packageGranted = true;
+        logCheckoutProEvent('credit_package.payment_confirmed', {
+          flowId,
+          orderId: transaction.credit_package_order_id,
+          transactionId: transaction.id,
+          paymentId: paymentData.id,
+          status: effectiveStatus,
+        });
+      }
+    } else if (transaction.consultation_id) {
+      const releaseOutcome = await releaseVerifiedPaidConsultation(transaction.id, adminDb);
+      reportUnlocked = releaseOutcome.success;
+    }
   } else if (effectiveStatus === 'refunded') {
     const nowIso = new Date().toISOString();
-    await adminDb
-      .from('customer_plate_consultations')
-      .update({
-        status: 'refunded',
-        payment_status: 'refunded',
-        updated_at: nowIso,
-      })
-      .eq('id', transaction.consultation_id);
 
-    await adminDb
-      .from('consultation_delivery_jobs')
-      .update({
-        status: 'failed_permanent',
-        last_error_code: 'TRANSACTION_REFUNDED',
-        last_error_message_safe: 'Transação estornada; entrega cancelada.',
-        failed_at: nowIso,
-        updated_at: nowIso,
-      })
-      .eq('transaction_id', transaction.id)
-      .in('status', ['pending', 'processing', 'retry_scheduled']);
+    if (isCreditPackage && transaction.credit_package_order_id) {
+      await adminDb
+        .from('credit_package_orders')
+        .update({
+          status: 'refunded',
+          updated_at: nowIso,
+        })
+        .eq('id', transaction.credit_package_order_id);
+    } else if (transaction.consultation_id) {
+      await adminDb
+        .from('customer_plate_consultations')
+        .update({
+          status: 'refunded',
+          payment_status: 'refunded',
+          updated_at: nowIso,
+        })
+        .eq('id', transaction.consultation_id);
+
+      await adminDb
+        .from('consultation_delivery_jobs')
+        .update({
+          status: 'failed_permanent',
+          last_error_code: 'TRANSACTION_REFUNDED',
+          last_error_message_safe: 'Transação estornada; entrega cancelada.',
+          failed_at: nowIso,
+          updated_at: nowIso,
+        })
+        .eq('transaction_id', transaction.id)
+        .in('status', ['pending', 'processing', 'retry_scheduled']);
+    }
   }
 
   // 5. Trilha de Auditoria
-  await adminDb.from('consultation_audit_logs').insert({
-    consultation_id: transaction.consultation_id,
-    transaction_id: transaction.id,
-    actor_id: actorId || null,
-    actor_type: actorType,
-    event:
-      actorType === 'webhook' ? 'webhook_payment_confirmed' : 'reconciliation_payment_confirmed',
-    details: {
-      mp_payment_id: paymentData.id,
-      previous_status: previousStatus,
-      new_status: effectiveStatus,
-      status_changed: statusChanged,
-      report_unlocked: reportUnlocked,
+  if (isCreditPackage) {
+    await adminDb.from('consultation_audit_logs').insert({
+      consultation_id: transaction.consultation_id || null,
+      transaction_id: transaction.id,
+      actor_id: actorId || null,
       actor_type: actorType,
-    },
-  });
+      event:
+        actorType === 'webhook'
+          ? 'credit_package_payment_confirmed'
+          : 'credit_package_reconciliation_payment_confirmed',
+      details: {
+        mp_payment_id: paymentData.id,
+        order_id: transaction.credit_package_order_id,
+        previous_status: previousStatus,
+        new_status: effectiveStatus,
+        status_changed: statusChanged,
+        package_granted: packageGranted,
+        actor_type: actorType,
+      },
+    });
+  } else if (transaction.consultation_id) {
+    await adminDb.from('consultation_audit_logs').insert({
+      consultation_id: transaction.consultation_id,
+      transaction_id: transaction.id,
+      actor_id: actorId || null,
+      actor_type: actorType,
+      event:
+        actorType === 'webhook' ? 'webhook_payment_confirmed' : 'reconciliation_payment_confirmed',
+      details: {
+        mp_payment_id: paymentData.id,
+        previous_status: previousStatus,
+        new_status: effectiveStatus,
+        status_changed: statusChanged,
+        report_unlocked: reportUnlocked,
+        actor_type: actorType,
+      },
+    });
+  }
 
   return {
     success: true,
@@ -220,9 +309,12 @@ export async function confirmAndProcessPaymentTransaction({
     currentStatus: effectiveStatus,
     statusChanged,
     reportUnlocked,
+    packageGranted,
     message:
       effectiveStatus === 'approved'
-        ? 'Pagamento aprovado e consulta liberada com sucesso.'
+        ? isCreditPackage
+          ? 'Pagamento aprovado e créditos do pacote liberados com sucesso.'
+          : 'Pagamento aprovado e consulta liberada com sucesso.'
         : `Pagamento atualizado com status: ${effectiveStatus}.`,
   };
 }

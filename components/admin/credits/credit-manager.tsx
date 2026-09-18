@@ -497,33 +497,6 @@ export function CreditManager({ users: initialUsers, initialLedger = [] }: Credi
                 </span>
               </div>
 
-              {action === 'grant' && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {PACKAGE_PRESETS.map((preset) => (
-                    <button
-                      key={preset.qty}
-                      type="button"
-                      onClick={() => handleSelectPreset(preset.qty)}
-                      className={`relative rounded-xl p-3 text-left border transition-all cursor-pointer ${
-                        selectedPreset === preset.qty
-                          ? 'bg-gradient-to-b from-amber-500/20 to-amber-600/10 border-amber-500 text-white shadow-md'
-                          : 'bg-zinc-900/60 hover:bg-zinc-900 border-zinc-800 text-zinc-300'
-                      }`}
-                    >
-                      {preset.popular && (
-                        <span className="absolute -top-2 right-2 px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 text-[9px] font-black uppercase tracking-wide">
-                          Popular
-                        </span>
-                      )}
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-sm font-black font-heading">{preset.label}</span>
-                        <span className="text-[10px] font-bold text-amber-400">{preset.discount}</span>
-                      </div>
-                      <span className="text-[10px] text-zinc-400 block mt-0.5">{preset.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
 
               {/* Number Input if custom or manual override */}
               <div className="flex items-center gap-3 pt-1">
@@ -548,31 +521,11 @@ export function CreditManager({ users: initialUsers, initialLedger = [] }: Credi
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleSelectPreset(5)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
-                    amount === 5 ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  Min: 5
-                </button>
+
               </div>
             </div>
 
-            {/* STEP 3: Motivo / Observação */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400">
-                3. Motivo da Negociação (Gravado no Ledger)
-              </label>
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: Pacote de 15 consultas fechado via WhatsApp (PIX)"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500"
-              />
-            </div>
+
 
             {/* Live Balance Preview Box */}
             {selectedUser && projectedBalance !== null && (

@@ -51,6 +51,6 @@ export const VEHICLE_HISTORY_FAQS: VehicleHistoryFaqItem[] = [
     id: 'pacotes-b2b-lojistas',
     question: 'Vocês oferecem pacotes de consultas com desconto para lojistas ou frotistas?',
     answer:
-      'Sim! Para lojistas de motos e carros, revendas, despachantes e frotistas, oferecemos pacotes pré-pagos de 5, 15, 30 e 50+ consultas com descontos progressivos de 5%, 8%, 12% até 15% OFF. Os créditos nunca expiram e permitem consultar qualquer veículo em 1 clique sem precisar passar cartão a cada placa. Para acessar os detalhes, basta criar sua conta gratuita e acessar a aba "Pacotes de Créditos" na sua Área do Cliente.',
+      'Sim! Para lojistas de motos e carros, revendas, despachantes e frotistas, oferecemos pacotes pré-pagos (como 5, 15, 30 e 50+ consultas) com descontos progressivos e preços dinâmicos exclusivos. A contratação é 100% online direto pelo Mercado Pago (Pix imediato ou Cartão de Crédito em até 12x), com ativação automática instantânea dos créditos no seu painel. Os créditos nunca expiram e permitem emitir laudos em 1 clique. Para frotas e concessionárias com demanda corporativa a partir de 50 consultas, também oferecemos propostas sob medida com faturamento PJ via WhatsApp.',
   },
 ];

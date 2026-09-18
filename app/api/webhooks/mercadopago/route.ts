@@ -264,6 +264,15 @@ export async function POST(request: NextRequest) {
       .eq('id', paymentData.externalReference)
       .maybeSingle();
     transaction = txByRef;
+
+    if (!transaction) {
+      const { data: txByOrder } = await adminDb
+        .from('payment_transactions')
+        .select('*')
+        .eq('credit_package_order_id', paymentData.externalReference)
+        .maybeSingle();
+      transaction = txByOrder;
+    }
   }
 
   if (!transaction) {

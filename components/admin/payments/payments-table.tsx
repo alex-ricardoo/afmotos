@@ -15,6 +15,8 @@ import {
   User,
   Receipt,
   FileCheck2,
+  Package,
+  Coins,
 } from 'lucide-react';
 import { type AdminPaymentItemDTO } from '@/lib/admin/payments-service';
 
@@ -217,15 +219,24 @@ export function PaymentsTable({
                   : 'border-zinc-800/80 bg-zinc-950/80'
               }`}
             >
-              {/* Header do Card Mobile: Placa + Valor */}
+              {/* Header do Card Mobile: Placa / Pacote + Valor */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black border border-zinc-700 shadow-inner">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                    <span className="font-mono text-xs font-black tracking-wider text-white">
-                      {item.plate}
-                    </span>
-                  </div>
+                  {item.purpose === 'credit_package' ? (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 shadow-inner">
+                      <Package className="h-3.5 w-3.5 text-amber-400" />
+                      <span className="font-mono text-xs font-black tracking-wider text-amber-200">
+                        PACOTE B2B
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black border border-zinc-700 shadow-inner">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                      <span className="font-mono text-xs font-black tracking-wider text-white">
+                        {item.plate}
+                      </span>
+                    </div>
+                  )}
                   <span className="text-[11px] text-zinc-400 font-mono">
                     {formatDateTime(item.paymentCreatedAt)}
                   </span>
@@ -262,13 +273,20 @@ export function PaymentsTable({
                   </span>
                 )}
 
-                {/* Laudo */}
-                <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border ${delBadge.className}`}
-                >
-                  <DelIcon className="h-3 w-3" />
-                  <span>{delBadge.label}</span>
-                </span>
+                {/* Laudo ou Pacote B2B */}
+                {item.purpose === 'credit_package' ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border bg-indigo-500/15 text-indigo-300 border-indigo-500/40 font-semibold">
+                    <Coins className="h-3 w-3" />
+                    <span>Créditos em Conta</span>
+                  </span>
+                ) : (
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border ${delBadge.className}`}
+                  >
+                    <DelIcon className="h-3 w-3" />
+                    <span>{delBadge.label}</span>
+                  </span>
+                )}
 
                 {/* Estorno */}
                 {refBadge && (
@@ -310,7 +328,9 @@ export function PaymentsTable({
                   </button>
                 )}
 
-                {(item.refund.status === 'pending' || item.refund.status === 'failed') && (
+                {(item.refund.status === 'pending' ||
+                  item.refund.status === 'failed' ||
+                  (item.purpose === 'credit_package' && item.paymentStatus === 'pending')) && (
                   <button
                     type="button"
                     onClick={() => onReconcile(item)}
@@ -348,7 +368,7 @@ export function PaymentsTable({
                   Data / Hora
                 </th>
                 <th scope="col" className="py-3.5 px-4">
-                  Placa
+                  Origem / Placa
                 </th>
                 <th scope="col" className="py-3.5 px-4">
                   Cliente
@@ -395,14 +415,23 @@ export function PaymentsTable({
                       {formatDateTime(item.paymentCreatedAt)}
                     </td>
 
-                    {/* Placa */}
+                    {/* Placa ou Pacote B2B */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black border border-zinc-700 shadow-inner">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                        <span className="font-mono text-xs font-black text-white tracking-wider">
-                          {item.plate}
-                        </span>
-                      </div>
+                      {item.purpose === 'credit_package' ? (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-300 shadow-inner">
+                          <Package className="h-3.5 w-3.5 text-amber-400" />
+                          <span className="font-mono text-xs font-black text-amber-200 tracking-wider">
+                            PACOTE B2B
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black border border-zinc-700 shadow-inner">
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                          <span className="font-mono text-xs font-black text-white tracking-wider">
+                            {item.plate}
+                          </span>
+                        </div>
+                      )}
                     </td>
 
                     {/* Cliente */}
@@ -444,25 +473,34 @@ export function PaymentsTable({
                       </div>
                     </td>
 
-                    {/* Laudo Veicular */}
+                    {/* Laudo Veicular ou Pacote B2B */}
                     <td className="py-3.5 px-4">
-                      <div className="flex flex-col gap-0.5">
-                        <span
-                          className={`inline-flex items-center gap-1 w-fit px-2.5 py-0.5 rounded-full text-[10px] border ${delBadge.className}`}
-                        >
-                          <DelIcon className="h-3 w-3" />
-                          <span>{delBadge.label}</span>
-                        </span>
-                        {item.delivery.lastErrorCode &&
-                          item.delivery.lastErrorCode !== 'APIBRASIL_INSUFFICIENT_CREDITS' && (
-                            <span
-                              className="text-[9px] text-zinc-500 font-mono truncate max-w-[160px]"
-                              title={item.delivery.lastErrorCode}
-                            >
-                              {item.delivery.lastErrorCode}
-                            </span>
-                          )}
-                      </div>
+                      {item.purpose === 'credit_package' ? (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="inline-flex items-center gap-1 w-fit px-2.5 py-0.5 rounded-full text-[10px] border bg-indigo-500/15 text-indigo-300 border-indigo-500/40 font-semibold">
+                            <Coins className="h-3 w-3" />
+                            <span>Créditos B2B</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-0.5">
+                          <span
+                            className={`inline-flex items-center gap-1 w-fit px-2.5 py-0.5 rounded-full text-[10px] border ${delBadge.className}`}
+                          >
+                            <DelIcon className="h-3 w-3" />
+                            <span>{delBadge.label}</span>
+                          </span>
+                          {item.delivery.lastErrorCode &&
+                            item.delivery.lastErrorCode !== 'APIBRASIL_INSUFFICIENT_CREDITS' && (
+                              <span
+                                className="text-[9px] text-zinc-500 font-mono truncate max-w-[160px]"
+                                title={item.delivery.lastErrorCode}
+                              >
+                                {item.delivery.lastErrorCode}
+                              </span>
+                            )}
+                        </div>
+                      )}
                     </td>
 
                     {/* Estorno */}
@@ -510,12 +548,19 @@ export function PaymentsTable({
                           </button>
                         )}
 
-                        {(item.refund.status === 'pending' || item.refund.status === 'failed') && (
+                        {(item.refund.status === 'pending' ||
+                          item.refund.status === 'failed' ||
+                          (item.purpose === 'credit_package' &&
+                            item.paymentStatus === 'pending')) && (
                           <button
                             type="button"
                             onClick={() => onReconcile(item)}
                             disabled={isReconciling}
-                            title="Reconciliar estorno no Mercado Pago"
+                            title={
+                              item.purpose === 'credit_package'
+                                ? 'Reconciliar pedido no Mercado Pago'
+                                : 'Reconciliar estorno no Mercado Pago'
+                            }
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/30 transition-all disabled:opacity-50 cursor-pointer"
                           >
                             <RefreshCw

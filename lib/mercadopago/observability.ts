@@ -49,7 +49,23 @@ export type CheckoutProLogEvent =
   | 'checkout_pro.reconciliation_completed'
   | 'checkout_pro.reconcile_requested'
   | 'checkout_pro.reconcile_completed'
-  | 'checkout_pro.reconcile_failed';
+  | 'checkout_pro.reconcile_failed'
+  // Eventos de compra e conciliação de pacotes de crédito B2B
+  | 'credit_package.checkout_started'
+  | 'credit_package.order_created'
+  | 'credit_package.preference_created'
+  | 'credit_package.payment_pending'
+  | 'credit_package.payment_approved'
+  | 'credit_package.payment_rejected'
+  | 'credit_package.payment_confirmed'
+  | 'credit_package.grant_started'
+  | 'credit_package.granted'
+  | 'credit_package.grant_failed'
+  | 'credit_package.grant_duplicate_prevented'
+  | 'credit_package.reconcile_started'
+  | 'credit_package.reconcile_completed'
+  | 'credit_package.refund_detected'
+  | 'credit_package.refund_manual_review';
 
 export function getRuntimeEnvironment(): 'production' | 'preview' | 'local' {
   if (process.env.VERCEL_ENV === 'production') return 'production';
@@ -86,6 +102,9 @@ export interface LogContext {
   flowId?: string;
   consultationId?: string;
   transactionId?: string;
+  orderId?: string;
+  offerId?: string;
+  isReused?: boolean;
   durationMs?: number;
   environment?: string;
   runtimeEnvironment?: 'production' | 'preview' | 'local';
@@ -146,6 +165,10 @@ export interface LogContext {
   signatureValid?: boolean;
   httpStatus?: number;
   errorMessage?: string;
+  reason?: string;
+  creditsConsumed?: number;
+  creditsRemaining?: number;
+  creditsRevoked?: number;
 }
 
 /**

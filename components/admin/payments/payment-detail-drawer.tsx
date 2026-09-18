@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Play,
   RefreshCw,
+  Package,
 } from 'lucide-react';
 import { type AdminPaymentItemDTO, type AuditTimelineItem } from '@/lib/admin/payments-service';
 import { maskId } from '@/lib/mercadopago/observability';
@@ -81,13 +82,24 @@ export function PaymentDetailDrawer({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white">Transação e Consulta</h2>
-                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black border border-zinc-700">
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                  <span className="font-mono text-xs font-black tracking-wider text-white">
-                    {item.plate}
-                  </span>
-                </div>
+                <h2 className="text-base font-bold text-white">
+                  {item.purpose === 'credit_package'
+                    ? 'Transação de Pacote B2B'
+                    : 'Transação e Consulta'}
+                </h2>
+                {item.purpose === 'credit_package' ? (
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-300">
+                    <Package className="h-3 w-3 text-amber-400" />
+                    <span className="font-mono text-xs font-black text-amber-200">PACOTE B2B</span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black border border-zinc-700">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                    <span className="font-mono text-xs font-black tracking-wider text-white">
+                      {item.plate}
+                    </span>
+                  </div>
+                )}
               </div>
               <p className="text-xs text-zinc-400 mt-0.5">
                 ID Transação:{' '}
@@ -119,28 +131,62 @@ export function PaymentDetailDrawer({
           </div>
         )}
 
-        {/* Bloco 1: Consulta Veicular */}
+        {/* Bloco 1: Origem do Pedido (Consulta ou Pacote de Créditos) */}
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/80 p-4 space-y-3 shadow-sm">
           <h3 className="text-xs font-bold uppercase tracking-wider text-[#e3c56c] flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span>Dados da Consulta Veicular</span>
+            {item.purpose === 'credit_package' ? (
+              <Package className="h-4 w-4" />
+            ) : (
+              <FileText className="h-4 w-4" />
+            )}
+            <span>
+              {item.purpose === 'credit_package'
+                ? 'Dados do Pacote de Créditos B2B'
+                : 'Dados da Consulta Veicular'}
+            </span>
           </h3>
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <span className="text-zinc-500 block">ID da Consulta:</span>
-              <span className="font-mono text-zinc-300">{maskId(item.consultationId)}</span>
+              <span className="text-zinc-500 block">
+                {item.purpose === 'credit_package' ? 'ID do Pedido de Pacote:' : 'ID da Consulta:'}
+              </span>
+              <span className="font-mono text-zinc-300">
+                {maskId(
+                  item.purpose === 'credit_package'
+                    ? item.creditPackageOrderId || item.consultationId
+                    : item.consultationId,
+                )}
+              </span>
             </div>
             <div>
-              <span className="text-zinc-500 block">Status da Consulta:</span>
-              <span className="font-semibold text-white capitalize">{item.consultationStatus}</span>
+              <span className="text-zinc-500 block">Status:</span>
+              <span className="font-semibold text-white capitalize">
+                {item.purpose === 'credit_package'
+                  ? item.paymentStatus === 'approved'
+                    ? 'Créditos Concedidos'
+                    : item.paymentStatus
+                  : item.consultationStatus}
+              </span>
             </div>
             <div>
-              <span className="text-zinc-500 block">Laudo Entregue:</span>
+              <span className="text-zinc-500 block">
+                {item.purpose === 'credit_package' ? 'Tipo de Operação:' : 'Laudo Entregue:'}
+              </span>
               <span
-                className={`font-semibold ${item.hasReportData ? 'text-emerald-400' : 'text-zinc-400'}`}
+                className={`font-semibold ${
+                  item.purpose === 'credit_package'
+                    ? 'text-indigo-300'
+                    : item.hasReportData
+                      ? 'text-emerald-400'
+                      : 'text-zinc-400'
+                }`}
               >
-                {item.hasReportData ? 'Sim (Disponível)' : 'Não'}
+                {item.purpose === 'credit_package'
+                  ? 'Créditos em Conta'
+                  : item.hasReportData
+                    ? 'Sim (Disponível)'
+                    : 'Não'}
               </span>
             </div>
             <div>
@@ -187,49 +233,51 @@ export function PaymentDetailDrawer({
           </div>
         </div>
 
-        {/* Bloco 3: API Brasil / Entrega */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/80 p-4 space-y-3 shadow-sm">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-[#e3c56c] flex items-center gap-2">
-            <Radio className="h-4 w-4" />
-            <span>Status Técnico da Entrega (API Brasil)</span>
-          </h3>
+        {/* Bloco 3: API Brasil / Entrega (Apenas para consultas individuais) */}
+        {item.purpose !== 'credit_package' && (
+          <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/80 p-4 space-y-3 shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#e3c56c] flex items-center gap-2">
+              <Radio className="h-4 w-4" />
+              <span>Status Técnico da Entrega (API Brasil)</span>
+            </h3>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <span className="text-zinc-500 block">Status da Entrega:</span>
-              <span className="font-bold text-white capitalize">{item.delivery.status}</span>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-zinc-500 block">Status da Entrega:</span>
+                <span className="font-bold text-white capitalize">{item.delivery.status}</span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Tentativas Realizadas:</span>
+                <span className="text-zinc-300 font-mono">
+                  {item.delivery.attemptCount} de {item.delivery.maxAttempts}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Último HTTP Status:</span>
+                <span className="font-mono text-zinc-300">
+                  {item.delivery.lastHttpStatus ? `HTTP ${item.delivery.lastHttpStatus}` : '-'}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Código da Falha:</span>
+                <span
+                  className={`font-bold ${item.flags.isInsufficientCredits ? 'text-red-400' : 'text-zinc-300'}`}
+                >
+                  {item.delivery.lastErrorCode || 'Nenhum'}
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="text-zinc-500 block">Tentativas Realizadas:</span>
-              <span className="text-zinc-300 font-mono">
-                {item.delivery.attemptCount} de {item.delivery.maxAttempts}
-              </span>
-            </div>
-            <div>
-              <span className="text-zinc-500 block">Último HTTP Status:</span>
-              <span className="font-mono text-zinc-300">
-                {item.delivery.lastHttpStatus ? `HTTP ${item.delivery.lastHttpStatus}` : '-'}
-              </span>
-            </div>
-            <div>
-              <span className="text-zinc-500 block">Código da Falha:</span>
-              <span
-                className={`font-bold ${item.flags.isInsufficientCredits ? 'text-red-400' : 'text-zinc-300'}`}
-              >
-                {item.delivery.lastErrorCode || 'Nenhum'}
-              </span>
-            </div>
+
+            {item.delivery.lastErrorMessageSafe && (
+              <div className="pt-2 border-t border-zinc-900 text-xs">
+                <span className="text-zinc-500 block mb-1">Diagnóstico do Provedor:</span>
+                <p className="text-zinc-300 bg-zinc-900/80 p-3 rounded-xl border border-zinc-800 font-mono text-[11px] leading-relaxed">
+                  {item.delivery.lastErrorMessageSafe}
+                </p>
+              </div>
+            )}
           </div>
-
-          {item.delivery.lastErrorMessageSafe && (
-            <div className="pt-2 border-t border-zinc-900 text-xs">
-              <span className="text-zinc-500 block mb-1">Diagnóstico do Provedor:</span>
-              <p className="text-zinc-300 bg-zinc-900/80 p-3 rounded-xl border border-zinc-800 font-mono text-[11px] leading-relaxed">
-                {item.delivery.lastErrorMessageSafe}
-              </p>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Bloco 4: Estorno */}
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/80 p-4 space-y-3 shadow-sm">

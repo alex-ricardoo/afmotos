@@ -70,15 +70,21 @@ export async function grantCreditsToUser({
 
     if (error) {
       console.error('[grantCreditsToUser] RPC error:', error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        code: 'CREDIT_PACKAGE_GRANT_FAILED',
+        error: 'Não foi possível liberar os créditos neste momento. Nenhum crédito foi adicionado.',
+      };
     }
 
     const res = data as RpcResponse | null;
     if (!res || !res.success) {
       return {
         success: false,
-        code: res?.code,
-        error: res?.message_safe || 'Falha ao conceder pacote de créditos.',
+        code: res?.code || 'CREDIT_PACKAGE_GRANT_FAILED',
+        error:
+          res?.message_safe ||
+          'Não foi possível liberar os créditos neste momento. Nenhum crédito foi adicionado.',
       };
     }
 
@@ -92,9 +98,12 @@ export async function grantCreditsToUser({
       consumedCredits: res.consumed_credits,
     };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
     console.error('[grantCreditsToUser] Unexpected error:', err);
-    return { success: false, error: message };
+    return {
+      success: false,
+      code: 'CREDIT_PACKAGE_GRANT_FAILED',
+      error: 'Não foi possível liberar os créditos neste momento. Nenhum crédito foi adicionado.',
+    };
   }
 }
 

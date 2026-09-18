@@ -4,11 +4,12 @@ import { createClient } from '@/lib/supabase/server';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { getVehicleConsultationPrice } from '@/lib/settings/server-queries';
 import { getUserCreditBalance } from '@/lib/credits/credit-service';
+import { getActiveCreditOffers } from '@/lib/credits/offers-service';
 import { CustomerCreditsView, type LedgerItem } from '@/components/customer/customer-credits-view';
 
 export const metadata = {
   title: 'Pacotes de Créditos B2B | AF Motos',
-  description: 'Adquira créditos pré-pagos para consultas veiculares com descontos progressivos e liberação imediata via WhatsApp.',
+  description: 'Adquira créditos pré-pagos para consultas veiculares com descontos progressivos e liberação imediata via WhatsApp ou Mercado Pago.',
 };
 
 export default async function CustomerCreditsPage() {
@@ -21,11 +22,12 @@ export default async function CustomerCreditsPage() {
     redirect('/cliente/login?returnUrl=/cliente/creditos');
   }
 
-  // 1. Carrega saldo, configurações e o PREÇO OFICIAL DINÂMICO da consulta no banco de dados
-  const [balance, rawSettings, regularPrice] = await Promise.all([
+  // 1. Carrega saldo, configurações, preço oficial e ofertas ativas de pacotes
+  const [balance, rawSettings, regularPrice, offers] = await Promise.all([
     getUserCreditBalance(user.id),
     getSiteSettings(),
     getVehicleConsultationPrice(),
+    getActiveCreditOffers(),
   ]);
 
   // 2. Carrega histórico do ledger (compatível com nova tabela customer_credit_ledger e fallback credit_ledger)
@@ -65,6 +67,7 @@ export default async function CustomerCreditsPage() {
       userName={userName}
       whatsappPhone={rawPhone}
       ledgerHistory={ledgerHistory}
+      offers={offers}
     />
   );
 }

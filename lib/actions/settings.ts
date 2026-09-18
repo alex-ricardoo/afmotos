@@ -52,9 +52,13 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
   }
 
   if (settings.vehicleHistory) {
-    const vehicleHistoryValidation = vehicleHistorySettingsSchema.safeParse(settings.vehicleHistory);
+    const vehicleHistoryValidation = vehicleHistorySettingsSchema.safeParse(
+      settings.vehicleHistory,
+    );
     if (!vehicleHistoryValidation.success) {
-      const firstError = vehicleHistoryValidation.error.issues[0]?.message || 'Dados de Histórico Veicular inválidos.';
+      const firstError =
+        vehicleHistoryValidation.error.issues[0]?.message ||
+        'Dados de Histórico Veicular inválidos.';
       console.error('Erro de validação em Histórico Veicular:', vehicleHistoryValidation.error);
       return { error: firstError };
     }
@@ -62,6 +66,26 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
       ...vehicleHistoryValidation.data,
       updatedAt: new Date().toISOString(),
     };
+
+    // Sincroniza com a tabela de versionamento de preço vehicle_history_pricing_versions
+    if (typeof settings.vehicleHistory.price === 'number' && settings.vehicleHistory.price > 0) {
+      try {
+        const { createVehicleHistoryPricingVersion } =
+          await import('@/lib/settings/pricing-service');
+        const { createAdminClient } = await import('@/lib/supabase/admin');
+        const adminClient = createAdminClient();
+        const { data: userData } = await supabase.auth.getUser();
+        await createVehicleHistoryPricingVersion({
+          publicPriceCents: Math.round(settings.vehicleHistory.price * 100),
+          apiBrasilLiveCostCents: 3000,
+          adminUserId: userData.user?.id || 'admin',
+          changeReason: 'Sincronização com Configurações da Loja',
+          dbClient: adminClient,
+        });
+      } catch (pvErr) {
+        console.warn('[saveSettingsAction] Falha ao sincronizar pricing version:', pvErr);
+      }
+    }
   }
 
   const dbPayload = {
@@ -96,6 +120,7 @@ export async function saveSettingsAction(payload: SaveSettingsPayload) {
 
   revalidatePath('/', 'layout');
   revalidatePath('/historico-veicular');
+  revalidatePath('/cliente/creditos');
   revalidatePath('/cliente', 'layout');
   revalidatePath('/admin/configuracoes');
   return { success: true };

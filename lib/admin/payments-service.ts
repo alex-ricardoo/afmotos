@@ -39,6 +39,8 @@ export interface AdminPaymentItemDTO {
   paymentStatusDetail: string | null;
   mpPaymentId: string | null;
   mpPreferenceId: string | null;
+  purpose?: string;
+  creditPackageOrderId?: string | null;
 
   consultationId: string;
   plate: string;
@@ -237,6 +239,8 @@ function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
     paymentStatusDetail: row.payment_status_detail ?? row.status_detail ?? null,
     mpPaymentId: row.mp_payment_id ?? null,
     mpPreferenceId: row.mp_preference_id ?? null,
+    purpose: (row.purpose as string) || (row.credit_package_order_id ? 'credit_package' : 'vehicle_consultation'),
+    creditPackageOrderId: (row.credit_package_order_id as string) || null,
 
     consultationId: row.consultation_id || '',
     plate: row.plate || 'SEM PLACA',

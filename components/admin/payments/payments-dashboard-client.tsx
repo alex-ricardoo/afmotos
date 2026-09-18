@@ -212,10 +212,24 @@ export function PaymentsDashboardClient({
   }) => {
     setIsSubmittingRefund(true);
     try {
-      const res = await fetch(`/api/admin/payments/${params.transactionId}/refund`, {
+      const isPackage =
+        selectedRefundItem?.purpose === 'credit_package' &&
+        selectedRefundItem?.creditPackageOrderId;
+
+      const endpoint = isPackage
+        ? `/api/admin/credit-package-orders/${selectedRefundItem.creditPackageOrderId}/refund`
+        : `/api/admin/payments/${params.transactionId}/refund`;
+
+      const body = isPackage
+        ? JSON.stringify({
+            reason: params.adminNote || params.reasonCode,
+          })
+        : JSON.stringify(params);
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params),
+        body,
       });
       const result = await res.json();
 
@@ -260,7 +274,12 @@ export function PaymentsDashboardClient({
   const handleReconcile = async (item: AdminPaymentItemDTO) => {
     setReconcilingId(item.transactionId);
     try {
-      const res = await fetch(`/api/admin/payments/${item.transactionId}/refund/reconcile`, {
+      const endpoint =
+        item.purpose === 'credit_package' && item.creditPackageOrderId
+          ? `/api/admin/credit-package-orders/${item.creditPackageOrderId}/reconcile`
+          : `/api/admin/payments/${item.transactionId}/refund/reconcile`;
+
+      const res = await fetch(endpoint, {
         method: 'POST',
       });
       const result = await res.json();

@@ -27,6 +27,7 @@ export interface ResolveUrlOptions {
   transactionId: string;
   environmentOverride?: DeploymentEnvironment;
   allowProductionInPreview?: boolean;
+  returnPathPrefix?: string;
 }
 
 /**
@@ -40,14 +41,16 @@ export function getDeploymentEnvironment(): DeploymentEnvironment {
 
   const mpCheckoutMode = process.env.MERCADO_PAGO_CHECKOUT_MODE?.toLowerCase().trim();
   if (mpCheckoutMode === 'production') return 'production';
-
-  // Se o token configurado é de produção (APP_USR-), o ambiente de pagamento é estritamente produção
-  const credentialMode = getCredentialMode();
-  if (credentialMode === 'production') return 'production';
+  if (mpCheckoutMode === 'test' || mpCheckoutMode === 'development') return 'development';
 
   const nodeEnv = process.env.NODE_ENV?.toLowerCase().trim();
   if (nodeEnv === 'production') return 'production';
   if (nodeEnv === 'test') return 'test';
+  if (nodeEnv === 'development') return 'development';
+
+  // Se o token configurado é de produção (APP_USR-) e não estamos em development/test, é produção
+  const credentialMode = getCredentialMode();
+  if (credentialMode === 'production') return 'production';
 
   return 'development';
 }
@@ -242,10 +245,11 @@ export function resolveCheckoutProUrls(options: ResolveUrlOptions): ResolvedChec
   const normalizedAppUrl = `${parsedAppUrl.origin}${cleanPath}`;
 
   // Resolução das 3 back_urls da aplicação
+  const basePath = options.returnPathPrefix || '/cliente/pagamento/retorno';
   const backUrls = {
-    success: `${normalizedAppUrl}/cliente/pagamento/retorno/${transactionId}?result=success`,
-    pending: `${normalizedAppUrl}/cliente/pagamento/retorno/${transactionId}?result=pending`,
-    failure: `${normalizedAppUrl}/cliente/pagamento/retorno/${transactionId}?result=failure`,
+    success: `${normalizedAppUrl}${basePath}/${transactionId}?result=success`,
+    pending: `${normalizedAppUrl}${basePath}/${transactionId}?result=pending`,
+    failure: `${normalizedAppUrl}${basePath}/${transactionId}?result=failure`,
   };
 
   const backUrlScheme = (parsedAppUrl.protocol === 'https:' ? 'https' : 'http') as 'https' | 'http';

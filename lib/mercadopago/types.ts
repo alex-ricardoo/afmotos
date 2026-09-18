@@ -85,7 +85,9 @@ export interface PaymentRefundRecord {
 
 export interface PaymentTransactionRecord {
   id: string;
-  consultation_id: string;
+  consultation_id: string | null;
+  purpose?: 'vehicle_consultation' | 'credit_package' | string;
+  credit_package_order_id?: string | null;
   user_id: string;
   mp_preference_id: string | null;
   mp_payment_id: string | null;

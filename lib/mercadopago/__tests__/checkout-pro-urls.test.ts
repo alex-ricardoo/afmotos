@@ -4,6 +4,7 @@ import {
   resolveCheckoutProUrls,
   sanitizeAndValidateCandidateUrl,
   isLoopbackOrLocal,
+  getDeploymentEnvironment,
 } from '../checkout-pro-urls.ts';
 import {
   CheckoutProUrlResolutionError,
@@ -290,6 +291,50 @@ describe('Checkout Pro URL Resolver & Production Safety', () => {
       assert.ok(!loggedJson.includes('transactionId'));
     } finally {
       console.log = originalLog;
+    }
+  });
+
+  it('getDeploymentEnvironment identifica corretamente os ambientes respeitando precedência', () => {
+    try {
+      // 1. Vercel Production
+      process.env.VERCEL_ENV = 'production';
+      assert.equal(getDeploymentEnvironment(), 'production');
+
+      // 2. Vercel Preview
+      process.env.VERCEL_ENV = 'preview';
+      assert.equal(getDeploymentEnvironment(), 'preview');
+
+      delete process.env.VERCEL_ENV;
+
+      // 3. MERCADO_PAGO_CHECKOUT_MODE=production
+      process.env.MERCADO_PAGO_CHECKOUT_MODE = 'production';
+      assert.equal(getDeploymentEnvironment(), 'production');
+
+      // 4. MERCADO_PAGO_CHECKOUT_MODE=test
+      process.env.MERCADO_PAGO_CHECKOUT_MODE = 'test';
+      assert.equal(getDeploymentEnvironment(), 'development');
+
+      delete process.env.MERCADO_PAGO_CHECKOUT_MODE;
+
+      // 5. NODE_ENV=development com token APP_USR => development
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'development';
+      process.env.MERCADO_PAGO_ACCESS_TOKEN = 'APP_USR-1234567890';
+      assert.equal(getDeploymentEnvironment(), 'development');
+
+      // 6. NODE_ENV=production => production
+      (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
+      assert.equal(getDeploymentEnvironment(), 'production');
+
+      // 7. Standalone sem NODE_ENV mas com token APP_USR => production
+      Reflect.deleteProperty(process.env, 'NODE_ENV');
+      process.env.MERCADO_PAGO_ACCESS_TOKEN = 'APP_USR-1234567890';
+      assert.equal(getDeploymentEnvironment(), 'production');
+
+      // 8. Standalone com token TEST => development
+      process.env.MERCADO_PAGO_ACCESS_TOKEN = 'TEST-1234567890';
+      assert.equal(getDeploymentEnvironment(), 'development');
+    } finally {
+      restoreEnv();
     }
   });
 });
