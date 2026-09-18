@@ -51,7 +51,7 @@ interface CustomerCreditsViewProps {
 
 export function CustomerCreditsView({
   balance,
-  regularConsultationPrice = 42.9,
+  regularConsultationPrice,
   userEmail,
   userName,
   whatsappPhone,
@@ -74,8 +74,11 @@ export function CustomerCreditsView({
 
   const cleanPhone = whatsappPhone.replace(/\D/g, '') || '81999999999';
 
-  // Preço base dinâmico vindo da tabela site_settings / vehicle_history_pricing_versions no banco de dados
-  const basePrice = regularConsultationPrice > 0 ? regularConsultationPrice : 42.9;
+  // Preço base oficial da consulta avulsa configurado dinamicamente no banco de dados (site_settings)
+  const basePrice =
+    typeof regularConsultationPrice === 'number' && regularConsultationPrice > 0
+      ? regularConsultationPrice
+      : 39.99;
 
   // Custo mínimo da API Brasil (R$ 30,00). Travamos piso para nunca vender abaixo de R$ 30,00.
   const APIBRASIL_FLOOR_COST = 30.0;
@@ -147,11 +150,13 @@ export function CustomerCreditsView({
           const isWaOnly = off.contact_only || off.requires_whatsapp;
           const unitVal =
             off.credits_quantity > 0 ? off.price_cents / off.credits_quantity / 100 : 0;
-          const refVal =
-            off.reference_individual_price_cents && off.reference_individual_price_cents > 0
-              ? off.reference_individual_price_cents / 100
-              : basePrice;
           const totalPrice = off.price_cents / 100;
+
+          const savingsPercent = isWaOnly
+            ? 'Sob Medida'
+            : off.discount_percent && off.discount_percent > 0
+              ? `${Math.round(off.discount_percent)}% OFF`
+              : null;
 
           return {
             id: off.id,
@@ -164,13 +169,8 @@ export function CustomerCreditsView({
                 ? 'Condição sob medida para grandes frotas e leilões.'
                 : `Para quem realiza consultas com frequência regular.`),
             estimatedUnitPrice: isWaOnly ? 'Sob consulta' : formatCurrency(unitVal),
-            regularUnitPrice: formatCurrency(refVal),
             totalPriceFormatted: isWaOnly ? 'Sob consulta' : formatCurrency(totalPrice),
-            savingsPercent: isWaOnly
-              ? 'Sob Medida'
-              : off.discount_percent
-                ? `${off.discount_percent}% OFF`
-                : null,
+            savingsPercent,
             perks:
               off.perks && off.perks.length > 0
                 ? off.perks
@@ -194,7 +194,6 @@ export function CustomerCreditsView({
             badge: null,
             tagline: 'Ideal para avaliações pontuais com economia garantida.',
             estimatedUnitPrice: formatCurrency(starterUnit),
-            regularUnitPrice: formatCurrency(basePrice),
             totalPriceFormatted: formatCurrency(5 * starterUnit),
             savingsPercent: '5% OFF',
             perks: [
@@ -213,7 +212,6 @@ export function CustomerCreditsView({
             badge: null,
             tagline: 'O preferido de revendas, lojistas e corretores de motos.',
             estimatedUnitPrice: formatCurrency(proUnit),
-            regularUnitPrice: formatCurrency(basePrice),
             totalPriceFormatted: formatCurrency(15 * proUnit),
             savingsPercent: '8% OFF',
             perks: [
@@ -232,7 +230,6 @@ export function CustomerCreditsView({
             badge: null,
             tagline: 'Máxima produtividade para alta rotatividade de veículos.',
             estimatedUnitPrice: formatCurrency(businessUnit),
-            regularUnitPrice: formatCurrency(basePrice),
             totalPriceFormatted: formatCurrency(30 * businessUnit),
             savingsPercent: '12% OFF',
             perks: [
@@ -251,7 +248,6 @@ export function CustomerCreditsView({
             badge: null,
             tagline: 'Condições especiais para concessionárias e frotas.',
             estimatedUnitPrice: formatCurrency(enterpriseUnit),
-            regularUnitPrice: formatCurrency(basePrice),
             totalPriceFormatted: 'Sob consulta',
             savingsPercent: 'Sob Medida',
             perks: [
@@ -271,29 +267,21 @@ export function CustomerCreditsView({
       const sorted = [...offers].sort((a, b) => a.credits_quantity - b.credits_quantity);
       return sorted.map((off) => {
         const isWa = off.contact_only || off.requires_whatsapp;
-        const refUnit =
-          off.reference_individual_price_cents && off.reference_individual_price_cents > 0
-            ? off.reference_individual_price_cents / 100
-            : basePrice;
         const pkgTotal = off.price_cents / 100;
         const qty = off.credits_quantity;
         const unitVal = qty > 0 ? pkgTotal / qty : 0;
-        const regularTot = qty * refUnit;
-        const savingsTot = Math.max(0, regularTot - pkgTotal);
         const discountPct =
-          off.discount_percent ??
-          (regularTot > 0 ? Math.round(((regularTot - pkgTotal) / regularTot) * 100) : 0);
+          off.discount_percent && off.discount_percent > 0
+            ? Math.round(off.discount_percent)
+            : 0;
 
         return {
           id: off.id,
           quantity: qty,
           label: isWa ? `${qty}+` : `${qty}`,
           name: off.name,
-          refUnitPrice: refUnit,
           pkgUnitPrice: unitVal,
-          regularTotal: regularTot,
           packageTotal: pkgTotal,
-          savingsTotal: savingsTot,
           discountPercent: discountPct,
           isWaOnly: isWa,
         };
@@ -306,11 +294,8 @@ export function CustomerCreditsView({
         quantity: 5,
         label: '5',
         name: 'Pacote Inicial',
-        refUnitPrice: basePrice,
         pkgUnitPrice: starterUnit,
-        regularTotal: 5 * basePrice,
         packageTotal: 5 * starterUnit,
-        savingsTotal: Math.max(0, 5 * basePrice - 5 * starterUnit),
         discountPercent: 5,
         isWaOnly: false,
       },
@@ -319,11 +304,8 @@ export function CustomerCreditsView({
         quantity: 15,
         label: '15',
         name: 'Pacote Lojista & Revenda',
-        refUnitPrice: basePrice,
         pkgUnitPrice: proUnit,
-        regularTotal: 15 * basePrice,
         packageTotal: 15 * proUnit,
-        savingsTotal: Math.max(0, 15 * basePrice - 15 * proUnit),
         discountPercent: 8,
         isWaOnly: false,
       },
@@ -332,11 +314,8 @@ export function CustomerCreditsView({
         quantity: 30,
         label: '30',
         name: 'Pacote Frotista & Despachante',
-        refUnitPrice: basePrice,
         pkgUnitPrice: businessUnit,
-        regularTotal: 30 * basePrice,
         packageTotal: 30 * businessUnit,
-        savingsTotal: Math.max(0, 30 * basePrice - 30 * businessUnit),
         discountPercent: 12,
         isWaOnly: false,
       },
@@ -345,16 +324,13 @@ export function CustomerCreditsView({
         quantity: 50,
         label: '50+',
         name: 'Volume Customizado',
-        refUnitPrice: basePrice,
         pkgUnitPrice: enterpriseUnit,
-        regularTotal: 50 * basePrice,
         packageTotal: 50 * enterpriseUnit,
-        savingsTotal: Math.max(0, 50 * basePrice - 50 * enterpriseUnit),
         discountPercent: 15,
         isWaOnly: true,
       },
     ];
-  }, [offers, basePrice, starterUnit, proUnit, businessUnit, enterpriseUnit]);
+  }, [offers, starterUnit, proUnit, businessUnit, enterpriseUnit]);
 
   // Pacote ativo no simulador
   const activeSimulatorTier =
@@ -766,9 +742,6 @@ export function CustomerCreditsView({
                         </span>
                       ) : (
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-zinc-500 line-through text-[11px]">
-                            {pkg.regularUnitPrice}
-                          </span>
                           <span className={`font-extrabold text-xs sm:text-sm ${theme.unitAccent}`}>
                             {pkg.estimatedUnitPrice}
                           </span>
@@ -869,21 +842,17 @@ export function CustomerCreditsView({
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* 4. SIMULADOR DE ECONOMIA (DINÂMICO E VISUAL BASEADO NO BANCO) */}
+      {/* 4. SIMULADOR DE PACOTES E VOLUME                              */}
       {/* ------------------------------------------------------------- */}
       <div className="p-5 sm:p-8 rounded-3xl bg-zinc-950 border border-zinc-800/80 space-y-5 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <TrendingDown className="w-5 h-5 text-emerald-400" />
-              <h3 className="text-lg font-black text-white">Simulador de Economia B2B</h3>
+              <h3 className="text-lg font-black text-white">Simulador de Pacotes & Volume</h3>
             </div>
             <p className="text-xs text-zinc-400">
-              Economia real calculada com base no valor de referência de{' '}
-              <strong className="text-white font-bold">
-                {formatCurrency(activeSimulatorTier.refUnitPrice)}
-              </strong>{' '}
-              por consulta avulsa.
+              Consulte o investimento total e o custo por laudo de acordo com a demanda da sua operação.
             </p>
           </div>
 
@@ -906,25 +875,25 @@ export function CustomerCreditsView({
           </div>
         </div>
 
-        {/* Métricas do Simulador Baseadas no Preço Dinâmico do Banco */}
+        {/* Métricas do Simulador */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-2">
-          {/* Card 1: Custo Avulso Normal */}
+          {/* Card 1: Volume Selecionado */}
           <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 space-y-1">
             <span className="text-[11px] font-semibold text-zinc-400">
-              Custo Avulso Normal ({activeSimulatorTier.quantity} un)
+              Volume Selecionado
             </span>
-            <div className="text-xl sm:text-2xl font-black text-zinc-300">
-              {formatCurrency(activeSimulatorTier.regularTotal)}
+            <div className="text-xl sm:text-2xl font-black text-white">
+              {activeSimulatorTier.label} consultas
             </div>
-            <span className="text-[10px] text-zinc-500">
-              {formatCurrency(activeSimulatorTier.refUnitPrice)} por placa individual
+            <span className="text-[10px] text-zinc-400">
+              Créditos vitalícios sem data de expiração
             </span>
           </div>
 
           {/* Card 2: Valor no Pacote */}
           <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 space-y-1">
             <span className="text-[11px] font-semibold text-zinc-400">
-              No {activeSimulatorTier.name}
+              Investimento Total ({activeSimulatorTier.name})
             </span>
             <div className="text-xl sm:text-2xl font-black text-emerald-400">
               {activeSimulatorTier.isWaOnly
@@ -933,23 +902,25 @@ export function CustomerCreditsView({
             </div>
             <span className="text-[10px] text-emerald-500 font-medium">
               {activeSimulatorTier.isWaOnly
-                ? 'Condição personalizada sob medida via WhatsApp'
-                : `Apenas ${formatCurrency(activeSimulatorTier.pkgUnitPrice)}/un (${activeSimulatorTier.discountPercent}% OFF)`}
+                ? 'Condição personalizada via WhatsApp'
+                : 'À vista no Pix ou até 12x no cartão'}
             </span>
           </div>
 
-          {/* Card 3: Economia no Bolso */}
+          {/* Card 3: Custo por Consulta */}
           <div className="p-4 rounded-2xl bg-gradient-to-br from-[#c9a44c]/15 to-transparent border border-[#c9a44c]/30 space-y-1">
-            <span className="text-[11px] font-bold text-[#e3c56c]">Economia no Bolso</span>
+            <span className="text-[11px] font-bold text-[#e3c56c]">Custo por Consulta</span>
             <div className="text-xl sm:text-2xl font-black text-[#e3c56c]">
               {activeSimulatorTier.isWaOnly
-                ? 'Sob Consulta'
-                : formatCurrency(activeSimulatorTier.savingsTotal)}
+                ? 'Sob Medida'
+                : `${formatCurrency(activeSimulatorTier.pkgUnitPrice)}/un`}
             </div>
             <span className="text-[10px] text-zinc-400">
               {activeSimulatorTier.isWaOnly
-                ? 'Desconto progressivo sob medida para sua frota'
-                : `${activeSimulatorTier.discountPercent}% de economia direta para o seu negócio`}
+                ? 'Condição diferenciada para frotas e lojistas'
+                : activeSimulatorTier.discountPercent > 0
+                  ? `${activeSimulatorTier.discountPercent}% de desconto aplicado no pacote`
+                  : 'Economia progressiva garantida no lote'}
             </span>
           </div>
         </div>
@@ -961,7 +932,7 @@ export function CustomerCreditsView({
       <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950 p-5 sm:p-8 space-y-5 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-900 pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#c9a44c]/15 border border-[#c9a44c]/30 flex items-center justify-center text-[#c9a44c]">
+            <div className="w-9 h-9 rounded-xl  flex items-center justify-center text-zinc-400">
               <History className="w-5 h-5" />
             </div>
             <div>

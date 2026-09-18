@@ -1,15 +1,19 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { getSiteSettings } from '@/lib/queries/settings';
-import { getVehicleConsultationPrice } from '@/lib/settings/server-queries';
+import { getPublicSiteSettings } from '@/lib/settings/server-queries';
+import { getVehicleHistorySettings } from '@/lib/site-settings';
 import { getUserCreditBalance } from '@/lib/credits/credit-service';
 import { getActiveCreditOffers } from '@/lib/credits/offers-service';
 import { CustomerCreditsView, type LedgerItem } from '@/components/customer/customer-credits-view';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata = {
   title: 'Pacotes de Créditos B2B | AF Motos',
-  description: 'Adquira créditos pré-pagos para consultas veiculares com descontos progressivos e liberação imediata via WhatsApp ou Mercado Pago.',
+  description:
+    'Adquira créditos pré-pagos para consultas veiculares com descontos progressivos e liberação imediata via WhatsApp ou Mercado Pago.',
 };
 
 export default async function CustomerCreditsPage() {
@@ -22,13 +26,16 @@ export default async function CustomerCreditsPage() {
     redirect('/cliente/login?returnUrl=/cliente/creditos');
   }
 
-  // 1. Carrega saldo, configurações, preço oficial e ofertas ativas de pacotes
-  const [balance, rawSettings, regularPrice, offers] = await Promise.all([
+  // 1. Carrega saldo, configurações oficiais do banco e ofertas ativas de pacotes (igual a /historico-veicular)
+  const [balance, publicSettings, offers] = await Promise.all([
     getUserCreditBalance(user.id),
-    getSiteSettings(),
-    getVehicleConsultationPrice(),
+    getPublicSiteSettings(),
     getActiveCreditOffers(),
   ]);
+
+  // Resolve a precificação do banco da mesma forma exata que /historico-veicular
+  const vehicleHistory = publicSettings?.vehicleHistory || getVehicleHistorySettings(null);
+  const consultationPrice = vehicleHistory.price;
 
   // 2. Carrega histórico do ledger (compatível com nova tabela customer_credit_ledger e fallback credit_ledger)
   let ledgerHistory: LedgerItem[] = [];
@@ -56,13 +63,17 @@ export default async function CustomerCreditsPage() {
     console.warn('[CustomerCreditsPage] Erro ao carregar ledger:', err);
   }
 
-  const rawPhone = rawSettings?.whatsapp_phone || '81999999999';
-  const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Cliente';
+  const rawPhone = publicSettings?.phone || '81999999999';
+  const userName =
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    user.email?.split('@')[0] ||
+    'Cliente';
 
   return (
     <CustomerCreditsView
       balance={balance}
-      regularConsultationPrice={regularPrice}
+      regularConsultationPrice={consultationPrice}
       userEmail={user.email || ''}
       userName={userName}
       whatsappPhone={rawPhone}
