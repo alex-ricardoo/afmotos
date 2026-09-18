@@ -21,6 +21,7 @@ import {
   CircleDollarSign,
   Coins,
   ShieldCheck,
+  Package,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -37,6 +38,7 @@ const navigation = [
   { name: 'Consulta Veicular', href: '/admin/consulta-placa', icon: FileSearch },
   { name: 'Pagamentos & Estornos', href: '/admin/pagamentos-consultas', icon: CircleDollarSign },
   { name: 'Créditos B2B', href: '/admin/credits', icon: Coins },
+  { name: 'Pacotes B2B', href: '/admin/configuracoes/pacotes-consultas', icon: Package },
   { name: 'Tabela FIPE', href: '/admin/fipe', icon: Scale },
   { name: 'Documentos Legais & LGPD', href: '/admin/configuracoes/documentos-legais', icon: ShieldCheck },
   { name: 'Configurações', href: '/admin/configuracoes', icon: Settings },

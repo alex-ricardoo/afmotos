@@ -27,6 +27,7 @@ export interface ResolveUrlOptions {
   transactionId: string;
   environmentOverride?: DeploymentEnvironment;
   allowProductionInPreview?: boolean;
+  returnPathPrefix?: string;
 }
 
 /**
@@ -242,10 +243,11 @@ export function resolveCheckoutProUrls(options: ResolveUrlOptions): ResolvedChec
   const normalizedAppUrl = `${parsedAppUrl.origin}${cleanPath}`;
 
   // Resolução das 3 back_urls da aplicação
+  const basePath = options.returnPathPrefix || '/cliente/pagamento/retorno';
   const backUrls = {
-    success: `${normalizedAppUrl}/cliente/pagamento/retorno/${transactionId}?result=success`,
-    pending: `${normalizedAppUrl}/cliente/pagamento/retorno/${transactionId}?result=pending`,
-    failure: `${normalizedAppUrl}/cliente/pagamento/retorno/${transactionId}?result=failure`,
+    success: `${normalizedAppUrl}${basePath}/${transactionId}?result=success`,
+    pending: `${normalizedAppUrl}${basePath}/${transactionId}?result=pending`,
+    failure: `${normalizedAppUrl}${basePath}/${transactionId}?result=failure`,
   };
 
   const backUrlScheme = (parsedAppUrl.protocol === 'https:' ? 'https' : 'http') as 'https' | 'http';

@@ -22,8 +22,12 @@ import {
   Smartphone,
   ExternalLink,
   ShieldAlert,
+  CreditCard,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { CreditPackageOffer } from '@/lib/credits/types';
 
 export interface LedgerItem {
   id: string;
@@ -46,6 +50,7 @@ interface CustomerCreditsViewProps {
   userName: string;
   whatsappPhone: string;
   ledgerHistory: LedgerItem[];
+  offers?: CreditPackageOffer[];
 }
 
 export function CustomerCreditsView({
@@ -55,9 +60,12 @@ export function CustomerCreditsView({
   userName,
   whatsappPhone,
   ledgerHistory,
+  offers = [],
 }: CustomerCreditsViewProps) {
   const [filterType, setFilterType] = useState<'all' | 'in' | 'out'>('all');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [buyingOfferId, setBuyingOfferId] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [simulatedCount, setSimulatedCount] = useState<number>(15);
 
   const cleanPhone = whatsappPhone.replace(/\D/g, '') || '81999999999';
@@ -85,82 +93,149 @@ export function CustomerCreditsView({
   const businessUnit = Math.max(APIBRASIL_FLOOR_COST + 1.0, Math.round(basePrice * (1 - DISCOUNT_TIERS.business) * 100) / 100);
   const enterpriseUnit = Math.max(APIBRASIL_FLOOR_COST + 1.0, Math.round(basePrice * (1 - DISCOUNT_TIERS.enterprise) * 100) / 100);
 
-  // Pacotes comerciais estruturados a partir do preço do banco com descontos fixos
-  const packages = [
-    {
-      id: 'starter',
-      name: 'Pacote Inicial',
-      quantity: 5,
-      badge: 'Autônomo',
-      tagline: 'Ideal para quem compra ou vende veículos com frequência moderada.',
-      estimatedUnitPrice: formatCurrency(starterUnit),
-      regularUnitPrice: formatCurrency(basePrice),
-      savingsPercent: '5% OFF',
-      perks: [
-        '5 laudos veiculares completos',
-        'Liberação imediata em 1 clique',
-        'Sem taxa de cartão a cada placa',
-        'Créditos sem data de expiração',
-      ],
-      highlight: false,
-      whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de fechar o Pacote Inicial de 5 créditos de consultas veiculares na AF Motos.`,
-    },
-    {
-      id: 'pro',
-      name: 'Pacote Lojista & Revenda',
-      quantity: 15,
-      badge: 'Mais Recomendado',
-      tagline: 'O pacote preferido de lojistas de motos, corretores e revendas.',
-      estimatedUnitPrice: formatCurrency(proUnit),
-      regularUnitPrice: formatCurrency(basePrice),
-      savingsPercent: '8% OFF',
-      perks: [
-        '15 laudos veiculares completos',
-        'Economia progressiva garantida',
-        'Prioridade na fila de processamento',
-        'Canal dedicado via WhatsApp',
-      ],
-      highlight: true,
-      whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e quero ativar o Pacote Lojista de 15 créditos com desconto especial da AF Motos.`,
-    },
-    {
-      id: 'business',
-      name: 'Pacote Frotista & Despachante',
-      quantity: 30,
-      badge: 'Melhor Custo-Benefício',
-      tagline: 'Máxima produtividade para quem avalia veículos diariamente.',
-      estimatedUnitPrice: formatCurrency(businessUnit),
-      regularUnitPrice: formatCurrency(basePrice),
-      savingsPercent: '12% OFF',
-      perks: [
-        '30 laudos veiculares completos',
-        'Menor custo por placa consultada',
-        'Histórico e auditoria centralizados',
-        'Suporte prioritário exclusivo',
-        'Créditos não expiram nunca',
-      ],
-      highlight: false,
-      whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de negociar o Pacote Business de 30 créditos veiculares.`,
-    },
-    {
-      id: 'enterprise',
-      name: 'Volume Customizado',
-      quantity: '50+',
-      badge: 'Sob Medida PJ',
-      tagline: 'Condição sob medida para leilões, concessionárias e grandes frotas.',
-      estimatedUnitPrice: formatCurrency(enterpriseUnit),
-      regularUnitPrice: formatCurrency(basePrice),
-      savingsPercent: '15% OFF',
-      perks: [
-        'Volume a partir de 50 consultas',
-        'Faturamento ou PIX PJ direto',
-        'Atendimento direto com a diretoria',
-        'Garantia de disponibilidade SLA',
-      ],
-      highlight: false,
-      whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e represento uma empresa com alta demanda (+50 consultas). Gostaria de uma cotação personalizada.`,
-    },
-  ];
+  const handleBuyWithMercadoPago = async (offerId: string) => {
+    try {
+      setBuyingOfferId(offerId);
+      setCheckoutError(null);
+
+      const idempotencyKey = crypto.randomUUID();
+      const res = await fetch(`/api/cliente/credit-packages/${offerId}/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idempotencyKey }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.redirectUrl) {
+        throw new Error(data.error || 'Não foi possível iniciar o checkout do pacote.');
+      }
+
+      window.location.href = data.redirectUrl;
+    } catch (err) {
+      console.error('[handleBuyWithMercadoPago] Erro:', err);
+      setCheckoutError(
+        err instanceof Error ? err.message : 'Erro inesperado ao conectar com o Mercado Pago.',
+      );
+      setBuyingOfferId(null);
+    }
+  };
+
+  // Pacotes comerciais dinâmicos baseados no catálogo oficial do banco
+  const packages = offers.length > 0
+    ? offers.map((off) => {
+        const isWaOnly = off.contact_only || off.requires_whatsapp;
+        const unitVal = off.credits_quantity > 0 ? (off.price_cents / off.credits_quantity) / 100 : 0;
+        const refVal = (off.reference_individual_price_cents || 3990) / 100;
+        const totalPrice = off.price_cents / 100;
+
+        return {
+          id: off.id,
+          name: off.name,
+          quantity: isWaOnly ? `${off.credits_quantity}+` : off.credits_quantity,
+          badge: off.badge || (isWaOnly ? 'Sob Medida PJ' : off.credits_quantity >= 30 ? 'Melhor Custo-Benefício' : off.credits_quantity >= 15 ? 'Mais Recomendado' : 'Autônomo'),
+          tagline: off.tagline || (isWaOnly ? 'Condição sob medida para leilões, concessionárias e grandes frotas.' : `Pacote comercial com ${off.credits_quantity} consultas veiculares.`),
+          estimatedUnitPrice: formatCurrency(unitVal),
+          regularUnitPrice: formatCurrency(refVal),
+          totalPriceFormatted: isWaOnly ? 'Sob consulta' : formatCurrency(totalPrice),
+          savingsPercent: off.discount_percent ? `${off.discount_percent}% OFF` : 'Especial',
+          perks: off.perks && off.perks.length > 0 ? off.perks : [
+            `${off.credits_quantity} laudos veiculares completos`,
+            'Liberação imediata em 1 clique',
+            'Sem taxa de cartão a cada placa',
+            'Créditos sem data de expiração',
+          ],
+          highlight: off.highlight,
+          contactOnly: isWaOnly,
+          whatsappMessage: isWaOnly
+            ? `Olá! Sou ${userName} (${userEmail}) e represento uma empresa com alta demanda (+50 consultas). Gostaria de uma cotação personalizada para o pacote ${off.name}.`
+            : `Olá! Sou ${userName} (${userEmail}) e gostaria de tirar dúvidas sobre o pacote ${off.name} de ${off.credits_quantity} consultas da AF Motos.`,
+        };
+      })
+    : [
+        {
+          id: 'starter',
+          name: 'Pacote Inicial',
+          quantity: 5,
+          badge: 'Autônomo',
+          tagline: 'Ideal para quem compra ou vende veículos com frequência moderada.',
+          estimatedUnitPrice: formatCurrency(starterUnit),
+          regularUnitPrice: formatCurrency(basePrice),
+          totalPriceFormatted: formatCurrency(5 * starterUnit),
+          savingsPercent: '5% OFF',
+          perks: [
+            '5 laudos veiculares completos',
+            'Liberação imediata em 1 clique',
+            'Sem taxa de cartão a cada placa',
+            'Créditos sem data de expiração',
+          ],
+          highlight: false,
+          contactOnly: false,
+          whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de fechar o Pacote Inicial de 5 créditos de consultas veiculares na AF Motos.`,
+        },
+        {
+          id: 'pro',
+          name: 'Pacote Lojista & Revenda',
+          quantity: 15,
+          badge: 'Mais Recomendado',
+          tagline: 'O pacote preferido de lojistas de motos, corretores e revendas.',
+          estimatedUnitPrice: formatCurrency(proUnit),
+          regularUnitPrice: formatCurrency(basePrice),
+          totalPriceFormatted: formatCurrency(15 * proUnit),
+          savingsPercent: '8% OFF',
+          perks: [
+            '15 laudos veiculares completos',
+            'Economia progressiva garantida',
+            'Prioridade na fila de processamento',
+            'Canal dedicado via WhatsApp',
+          ],
+          highlight: true,
+          contactOnly: false,
+          whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e quero ativar o Pacote Lojista de 15 créditos com desconto especial da AF Motos.`,
+        },
+        {
+          id: 'business',
+          name: 'Pacote Frotista & Despachante',
+          quantity: 30,
+          badge: 'Melhor Custo-Benefício',
+          tagline: 'Máxima produtividade para quem avalia veículos diariamente.',
+          estimatedUnitPrice: formatCurrency(businessUnit),
+          regularUnitPrice: formatCurrency(basePrice),
+          totalPriceFormatted: formatCurrency(30 * businessUnit),
+          savingsPercent: '12% OFF',
+          perks: [
+            '30 laudos veiculares completos',
+            'Menor custo por placa consultada',
+            'Histórico e auditoria centralizados',
+            'Suporte prioritário exclusivo',
+            'Créditos não expiram nunca',
+          ],
+          highlight: false,
+          contactOnly: false,
+          whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de negociar o Pacote Business de 30 créditos veiculares.`,
+        },
+        {
+          id: 'enterprise',
+          name: 'Volume Customizado',
+          quantity: '50+',
+          badge: 'Sob Medida PJ',
+          tagline: 'Condição sob medida para leilões, concessionárias e grandes frotas.',
+          estimatedUnitPrice: formatCurrency(enterpriseUnit),
+          regularUnitPrice: formatCurrency(basePrice),
+          totalPriceFormatted: 'Sob consulta',
+          savingsPercent: '15% OFF',
+          perks: [
+            'Volume a partir de 50 consultas',
+            'Faturamento ou PIX PJ direto',
+            'Atendimento direto com a diretoria',
+            'Garantia de disponibilidade SLA',
+          ],
+          highlight: false,
+          contactOnly: true,
+          whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e represento uma empresa com alta demanda (+50 consultas). Gostaria de uma cotação personalizada.`,
+        },
+      ];
 
   // Cálculo dinâmico do simulador
   const simulatedUnitDiscounted =
@@ -386,12 +461,30 @@ export function CustomerCreditsView({
             <span>Condições Especiais com Desconto por Volume</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Escolha seu Pacote e Fale Conosco
+            Escolha seu Pacote e Ative na Hora
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400">
-            Preços calculados com base no valor oficial de {formatCurrency(basePrice)} por consulta individual.
+            Preços oficiais e liberação automática via Mercado Pago Checkout Pro ou negociação sob medida.
           </p>
         </div>
+
+        {/* Feedback de erro de checkout */}
+        {checkoutError && (
+          <div className="p-4 rounded-2xl bg-rose-950/60 border border-rose-800/80 text-rose-200 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="flex-1 text-xs space-y-1">
+              <p className="font-bold">Não foi possível iniciar o pagamento:</p>
+              <p>{checkoutError}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCheckoutError(null)}
+              className="text-rose-400 hover:text-rose-200 text-xs font-bold cursor-pointer"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {packages.map((pkg) => {
@@ -431,9 +524,16 @@ export function CustomerCreditsView({
 
                   {/* Volume e Preço Estimado Dinâmico */}
                   <div className="py-3 px-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-black text-white">{pkg.quantity}</span>
-                      <span className="text-xs font-bold text-zinc-400">consultas</span>
+                    <div className="flex items-baseline justify-between">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-3xl font-black text-white">{pkg.quantity}</span>
+                        <span className="text-xs font-bold text-zinc-400">consultas</span>
+                      </div>
+                      {pkg.totalPriceFormatted && (
+                        <span className="text-xs font-black text-[#e3c56c]">
+                          {pkg.totalPriceFormatted}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center justify-between text-[11px] pt-1 border-t border-zinc-800/50">
                       <span className="text-zinc-500 line-through">{pkg.regularUnitPrice}/un</span>
@@ -445,7 +545,7 @@ export function CustomerCreditsView({
 
                   {/* Benefícios */}
                   <ul className="space-y-2 text-xs text-zinc-300 pt-1">
-                    {pkg.perks.map((perk, i) => (
+                    {pkg.perks.map((perk: string, i: number) => (
                       <li key={i} className="flex items-start gap-2">
                         <Check className="w-4 h-4 text-[#c9a44c] shrink-0 mt-0.5" />
                         <span className="leading-tight">{perk}</span>
@@ -454,26 +554,58 @@ export function CustomerCreditsView({
                   </ul>
                 </div>
 
-                {/* Botão de WhatsApp */}
-                <div className="pt-6">
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full group"
-                  >
-                    <Button
-                      type="button"
-                      className={`w-full font-black rounded-xl py-5 text-xs flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                        pkg.highlight
-                          ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 hover:brightness-110 shadow-md group-hover:scale-[1.02]'
-                          : 'bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 hover:border-zinc-700 group-hover:scale-[1.02]'
-                      }`}
+                {/* Ações do Card: Mercado Pago para pacotes padrão, WhatsApp para custom */}
+                <div className="pt-6 space-y-2">
+                  {pkg.contactOnly ? (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full group"
                     >
-                      <MessageCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>Ativar no WhatsApp</span>
-                    </Button>
-                  </a>
+                      <Button
+                        type="button"
+                        className="w-full font-black rounded-xl py-5 text-xs flex items-center justify-center gap-2 cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all group-hover:scale-[1.02]"
+                      >
+                        <MessageCircle className="w-4 h-4 shrink-0" />
+                        <span>Negociar no WhatsApp</span>
+                      </Button>
+                    </a>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        onClick={() => handleBuyWithMercadoPago(pkg.id)}
+                        disabled={Boolean(buyingOfferId)}
+                        className={`w-full font-black rounded-xl py-5 text-xs flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                          pkg.highlight
+                            ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 hover:brightness-110 shadow-md hover:scale-[1.02]'
+                            : 'bg-[#c9a44c] hover:bg-[#b48d3c] text-zinc-950 shadow-sm hover:scale-[1.02]'
+                        }`}
+                      >
+                        {buyingOfferId === pkg.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                            <span>Iniciando Checkout...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="w-4 h-4 shrink-0" />
+                            <span>Comprar com Mercado Pago</span>
+                          </>
+                        )}
+                      </Button>
+
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-center text-[11px] text-zinc-400 hover:text-[#e3c56c] transition-colors pt-1"
+                      >
+                        Dúvidas? Fale no WhatsApp
+                      </a>
+                    </>
+                  )}
                 </div>
               </div>
             );

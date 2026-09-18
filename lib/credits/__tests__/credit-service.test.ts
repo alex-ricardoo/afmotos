@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -149,10 +150,20 @@ describe('B2B Credit Packages & Service Logic', () => {
       },
     };
 
-    const prodMockResult = await consumeConsultationCredit('cons-mock', true, 'production', fakeDb as any);
+    const prodMockResult = await consumeConsultationCredit(
+      'cons-mock',
+      true,
+      'production',
+      fakeDb as any,
+    );
     assert.equal(prodMockResult, false);
 
-    const prodLiveResult = await consumeConsultationCredit('cons-live', false, 'production', fakeDb as any);
+    const prodLiveResult = await consumeConsultationCredit(
+      'cons-live',
+      false,
+      'production',
+      fakeDb as any,
+    );
     assert.equal(prodLiveResult, true);
   });
 
@@ -240,4 +251,3 @@ describe('B2B Credit Packages & Service Logic', () => {
     assert.equal(result.error, 'Apenas administradores ativos podem conceder pacotes de créditos.');
   });
 });
-
