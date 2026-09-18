@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { confirmAndProcessPaymentTransaction } from '../../mercadopago/payment-processing-service.ts';
 import { buildPackagePreferenceBody } from '../../mercadopago/package-preference-builder.ts';
+import { createOrReusePackageOrder } from '../orders-service.ts';
 import type { CreditPackageOrder, CreditPackageOffer } from '../types.ts';
 
 describe('Package Checkout Flow Integration & Isolation (T009)', () => {
@@ -198,5 +199,85 @@ describe('Package Checkout Flow Integration & Isolation (T009)', () => {
 
     assert.equal(result.success, false);
     assert.equal(result.message, 'Valor monetário divergente.');
+  });
+
+  it('4. createOrReusePackageOrder inserts order without payment_transaction_id first, then creates tx, then links order', async () => {
+    let orderInsertedValues: any = null;
+    let txInsertedValues: any = null;
+    let orderUpdatedWith: any = null;
+
+    const mockDb = {
+      from: (table: string) => {
+        if (table === 'credit_package_orders') {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  maybeSingle: () => Promise.resolve({ data: null }),
+                }),
+              }),
+            }),
+            insert: (values: any) => {
+              orderInsertedValues = values;
+              return {
+                select: () => ({
+                  single: () => Promise.resolve({ data: { ...values, id: values.id }, error: null }),
+                }),
+              };
+            },
+            update: (values: any) => ({
+              eq: (field: string, val: string) => {
+                orderUpdatedWith = { field, val, values };
+                return Promise.resolve({ error: null });
+              },
+            }),
+          };
+        }
+        if (table === 'payment_transactions') {
+          return {
+            insert: (values: any) => {
+              txInsertedValues = values;
+              return Promise.resolve({ error: null });
+            },
+          };
+        }
+        return {};
+      },
+    };
+
+    const result = await createOrReusePackageOrder(
+      {
+        userId: 'user-b2b-test',
+        userEmail: 'user@b2b.com',
+        offerId: mockOffer.id,
+        idempotencyKey: 'idem-order-flow-test',
+      },
+      {
+        dbClient: mockDb as any,
+        offerOverride: mockOffer,
+      },
+    );
+
+    assert.equal(result.success, true);
+    assert.ok(result.order);
+    assert.ok(result.transactionId);
+
+    // Initial insert into credit_package_orders MUST have payment_transaction_id as null to prevent FK violation
+    assert.equal(
+      orderInsertedValues.payment_transaction_id,
+      null,
+      'Initial order insert must have payment_transaction_id null to avoid FK violation',
+    );
+
+    // Then payment_transactions was inserted with credit_package_order_id matching order.id
+    assert.ok(txInsertedValues);
+    assert.equal(txInsertedValues.purpose, 'credit_package');
+    assert.equal(txInsertedValues.credit_package_order_id, result.order.id);
+    assert.equal(txInsertedValues.id, result.transactionId);
+
+    // Then order was updated with the generated payment_transaction_id
+    assert.ok(orderUpdatedWith);
+    assert.equal(orderUpdatedWith.values.payment_transaction_id, result.transactionId);
+    assert.equal(orderUpdatedWith.val, result.order.id);
   });
 });

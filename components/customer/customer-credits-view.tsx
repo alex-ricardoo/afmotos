@@ -10,8 +10,6 @@ import {
   CheckCircle2,
   Zap,
   TrendingDown,
-  Clock,
-  ArrowRight,
   History,
   HelpCircle,
   Car,
@@ -20,13 +18,11 @@ import {
   Percent,
   Check,
   Smartphone,
-  ExternalLink,
-  ShieldAlert,
-  CreditCard,
   AlertCircle,
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MercadoPagoBrandIcon } from '@/components/customer/payment-brand-icons';
 import type { CreditPackageOffer } from '@/lib/credits/types';
 
 export interface LedgerItem {
@@ -74,24 +70,36 @@ export function CustomerCreditsView({
   const basePrice = regularConsultationPrice > 0 ? regularConsultationPrice : 39.99;
 
   // Custo mínimo da API Brasil (R$ 30,00). Travamos piso para nunca vender abaixo de R$ 30,00.
-  const APIBRASIL_FLOOR_COST = 30.00;
+  const APIBRASIL_FLOOR_COST = 30.0;
 
   const formatCurrency = (val: number) =>
     val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   // Percentuais de desconto fixos e altamente lucrativos: 5%, 8%, 12% e 15%
   const DISCOUNT_TIERS = {
-    starter: 0.05,     // 5% OFF
-    pro: 0.08,         // 8% OFF
-    business: 0.12,    // 12% OFF
-    enterprise: 0.15,  // 15% OFF
+    starter: 0.05, // 5% OFF
+    pro: 0.08, // 8% OFF
+    business: 0.12, // 12% OFF
+    enterprise: 0.15, // 15% OFF
   };
 
   // Valores unitários calculados sobre o preço oficial do banco, com lucro garantido
-  const starterUnit = Math.max(APIBRASIL_FLOOR_COST + 1.0, Math.round(basePrice * (1 - DISCOUNT_TIERS.starter) * 100) / 100);
-  const proUnit = Math.max(APIBRASIL_FLOOR_COST + 1.0, Math.round(basePrice * (1 - DISCOUNT_TIERS.pro) * 100) / 100);
-  const businessUnit = Math.max(APIBRASIL_FLOOR_COST + 1.0, Math.round(basePrice * (1 - DISCOUNT_TIERS.business) * 100) / 100);
-  const enterpriseUnit = Math.max(APIBRASIL_FLOOR_COST + 1.0, Math.round(basePrice * (1 - DISCOUNT_TIERS.enterprise) * 100) / 100);
+  const starterUnit = Math.max(
+    APIBRASIL_FLOOR_COST + 1.0,
+    Math.round(basePrice * (1 - DISCOUNT_TIERS.starter) * 100) / 100,
+  );
+  const proUnit = Math.max(
+    APIBRASIL_FLOOR_COST + 1.0,
+    Math.round(basePrice * (1 - DISCOUNT_TIERS.pro) * 100) / 100,
+  );
+  const businessUnit = Math.max(
+    APIBRASIL_FLOOR_COST + 1.0,
+    Math.round(basePrice * (1 - DISCOUNT_TIERS.business) * 100) / 100,
+  );
+  const enterpriseUnit = Math.max(
+    APIBRASIL_FLOOR_COST + 1.0,
+    Math.round(basePrice * (1 - DISCOUNT_TIERS.enterprise) * 100) / 100,
+  );
 
   const handleBuyWithMercadoPago = async (offerId: string) => {
     try {
@@ -112,7 +120,9 @@ export function CustomerCreditsView({
         throw new Error(data.error || 'Não foi possível iniciar o checkout do pacote.');
       }
 
-      window.location.href = data.redirectUrl;
+      if (typeof window !== 'undefined') {
+        window.location.assign(data.redirectUrl);
+      }
     } catch (err) {
       console.error('[handleBuyWithMercadoPago] Erro:', err);
       setCheckoutError(
@@ -123,129 +133,144 @@ export function CustomerCreditsView({
   };
 
   // Pacotes comerciais dinâmicos baseados no catálogo oficial do banco
-  const packages = offers.length > 0
-    ? offers.map((off) => {
-        const isWaOnly = off.contact_only || off.requires_whatsapp;
-        const unitVal = off.credits_quantity > 0 ? (off.price_cents / off.credits_quantity) / 100 : 0;
-        const refVal = (off.reference_individual_price_cents || 3990) / 100;
-        const totalPrice = off.price_cents / 100;
+  const packages =
+    offers.length > 0
+      ? offers.map((off) => {
+          const isWaOnly = off.contact_only || off.requires_whatsapp;
+          const unitVal =
+            off.credits_quantity > 0 ? off.price_cents / off.credits_quantity / 100 : 0;
+          const refVal = (off.reference_individual_price_cents || 3990) / 100;
+          const totalPrice = off.price_cents / 100;
 
-        return {
-          id: off.id,
-          name: off.name,
-          quantity: isWaOnly ? `${off.credits_quantity}+` : off.credits_quantity,
-          badge: off.badge || (isWaOnly ? 'Sob Medida PJ' : off.credits_quantity >= 30 ? 'Melhor Custo-Benefício' : off.credits_quantity >= 15 ? 'Mais Recomendado' : 'Autônomo'),
-          tagline: off.tagline || (isWaOnly ? 'Condição sob medida para leilões, concessionárias e grandes frotas.' : `Pacote comercial com ${off.credits_quantity} consultas veiculares.`),
-          estimatedUnitPrice: formatCurrency(unitVal),
-          regularUnitPrice: formatCurrency(refVal),
-          totalPriceFormatted: isWaOnly ? 'Sob consulta' : formatCurrency(totalPrice),
-          savingsPercent: off.discount_percent ? `${off.discount_percent}% OFF` : 'Especial',
-          perks: off.perks && off.perks.length > 0 ? off.perks : [
-            `${off.credits_quantity} laudos veiculares completos`,
-            'Liberação imediata em 1 clique',
-            'Sem taxa de cartão a cada placa',
-            'Créditos sem data de expiração',
-          ],
-          highlight: off.highlight,
-          contactOnly: isWaOnly,
-          whatsappMessage: isWaOnly
-            ? `Olá! Sou ${userName} (${userEmail}) e represento uma empresa com alta demanda (+50 consultas). Gostaria de uma cotação personalizada para o pacote ${off.name}.`
-            : `Olá! Sou ${userName} (${userEmail}) e gostaria de tirar dúvidas sobre o pacote ${off.name} de ${off.credits_quantity} consultas da AF Motos.`,
-        };
-      })
-    : [
-        {
-          id: 'starter',
-          name: 'Pacote Inicial',
-          quantity: 5,
-          badge: 'Autônomo',
-          tagline: 'Ideal para quem compra ou vende veículos com frequência moderada.',
-          estimatedUnitPrice: formatCurrency(starterUnit),
-          regularUnitPrice: formatCurrency(basePrice),
-          totalPriceFormatted: formatCurrency(5 * starterUnit),
-          savingsPercent: '5% OFF',
-          perks: [
-            '5 laudos veiculares completos',
-            'Liberação imediata em 1 clique',
-            'Sem taxa de cartão a cada placa',
-            'Créditos sem data de expiração',
-          ],
-          highlight: false,
-          contactOnly: false,
-          whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de fechar o Pacote Inicial de 5 créditos de consultas veiculares na AF Motos.`,
-        },
-        {
-          id: 'pro',
-          name: 'Pacote Lojista & Revenda',
-          quantity: 15,
-          badge: 'Mais Recomendado',
-          tagline: 'O pacote preferido de lojistas de motos, corretores e revendas.',
-          estimatedUnitPrice: formatCurrency(proUnit),
-          regularUnitPrice: formatCurrency(basePrice),
-          totalPriceFormatted: formatCurrency(15 * proUnit),
-          savingsPercent: '8% OFF',
-          perks: [
-            '15 laudos veiculares completos',
-            'Economia progressiva garantida',
-            'Prioridade na fila de processamento',
-            'Canal dedicado via WhatsApp',
-          ],
-          highlight: true,
-          contactOnly: false,
-          whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e quero ativar o Pacote Lojista de 15 créditos com desconto especial da AF Motos.`,
-        },
-        {
-          id: 'business',
-          name: 'Pacote Frotista & Despachante',
-          quantity: 30,
-          badge: 'Melhor Custo-Benefício',
-          tagline: 'Máxima produtividade para quem avalia veículos diariamente.',
-          estimatedUnitPrice: formatCurrency(businessUnit),
-          regularUnitPrice: formatCurrency(basePrice),
-          totalPriceFormatted: formatCurrency(30 * businessUnit),
-          savingsPercent: '12% OFF',
-          perks: [
-            '30 laudos veiculares completos',
-            'Menor custo por placa consultada',
-            'Histórico e auditoria centralizados',
-            'Suporte prioritário exclusivo',
-            'Créditos não expiram nunca',
-          ],
-          highlight: false,
-          contactOnly: false,
-          whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de negociar o Pacote Business de 30 créditos veiculares.`,
-        },
-        {
-          id: 'enterprise',
-          name: 'Volume Customizado',
-          quantity: '50+',
-          badge: 'Sob Medida PJ',
-          tagline: 'Condição sob medida para leilões, concessionárias e grandes frotas.',
-          estimatedUnitPrice: formatCurrency(enterpriseUnit),
-          regularUnitPrice: formatCurrency(basePrice),
-          totalPriceFormatted: 'Sob consulta',
-          savingsPercent: '15% OFF',
-          perks: [
-            'Volume a partir de 50 consultas',
-            'Faturamento ou PIX PJ direto',
-            'Atendimento direto com a diretoria',
-            'Garantia de disponibilidade SLA',
-          ],
-          highlight: false,
-          contactOnly: true,
-          whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e represento uma empresa com alta demanda (+50 consultas). Gostaria de uma cotação personalizada.`,
-        },
-      ];
+          return {
+            id: off.id,
+            name: off.name,
+            quantity: isWaOnly ? `${off.credits_quantity}+` : off.credits_quantity,
+            badge:
+              off.badge ||
+              (isWaOnly
+                ? 'Corporativo'
+                : off.credits_quantity >= 30
+                  ? 'Custo-Benefício'
+                  : off.credits_quantity >= 15
+                    ? 'Mais Popular'
+                    : 'Iniciante'),
+            tagline:
+              off.tagline ||
+              (isWaOnly
+                ? 'Condição sob medida para grandes frotas e leilões.'
+                : `Para quem realiza consultas com frequência regular.`),
+            estimatedUnitPrice: isWaOnly ? 'Sob consulta' : formatCurrency(unitVal),
+            regularUnitPrice: formatCurrency(refVal),
+            totalPriceFormatted: isWaOnly ? 'Sob consulta' : formatCurrency(totalPrice),
+            savingsPercent: isWaOnly
+              ? 'Sob Medida'
+              : off.discount_percent
+                ? `${off.discount_percent}% OFF`
+                : null,
+            perks:
+              off.perks && off.perks.length > 0
+                ? off.perks
+                : [
+                    `${off.credits_quantity} laudos veiculares completos`,
+                    'Liberação imediata em 1 clique',
+                    'Créditos sem data de validade',
+                  ],
+            highlight: off.highlight,
+            contactOnly: isWaOnly,
+            whatsappMessage: isWaOnly
+              ? `Olá! Sou ${userName} (${userEmail}) e represento uma empresa com alta demanda (+50 consultas). Gostaria de uma cotação personalizada para o pacote ${off.name}.`
+              : `Olá! Sou ${userName} (${userEmail}) e gostaria de tirar dúvidas sobre o pacote ${off.name} de ${off.credits_quantity} consultas da AF Motos.`,
+          };
+        })
+      : [
+          {
+            id: 'starter',
+            name: 'Pacote Inicial',
+            quantity: 5,
+            badge: 'Iniciante',
+            tagline: 'Ideal para avaliações pontuais com economia garantida.',
+            estimatedUnitPrice: formatCurrency(starterUnit),
+            regularUnitPrice: formatCurrency(basePrice),
+            totalPriceFormatted: formatCurrency(5 * starterUnit),
+            savingsPercent: '5% OFF',
+            perks: [
+              '5 laudos veiculares completos',
+              'Liberação imediata no sistema',
+              'Créditos sem data de validade',
+            ],
+            highlight: false,
+            contactOnly: false,
+            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de fechar o Pacote Inicial de 5 créditos de consultas veiculares na AF Motos.`,
+          },
+          {
+            id: 'pro',
+            name: 'Pacote Lojista & Revenda',
+            quantity: 15,
+            badge: 'Mais Popular',
+            tagline: 'O preferido de revendas, lojistas e corretores de motos.',
+            estimatedUnitPrice: formatCurrency(proUnit),
+            regularUnitPrice: formatCurrency(basePrice),
+            totalPriceFormatted: formatCurrency(15 * proUnit),
+            savingsPercent: '8% OFF',
+            perks: [
+              '15 laudos veiculares completos',
+              'Maior economia por consulta',
+              'Prioridade no processamento',
+            ],
+            highlight: true,
+            contactOnly: false,
+            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e quero ativar o Pacote Lojista de 15 créditos com desconto especial da AF Motos.`,
+          },
+          {
+            id: 'business',
+            name: 'Pacote Frotista & Despachante',
+            quantity: 30,
+            badge: 'Custo-Benefício',
+            tagline: 'Máxima produtividade para alta rotatividade de veículos.',
+            estimatedUnitPrice: formatCurrency(businessUnit),
+            regularUnitPrice: formatCurrency(basePrice),
+            totalPriceFormatted: formatCurrency(30 * businessUnit),
+            savingsPercent: '12% OFF',
+            perks: [
+              '30 laudos veiculares completos',
+              'Menor custo por placa consultada',
+              'Suporte dedicado no WhatsApp',
+            ],
+            highlight: false,
+            contactOnly: false,
+            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de negociar o Pacote Business de 30 créditos veiculares.`,
+          },
+          {
+            id: 'enterprise',
+            name: 'Volume Customizado',
+            quantity: '50+',
+            badge: 'Corporativo',
+            tagline: 'Condições especiais para concessionárias e frotas.',
+            estimatedUnitPrice: formatCurrency(enterpriseUnit),
+            regularUnitPrice: formatCurrency(basePrice),
+            totalPriceFormatted: 'Sob consulta',
+            savingsPercent: 'Sob Medida',
+            perks: [
+              'Volume a partir de 50 consultas',
+              'Faturamento PJ ou Pix direto',
+              'Atendimento comercial VIP',
+            ],
+            highlight: false,
+            contactOnly: true,
+            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e represento uma empresa com alta demanda (+50 consultas). Gostaria de uma cotação personalizada.`,
+          },
+        ];
 
   // Cálculo dinâmico do simulador
   const simulatedUnitDiscounted =
     simulatedCount >= 50
       ? enterpriseUnit
       : simulatedCount >= 30
-      ? businessUnit
-      : simulatedCount >= 15
-      ? proUnit
-      : starterUnit;
+        ? businessUnit
+        : simulatedCount >= 15
+          ? proUnit
+          : starterUnit;
 
   const regularTotal = simulatedCount * basePrice;
   const packageTotal = simulatedCount * simulatedUnitDiscounted;
@@ -285,7 +310,7 @@ export function CustomerCreditsView({
   ];
 
   return (
-    <div className="space-y-8 sm:space-y-12 pb-20 max-w-5xl mx-auto">
+    <div className="space-y-8 sm:space-y-12 pb-20 max-w-6xl mx-auto px-4 sm:px-6">
       {/* ------------------------------------------------------------- */}
       {/* 1. HERO & SALDO - MOBILE FIRST EYE-CATCHER                    */}
       {/* ------------------------------------------------------------- */}
@@ -307,8 +332,9 @@ export function CustomerCreditsView({
             </h1>
 
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-              Consulte histórico completo de motos, carros e caminhões em 1 clique.
-              Negocie cotas com descontos progressivos direto no WhatsApp e elimine a cobrança por placa individual.
+              Consulte histórico completo de motos, carros e caminhões em 1 clique. Adquira cotas
+              pré-pagas com desconto e emita laudos imediatamente sem passar pelo checkout a cada
+              placa.
             </p>
 
             {/* Micro badges de valor */}
@@ -325,7 +351,7 @@ export function CustomerCreditsView({
           </div>
 
           {/* Card de Saldo Atual - Destaque em Vidro */}
-          <div className="w-full lg:w-auto shrink-0 p-5 sm:p-7 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-zinc-800/60 via-zinc-900/90 to-zinc-950 border border-[#c9a44c]/30 shadow-[0_0_30px_rgba(201,164,76,0.12)] flex flex-col items-center justify-center text-center">
+          <div className="w-full lg:w-80 shrink-0 p-5 sm:p-7 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-zinc-800/60 via-zinc-900/90 to-zinc-950 border border-[#c9a44c]/30 shadow-[0_0_30px_rgba(201,164,76,0.12)] flex flex-col items-center justify-center text-center">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-xl bg-[#c9a44c]/20 border border-[#c9a44c]/40 flex items-center justify-center text-[#e3c56c]">
                 <Coins className="w-4 h-4" />
@@ -376,8 +402,8 @@ export function CustomerCreditsView({
                     size="lg"
                     className="w-full bg-[#c9a44c] hover:bg-[#b48d3c] text-zinc-950 font-black text-xs sm:text-sm rounded-xl py-5 sm:py-6 shadow-md cursor-pointer transition-transform active:scale-95"
                   >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Comprar Créditos via WhatsApp
+                    <Coins className="w-4 h-4 mr-2" />
+                    Adquirir Créditos
                   </Button>
                 </a>
               )}
@@ -428,11 +454,12 @@ export function CustomerCreditsView({
               <span className="text-xs font-black px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                 Passo 2
               </span>
-              <MessageCircle className="w-5 h-5 text-zinc-500" />
+              <ShieldCheck className="w-5 h-5 text-zinc-500" />
             </div>
-            <h3 className="text-sm font-bold text-white pt-1">Ativação no WhatsApp</h3>
+            <h3 className="text-sm font-bold text-white pt-1">Pagamento Instantâneo</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Confirme com nosso atendente comercial, pague via PIX e tenha os créditos liberados em minutos.
+              Pague com Mercado Pago (Pix ou Cartão) ou negocie direto no WhatsApp para faturamento
+              PJ.
             </p>
           </div>
 
@@ -452,25 +479,42 @@ export function CustomerCreditsView({
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* 3. GRADE DE PACOTES COMERCIAIS                                */}
+      {/* 3. GRADE DE PACOTES COMERCIAIS (DESIGN SÊNIOR MOBILE FIRST)  */}
       {/* ------------------------------------------------------------- */}
-      <div id="pacotes" className="space-y-6 scroll-mt-24">
-        <div className="text-center max-w-xl mx-auto space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-zinc-900 border border-zinc-800 text-zinc-300">
+      <div id="pacotes" className="space-y-6 sm:space-y-8 scroll-mt-24">
+        <div className="text-center max-w-2xl mx-auto space-y-2.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-900/90 border border-zinc-800 text-zinc-300 shadow-inner">
             <Percent className="w-3.5 h-3.5 text-[#c9a44c]" />
-            <span>Condições Especiais com Desconto por Volume</span>
+            <span>Condições Comerciais • Liberação Imediata</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Escolha seu Pacote e Ative na Hora
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+            Escolha seu Pacote de Créditos
           </h2>
-          <p className="text-xs sm:text-sm text-zinc-400">
-            Preços oficiais e liberação automática via Mercado Pago Checkout Pro ou negociação sob medida.
+          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl mx-auto">
+            Créditos sem data de expiração. Pagamento seguro com liberação automática via Mercado
+            Pago ou negociação personalizada para empresas.
           </p>
+
+          {/* Micro badges de garantia */}
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-[11px] text-zinc-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/70 border border-zinc-800/80">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              Ambiente Seguro
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/70 border border-zinc-800/80">
+              <Zap className="w-3.5 h-3.5 text-[#009ee3]" />
+              Pix Instantâneo ou Cartão até 12x
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/70 border border-zinc-800/80">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#c9a44c]" />
+              Créditos Não Expiram
+            </span>
+          </div>
         </div>
 
         {/* Feedback de erro de checkout */}
         {checkoutError && (
-          <div className="p-4 rounded-2xl bg-rose-950/60 border border-rose-800/80 text-rose-200 flex items-start gap-3">
+          <div className="p-4 rounded-2xl bg-rose-950/60 border border-rose-800/80 text-rose-200 flex items-start gap-3 shadow-lg">
             <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
             <div className="flex-1 text-xs space-y-1">
               <p className="font-bold">Não foi possível iniciar o pagamento:</p>
@@ -486,125 +530,244 @@ export function CustomerCreditsView({
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-          {packages.map((pkg) => {
+        {/* Grade de Pacotes Responsiva com Cores Diferenciadas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
+          {packages.map((pkg, index) => {
             const waUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(pkg.whatsappMessage)}`;
+
+            // Sistema de Cores e Temas Únicos por Pacote
+            const isWa =
+              pkg.contactOnly ||
+              (typeof pkg.quantity === 'number'
+                ? pkg.quantity >= 50
+                : String(pkg.quantity).includes('50')) ||
+              index === 3;
+            const isGold =
+              !isWa &&
+              (pkg.highlight ||
+                (typeof pkg.quantity === 'number' && pkg.quantity >= 15 && pkg.quantity < 30) ||
+                index === 1);
+            const isSky =
+              !isWa &&
+              !isGold &&
+              ((typeof pkg.quantity === 'number' && pkg.quantity >= 30 && pkg.quantity < 50) ||
+                index === 2);
+
+            const theme = isWa
+              ? {
+                  cardBg: 'bg-gradient-to-b from-emerald-950/25 via-zinc-950 to-zinc-950',
+                  border:
+                    'border-emerald-500/50 hover:border-emerald-400 shadow-[0_10px_35px_rgba(16,185,129,0.12)] hover:shadow-[0_16px_45px_rgba(16,185,129,0.22)] ring-1 ring-emerald-500/25',
+                  tag: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 font-black',
+                  priceAccent: 'text-emerald-400',
+                  unitAccent: 'text-emerald-300',
+                  checkBg: 'bg-emerald-500/20 text-emerald-400',
+                  buttonClass:
+                    'bg-gradient-to-r from-emerald-600 via-emerald-600 to-teal-700 hover:from-emerald-500 hover:via-emerald-500 hover:to-teal-600 shadow-md shadow-emerald-950/50',
+                  btnIconClass: 'bg-white text-emerald-600',
+                }
+              : isGold
+                ? {
+                    cardBg: 'bg-gradient-to-b from-amber-950/30 via-zinc-950 to-zinc-950',
+                    border:
+                      'border-[#c9a44c] hover:border-amber-400 shadow-[0_12px_45px_rgba(201,164,76,0.18)] hover:shadow-[0_16px_55px_rgba(201,164,76,0.30)] ring-1 ring-[#c9a44c]/60 lg:-translate-y-2',
+                    tag: 'bg-amber-500/20 text-[#f5d77f] border-[#c9a44c]/50 font-black',
+                    priceAccent: 'text-white',
+                    unitAccent: 'text-[#e3c56c]',
+                    checkBg: 'bg-amber-500/20 text-[#e3c56c]',
+                    buttonClass:
+                      'bg-gradient-to-r from-[#009ee3] via-[#008fe3] to-[#0070ba] hover:from-[#0ab1fc] hover:via-[#009ee3] hover:to-[#007eb5] shadow-md shadow-sky-950/50',
+                    btnIconClass: 'bg-white text-[#009ee3]',
+                  }
+                : isSky
+                  ? {
+                      cardBg: 'bg-gradient-to-b from-sky-950/30 via-zinc-950 to-zinc-950',
+                      border:
+                        'border-sky-500/50 hover:border-sky-400 shadow-[0_10px_35px_rgba(14,165,233,0.12)] hover:shadow-[0_16px_45px_rgba(14,165,233,0.22)] ring-1 ring-sky-500/25',
+                      tag: 'bg-sky-500/15 text-sky-400 border-sky-500/30 font-black',
+                      priceAccent: 'text-white',
+                      unitAccent: 'text-sky-300',
+                      checkBg: 'bg-sky-500/20 text-sky-400',
+                      buttonClass:
+                        'bg-gradient-to-r from-[#009ee3] via-[#008fe3] to-[#0070ba] hover:from-[#0ab1fc] hover:via-[#009ee3] hover:to-[#007eb5] shadow-md shadow-sky-950/50',
+                      btnIconClass: 'bg-white text-[#009ee3]',
+                    }
+                  : {
+                      cardBg: 'bg-gradient-to-b from-zinc-900/90 via-zinc-950 to-zinc-950',
+                      border:
+                        'border-zinc-700/70 hover:border-zinc-500 shadow-lg hover:shadow-[0_12px_35px_rgba(255,255,255,0.05)] ring-1 ring-zinc-700/30',
+                      tag: 'bg-zinc-800 text-zinc-200 border-zinc-700/80 font-bold',
+                      priceAccent: 'text-white',
+                      unitAccent: 'text-[#e3c56c]',
+                      checkBg: 'bg-zinc-800 text-zinc-300',
+                      buttonClass:
+                        'bg-gradient-to-r from-[#009ee3] via-[#008fe3] to-[#0070ba] hover:from-[#0ab1fc] hover:via-[#009ee3] hover:to-[#007eb5] shadow-md shadow-sky-950/50',
+                      btnIconClass: 'bg-white text-[#009ee3]',
+                    };
 
             return (
               <div
                 key={pkg.id}
-                className={`relative flex flex-col justify-between p-5 sm:p-6 rounded-3xl border transition-all duration-300 ${
-                  pkg.highlight
-                    ? 'bg-gradient-to-b from-[#c9a44c]/15 via-zinc-900/95 to-zinc-950 border-[#c9a44c] shadow-[0_0_30px_rgba(201,164,76,0.18)] lg:-translate-y-2'
-                    : 'bg-zinc-950/80 border-zinc-800/90 hover:border-zinc-700'
-                }`}
+                className={`relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl sm:rounded-3xl border transition-all duration-300 ${theme.cardBg} ${theme.border}`}
               >
                 <div className="space-y-4">
-                  {/* Header do Card com Badge Não-Sobreposto */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md flex items-center gap-1.5 ${
-                        pkg.highlight
-                          ? 'bg-gradient-to-r from-[#e3c56c] to-[#c9a44c] text-zinc-950 shadow-sm'
-                          : 'bg-zinc-900 border border-zinc-800 text-zinc-400'
-                      }`}
-                    >
-                      {pkg.highlight && <Sparkles className="w-3 h-3 text-zinc-950 shrink-0" />}
-                      {pkg.badge}
-                    </span>
-                    <span className="text-[11px] font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                      {pkg.savingsPercent}
-                    </span>
+                  {/* Topo do Card: Somente o Selo de Desconto (Sem slugs de categoria) */}
+                  <div className="flex items-center justify-end min-h-[26px]">
+                    {pkg.savingsPercent ? (
+                      <span
+                        className={`text-[11px] px-2.5 py-0.5 rounded-full border ${theme.tag}`}
+                      >
+                        {pkg.savingsPercent}
+                      </span>
+                    ) : (
+                      <span className="opacity-0 text-[11px]">-</span>
+                    )}
                   </div>
 
+                  {/* Nome do Pacote e Tagline */}
                   <div className="space-y-1">
-                    <h3 className="text-lg font-black text-white">{pkg.name}</h3>
-                    <p className="text-xs text-zinc-400 leading-snug">{pkg.tagline}</p>
+                    <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                      {pkg.name}
+                    </h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2 min-h-[36px]">
+                      {pkg.tagline}
+                    </p>
                   </div>
 
-                  {/* Volume e Preço Estimado Dinâmico */}
-                  <div className="py-3 px-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+                  {/* Seção de Preço e Volume */}
+                  <div className="py-3 px-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 space-y-2.5">
+                    {/* Linha 1: Volume de Consultas */}
                     <div className="flex items-baseline justify-between">
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-3xl font-black text-white">{pkg.quantity}</span>
-                        <span className="text-xs font-bold text-zinc-400">consultas</span>
-                      </div>
-                      {pkg.totalPriceFormatted && (
-                        <span className="text-xs font-black text-[#e3c56c]">
-                          {pkg.totalPriceFormatted}
+                        <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                          {pkg.quantity}
                         </span>
-                      )}
+                        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                          consultas
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-zinc-800/50">
-                      <span className="text-zinc-500 line-through">{pkg.regularUnitPrice}/un</span>
-                      <span className="text-[#e3c56c] font-black">
-                        {pkg.estimatedUnitPrice}/un
-                      </span>
+
+                    {/* Linha 2: Preço Total */}
+                    <div>
+                      <div
+                        className={`text-2xl sm:text-3xl font-black tracking-tight ${theme.priceAccent}`}
+                      >
+                        {pkg.totalPriceFormatted}
+                      </div>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">
+                        {pkg.contactOnly
+                          ? 'Condições personalizadas para sua empresa'
+                          : 'à vista no Pix ou até 12x no cartão'}
+                      </p>
+                    </div>
+
+                    {/* Linha 3: Valor por Unidade */}
+                    <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between text-xs">
+                      {pkg.contactOnly ? (
+                        <span className="text-[11px] text-zinc-400">
+                          Preço diferenciado por volume
+                        </span>
+                      ) : (
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-zinc-500 line-through text-[11px]">
+                            {pkg.regularUnitPrice}
+                          </span>
+                          <span className={`font-extrabold text-xs sm:text-sm ${theme.unitAccent}`}>
+                            {pkg.estimatedUnitPrice}
+                          </span>
+                          <span className="text-zinc-400 text-[11px]">/unidade</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Benefícios */}
-                  <ul className="space-y-2 text-xs text-zinc-300 pt-1">
-                    {pkg.perks.map((perk: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <Check className="w-4 h-4 text-[#c9a44c] shrink-0 mt-0.5" />
-                        <span className="leading-tight">{perk}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Benefícios / Perks */}
+                  <div className="space-y-2 pt-1">
+                    <ul className="space-y-2 text-xs text-zinc-300">
+                      {pkg.perks.map((perk: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <div
+                            className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${theme.checkBg}`}
+                          >
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                          <span className="leading-tight text-zinc-300">{perk}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
-                {/* Ações do Card: Mercado Pago para pacotes padrão, WhatsApp para custom */}
-                <div className="pt-6 space-y-2">
+                {/* Botão de Ação */}
+                <div className="pt-5 space-y-2">
                   {pkg.contactOnly ? (
-                    <a
-                      href={waUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block w-full group"
-                    >
-                      <Button
-                        type="button"
-                        className="w-full font-black rounded-xl py-5 text-xs flex items-center justify-center gap-2 cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all group-hover:scale-[1.02]"
-                      >
-                        <MessageCircle className="w-4 h-4 shrink-0" />
-                        <span>Negociar no WhatsApp</span>
-                      </Button>
-                    </a>
-                  ) : (
-                    <>
-                      <Button
-                        type="button"
-                        onClick={() => handleBuyWithMercadoPago(pkg.id)}
-                        disabled={Boolean(buyingOfferId)}
-                        className={`w-full font-black rounded-xl py-5 text-xs flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                          pkg.highlight
-                            ? 'bg-gradient-to-r from-[#e3c56c] via-[#c9a44c] to-[#b48d3c] text-zinc-950 hover:brightness-110 shadow-md hover:scale-[1.02]'
-                            : 'bg-[#c9a44c] hover:bg-[#b48d3c] text-zinc-950 shadow-sm hover:scale-[1.02]'
-                        }`}
-                      >
-                        {buyingOfferId === pkg.id ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                            <span>Iniciando Checkout...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CreditCard className="w-4 h-4 shrink-0" />
-                            <span>Comprar com Mercado Pago</span>
-                          </>
-                        )}
-                      </Button>
-
+                    <div className="space-y-2">
                       <a
                         href={waUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block text-center text-[11px] text-zinc-400 hover:text-[#e3c56c] transition-colors pt-1"
+                        className="block w-full"
                       >
-                        Dúvidas? Fale no WhatsApp
+                        <Button
+                          type="button"
+                          className={`w-full h-11 sm:h-12 text-xs sm:text-sm font-bold text-white rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer transition-all ${theme.buttonClass}`}
+                        >
+                          <div
+                            className={`flex h-5 w-5 items-center justify-center rounded-full shrink-0 ${theme.btnIconClass}`}
+                          >
+                            <MessageCircle className="h-3 w-3 fill-current" />
+                          </div>
+                          <span className="font-black">WhatsApp</span>
+                        </Button>
                       </a>
-                    </>
+                      <p className="text-center text-[10px] text-zinc-500">
+                        Cotação e faturamento sob medida
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        onClick={() => handleBuyWithMercadoPago(pkg.id)}
+                        disabled={Boolean(buyingOfferId)}
+                        className={`relative overflow-hidden w-full h-11 sm:h-12 text-xs sm:text-sm font-bold text-white rounded-xl flex items-center justify-center gap-2 group active:scale-[0.98] cursor-pointer transition-all ${theme.buttonClass}`}
+                      >
+                        {/* Efeito sutil de brilho no hover */}
+                        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 pointer-events-none" />
+
+                        {buyingOfferId === pkg.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin shrink-0 text-white" />
+                            <span>Iniciando...</span>
+                          </>
+                        ) : (
+                          <>
+                            <div
+                              className={`flex h-5 w-5 items-center justify-center rounded-full shrink-0 ${theme.btnIconClass}`}
+                            >
+                              <MercadoPagoBrandIcon className="h-3 w-3" />
+                            </div>
+                            <span className="font-black">Comprar Pacote</span>
+                          </>
+                        )}
+                      </Button>
+
+                      <div className="flex items-center justify-between text-[10px] text-zinc-500 px-1 pt-0.5">
+                        <span className="inline-flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                          Checkout Seguro
+                        </span>
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-[#e3c56c] transition-colors"
+                        >
+                          Dúvidas? WhatsApp
+                        </a>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -624,7 +787,8 @@ export function CustomerCreditsView({
               <h3 className="text-lg font-black text-white">Simulador de Economia B2B</h3>
             </div>
             <p className="text-xs text-zinc-400">
-              Economia calculada com base no valor dinâmico oficial de {formatCurrency(basePrice)} por consulta avulsa.
+              Economia calculada com base no valor dinâmico oficial de {formatCurrency(basePrice)}{' '}
+              por consulta avulsa.
             </p>
           </div>
 
@@ -654,7 +818,9 @@ export function CustomerCreditsView({
             <div className="text-xl sm:text-2xl font-black text-zinc-300">
               {formatCurrency(regularTotal)}
             </div>
-            <span className="text-[10px] text-zinc-500">{formatCurrency(basePrice)} por placa individual</span>
+            <span className="text-[10px] text-zinc-500">
+              {formatCurrency(basePrice)} por placa individual
+            </span>
           </div>
 
           <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 space-y-1">
@@ -688,7 +854,9 @@ export function CustomerCreditsView({
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Extrato de Movimentações</h2>
-              <p className="text-xs text-zinc-400">Histórico de lotes concedidos, utilizações e estornos.</p>
+              <p className="text-xs text-zinc-400">
+                Histórico de lotes concedidos, utilizações e estornos.
+              </p>
             </div>
           </div>
 
@@ -751,8 +919,13 @@ export function CustomerCreditsView({
             <div className="block sm:hidden space-y-2.5">
               {filteredLedger.map((item) => {
                 const type = item.entry_type || item.transaction_type || '';
-                const isPositive = ['grant', 'granted', 'release', 'released', 'adjustment_add'].includes(type);
-                const isNegative = ['consume', 'consumed', 'reserve', 'reserved', 'adjustment_remove', 'revoke'].includes(type);
+                const isPositive = [
+                  'grant',
+                  'granted',
+                  'release',
+                  'released',
+                  'adjustment_add',
+                ].includes(type);
                 const qty = item.quantity || item.amount || 1;
                 const formattedDate = new Date(item.created_at).toLocaleString('pt-BR', {
                   day: '2-digit',
@@ -774,19 +947,19 @@ export function CustomerCreditsView({
                             isPositive
                               ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                               : type === 'reserve' || type === 'reserved'
-                              ? 'bg-sky-500/15 text-sky-400 border-sky-500/30'
-                              : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                                ? 'bg-sky-500/15 text-sky-400 border-sky-500/30'
+                                : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                           }`}
                         >
                           {type === 'grant' || type === 'granted'
                             ? 'Créditos Adicionados'
                             : type === 'consume' || type === 'consumed'
-                            ? 'Consulta Realizada'
-                            : type === 'release' || type === 'released'
-                            ? 'Crédito Devolvido'
-                            : type === 'reserve' || type === 'reserved'
-                            ? 'Reserva em Processo'
-                            : type}
+                              ? 'Consulta Realizada'
+                              : type === 'release' || type === 'released'
+                                ? 'Crédito Devolvido'
+                                : type === 'reserve' || type === 'reserved'
+                                  ? 'Reserva em Processo'
+                                  : type}
                         </span>
                         <span className="text-[10px] text-zinc-500 font-mono">{formattedDate}</span>
                       </div>
@@ -821,7 +994,13 @@ export function CustomerCreditsView({
                 <tbody className="divide-y divide-zinc-900/60 text-zinc-300">
                   {filteredLedger.map((item) => {
                     const type = item.entry_type || item.transaction_type || '';
-                    const isPositive = ['grant', 'granted', 'release', 'released', 'adjustment_add'].includes(type);
+                    const isPositive = [
+                      'grant',
+                      'granted',
+                      'release',
+                      'released',
+                      'adjustment_add',
+                    ].includes(type);
                     const qty = item.quantity || item.amount || 1;
 
                     return (
@@ -835,19 +1014,19 @@ export function CustomerCreditsView({
                               isPositive
                                 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                                 : type === 'reserve' || type === 'reserved'
-                                ? 'bg-sky-500/15 text-sky-400 border-sky-500/30'
-                                : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                                  ? 'bg-sky-500/15 text-sky-400 border-sky-500/30'
+                                  : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                             }`}
                           >
                             {type === 'grant' || type === 'granted'
                               ? 'Créditos Adicionados'
                               : type === 'consume' || type === 'consumed'
-                              ? 'Consulta Realizada'
-                              : type === 'release' || type === 'released'
-                              ? 'Crédito Devolvido'
-                              : type === 'reserve' || type === 'reserved'
-                              ? 'Reserva em Processo'
-                              : type}
+                                ? 'Consulta Realizada'
+                                : type === 'release' || type === 'released'
+                                  ? 'Crédito Devolvido'
+                                  : type === 'reserve' || type === 'reserved'
+                                    ? 'Reserva em Processo'
+                                    : type}
                           </span>
                         </td>
                         <td className="py-3 px-3 font-mono font-bold text-sm">
@@ -913,15 +1092,18 @@ export function CustomerCreditsView({
       {/* ------------------------------------------------------------- */}
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="space-y-1 max-w-md">
-          <h4 className="text-base font-bold text-white">Precisa de um volume diferente ou faturamento PJ?</h4>
+          <h4 className="text-base font-bold text-white">
+            Precisa de um volume diferente ou faturamento PJ?
+          </h4>
           <p className="text-xs text-zinc-400">
-            Nossa equipe comercial atende despachantes, oficinas, corretores e revendas com propostas sob medida.
+            Nossa equipe comercial atende despachantes, oficinas, corretores e revendas com
+            propostas sob medida.
           </p>
         </div>
 
         <a
           href={`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(
-            `Olá! Gostaria de conversar com a equipe sobre pacotes corporativos de consultas veiculares. Meu e-mail é ${userEmail}.`
+            `Olá! Gostaria de conversar com a equipe sobre pacotes corporativos de consultas veiculares. Meu e-mail é ${userEmail}.`,
           )}`}
           target="_blank"
           rel="noopener noreferrer"

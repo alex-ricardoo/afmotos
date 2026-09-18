@@ -108,7 +108,7 @@ export async function createOrReusePackageOrder(
       discount_cents: discountCents,
       discount_percent: offer.discount_percent,
       status: 'pending',
-      payment_transaction_id: transactionId,
+      payment_transaction_id: null,
       external_reference: orderId,
       idempotency_key: idempotencyKey,
     })
@@ -148,6 +148,21 @@ export async function createOrReusePackageOrder(
       errorMessage: 'Falha ao registrar transação financeira vinculada.',
     };
   }
+
+  // 6. Vincula a transação financeira criada de volta no pedido de pacote
+  const { error: updateOrderError } = await adminDb
+    .from('credit_package_orders')
+    .update({ payment_transaction_id: transactionId })
+    .eq('id', orderId);
+
+  if (updateOrderError) {
+    console.warn(
+      '[createOrReusePackageOrder] Aviso ao vincular payment_transaction_id no pedido:',
+      updateOrderError,
+    );
+  }
+
+  createdOrder.payment_transaction_id = transactionId;
 
   return {
     success: true,

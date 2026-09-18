@@ -56,7 +56,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[ADMIN_CREDITS] Erro ao processar créditos:', error);
     return NextResponse.json(
-      { success: false, error: 'Erro interno ao processar créditos.' },
+      {
+        success: false,
+        code: 'CREDIT_PACKAGE_GRANT_FAILED',
+        error: 'Não foi possível liberar os créditos neste momento. Nenhum crédito foi adicionado.',
+      },
       { status: 500 },
     );
   }

@@ -118,6 +118,7 @@ export async function POST(
     try {
       preferenceResponse = await preferenceClient.create({ body: preferenceBody });
     } catch (mpError: unknown) {
+      console.error('[credit_package_checkout] Erro ao criar preferência no Mercado Pago:', mpError);
       const normalized = normalizeCheckoutProError(mpError);
       logCheckoutProEvent(
         'checkout_pro.preference_create_failed',
@@ -169,7 +170,19 @@ export async function POST(
       environment: envMode,
     });
   } catch (error: unknown) {
+    console.error('[credit_package_checkout] Erro capturado no checkout do pacote:', error);
     const normalized = normalizeCheckoutProError(error);
+    logCheckoutProEvent(
+      'checkout_pro.preference_create_failed',
+      {
+        flowId,
+        errorName: normalized.errorName,
+        errorOrigin: normalized.errorOrigin,
+        providerHttpStatus: normalized.providerHttpStatus,
+        providerMessageSanitized: normalized.providerMessageSanitized,
+      },
+      'error',
+    );
     return NextResponse.json(
       { success: false, error: normalized.safeClientMessage, code: normalized.safeClientCode },
       { status: normalized.httpStatus },
