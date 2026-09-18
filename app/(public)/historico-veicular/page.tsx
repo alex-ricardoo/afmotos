@@ -17,6 +17,7 @@ import { VehicleHistoryCtaFinal } from '@/components/vehicle-history/vehicle-his
 import { buildPageMetadata, JsonLd, SEO_CONFIG } from '@/lib/seo';
 import { buildVehicleHistoryServiceSchema } from '@/lib/seo/schemas/vehicle-history';
 import { getVehicleHistorySettings } from '@/lib/site-settings';
+import { getActiveCreditOffers } from '@/lib/credits/offers-service';
 
 export const revalidate = 60; // Revalida a cada 1 minuto (ISR)
 
@@ -49,7 +50,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HistoricoVeicularPage() {
-  const settings = await getPublicSiteSettings();
+  const [settings, creditOffers] = await Promise.all([
+    getPublicSiteSettings(),
+    getActiveCreditOffers(),
+  ]);
 
   if (!settings) {
     notFound();
@@ -115,6 +119,7 @@ export default async function HistoricoVeicularPage() {
           settings={vehicleHistory}
           siteName={settings.siteName}
           defaultPhone={settings.phone}
+          offers={creditOffers}
         />
 
         {/* G. Vantagens na Negociação (Compra e Venda) */}

@@ -51,7 +51,7 @@ interface CustomerCreditsViewProps {
 
 export function CustomerCreditsView({
   balance,
-  regularConsultationPrice = 39.9,
+  regularConsultationPrice = 42.9,
   userEmail,
   userName,
   whatsappPhone,
@@ -62,12 +62,20 @@ export function CustomerCreditsView({
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [buyingOfferId, setBuyingOfferId] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [simulatedCount, setSimulatedCount] = useState<number>(15);
+  const [simulatedCount, setSimulatedCount] = useState<number>(() => {
+    if (offers.length > 0) {
+      const highlight = offers.find((o) => o.highlight);
+      if (highlight) return highlight.credits_quantity;
+      if (offers[1]) return offers[1].credits_quantity;
+      return offers[0].credits_quantity;
+    }
+    return 15;
+  });
 
   const cleanPhone = whatsappPhone.replace(/\D/g, '') || '81999999999';
 
-  // Preço base dinâmico vindo da tabela site_settings no banco de dados (ex: R$ 39,99)
-  const basePrice = regularConsultationPrice > 0 ? regularConsultationPrice : 39.99;
+  // Preço base dinâmico vindo da tabela site_settings / vehicle_history_pricing_versions no banco de dados
+  const basePrice = regularConsultationPrice > 0 ? regularConsultationPrice : 42.9;
 
   // Custo mínimo da API Brasil (R$ 30,00). Travamos piso para nunca vender abaixo de R$ 30,00.
   const APIBRASIL_FLOOR_COST = 30.0;
@@ -139,22 +147,17 @@ export function CustomerCreditsView({
           const isWaOnly = off.contact_only || off.requires_whatsapp;
           const unitVal =
             off.credits_quantity > 0 ? off.price_cents / off.credits_quantity / 100 : 0;
-          const refVal = (off.reference_individual_price_cents || 3990) / 100;
+          const refVal =
+            off.reference_individual_price_cents && off.reference_individual_price_cents > 0
+              ? off.reference_individual_price_cents / 100
+              : basePrice;
           const totalPrice = off.price_cents / 100;
 
           return {
             id: off.id,
             name: off.name,
             quantity: isWaOnly ? `${off.credits_quantity}+` : off.credits_quantity,
-            badge:
-              off.badge ||
-              (isWaOnly
-                ? 'Corporativo'
-                : off.credits_quantity >= 30
-                  ? 'Custo-Benefício'
-                  : off.credits_quantity >= 15
-                    ? 'Mais Popular'
-                    : 'Iniciante'),
+            badge: off.badge || null,
             tagline:
               off.tagline ||
               (isWaOnly
@@ -188,7 +191,7 @@ export function CustomerCreditsView({
             id: 'starter',
             name: 'Pacote Inicial',
             quantity: 5,
-            badge: 'Iniciante',
+            badge: null,
             tagline: 'Ideal para avaliações pontuais com economia garantida.',
             estimatedUnitPrice: formatCurrency(starterUnit),
             regularUnitPrice: formatCurrency(basePrice),
@@ -207,7 +210,7 @@ export function CustomerCreditsView({
             id: 'pro',
             name: 'Pacote Lojista & Revenda',
             quantity: 15,
-            badge: 'Mais Popular',
+            badge: null,
             tagline: 'O preferido de revendas, lojistas e corretores de motos.',
             estimatedUnitPrice: formatCurrency(proUnit),
             regularUnitPrice: formatCurrency(basePrice),
@@ -226,7 +229,7 @@ export function CustomerCreditsView({
             id: 'business',
             name: 'Pacote Frotista & Despachante',
             quantity: 30,
-            badge: 'Custo-Benefício',
+            badge: null,
             tagline: 'Máxima produtividade para alta rotatividade de veículos.',
             estimatedUnitPrice: formatCurrency(businessUnit),
             regularUnitPrice: formatCurrency(basePrice),
@@ -245,7 +248,7 @@ export function CustomerCreditsView({
             id: 'enterprise',
             name: 'Volume Customizado',
             quantity: '50+',
-            badge: 'Corporativo',
+            badge: null,
             tagline: 'Condições especiais para concessionárias e frotas.',
             estimatedUnitPrice: formatCurrency(enterpriseUnit),
             regularUnitPrice: formatCurrency(basePrice),
@@ -262,19 +265,102 @@ export function CustomerCreditsView({
           },
         ];
 
-  // Cálculo dinâmico do simulador
-  const simulatedUnitDiscounted =
-    simulatedCount >= 50
-      ? enterpriseUnit
-      : simulatedCount >= 30
-        ? businessUnit
-        : simulatedCount >= 15
-          ? proUnit
-          : starterUnit;
+  // Configuração dinâmica do Simulador B2B baseada 100% nas ofertas do banco
+  const simulatorTiers = React.useMemo(() => {
+    if (offers && offers.length > 0) {
+      const sorted = [...offers].sort((a, b) => a.credits_quantity - b.credits_quantity);
+      return sorted.map((off) => {
+        const isWa = off.contact_only || off.requires_whatsapp;
+        const refUnit =
+          off.reference_individual_price_cents && off.reference_individual_price_cents > 0
+            ? off.reference_individual_price_cents / 100
+            : basePrice;
+        const pkgTotal = off.price_cents / 100;
+        const qty = off.credits_quantity;
+        const unitVal = qty > 0 ? pkgTotal / qty : 0;
+        const regularTot = qty * refUnit;
+        const savingsTot = Math.max(0, regularTot - pkgTotal);
+        const discountPct =
+          off.discount_percent ??
+          (regularTot > 0 ? Math.round(((regularTot - pkgTotal) / regularTot) * 100) : 0);
 
-  const regularTotal = simulatedCount * basePrice;
-  const packageTotal = simulatedCount * simulatedUnitDiscounted;
-  const savingsTotal = Math.max(0, regularTotal - packageTotal);
+        return {
+          id: off.id,
+          quantity: qty,
+          label: isWa ? `${qty}+` : `${qty}`,
+          name: off.name,
+          refUnitPrice: refUnit,
+          pkgUnitPrice: unitVal,
+          regularTotal: regularTot,
+          packageTotal: pkgTotal,
+          savingsTotal: savingsTot,
+          discountPercent: discountPct,
+          isWaOnly: isWa,
+        };
+      });
+    }
+
+    return [
+      {
+        id: 'tier-5',
+        quantity: 5,
+        label: '5',
+        name: 'Pacote Inicial',
+        refUnitPrice: basePrice,
+        pkgUnitPrice: starterUnit,
+        regularTotal: 5 * basePrice,
+        packageTotal: 5 * starterUnit,
+        savingsTotal: Math.max(0, 5 * basePrice - 5 * starterUnit),
+        discountPercent: 5,
+        isWaOnly: false,
+      },
+      {
+        id: 'tier-15',
+        quantity: 15,
+        label: '15',
+        name: 'Pacote Lojista & Revenda',
+        refUnitPrice: basePrice,
+        pkgUnitPrice: proUnit,
+        regularTotal: 15 * basePrice,
+        packageTotal: 15 * proUnit,
+        savingsTotal: Math.max(0, 15 * basePrice - 15 * proUnit),
+        discountPercent: 8,
+        isWaOnly: false,
+      },
+      {
+        id: 'tier-30',
+        quantity: 30,
+        label: '30',
+        name: 'Pacote Frotista & Despachante',
+        refUnitPrice: basePrice,
+        pkgUnitPrice: businessUnit,
+        regularTotal: 30 * basePrice,
+        packageTotal: 30 * businessUnit,
+        savingsTotal: Math.max(0, 30 * basePrice - 30 * businessUnit),
+        discountPercent: 12,
+        isWaOnly: false,
+      },
+      {
+        id: 'tier-50',
+        quantity: 50,
+        label: '50+',
+        name: 'Volume Customizado',
+        refUnitPrice: basePrice,
+        pkgUnitPrice: enterpriseUnit,
+        regularTotal: 50 * basePrice,
+        packageTotal: 50 * enterpriseUnit,
+        savingsTotal: Math.max(0, 50 * basePrice - 50 * enterpriseUnit),
+        discountPercent: 15,
+        isWaOnly: true,
+      },
+    ];
+  }, [offers, basePrice, starterUnit, proUnit, businessUnit, enterpriseUnit]);
+
+  // Pacote ativo no simulador
+  const activeSimulatorTier =
+    simulatorTiers.find((t) => t.quantity === simulatedCount) ||
+    simulatorTiers[1] ||
+    simulatorTiers[0];
 
   // Filtro de Extrato
   const filteredLedger = ledgerHistory.filter((item) => {
@@ -288,24 +374,28 @@ export function CustomerCreditsView({
 
   const faqs = [
     {
-      q: 'Como é feita a ativação dos créditos após o pagamento?',
-      a: 'Após combinar o pacote com nossa equipe no WhatsApp e concluir o pagamento (normalmente via PIX), o administrador credita o lote contratado diretamente na sua conta em questão de minutos. Seu saldo atualiza automaticamente na tela.',
+      q: 'Quando meus créditos caem na conta após o pagamento?',
+      a: 'Cai na hora! Assim que você conclui o pagamento pelo Mercado Pago (seja por Pix ou cartão de crédito), seus créditos entram automaticamente no seu saldo em poucos segundos. Não precisa enviar comprovante nem esperar ninguém aprovar. Se você comprou o pacote de mais de 50 consultas pelo WhatsApp, nossa equipe libera seus créditos assim que o pagamento for confirmado.',
     },
     {
-      q: 'O que acontece se a consulta não encontrar dados ou falhar?',
-      a: 'Nosso sistema conta com proteção de reserva atômica. O crédito só é consumido definitivamente se o laudo oficial for entregue com sucesso. Em caso de falha permanente da base governamental, o crédito é estornado automaticamente para o seu saldo.',
+      q: 'E se a consulta falhar ou a placa não for encontrada? Eu perco o crédito?',
+      a: 'Não, você nunca sai no prejuízo! O seu crédito só é descontado se o relatório completo do veículo for gerado com sucesso. Se o sistema do Detran estiver fora do ar ou acontecer qualquer erro na busca, o seu crédito volta na mesma hora para o seu saldo.',
     },
     {
-      q: 'Os créditos possuem prazo de validade?',
-      a: 'Não. Os créditos adquiridos ficam vinculados permanentemente ao seu cadastro. Você pode usá-los hoje, no próximo mês ou ao longo de todo o ano, no ritmo do seu negócio.',
+      q: 'Os créditos têm prazo de validade? Eles vencem?',
+      a: 'Não vencem nunca! Os créditos comprados são seus para sempre. Você pode usar um hoje, outro daqui a três meses ou no ano que vem, no seu próprio ritmo.',
     },
     {
-      q: 'Como faço para usar o crédito no momento da consulta?',
-      a: 'Muito simples: acesse a tela de Nova Consulta, digite a placa do veículo e prossiga. O sistema detecta seu saldo disponível e apresenta a opção "Usar 1 Crédito da Plataforma". Ao clicar, o laudo é emitido na hora sem passar pelo Mercado Pago.',
+      q: 'Como eu uso os créditos para consultar uma placa?',
+      a: 'É muito fácil: vá em "Nova Consulta", digite a placa do carro ou da moto e clique em continuar. O sistema vai reconhecer que você tem saldo e mostrará um botão para usar 1 crédito. Ao clicar nele, o laudo abre na tela na hora, sem você precisar passar cartão nem fazer Pix novamente.',
     },
     {
-      q: 'Posso transferir créditos para outra conta?',
-      a: 'Os créditos são vinculados ao e-mail e CPF cadastrados. Caso você utilize uma conta corporativa com múltiplos operadores, nossa equipe pode ajustar a distribuição no momento da negociação comercial.',
+      q: 'Posso parcelar a compra dos pacotes no cartão?',
+      a: 'Sim! Você pode pagar à vista no Pix ou parcelar no cartão de crédito em até 12 vezes direto no Mercado Pago, com total segurança e aprovação rápida.',
+    },
+    {
+      q: 'Como funciona para quem precisa de muitas consultas (mais de 50)?',
+      a: 'Se você tem loja, revenda, frota de veículos ou faz muitas consultas por mês, nós montamos um pacote sob medida com desconto ainda maior. É só clicar no botão de WhatsApp do pacote corporativo e conversar direto com a nossa equipe.',
     },
   ];
 
@@ -324,7 +414,7 @@ export function CustomerCreditsView({
           <div className="space-y-3 sm:space-y-4 max-w-xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500/15 via-[#c9a44c]/20 to-amber-600/15 text-[#e3c56c] border border-[#c9a44c]/30">
               <Sparkles className="w-3.5 h-3.5 text-[#e3c56c]" />
-              <span>Modalidade B2B • Créditos Pré-Pagos</span>
+              <span>Créditos Pré-Pagos • Pagamento Seguro Mercado Pago</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
@@ -332,20 +422,24 @@ export function CustomerCreditsView({
             </h1>
 
             <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-              Consulte histórico completo de motos, carros e caminhões em 1 clique. Adquira cotas
-              pré-pagas com desconto e emita laudos imediatamente sem passar pelo checkout a cada
-              placa.
+              Compre pacotes de créditos com desconto progressivo direto pelo{' '}
+              <strong>Mercado Pago</strong> (Pix imediato ou Cartão até 12x). Seus laudos são
+              emitidos na hora em 1 clique, sem precisar passar pelo checkout a cada consulta.
             </p>
 
             {/* Micro badges de valor */}
             <div className="pt-1 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-zinc-400">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                Sem validade de expiração
+                <Zap className="w-3.5 h-3.5 text-[#c9a44c]" />
+                Liberação automática instantânea
               </span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
-                <Zap className="w-3.5 h-3.5 text-[#c9a44c]" />
-                Emissão em 1 clique
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                Créditos vitalícios sem expiração
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#009ee3]" />
+                Devolução automática se falhar
               </span>
             </div>
           </div>
@@ -428,10 +522,10 @@ export function CustomerCreditsView({
       <div className="space-y-4">
         <div className="text-center sm:text-left space-y-1">
           <span className="text-[11px] font-black uppercase tracking-wider text-[#c9a44c]">
-            Simplicidade Operacional
+            Processo 100% Automatizado
           </span>
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            Como funciona a contratação e o uso
+            Como funciona a compra e o uso dos seus créditos
           </h2>
         </div>
 
@@ -445,7 +539,8 @@ export function CustomerCreditsView({
             </div>
             <h3 className="text-sm font-bold text-white pt-1">Escolha o Pacote Ideal</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Defina a quantidade de consultas que sua operação precisa (de 5 a mais de 50 laudos).
+              Defina a quantidade de consultas que sua operação precisa (de 5 a mais de 50 laudos)
+              com desconto progressivo por volume.
             </p>
           </div>
 
@@ -456,10 +551,10 @@ export function CustomerCreditsView({
               </span>
               <ShieldCheck className="w-5 h-5 text-zinc-500" />
             </div>
-            <h3 className="text-sm font-bold text-white pt-1">Pagamento Instantâneo</h3>
+            <h3 className="text-sm font-bold text-white pt-1">Pagamento Online Instantâneo</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Pague com Mercado Pago (Pix ou Cartão) ou negocie direto no WhatsApp para faturamento
-              PJ.
+              Pague com total segurança no Mercado Pago (Pix imediato ou Cartão em até 12x). Os
+              créditos entram automaticamente no seu saldo!
             </p>
           </div>
 
@@ -472,7 +567,8 @@ export function CustomerCreditsView({
             </div>
             <h3 className="text-sm font-bold text-white pt-1">Consulte em 1 Toque</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Digite qualquer placa e emita laudos completos sem burocracia de pagamento avulso.
+              Digite qualquer placa e emita laudos oficiais completos em 1 clique, sem burocracia
+              nem digitação de cartão a cada consulta.
             </p>
           </div>
         </div>
@@ -485,21 +581,21 @@ export function CustomerCreditsView({
         <div className="text-center max-w-2xl mx-auto space-y-2.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-900/90 border border-zinc-800 text-zinc-300 shadow-inner">
             <Percent className="w-3.5 h-3.5 text-[#c9a44c]" />
-            <span>Condições Comerciais • Liberação Imediata</span>
+            <span>Catálogo Oficial • Preços Dinâmicos & Mercado Pago</span>
           </div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
             Escolha seu Pacote de Créditos
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl mx-auto">
-            Créditos sem data de expiração. Pagamento seguro com liberação automática via Mercado
-            Pago ou negociação personalizada para empresas.
+            Créditos sem data de expiração. Pagamento seguro com liberação automática instantânea
+            via Mercado Pago ou atendimento corporativo para demandas acima de 50 consultas.
           </p>
 
           {/* Micro badges de garantia */}
           <div className="pt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-[11px] text-zinc-400">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/70 border border-zinc-800/80">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              Ambiente Seguro
+              Ambiente Seguro Mercado Pago
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/70 border border-zinc-800/80">
               <Zap className="w-3.5 h-3.5 text-[#009ee3]" />
@@ -507,7 +603,7 @@ export function CustomerCreditsView({
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/70 border border-zinc-800/80">
               <CheckCircle2 className="w-3.5 h-3.5 text-[#c9a44c]" />
-              Créditos Não Expiram
+              Créditos Nunca Expiram
             </span>
           </div>
         </div>
@@ -754,10 +850,6 @@ export function CustomerCreditsView({
                       </Button>
 
                       <div className="flex items-center justify-between text-[10px] text-zinc-500 px-1 pt-0.5">
-                        <span className="inline-flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                          Checkout Seguro
-                        </span>
                         <a
                           href={waUrl}
                           target="_blank"
@@ -777,7 +869,7 @@ export function CustomerCreditsView({
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* 4. SIMULADOR DE ECONOMIA (DINÂMICO E VISUAL)                 */}
+      {/* 4. SIMULADOR DE ECONOMIA (DINÂMICO E VISUAL BASEADO NO BANCO) */}
       {/* ------------------------------------------------------------- */}
       <div className="p-5 sm:p-8 rounded-3xl bg-zinc-950 border border-zinc-800/80 space-y-5 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -787,25 +879,28 @@ export function CustomerCreditsView({
               <h3 className="text-lg font-black text-white">Simulador de Economia B2B</h3>
             </div>
             <p className="text-xs text-zinc-400">
-              Economia calculada com base no valor dinâmico oficial de {formatCurrency(basePrice)}{' '}
+              Economia real calculada com base no valor de referência de{' '}
+              <strong className="text-white font-bold">
+                {formatCurrency(activeSimulatorTier.refUnitPrice)}
+              </strong>{' '}
               por consulta avulsa.
             </p>
           </div>
 
-          {/* Seletores rápidos de volume */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-zinc-900 border border-zinc-800 self-start sm:self-auto">
-            {[5, 15, 30, 50].map((qty) => (
+          {/* Seletores rápidos de volume dinâmicos mapeados dos pacotes reais do banco */}
+          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-zinc-900 border border-zinc-800 self-start sm:self-auto">
+            {simulatorTiers.map((tier) => (
               <button
-                key={qty}
+                key={tier.id}
                 type="button"
-                onClick={() => setSimulatedCount(qty)}
+                onClick={() => setSimulatedCount(tier.quantity)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                  simulatedCount === qty
+                  activeSimulatorTier.quantity === tier.quantity
                     ? 'bg-[#c9a44c] text-zinc-950 shadow-xs'
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                {qty} un
+                {tier.label} un
               </button>
             ))}
           </div>
@@ -813,32 +908,49 @@ export function CustomerCreditsView({
 
         {/* Métricas do Simulador Baseadas no Preço Dinâmico do Banco */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-2">
+          {/* Card 1: Custo Avulso Normal */}
           <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 space-y-1">
-            <span className="text-[11px] font-semibold text-zinc-400">Custo Avulso Normal</span>
+            <span className="text-[11px] font-semibold text-zinc-400">
+              Custo Avulso Normal ({activeSimulatorTier.quantity} un)
+            </span>
             <div className="text-xl sm:text-2xl font-black text-zinc-300">
-              {formatCurrency(regularTotal)}
+              {formatCurrency(activeSimulatorTier.regularTotal)}
             </div>
             <span className="text-[10px] text-zinc-500">
-              {formatCurrency(basePrice)} por placa individual
+              {formatCurrency(activeSimulatorTier.refUnitPrice)} por placa individual
             </span>
           </div>
 
+          {/* Card 2: Valor no Pacote */}
           <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 space-y-1">
-            <span className="text-[11px] font-semibold text-zinc-400">Estimado no Pacote B2B</span>
+            <span className="text-[11px] font-semibold text-zinc-400">
+              No {activeSimulatorTier.name}
+            </span>
             <div className="text-xl sm:text-2xl font-black text-emerald-400">
-              {formatCurrency(packageTotal)}
+              {activeSimulatorTier.isWaOnly
+                ? 'Sob Consulta'
+                : formatCurrency(activeSimulatorTier.packageTotal)}
             </div>
             <span className="text-[10px] text-emerald-500 font-medium">
-              Apenas {formatCurrency(simulatedUnitDiscounted)}/un negociado
+              {activeSimulatorTier.isWaOnly
+                ? 'Condição personalizada sob medida via WhatsApp'
+                : `Apenas ${formatCurrency(activeSimulatorTier.pkgUnitPrice)}/un (${activeSimulatorTier.discountPercent}% OFF)`}
             </span>
           </div>
 
+          {/* Card 3: Economia no Bolso */}
           <div className="p-4 rounded-2xl bg-gradient-to-br from-[#c9a44c]/15 to-transparent border border-[#c9a44c]/30 space-y-1">
             <span className="text-[11px] font-bold text-[#e3c56c]">Economia no Bolso</span>
             <div className="text-xl sm:text-2xl font-black text-[#e3c56c]">
-              {formatCurrency(savingsTotal)}
+              {activeSimulatorTier.isWaOnly
+                ? 'Sob Consulta'
+                : formatCurrency(activeSimulatorTier.savingsTotal)}
             </div>
-            <span className="text-[10px] text-zinc-400">Dinheiro que fica na sua operação</span>
+            <span className="text-[10px] text-zinc-400">
+              {activeSimulatorTier.isWaOnly
+                ? 'Desconto progressivo sob medida para sua frota'
+                : `${activeSimulatorTier.discountPercent}% de economia direta para o seu negócio`}
+            </span>
           </div>
         </div>
       </div>
@@ -855,7 +967,7 @@ export function CustomerCreditsView({
             <div>
               <h2 className="text-lg font-bold text-white">Extrato de Movimentações</h2>
               <p className="text-xs text-zinc-400">
-                Histórico de lotes concedidos, utilizações e estornos.
+                Histórico de pacotes adquiridos no Mercado Pago, consultas realizadas e estornos.
               </p>
             </div>
           </div>
@@ -1093,17 +1205,17 @@ export function CustomerCreditsView({
       <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="space-y-1 max-w-md">
           <h4 className="text-base font-bold text-white">
-            Precisa de um volume diferente ou faturamento PJ?
+            Precisa de faturamento PJ ou volume superior a 50 laudos?
           </h4>
           <p className="text-xs text-zinc-400">
-            Nossa equipe comercial atende despachantes, oficinas, corretores e revendas com
-            propostas sob medida.
+            Nossa equipe comercial atende concessionárias, revendas, despachantes e frotistas com
+            condições sob medida e faturamento corporativo.
           </p>
         </div>
 
         <a
           href={`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(
-            `Olá! Gostaria de conversar com a equipe sobre pacotes corporativos de consultas veiculares. Meu e-mail é ${userEmail}.`,
+            `Olá! Gostaria de conversar com a equipe sobre pacotes corporativos de consultas veiculares (+50 laudos). Meu e-mail é ${userEmail}.`,
           )}`}
           target="_blank"
           rel="noopener noreferrer"
@@ -1114,7 +1226,7 @@ export function CustomerCreditsView({
             className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl py-5 px-6 shadow-md cursor-pointer flex items-center justify-center gap-2"
           >
             <MessageCircle className="w-4 h-4" />
-            <span>Falar com Consultor</span>
+            <span>Falar com Consultor B2B</span>
           </Button>
         </a>
       </div>

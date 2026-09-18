@@ -7,12 +7,10 @@ import {
   ArrowRight,
   ShieldCheck,
   AlertTriangle,
-  Users,
   Zap,
   Lock,
   Sparkles,
   FileCheck2,
-  Coins,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import {
@@ -24,12 +22,14 @@ import {
 } from '@/components/customer/payment-brand-icons';
 import { VehicleHistorySettings } from '@/types/site-settings';
 import { buildVehicleHistoryB2BWhatsAppUrl } from '@/lib/utils/whatsapp';
+import type { CreditPackageOffer } from '@/lib/credits/types';
 import { useVehicleHistory } from './vehicle-history-context';
 
 interface VehicleHistoryPricingProps {
   settings: VehicleHistorySettings;
   siteName: string;
   defaultPhone: string;
+  offers?: CreditPackageOffer[];
 }
 
 const CHECKLIST_ITEMS = [
@@ -47,6 +47,7 @@ export function VehicleHistoryPricing({
   settings,
   siteName,
   defaultPhone,
+  offers = [],
 }: VehicleHistoryPricingProps) {
   const { isValid, formattedPlate, scrollToSection } = useVehicleHistory();
   const phone = settings.whatsappPhoneOverride || defaultPhone;
@@ -73,37 +74,85 @@ export function VehicleHistoryPricing({
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const b2bTiers = [
-    {
-      qty: 5,
-      name: 'Inicial',
-      discount: '5% OFF',
-      unitPrice: (rawPrice * 0.95).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-      highlight: false,
-    },
-    {
-      qty: 15,
-      name: 'Lojista',
-      discount: '8% OFF',
-      unitPrice: (rawPrice * 0.92).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-      highlight: true,
-      badge: 'Mais Vendido',
-    },
-    {
-      qty: 30,
-      name: 'Frotista',
-      discount: '12% OFF',
-      unitPrice: (rawPrice * 0.88).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-      highlight: false,
-    },
-    {
-      qty: '50+',
-      name: 'Enterprise',
-      discount: '15% OFF',
-      unitPrice: (rawPrice * 0.85).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-      highlight: false,
-    },
-  ];
+  // Se existirem ofertas ativas no catálogo oficial do banco, calcula os tiers dinamicamente
+  const b2bTiers =
+    offers.length > 0
+      ? offers.map((off) => {
+          const isWa = off.contact_only || off.requires_whatsapp || off.credits_quantity >= 50;
+          const unitCents =
+            off.credits_quantity > 0 ? Math.round(off.price_cents / off.credits_quantity) : 0;
+          const unitPrice = isWa
+            ? 'Sob consulta'
+            : (unitCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          const discount = isWa
+            ? 'Sob Medida'
+            : off.discount_percent
+              ? `${off.discount_percent}% OFF`
+              : 'Especial';
+
+          return {
+            qty: isWa ? `${off.credits_quantity}+` : off.credits_quantity,
+            name: off.name,
+            discount,
+            unitPrice,
+            highlight: Boolean(off.highlight || off.is_featured),
+            badge: off.badge || (off.highlight ? 'Mais Vendido' : undefined),
+            contactOnly: isWa,
+          };
+        })
+      : [
+          {
+            qty: 5,
+            name: 'Inicial',
+            discount: '5% OFF',
+            unitPrice: (rawPrice * 0.95).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }),
+            highlight: false,
+            badge: undefined,
+            contactOnly: false,
+          },
+          {
+            qty: 15,
+            name: 'Lojista',
+            discount: '8% OFF',
+            unitPrice: (rawPrice * 0.92).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }),
+            highlight: true,
+            badge: 'Mais Vendido',
+            contactOnly: false,
+          },
+          {
+            qty: 30,
+            name: 'Frotista',
+            discount: '12% OFF',
+            unitPrice: (rawPrice * 0.88).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }),
+            highlight: false,
+            badge: undefined,
+            contactOnly: false,
+          },
+          {
+            qty: '50+',
+            name: 'Enterprise',
+            discount: '15% OFF',
+            unitPrice: (rawPrice * 0.85).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }),
+            highlight: false,
+            badge: undefined,
+            contactOnly: true,
+          },
+        ];
+
+  const maxDiscount =
+    offers.length > 0 ? Math.max(...offers.map((o) => o.discount_percent || 0), 15) : 15;
 
   return (
     <section
@@ -322,28 +371,31 @@ export function VehicleHistoryPricing({
                 <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span className="text-amber-300">Pacotes B2B & Lojistas</span>
                 <span className="text-zinc-600">•</span>
-                <span className="text-emerald-400">Até 15% OFF</span>
+                <span className="text-emerald-400">Até {maxDiscount}% OFF</span>
               </div>
 
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight font-heading">
-                Pacotes de Créditos Pré-Pagos
+                Pacotes de Créditos com Compra Online
               </h3>
               <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl leading-relaxed">
-                Avalia veículos frequentemente? Compre créditos com desconto progressivo e consulte placas em 1 clique direto na sua <strong>Área do Cliente</strong> sem precisar passar cartão a cada consulta.
+                Avalia veículos frequentemente? Compre pacotes com desconto progressivo direto pelo{' '}
+                <strong>Mercado Pago</strong> e consulte placas em 1 clique na sua{' '}
+                <strong>Área do Cliente</strong> com liberação automática instantânea dos créditos.
+                Para frotas a partir de 50 consultas, conte com negociação sob medida via WhatsApp.
               </p>
             </div>
 
             {/* Quick CTAs on desktop header */}
             <div className="hidden lg:flex flex-col items-end gap-1.5 shrink-0">
               <Link
-                href="/cliente/creditos"
+                href="/cliente/creditos#pacotes"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 transition-all active:scale-[0.98]"
               >
-                <span>Ver Pacotes no Painel</span>
+                <span>Comprar Pacotes Online</span>
                 <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
               </Link>
               <span className="text-[10px] text-zinc-400">
-                🔒 Área restrita do cliente
+                ⚡ Liberação automática no Mercado Pago
               </span>
             </div>
           </div>
@@ -361,8 +413,12 @@ export function VehicleHistoryPricing({
               >
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col items-center justify-center font-black text-white shrink-0">
-                    <span className="text-sm font-heading leading-none text-amber-300">{tier.qty}</span>
-                    <span className="text-[9px] text-zinc-400 font-normal leading-none mt-0.5">un</span>
+                    <span className="text-sm font-heading leading-none text-amber-300">
+                      {tier.qty}
+                    </span>
+                    <span className="text-[9px] text-zinc-400 font-normal leading-none mt-0.5">
+                      un
+                    </span>
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -374,7 +430,9 @@ export function VehicleHistoryPricing({
                       )}
                     </div>
                     <span className="text-[10px] text-zinc-400">
-                      {tier.qty === '50+' ? 'Demanda sob medida' : `${tier.qty} laudos veiculares`}
+                      {tier.contactOnly || String(tier.qty).includes('50')
+                        ? 'Demanda sob medida'
+                        : `${tier.qty} laudos veiculares`}
                     </span>
                   </div>
                 </div>
@@ -388,7 +446,9 @@ export function VehicleHistoryPricing({
                       {tier.discount}
                     </span>
                   </div>
-                  <span className="text-[9px] text-zinc-400 block">por consulta</span>
+                  <span className="text-[9px] text-zinc-400 block">
+                    {tier.contactOnly ? 'sob medida' : 'por consulta'}
+                  </span>
                 </div>
               </div>
             ))}
@@ -425,11 +485,13 @@ export function VehicleHistoryPricing({
 
                 <div className="pt-3 mt-3 border-t border-zinc-800/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-zinc-400 block">A partir de</span>
+                    <span className="text-[10px] text-zinc-400 block">
+                      {tier.contactOnly ? 'Negociação' : 'A partir de'}
+                    </span>
                     <span className="text-xs sm:text-sm font-black text-white font-mono">
                       {tier.unitPrice}
                     </span>
-                    <span className="text-[10px] text-zinc-400"> /un</span>
+                    {!tier.contactOnly && <span className="text-[10px] text-zinc-400"> /un</span>}
                   </div>
                   <span className="px-2 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black text-xs whitespace-nowrap">
                     {tier.discount}
@@ -440,10 +502,14 @@ export function VehicleHistoryPricing({
           </div>
 
           {/* Value Guarantees (Clean grid on mobile) */}
-          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-2 py-1 text-xs text-zinc-300">
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-4 gap-2 py-1 text-xs text-zinc-300">
             <div className="flex items-center gap-2">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
-              <span>Uso em 1 clique sem passar cartão</span>
+              <span>Pix imediato ou Cartão até 12x</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
+              <span>Liberação automática imediata</span>
             </div>
             <div className="flex items-center gap-2">
               <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3] shrink-0" />
@@ -458,20 +524,20 @@ export function VehicleHistoryPricing({
           {/* Action Buttons (Compact, single-line, mobile-first) */}
           <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
             <Link
-              href="/cliente/creditos"
-              className="w-full sm:flex-1 min-h-[42px] sm:min-h-[46px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 transition-all active:scale-[0.98] text-center cursor-pointer"
+              href="/cliente/creditos#pacotes"
+              className="w-full sm:flex-1 min-h-[44px] sm:min-h-[48px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/35 transition-all active:scale-[0.98] text-center cursor-pointer"
             >
-              <span className="whitespace-nowrap">Ver Pacotes com Desconto</span>
+              <span className="whitespace-nowrap">Comprar Pacotes com Desconto Online</span>
               <ArrowRight className="w-4 h-4 stroke-[2.5] shrink-0" />
             </Link>
 
             <button
               type="button"
               onClick={handleB2BClick}
-              className="w-full sm:w-auto min-h-[42px] sm:min-h-[46px] py-2.5 px-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-zinc-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] sm:min-h-[48px] py-2.5 px-4 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-zinc-200 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
               <WhatsAppIcon className="w-3.5 h-3.5 fill-current text-emerald-400 shrink-0" />
-              <span className="whitespace-nowrap">Falar no WhatsApp</span>
+              <span className="whitespace-nowrap">Frotas e Grandes Volumes (50+)</span>
             </button>
           </div>
 
@@ -480,12 +546,12 @@ export function VehicleHistoryPricing({
             <p className="text-[11px] text-zinc-400 flex items-center justify-center gap-1.5 flex-wrap">
               <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <span>
-                Para acessar simulações e solicitar a liberação de créditos, é necessário ter uma conta.{' '}
+                Os créditos adquiridos são vinculados com segurança ao seu usuário.{' '}
                 <Link
                   href="/cliente/cadastro?returnUrl=%2Fcliente%2Fcreditos"
                   className="text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2"
                 >
-                  Cadastre-se grátis
+                  Crie sua conta grátis
                 </Link>{' '}
                 ou{' '}
                 <Link
@@ -493,8 +559,8 @@ export function VehicleHistoryPricing({
                   className="text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2"
                 >
                   faça login
-                </Link>
-                .
+                </Link>{' '}
+                para comprar online e gerenciar seus laudos.
               </span>
             </p>
           </div>
