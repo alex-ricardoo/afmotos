@@ -31,9 +31,15 @@ import {
 
 interface VehicleHistoryPricingCardProps {
   onPriceUpdated?: (newPrice: number) => void;
+  showStandaloneSaveButton?: boolean;
+  onValuesChange?: (data: { publicPrice: number; liveCost: number; changeReason: string }) => void;
 }
 
-export function VehicleHistoryPricingCard({ onPriceUpdated }: VehicleHistoryPricingCardProps) {
+export function VehicleHistoryPricingCard({
+  onPriceUpdated,
+  showStandaloneSaveButton = true,
+  onValuesChange,
+}: VehicleHistoryPricingCardProps) {
   const [config, setConfig] = useState<VehicleHistoryPricingConfig | null>(null);
   const [versions, setVersions] = useState<VehicleHistoryPricingVersionRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,7 +202,21 @@ export function VehicleHistoryPricingCard({ onPriceUpdated }: VehicleHistoryPric
               step="0.01"
               min="0.01"
               value={sellingPrice}
-              onChange={(e) => setSellingPrice(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSellingPrice(val);
+                const parsed = parseFloat(val) || 0;
+                if (parsed > 0 && onPriceUpdated) {
+                  onPriceUpdated(parsed);
+                }
+                if (onValuesChange) {
+                  onValuesChange({
+                    publicPrice: parsed,
+                    liveCost: parseFloat(liveCost) || 0,
+                    changeReason,
+                  });
+                }
+              }}
               placeholder="49.90"
               disabled={loading || isPending}
               className="bg-zinc-950 border-zinc-800 text-white font-mono text-base font-bold focus:border-[#c9a44c]"
@@ -216,7 +236,17 @@ export function VehicleHistoryPricingCard({ onPriceUpdated }: VehicleHistoryPric
               step="0.01"
               min="0"
               value={liveCost}
-              onChange={(e) => setLiveCost(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setLiveCost(val);
+                if (onValuesChange) {
+                  onValuesChange({
+                    publicPrice: parseFloat(sellingPrice) || 0,
+                    liveCost: parseFloat(val) || 0,
+                    changeReason,
+                  });
+                }
+              }}
               placeholder="30.00"
               disabled={loading || isPending}
               className="bg-zinc-950 border-zinc-800 text-white font-mono text-base font-bold focus:border-[#c9a44c]"
@@ -260,27 +290,39 @@ export function VehicleHistoryPricingCard({ onPriceUpdated }: VehicleHistoryPric
             </label>
             <Input
               value={changeReason}
-              onChange={(e) => setChangeReason(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setChangeReason(val);
+                if (onValuesChange) {
+                  onValuesChange({
+                    publicPrice: parseFloat(sellingPrice) || 0,
+                    liveCost: parseFloat(liveCost) || 0,
+                    changeReason: val,
+                  });
+                }
+              }}
               placeholder="Ex: Reajuste contratual do provedor API Brasil"
               disabled={loading || isPending}
               className="bg-zinc-950 border-zinc-800 text-xs text-white"
             />
           </div>
 
-          <Button
-            type="button"
-            onClick={handleOpenConfirm}
-            disabled={loading || isPending}
-            className="bg-[#c9a44c] hover:bg-[#d8b35a] text-black font-extrabold text-xs px-6 py-2.5 rounded-xl transition-all cursor-pointer h-10 shrink-0"
-          >
-            {isPending ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Salvando...
-              </>
-            ) : (
-              'Salvar Nova Versão de Tarifas'
-            )}
-          </Button>
+          {showStandaloneSaveButton && (
+            <Button
+              type="button"
+              onClick={handleOpenConfirm}
+              disabled={loading || isPending}
+              className="bg-[#c9a44c] hover:bg-[#d8b35a] text-black font-extrabold text-xs px-6 py-2.5 rounded-xl transition-all cursor-pointer h-10 shrink-0"
+            >
+              {isPending ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Salvando...
+                </>
+              ) : (
+                'Salvar Nova Versão de Tarifas'
+              )}
+            </Button>
+          )}
         </div>
       </div>
 

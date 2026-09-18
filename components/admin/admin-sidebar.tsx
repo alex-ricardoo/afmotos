@@ -72,6 +72,11 @@ const navigation: NavItem[] = [
       },
       { name: 'Créditos B2B', href: '/admin/credits', icon: Coins },
       { name: 'Pacotes B2B', href: '/admin/configuracoes/pacotes-consultas', icon: Package },
+      {
+        name: 'Configuração & Preço',
+        href: '/admin/historico-veicular/configuracoes',
+        icon: Settings,
+      },
     ],
   },
   { type: 'link', name: 'Tabela FIPE', href: '/admin/fipe', icon: Scale },
