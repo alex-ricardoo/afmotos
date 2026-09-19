@@ -57,12 +57,14 @@ export function toCustomerVehicleReportDto(
     d.baseEstadual?.comunicacaoVenda ||
     d.base_estadual?.comunicacao_venda ||
     d.baseNacional?.indicadorComunicacaoVendas ||
-    'NÃO CONSTA COMUNICAÇÃO DE VENDAS'
+    'NAO CONSTA COMUNICACAO DE VENDAS'
   ).trim();
 
-  const hasComVenda = !rawComVenda.toUpperCase().includes('NAO CONSTA') &&
-    !rawComVenda.toUpperCase().includes('NADA CONSTA') &&
-    rawComVenda.toUpperCase() !== 'NAO';
+  const normComVenda = rawComVenda.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  const hasComVenda = !normComVenda.includes('NAO CONSTA') &&
+    !normComVenda.includes('NADA CONSTA') &&
+    normComVenda !== 'NAO' &&
+    normComVenda.length > 0;
 
   const vehicleStatus = String(
     d.baseEstadual?.situacaoVeiculo ||

@@ -30,11 +30,11 @@ export default function PublicFallbackLoading() {
       <div className="text-center pt-8 pb-4">
         <p className="text-xs text-zinc-500 flex items-center justify-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-amber-400/80 animate-pulse" />
-          Carregando informações mais recentes do showroom AF Motos...
+          Carregando informações mais recentes do showroom AF Veículos PE...
         </p>
       </div>
 
-      <span className="sr-only">Carregando conteúdo da página da AF Motos...</span>
+      <span className="sr-only">Carregando conteúdo da página da AF Veículos PE...</span>
     </div>
   );
 }

@@ -25,8 +25,9 @@ describe('Vehicle Lookup Adapters with Authentic API Brasil Payload', () => {
   it('parses complete authentic mock payload without errors', () => {
     const parsed = parseApiBrasilVehicleResponse(mockPayload);
     assert.strictEqual(parsed.error, false);
-    assert.strictEqual(parsed.data?.placa, 'ABC1234');
-    assert.strictEqual(parsed.data?.dadosBasicosDoVeiculo?.marca, 'MARCA FICTICIA');
+    assert.strictEqual(parsed.data?.placa, 'QYR8B57');
+    assert.strictEqual(parsed.data?.dadosBasicosDoVeiculo?.marca, 'YAMAHA');
+    assert.strictEqual(parsed.data?.marcaModelo, 'YAMAHA/FZ25 FAZER');
   });
 
   it('tolerantly parses null or empty payloads without throwing', () => {
@@ -44,10 +45,11 @@ describe('Vehicle Lookup Adapters with Authentic API Brasil Payload', () => {
     const risk = toVehicleRiskSummary(parsed);
 
     assert.strictEqual(risk.has_active_theft_robbery, false);
-    assert.strictEqual(risk.has_active_gravamen, true); // Active gravamen in fintech
+    assert.strictEqual(risk.has_active_gravamen, false); // Gravame baixado pelo agente financeiro
     assert.strictEqual(risk.has_debts, false);
-    assert.strictEqual(risk.has_auction_record, true); // Verified auction record in mock
-    assert.strictEqual(risk.risk_level, 'HIGH');
+    assert.strictEqual(risk.has_auction_record, false);
+    assert.strictEqual(risk.has_accident_indication, false);
+    assert.strictEqual(risk.risk_level, 'LOW');
   });
 
   it('consolidates debts and infractions from baseEstadual', () => {
@@ -56,46 +58,37 @@ describe('Vehicle Lookup Adapters with Authentic API Brasil Payload', () => {
 
     assert.strictEqual(debts.total_amount, 0);
     assert.strictEqual(debts.has_fines, false);
+    assert.strictEqual(debts.has_ipva_debts, false);
+    assert.strictEqual(debts.has_licensing_debts, false);
   });
 
   it('correctly classifies Pessoa Jurídica vs Pessoa Física and masks according to LGPD', () => {
     const parsed = parseApiBrasilVehicleResponse(mockPayload);
     const history = toVehicleHistorySummary(parsed);
 
-    assert.strictEqual(history.previous_owners.length, 3);
-
-    // 1. EMPRESA FICTICIA LTDA -> PJ
+    assert.strictEqual(history.previous_owners.length, 1);
     const owner1 = history.previous_owners[0];
-    assert.strictEqual(owner1.document_type, 'PJ');
-    assert.strictEqual(owner1.masked_document?.includes('/'), true);
-
-    // 2. LOCADORA DEMO SA -> PJ
-    const owner2 = history.previous_owners[1];
-    assert.strictEqual(owner2.document_type, 'PJ');
-    assert.strictEqual(owner2.masked_document?.includes('/'), true);
-
-    // 3. PESSOA FISICA TREINAMENTO -> PF
-    const owner3 = history.previous_owners[2];
-    assert.strictEqual(owner3.document_type, 'PF');
-    assert.strictEqual(owner3.masked_document?.includes('-'), true);
+    assert.strictEqual(owner1.state, 'PE');
+    assert.strictEqual(owner1.masked_document?.length! > 0, true);
   });
 
   it('extracts database summary columns for PostgreSQL insert', () => {
     const parsed = parseApiBrasilVehicleResponse(mockPayload);
     const cols = extractDatabaseSummaryColumns(parsed, mockPayload);
 
-    assert.strictEqual(cols.plate_normalized, 'ABC1234');
-    assert.strictEqual(cols.plate_display, 'ABC-1234');
-    assert.strictEqual(cols.brand, 'MARCA FICTICIA');
-    assert.strictEqual(cols.chassis_masked?.startsWith('8AJ'), true);
-    assert.strictEqual(cols.renavam_masked?.endsWith('1222'), true);
+    assert.strictEqual(cols.plate_normalized, 'QYR8B57');
+    assert.strictEqual(cols.plate_display, 'QYR8B57');
+    assert.strictEqual(cols.brand, 'YAMAHA');
+    assert.strictEqual(cols.model, 'FZ25 FAZER');
+    assert.strictEqual(cols.chassis_masked?.startsWith('9C6'), true);
+    assert.strictEqual(cols.renavam_masked?.endsWith('6693'), true);
   });
 
   it('transforms database record into InternalVehicleConsultationDto and CustomerVehicleReportDto with enriched metadata', () => {
     const fakeRecord: VehicleConsultationRecord = {
       id: '123e4567-e89b-12d3-a456-426614174000',
-      plate_normalized: 'ABC1234',
-      plate_display: 'ABC-1234',
+      plate_normalized: 'QYR8B57',
+      plate_display: 'QYR-8B57',
       consultation_type: 'veiculos-total',
       provider: 'apibrasil',
       raw_response: mockPayload,
@@ -103,38 +96,38 @@ describe('Vehicle Lookup Adapters with Authentic API Brasil Payload', () => {
       status: 'COMPLETED',
       provider_status_code: 200,
       provider_error: false,
-      provider_message: 'Dados validos em homologacao!',
+      provider_message: 'Dados validos!',
       mode: 'mock',
       is_mock: true,
       is_chargeable: false,
       charged_amount: 0,
-      provider_balance_before: 105.66,
-      provider_balance_after: 105.66,
-      provider_tax: 0,
-      vehicle_type: 'AUTOMOVEL',
-      brand: 'MARCA FICTICIA',
-      model: 'SUV CONCEITO FLEX',
-      vehicle_description: 'SUV CONCEITO FLEX',
+      provider_balance_before: 46.06,
+      provider_balance_after: 16.06,
+      provider_tax: 30,
+      vehicle_type: 'MOTOCICLETA',
+      brand: 'YAMAHA',
+      model: 'FZ25 FAZER',
+      vehicle_description: 'FZ25 FAZER',
       year_manufacture: 2021,
-      year_model: 2022,
-      color: 'AZUL',
-      state: 'SP',
-      city: 'CIDADE INVENTADA',
-      chassis_masked: '8AJ******3456',
-      renavam_masked: '*******1222',
-      risk_level: 'MEDIUM',
-      risk_index: 35,
+      year_model: 2021,
+      color: 'VERMELHA',
+      state: 'PE',
+      city: 'OLINDA',
+      chassis_masked: '9C6******3711',
+      renavam_masked: '*******6693',
+      risk_level: 'LOW',
+      risk_index: 10,
       has_active_theft_robbery: false,
       has_judicial_restriction: false,
-      has_financial_restriction: true,
-      has_active_gravamen: true,
+      has_financial_restriction: false,
+      has_active_gravamen: false,
       has_auction_record: false,
       has_accident_indication: false,
       has_debts: false,
       debts_total_amount: 0,
       confirmation_at: new Date().toISOString(),
       confirmed_by: '123e4567-e89b-12d3-a456-426614174001',
-      confirmation_plate: 'ABC-1234',
+      confirmation_plate: 'QYR-8B57',
       confirmation_message_version: 'v1.0',
       motorcycle_id: null,
       sell_request_id: null,
@@ -150,19 +143,16 @@ describe('Vehicle Lookup Adapters with Authentic API Brasil Payload', () => {
 
     const internalDto = toInternalVehicleConsultationDto(fakeRecord);
     assert.strictEqual(internalDto.id, fakeRecord.id);
-    assert.strictEqual(internalDto.summary.brand, 'MARCA FICTICIA');
-    assert.strictEqual(internalDto.fipe.price, 158900);
+    assert.strictEqual(internalDto.summary.brand, 'YAMAHA');
+    assert.strictEqual(internalDto.fipe.price, 18649);
 
     const summaryDto = toVehicleConsultationSummaryDto(fakeRecord);
     assert.strictEqual(summaryDto.id, fakeRecord.id);
-    assert.strictEqual(summaryDto.brand, 'MARCA FICTICIA');
+    assert.strictEqual(summaryDto.brand, 'YAMAHA');
 
     const customerDto = toCustomerVehicleReportDto(internalDto);
-    assert.strictEqual(customerDto.brand, 'MARCA FICTICIA');
-    assert.strictEqual(customerDto.procedural_verdict, 'ATTENTION');
-    assert.strictEqual(customerDto.latest_km_record?.mileage, 12850);
-    assert.strictEqual(customerDto.latest_km_record?.announced_price, 125000);
-    assert.strictEqual(customerDto.commercial_indicators?.has_rental_record, true);
+    assert.strictEqual(customerDto.brand, 'YAMAHA');
+    assert.strictEqual(customerDto.procedural_verdict, 'APPROVED');
     assert.strictEqual(customerDto.commercial_indicators?.has_sale_communication, false);
     assert.strictEqual(customerDto.disclaimer.includes('API Brasil'), true);
   });

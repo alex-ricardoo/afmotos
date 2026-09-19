@@ -28,7 +28,7 @@ export default function CatalogLoading() {
           </div>
         </div>
       </div>
-      <span className="sr-only">Carregando catálogo de veículos da AF Motos...</span>
+      <span className="sr-only">Carregando catálogo de veículos da AF Veículos PE...</span>
     </div>
   );
 }

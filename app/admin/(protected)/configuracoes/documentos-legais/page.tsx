@@ -6,7 +6,7 @@ import { getPublishedDocument, getAdminPrivacyRequests } from '@/lib/legal/queri
 import { LegalDocumentsManager } from '@/components/admin/legal-documents-manager';
 
 export const metadata = {
-  title: 'Documentos Legais & LGPD | Painel Admin | AF Motos',
+  title: 'Documentos Legais & LGPD | Painel Admin | AF Veículos PE',
   description: 'Gestão de versões, imutabilidade SHA-256 e solicitações LGPD de titulares.',
 };
 

@@ -65,7 +65,7 @@ export default function MotorcycleDetailLoading() {
           <MotorcycleGridSkeleton count={3} />
         </div>
       </div>
-      <span className="sr-only">Carregando detalhes do veículo na AF Motos...</span>
+      <span className="sr-only">Carregando detalhes do veículo na AF Veículos PE...</span>
     </div>
   );
 }

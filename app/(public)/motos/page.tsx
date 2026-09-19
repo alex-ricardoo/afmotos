@@ -96,7 +96,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
         'Sim, 100% das motos do nosso estoque possuem consulta veicular e laudo cautelar aprovado, garantindo procedência limpa, sem sinistro ou passagem por leilão.',
     },
     {
-      question: 'A AF Motos aceita moto usada na troca?',
+      question: 'A AF Veículos PE aceita moto usada na troca?',
       answer:
         'Sim! Aceitamos sua moto usada como parte do pagamento com avaliação justa e transparente baseada na Tabela FIPE e no estado real de conservação.',
     },

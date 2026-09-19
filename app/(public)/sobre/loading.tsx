@@ -6,7 +6,7 @@ export default function SobreLoading() {
     <div
       role="status"
       aria-busy="true"
-      aria-label="Carregando sobre a AF Motos..."
+      aria-label="Carregando sobre a AF Veículos PE..."
       className="bg-zinc-950 min-h-screen text-zinc-100 py-12 px-4 md:px-8 space-y-16 animate-in fade-in-50 duration-150 max-w-6xl mx-auto"
     >
       {/* Hero Section */}
@@ -47,7 +47,7 @@ export default function SobreLoading() {
           <Skeleton className="w-full h-full rounded-none" />
         </div>
       </div>
-      <span className="sr-only">Carregando informações institucionais da AF Motos...</span>
+      <span className="sr-only">Carregando informações institucionais da AF Veículos PE...</span>
     </div>
   );
 }

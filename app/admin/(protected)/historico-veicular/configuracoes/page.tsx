@@ -12,7 +12,7 @@ export const metadata = {
 
 export default async function HistoricoVeicularConfiguracoesPage() {
   const settings = await getSettings();
-  const siteName = settings?.site_name || 'AF Motos';
+  const siteName = settings?.site_name || 'AF Veículos PE';
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16 px-4 sm:px-6 lg:px-8">

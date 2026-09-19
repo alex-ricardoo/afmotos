@@ -202,7 +202,11 @@ export async function executeVehiclePlateLookup(
 ): Promise<LookupExecutionResult> {
   const normalizedPlate = normalizeBrazilianPlate(params.plate);
 
+  console.log(`\n[API_BRASIL] 🔍 ========================================================`);
+  console.log(`[API_BRASIL] 🔍 [executeVehiclePlateLookup] Iniciando processamento para placa: "${params.plate}" (normalizada: "${normalizedPlate}")`);
+
   if (!isValidBrazilianPlate(normalizedPlate)) {
+    console.warn(`[API_BRASIL] ❌ Placa inválida: "${params.plate}"`);
     throw new Error(
       `Placa inválida: "${params.plate}". Informe uma placa válida no formato antigo ou Mercosul.`,
     );
@@ -218,11 +222,17 @@ export async function executeVehiclePlateLookup(
   const config = getVehicleLookupConfig(defaultCostBrl);
   const currentMode: VehicleLookupMode = config.mode;
 
+  console.log(`[API_BRASIL] ⚙️ Modo ativo: [${currentMode.toUpperCase()}] | URL Base: ${config.apiBrasilBaseUrl}`);
+  console.log(`[API_BRASIL] 🔑 Token configurado? ${Boolean(config.apiBrasilToken)} ${config.apiBrasilToken ? `(tamanho: ${config.apiBrasilToken.length} caracteres)` : '(TOKEN AUSENTE!)'}`);
+
   // 1. Cache-first check (unless forceRefresh is explicitly requested)
   if (!params.forceRefresh) {
+    console.log(`[API_BRASIL] 🔎 Verificando se já existe laudo em cache local no Supabase...`);
     const requireLiveOnly = currentMode === 'live' || Boolean(params.requireLiveOnly);
     const existing = await findExistingConsultation(normalizedPlate, supabase, { requireLiveOnly });
     if (existing && existing.status === 'COMPLETED') {
+      console.log(`[API_BRASIL] ✅ Cache HIT local! Consulta prévia reaproveitada (ID: ${existing.id}, Custo: R$ 0,00)`);
+      console.log(`[API_BRASIL] 🔍 ========================================================\n`);
       return {
         success: true,
         isCacheHit: true,
@@ -230,6 +240,9 @@ export async function executeVehiclePlateLookup(
         message: 'Consulta recuperada do cache local (Custo R$ 0,00).',
       };
     }
+    console.log(`[API_BRASIL] ℹ️ Cache MISS: Nenhuma consulta válida encontrada em cache local.`);
+  } else {
+    console.log(`[API_BRASIL] 🔄 forceRefresh=true: Ignorando cache local.`);
   }
 
   // 2. Execution according to Mode (Live API vs Mock)
@@ -244,6 +257,7 @@ export async function executeVehiclePlateLookup(
 
   if (currentMode === 'live') {
     if (!config.apiBrasilToken) {
+      console.error(`[API_BRASIL] ❌ Erro: APIBRASIL_TOKEN não configurado no ambiente e modo live solicitado!`);
       throw new InvalidTokenError(
         'Token da API Brasil não configurado. Por favor, configure a variável de ambiente APIBRASIL_TOKEN com o token obtido em https://app.apibrasil.io ou entre em contato com o desenvolvedor Alex.',
       );
@@ -259,6 +273,11 @@ export async function executeVehiclePlateLookup(
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+
+    const startTime = Date.now();
+    console.log(`[API_BRASIL] 🚀 Disparando POST para API Brasil: ${config.apiBrasilBaseUrl}`);
+    console.log(`[API_BRASIL] 📤 Payload: { tipo: 'veiculos-total', placa: '${normalizedPlate}', homolog: false }`);
+    console.log(`[API_BRASIL] ⏳ Aguardando retorno da API Brasil (Timeout configurado: ${config.timeoutMs / 1000}s)...`);
 
     try {
       const response = await fetch(config.apiBrasilBaseUrl, {
@@ -276,20 +295,28 @@ export async function executeVehiclePlateLookup(
       });
 
       clearTimeout(timeout);
+      const elapsedMs = Date.now() - startTime;
+      console.log(`[API_BRASIL] 📥 Resposta HTTP recebida da API Brasil | Status: ${response.status} ${response.statusText} (${elapsedMs}ms)`);
 
       // Handle Authentication & Authorization errors
       if (response.status === 401 || response.status === 403) {
+        console.error(`[API_BRASIL] ❌ Erro de Autenticação na API Brasil (HTTP ${response.status}). Token pode ser inválido ou revogado.`);
         throw new InvalidTokenError();
       }
 
       const responseText = await response.text();
+      console.log(`[API_BRASIL] 📦 Tamanho do corpo da resposta: ${responseText.length} caracteres`);
+
       try {
         rawPayload = JSON.parse(responseText) as Record<string, unknown>;
       } catch (parseErr) {
+        console.error(`[API_BRASIL] ❌ Resposta da API Brasil não é um JSON válido:`, responseText.slice(0, 300));
         throw new Error(
           `Resposta inválida recebida da API Brasil (HTTP ${response.status}): ${responseText.slice(0, 200)}`,
         );
       }
+
+      console.log(`[API_BRASIL] 📄 Retorno analisado: error=${rawPayload.error}, status_code=${rawPayload.status_code || response.status}, message="${rawPayload.message || 'OK'}"`);
 
       // Check for Insufficient Balance (Saldo Insuficiente)
       if (
@@ -308,6 +335,8 @@ export async function executeVehiclePlateLookup(
             ? rawPayload.recharge_url
             : 'https://app.apibrasil.io/dashboard?modal=recharge';
 
+        console.warn(`[API_BRASIL] ⚠️ Saldo insuficiente na conta da API Brasil: ${balanceStr}`);
+
         throw new InsufficientBalanceError(
           String(
             rawPayload.message || 'Você não possui saldo suficiente para realizar essa consulta.',
@@ -320,6 +349,7 @@ export async function executeVehiclePlateLookup(
       // Check for other API errors
       if (rawPayload.error === true) {
         const errMsg = String(rawPayload.message || 'Erro ao processar consulta na API Brasil.');
+        console.error(`[API_BRASIL] ❌ Erro no corpo da resposta da API Brasil: ${errMsg}`);
         if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('autentic')) {
           throw new InvalidTokenError(errMsg);
         }
@@ -338,8 +368,12 @@ export async function executeVehiclePlateLookup(
       if (balanceBefore != null && taxCharged != null) {
         balanceAfter = balanceBefore - taxCharged;
       }
+
+      console.log(`[API_BRASIL] 💰 Saldo anterior: ${balanceBefore ?? 'N/A'} | Taxa cobrada: ${taxCharged ?? 'N/A'} | Saldo posterior: ${balanceAfter ?? 'N/A'}`);
     } catch (fetchErr: unknown) {
       clearTimeout(timeout);
+      const elapsedMs = Date.now() - startTime;
+      console.error(`[API_BRASIL] ❌ Falha na requisição para a API Brasil após ${elapsedMs}ms:`, fetchErr);
 
       // Re-throw our specific custom domain errors
       if (fetchErr instanceof InsufficientBalanceError || fetchErr instanceof InvalidTokenError) {
@@ -366,6 +400,7 @@ export async function executeVehiclePlateLookup(
     }
   } else {
     // Mock Mode (Ambiente de desenvolvimento sem token)
+    console.log(`[API_BRASIL] 🧪 Modo MOCK ativo. Carregando dados simulados para placa: "${normalizedPlate}"`);
     isMock = true;
     isChargeable = false;
     chargedAmount = 0.0;
@@ -373,10 +408,13 @@ export async function executeVehiclePlateLookup(
   }
 
   // 3. Parse & Extract Summary Columns
+  console.log(`[API_BRASIL] ⚙️ Parseando campos e extraindo colunas do veículo...`);
   const parsedResponse = parseApiBrasilVehicleResponse(rawPayload);
   const summaryCols = extractDatabaseSummaryColumns(parsedResponse, rawPayload);
+  console.log(`[API_BRASIL] 📋 Veículo identificado: ${summaryCols.brand || 'N/A'} ${summaryCols.model || 'N/A'} (${summaryCols.year_manufacture || '-'}/${summaryCols.year_model || '-'}) | Chassi: ${summaryCols.chassis_masked ? summaryCols.chassis_masked : 'N/A'}`);
 
   // 4. Persist to Database
+  console.log(`[API_BRASIL] 💾 Gravando consulta no Supabase (tabela vehicle_plate_consultations)...`);
   const insertPayload = {
     ...summaryCols,
     consultation_type: 'veiculos-total',
@@ -409,8 +447,11 @@ export async function executeVehiclePlateLookup(
     .single();
 
   if (insertError || !inserted) {
+    console.error(`[API_BRASIL] ❌ Erro ao salvar consulta no Supabase:`, insertError);
     throw new Error(`Erro ao salvar histórico veicular no banco de dados: ${insertError?.message}`);
   }
+
+  console.log(`[API_BRASIL] ✅ Consulta salva com sucesso! ID: ${inserted.id}`);
 
   // 5. Registrar custo do provedor em vehicle_lookup_provider_costs
   try {

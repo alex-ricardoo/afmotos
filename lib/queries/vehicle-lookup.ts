@@ -132,7 +132,32 @@ export async function getVehicleConsultationById(
     return null;
   }
 
-  return toInternalVehicleConsultationDto(data as VehicleConsultationRecord);
+  const dto = toInternalVehicleConsultationDto(data as VehicleConsultationRecord);
+
+  // Self-heal stale summary columns if raw_response exists and differs from cached DB fields
+  if (
+    data.raw_response &&
+    (data.has_auction_record !== dto.summary.has_auction_record ||
+      data.has_accident_indication !== dto.summary.has_accident_indication ||
+      data.risk_level !== dto.summary.risk_level ||
+      data.risk_index !== dto.summary.risk_index ||
+      data.has_active_gravamen !== dto.summary.has_active_gravamen)
+  ) {
+    void Promise.resolve(
+      supabase
+        .from('vehicle_plate_consultations')
+        .update({
+          has_auction_record: dto.summary.has_auction_record,
+          has_accident_indication: dto.summary.has_accident_indication,
+          risk_level: dto.summary.risk_level,
+          risk_index: dto.summary.risk_index,
+          has_active_gravamen: dto.summary.has_active_gravamen,
+        })
+        .eq('id', id)
+    ).catch((err: any) => console.warn('[VEHICLE_LOOKUP] Failed to self-heal consultation record:', err));
+  }
+
+  return dto;
 }
 
 /**

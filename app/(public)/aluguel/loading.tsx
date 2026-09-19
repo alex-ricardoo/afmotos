@@ -45,7 +45,7 @@ export default function AluguelLoading() {
           ))}
         </div>
       </div>
-      <span className="sr-only">Carregando planos de locação da AF Motos...</span>
+      <span className="sr-only">Carregando planos de locação da AF Veículos PE...</span>
     </div>
   );
 }

@@ -5,8 +5,8 @@ import { getUserCreditBalance } from '@/lib/credits/credit-service';
 import { ClientDashboard } from '@/components/customer/client-dashboard';
 
 export const metadata = {
-  title: 'Dashboard | Área do Cliente | AF Motos',
-  description: 'Acompanhe suas consultas veiculares e gerencie sua conta na AF Motos.',
+  title: 'Dashboard | Área do Cliente | AF Veículos PE',
+  description: 'Acompanhe suas consultas veiculares e gerencie sua conta na AF Veículos PE.',
 };
 
 export default async function CustomerDashboardPage() {

@@ -22,7 +22,7 @@ export default async function PoliticaPrivacidadePage() {
   const settings = await getSettings();
   const doc = await getPublishedDocument('privacy_policy');
 
-  const siteName = settings?.site_name || doc.institution.siteName || 'AF Motos';
+  const siteName = settings?.site_name || doc.institution.siteName || 'AF Veículos PE';
   const whatsappPhone = settings?.whatsapp_phone || doc.institution.whatsappPhone;
   const contactEmail = settings?.contact_email || doc.institution.contactEmail;
   const cnpj = settings?.cnpj || doc.institution.cnpj;

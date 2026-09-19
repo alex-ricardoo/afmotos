@@ -48,7 +48,7 @@ export default function AnunciarMotoLoading() {
           <Skeleton className="h-14 w-full rounded-2xl bg-amber-500/20" />
         </div>
       </div>
-      <span className="sr-only">Carregando tela de anúncio e consignação da AF Motos...</span>
+      <span className="sr-only">Carregando tela de anúncio e consignação da AF Veículos PE...</span>
     </div>
   );
 }

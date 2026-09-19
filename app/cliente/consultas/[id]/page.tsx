@@ -10,7 +10,7 @@ interface ConsultationDetailPageProps {
 }
 
 export const metadata = {
-  title: 'Laudo da Consulta | Área do Cliente | AF Motos',
+  title: 'Laudo da Consulta | Área do Cliente | AF Veículos PE',
   description: 'Detalhes e laudo completo da consulta veicular realizada.',
 };
 

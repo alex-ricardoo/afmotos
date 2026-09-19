@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export const metadata = {
-  title: 'Pacotes de Créditos B2B | AF Motos',
+  title: 'Pacotes de Créditos B2B | AF Veículos PE',
   description:
     'Adquira créditos pré-pagos para consultas veiculares com descontos progressivos e liberação imediata via WhatsApp ou Mercado Pago.',
 };

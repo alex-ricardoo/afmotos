@@ -23,9 +23,12 @@ export function TabVehicleData({ dto }: { dto: InternalVehicleConsultationDto })
     'NÃO CONSTA COMUNICAÇÃO DE VENDAS'
   ).trim();
 
-  const hasComVenda = !rawComVenda.toUpperCase().includes('NAO CONSTA') &&
-    !rawComVenda.toUpperCase().includes('NADA CONSTA') &&
-    rawComVenda.toUpperCase() !== 'NAO';
+  const normComVenda = rawComVenda.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  const hasComVenda =
+    !normComVenda.includes('NAO CONSTA') &&
+    !normComVenda.includes('NADA CONSTA') &&
+    normComVenda !== 'NAO' &&
+    normComVenda.length > 0;
 
   const vehicleStatus = String(
     raw.baseEstadual?.situacaoVeiculo ||

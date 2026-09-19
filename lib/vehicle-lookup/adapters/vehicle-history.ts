@@ -6,6 +6,7 @@ import type {
   AuctionPhoto,
 } from '../types.ts';
 import { maskCpf, maskCnpj } from '../sanitizers/index.ts';
+import { normalizeText } from './vehicle-risk.ts';
 
 const CORPORATE_KEYWORDS_REGEX = /\b(LTDA|S\/A|SA|LOCADORA|EIRELI|ME|EPP|CIA|COMPANHIA|BANCO|FINANCEIRA|COOPERATIVA|EMPRESA|COMERCIO|SERVICOS|AUTO|VEICULOS|MOTOS|TRANSPORTES|DISTRIBUIDORA|ASSOCIACAO|FUNDACAO)\b/i;
 
@@ -209,20 +210,20 @@ export function toVehicleHistorySummary(
   }
 
   // Auction presence: prefer checking auctions.length > 0 per user requirement
-  const leilaoDesc = String(d.leilao?.descricao || '');
+  const leilaoDesc = normalizeText(d.leilao?.descricao || '');
   const hasAuction = Boolean(
     auctions.length > 0 ||
-    d.leilao?.tem_leilao ||
+    d.leilao?.tem_leilao === true ||
     (photosList.length > 0 && d.fotosLoteVeiculo) ||
-    (auctionScore && (auctionScore.score_label || auctionScore.acceptance)) ||
-    (leilaoDesc && !leilaoDesc.toLowerCase().includes('nao consta') && !leilaoDesc.toLowerCase().includes('sem registro'))
+    (auctionScore && (Boolean(auctionScore.score_label) || Boolean(auctionScore.acceptance))) ||
+    (leilaoDesc && !leilaoDesc.includes('NAO CONSTA') && !leilaoDesc.includes('SEM REGISTRO') && !leilaoDesc.includes('NADA CONSTA'))
   );
 
-  const sinistroDesc = String(d.indicioSinistro?.descricao || '');
+  const sinistroDesc = normalizeText(d.indicioSinistro?.descricao || '');
   const hasClaims = Boolean(
-    d.sinistro?.tem_sinistro ||
+    d.sinistro?.tem_sinistro === true ||
     claims.length > 0 ||
-    (sinistroDesc && !sinistroDesc.toUpperCase().includes('NAO CONSTA'))
+    (sinistroDesc && !sinistroDesc.includes('NAO CONSTA') && !sinistroDesc.includes('NADA CONSTA') && !sinistroDesc.includes('SEM REGISTRO'))
   );
 
   return {

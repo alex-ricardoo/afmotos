@@ -18,17 +18,26 @@ export interface ExecuteLookupActionInput {
 export async function checkPlateCacheAction(plate: string) {
   try {
     const normalized = normalizeBrazilianPlate(plate);
+    console.log(`[VEHICLE_LOOKUP] [checkPlateCacheAction] Checando cache para a placa: "${plate}" (normalizada: "${normalized}")`);
     if (!isValidBrazilianPlate(normalized)) {
+      console.warn(`[VEHICLE_LOOKUP] [checkPlateCacheAction] Placa inválida: "${plate}"`);
       return { data: null, error: 'Placa inválida.' };
     }
     const cached = await checkCacheForPlate(normalized);
+    if (cached) {
+      console.log(`[VEHICLE_LOOKUP] [checkPlateCacheAction] ✅ Placa "${normalized}" encontrada no cache (ID: ${cached.id}, Status: ${cached.status})`);
+    } else {
+      console.log(`[VEHICLE_LOOKUP] [checkPlateCacheAction] ℹ️ Placa "${normalized}" não encontrada no cache local.`);
+    }
     return { data: cached, error: null };
   } catch (err: any) {
+    console.error(`[VEHICLE_LOOKUP] [checkPlateCacheAction] ❌ Erro ao checar cache da placa "${plate}":`, err);
     return { data: null, error: err?.message || 'Erro ao verificar cache da placa.' };
   }
 }
 
 export async function executeVehiclePlateLookupAction(input: ExecuteLookupActionInput) {
+  console.log(`[VEHICLE_LOOKUP] [executeAction] 🚀 Recebida solicitação de consulta veicular para a placa: "${input.plate}"`);
   try {
     const supabase = await createClient();
     const {
@@ -37,14 +46,19 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.error('[VEHICLE_LOOKUP] [executeAction] ❌ Erro de autenticação: usuário não logado ou sessão expirada.', authError?.message);
       return { error: 'Usuário não autenticado ou sessão expirada.' };
     }
 
     const normalized = normalizeBrazilianPlate(input.plate);
+    console.log(`[VEHICLE_LOOKUP] [executeAction] Usuário: ${user.id} (${user.email || 'sem email'}) | Placa normalizada: "${normalized}"`);
+
     if (!isValidBrazilianPlate(normalized)) {
+      console.warn(`[VEHICLE_LOOKUP] [executeAction] ❌ Placa com formato inválido: "${input.plate}"`);
       return { error: `A placa "${input.plate}" não possui formato válido (antigo ou Mercosul).` };
     }
 
+    console.log(`[VEHICLE_LOOKUP] [executeAction] Chamando executeVehiclePlateLookup...`);
     const result = await executeVehiclePlateLookup(
       {
         plate: normalized,
@@ -58,6 +72,7 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
       supabase
     );
 
+    console.log(`[VEHICLE_LOOKUP] [executeAction] ✅ Consulta processada com sucesso! ID: ${result.record.id} | CacheHit: ${result.isCacheHit} | isMock: ${result.record.is_mock}`);
     revalidatePath('/admin/consulta-placa');
 
     return {
@@ -68,9 +83,10 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
       isMock: result.record.is_mock,
     };
   } catch (err: any) {
-    console.error('Failed to execute vehicle plate lookup:', err);
+    console.error('[VEHICLE_LOOKUP] [executeAction] ❌ Erro durante a execução da consulta veicular:', err);
 
     if (err?.name === 'InsufficientBalanceError') {
+      console.warn(`[VEHICLE_LOOKUP] [executeAction] ⚠️ Saldo insuficiente na API Brasil: ${err.balance}`);
       return {
         error: err.message,
         isInsufficientBalance: true,
@@ -80,6 +96,7 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     }
 
     if (err?.name === 'InvalidTokenError') {
+      console.error(`[VEHICLE_LOOKUP] [executeAction] ❌ Token inválido ou expirado da API Brasil`);
       return {
         error: err.message,
         isTokenError: true,

@@ -5,7 +5,7 @@ import { getUserComplianceStatus } from '@/lib/legal/queries';
 import { DocumentAcceptanceFlow } from '@/components/customer/document-acceptance-flow';
 
 export const metadata = {
-  title: 'Atualização de Termos e Privacidade | AF Motos',
+  title: 'Atualização de Termos e Privacidade | AF Veículos PE',
   description: 'Confirmação de aceite da Política de Privacidade e dos Termos de Uso vigentes.',
 };
 

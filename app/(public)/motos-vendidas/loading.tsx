@@ -19,7 +19,7 @@ export default function MotosVendidasLoading() {
 
       {/* Grid of Sold Bikes */}
       <MotorcycleGridSkeleton count={6} />
-      <span className="sr-only">Carregando histórico de entregas da AF Motos...</span>
+      <span className="sr-only">Carregando histórico de entregas da AF Veículos PE...</span>
     </div>
   );
 }

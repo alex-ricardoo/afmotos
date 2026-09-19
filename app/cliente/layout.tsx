@@ -6,7 +6,7 @@ import { getUserComplianceStatus } from '@/lib/legal/queries';
 import { ComplianceBanner } from '@/components/customer/compliance-banner';
 
 export const metadata = {
-  title: 'Área do Cliente | AF Motos',
+  title: 'Área do Cliente | AF Veículos PE',
   description: 'Painel do cliente para consulta veicular, histórico e perfil.',
 };
 

@@ -23,7 +23,7 @@ interface LoginPageProps {
 }
 
 export const metadata = {
-  title: 'Entrar | Portal do Cliente | AF Motos',
+  title: 'Entrar | Portal do Cliente | AF Veículos PE',
   description: 'Acesse sua conta para consultar histórico veicular, acompanhar pedidos e baixar laudos oficiais em PDF.',
 };
 
@@ -77,7 +77,7 @@ export default async function CustomerLoginPage({ searchParams }: LoginPageProps
               <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-amber-500/40 shadow-md shadow-amber-500/10 bg-zinc-900 shrink-0">
                 <Image
                   src="/logo.jpg"
-                  alt="AF Motos"
+                  alt="AF Veículos PE"
                   fill
                   sizes="44px"
                   className="object-cover"
@@ -86,7 +86,7 @@ export default async function CustomerLoginPage({ searchParams }: LoginPageProps
               </div>
               <div>
                 <span className="text-sm font-black text-white tracking-tight font-heading block">
-                  AF MOTOS
+                  AF Veículos PE
                 </span>
                 <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">
                   Área do Cliente

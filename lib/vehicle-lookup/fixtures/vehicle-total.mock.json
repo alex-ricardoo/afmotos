@@ -1,130 +1,236 @@
 {
-  "user": {
-    "first_name": "VINICIUS",
-    "email": "vinicius.costa@apibrasil.com.br",
-    "cellphone": "31984771686",
-    "notification": "yes"
-  },
-  "balance": "105,660",
-  "balance_before": "105,660",
-  "tax": "0,000",
-  "status_code": 200,
-  "error": false,
-  "message": "Dados validos em homologacao! Voce nao foi tarifado e a requisicao nao foi contabilizada.",
-  "valor_consulta": 0,
-  "api_limit_for": "homolog",
-  "homolog": true,
+  "tax": "30,000",
   "data": {
+    "uf": "PE",
+    "cmt": null,
+    "pbt": "31",
+    "eixos": "0",
+    "fotos": [],
+    "placa": "QYR8B57",
+    "chassi": "9C6RG5010M0073711",
+    "cidade": "OLINDA",
+    "leilao": {
+      "score": {
+        "score": null,
+        "aceitacao": null,
+        "pontuacao": null,
+        "percentualSobreRef": null,
+        "exigenciaVistoriaEspecial": null
+      },
+      "descricao": "Não consta registro de leilão para o veículo informado",
+      "registros": []
+    },
+    "qtdPax": "2",
+    "anuncio": {
+      "km": null,
+      "data": null,
+      "fotos": [],
+      "placa": null,
+      "valor": null,
+      "opcionais": [],
+      "observacao": null
+    },
+    "gravame": [
+      {
+        "uf": "PE",
+        "placa": "QYR8B57",
+        "agente": "AYMORE CREDITO, FINANCIAMENTO E INVESTIM",
+        "chassi": "9C6RG5010M0073711",
+        "numero": "05488900",
+        "gravame": null,
+        "renavam": "01253906693",
+        "ufPlaca": null,
+        "contrato": "SIRCAF: SIM 0",
+        "intencao": null,
+        "situacao": "VEÍCULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
+        "anoModelo": null,
+        "municipio": null,
+        "dataEmissao": null,
+        "observacoes": "Atual",
+        "responsavel": "FINANCEIRA",
+        "codigoAgente": null,
+        "dataInclusao": "11/01/2024",
+        "dataSituacao": null,
+        "dataVigencia": null,
+        "anoFabricacao": null,
+        "documentoAgente": null,
+        "documentoFinanciado": "09073790441",
+        "dataVigenciaContrato": null
+      },
+      {
+        "uf": "PE",
+        "placa": "QYR8B57",
+        "agente": "BANCO YAMAHA MOTOR DO BRASIL SA",
+        "chassi": "9C6RG5010M0073711",
+        "numero": "04569351",
+        "gravame": null,
+        "renavam": "01253906693",
+        "ufPlaca": null,
+        "contrato": "SIRCAF: SIM 0",
+        "intencao": null,
+        "situacao": "VEÍCULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
+        "anoModelo": null,
+        "municipio": null,
+        "dataEmissao": null,
+        "observacoes": "Histórico",
+        "responsavel": "FINANCEIRA",
+        "codigoAgente": null,
+        "dataInclusao": "28/01/2021",
+        "dataSituacao": null,
+        "dataVigencia": null,
+        "anoFabricacao": null,
+        "documentoAgente": null,
+        "documentoFinanciado": "00004685493400",
+        "dataVigenciaContrato": null
+      }
+    ],
+    "renavam": "01253906693",
+    "revisao": {
+      "veiculosFipe": []
+    },
+    "numMotor": "G3K1E-073709",
+    "potencia": "0",
+    "anoModelo": "2021",
+    "categoria": "MT - NAKED/ROADSTER",
+    "municipio": "OLINDA",
+    "opcionais": [],
     "acessorios": {
       "veiculosFipe": []
     },
-    "acessoriosCategorizados": {
-      "acessorios": [],
-      "categorias": []
+    "codigoFipe": [
+      {
+        "codigo": "827117-8",
+        "valorZeroKM": "18735"
+      },
+      {
+        "codigo": "827116-0",
+        "valorZeroKM": "18735"
+      },
+      {
+        "codigo": "827107-0",
+        "valorZeroKM": "15107"
+      }
+    ],
+    "corVeiculo": "VERMELHA",
+    "custoMedio": {
+      "custoTotal": 0,
+      "custoCada10k": [],
+      "custoPlanoRevisaoTotal": 0,
+      "custoDesgastePecasTotal": 0
     },
+    "registroDi": null,
+    "restricoes": null,
+    "rouboFurto": {
+      "historico": [],
+      "constaOcorrencia": false,
+      "indicadorProcedencia": null,
+      "constaOcorrenciaAtiva": false,
+      "municipioEmplacamento": null
+    },
+    "ufFaturado": "PE",
+    "caixaCambio": null,
+    "cestaBasica": {
+      "registros": [],
+      "veiculosFipe": []
+    },
+    "cilindradas": "249",
+    "combustivel": "ALCOOL/GASOLINA",
+    "docFaturado": "28628169000100",
+    "historicoKm": [],
+    "marcaModelo": "YAMAHA/FZ25 FAZER",
+    "numFaturado": "28628169000100",
+    "procedencia": "NACIONAL",
+    "tipoVeiculo": "MOTOCICLETA",
     "analiseRisco": {
+      "parecer": "Veículo com baixo risco de recusa em comercialização/seguro 😃",
       "imageLink": null,
-      "indiceRisco": "2",
-      "parecer": "Veiculo sem indicio real, dados ficticios para homologacao"
-    },
-    "anoFabricacao": "2021",
-    "anoModelo": "2022",
-    "anuncio": {
-      "data": "03/05/2024 14:22:11",
-      "fotos": [],
-      "km": "12850",
-      "observacao": "Oferta teste exclusiva para ambiente de desenvolvimento.",
-      "opcionais": [
-        {
-          "descricao": "Direcao eletrica"
-        },
-        {
-          "descricao": "Camera de reverso"
-        },
-        {
-          "descricao": "Chave presencial"
-        }
-      ],
-      "placa": "ABC9234",
-      "valor": "125000.00"
+      "indiceRisco": "1"
     },
     "baseEstadual": {
-      "categoria": "PARTICULAR",
-      "chassi": "8AJZZZ999JZ123456",
-      "combustivel": "GASOLINA/EL",
-      "comunicacaoInclusao": null,
-      "comunicacaoVenda": "NAO CONSTA COMUNICACAO DE VENDAS",
-      "cor": "AZUL",
-      "dataAlteracaoMotor": null,
-      "dataEmissaoCrv": "10/01/2024",
-      "dataInclusaoIntencaoTrocaFinanceira": null,
-      "dataLimiteRestricaoTributaria": null,
-      "dataVenda": null,
-      "dataVigenciaContratoFinanceira": null,
-      "debitoCetesb": null,
-      "debitoDer": null,
-      "debitoDersa": null,
-      "debitoDetran": null,
-      "debitoDpvat": null,
-      "debitoIpva": "0,00",
-      "debitoLicenciamento": "0,00",
-      "debitoMultas": "0,00",
-      "debitoMunicipais": "0,00",
-      "debitoPoliciaRodoviariaFederal": null,
-      "debitoRenainf": null,
+      "uf": "PE",
+      "cor": "VERMELHA",
+      "tipo": "MOTOCICLO",
+      "motor": "G3K1E073709",
+      "placa": "QYR8B57",
+      "chassi": "9C6RG5010M0073711",
       "especie": "PASSAGEIRO",
-      "exercicioLicenciamento": null,
-      "existeDebitoDpvat": "NAO EXISTE DEBITO DE DPVAT",
-      "existeDebitoIpva": "NAO EXISTE DEBITO DE IPVA",
-      "existeDebitoLicenciamento": "NAO EXISTE DEBITO DE LICENCIAMENTO",
-      "existeDebitoMulta": "NAO EXISTE DEBITO DE MULTA",
-      "licdata": "10/01/2024",
-      "motor": "XZ9JK123456",
-      "municipio": "CIDADE INVENTADA",
+      "licdata": "29/01/2024",
+      "pronome": null,
+      "renavam": "01253906693",
+      "categoria": null,
+      "dataVenda": null,
+      "debitoDer": null,
+      "municipio": "RECIFE",
+      "debitoIpva": "0,00",
+      "combustivel": "ALCO/GASOL",
+      "debitoDersa": null,
+      "debitoDpvat": "0,00",
       "observacoes": null,
+      "debitoCetesb": null,
+      "debitoDetran": null,
+      "debitoMultas": "0,00",
+      "debitoRenainf": null,
+      "dataEmissaoCrv": "29/01/2024",
+      "pronomeAnterior": null,
+      "situacaoVeiculo": "CIRCULACAO",
+      "comunicacaoVenda": "NAO CONSTA COMUNICACAO DE VENDAS",
+      "debitoMunicipais": "0,00",
+      "existeDebitoIpva": "NAO EXISTE DEBITO DE IPVA",
+      "restricaoGuincho": "NADA CONSTA",
+      "restricaoRenajud": "NADA CONSTA",
+      "existeDebitoDpvat": "NAO EXISTE DEBITO DE DPVAT",
+      "existeDebitoMulta": "NAO EXISTE DEBITO DE MULTA",
       "outrasRestricoes1": "NADA CONSTA",
       "outrasRestricoes2": "NADA CONSTA",
       "outrasRestricoes3": "NADA CONSTA",
       "outrasRestricoes4": "NADA CONSTA",
-      "placa": "ABC1234",
-      "pronome": "EMPRESA FICTICIA LTDA",
-      "pronomeAnterior": null,
-      "renavam": "00999111222",
-      "restricaoAdminisrativa": "NADA CONSTA",
-      "restricaoAmbiental": null,
-      "restricaoArrendatario": null,
-      "restricaoDataInclusao": null,
-      "restricaoDocArrendatario": null,
-      "restricaoFinanceira": "NADA CONSTA",
-      "restricaoGuincho": "NADA CONSTA",
       "restricaoJudicial": "NADA CONSTA",
+      "dataAlteracaoMotor": null,
+      "restricaoAmbiental": null,
+      "tipoMarcacaoChassi": "NORMAL",
+      "comunicacaoInclusao": null,
+      "debitoLicenciamento": "0,00",
+      "restricaoFinanceira": null,
       "restricaoNomeAgente": null,
-      "restricaoRenajud": "NADA CONSTA",
       "restricaoRouboFurto": "NADA CONSTA",
       "restricaoTributaria": "NADA CONSTA",
-      "situacaoVeiculo": "CIRCULACAO",
-      "tipo": "AUTOMOVEL",
-      "tipoMarcacaoChassi": "NORMAL",
-      "uf": "SP"
+      "restricaoArrendatario": null,
+      "restricaoDataInclusao": null,
+      "exercicioLicenciamento": "2024",
+      "restricaoAdminisrativa": "NADA CONSTA",
+      "restricaoDocArrendatario": null,
+      "existeDebitoLicenciamento": "NAO EXISTE DEBITO DE LICENCIAMENTO",
+      "dataLimiteRestricaoTributaria": null,
+      "dataVigenciaContratoFinanceira": null,
+      "debitoPoliciaRodoviariaFederal": null,
+      "dataInclusaoIntencaoTrocaFinanceira": null
     },
     "baseNacional": {
-      "anoFabricacao": "2021",
-      "anoModelo": "2022",
-      "categoria": "PARTICULAR",
-      "chassi": "8AJZZZ999JZ123456",
-      "combustivel": "GASOLINA/EL",
-      "cor": "AZUL",
       "di": null,
-      "docFaturado": "12345000000123",
-      "dtEmissaoCrv": null,
-      "dtUltimaAtualizacao": null,
+      "uf": "PE",
+      "cor": "VERMELHA",
+      "motor": "G3K1E073709",
+      "placa": "QYR8B57",
+      "chassi": "9C6RG5010M0073711",
       "especie": "PASSAGEIRO",
-      "especieVeiculo": "PASSAGEIRO",
-      "indicadorComunicacaoVendas": "NAO",
-      "indicadorRestricaoRenajud": "NAO",
-      "motor": "XZ9JK123456",
-      "municipio": "CIDADE INVENTADA",
+      "renavam": "01253906693",
+      "anoModelo": "2021",
+      "categoria": null,
+      "municipio": "CABO DE SANTO AGOSTINHO",
       "ocorrencia": "VEICULO NAO INDICA OCORRENCIA DE ROUBO/FURTO",
+      "restricao1": "NADA CONSTA",
+      "restricao2": "NADA CONSTA",
+      "restricao3": "NADA CONSTA",
+      "restricao4": "NADA CONSTA",
+      "ufFaturado": "PE",
+      "combustivel": "ALCO/GASOL",
+      "docFaturado": "28628169000100",
+      "tipoVeiculo": "MOTOCICLO",
+      "dtEmissaoCrv": null,
+      "anoFabricacao": "2021",
+      "especieVeiculo": "PASSAGEIRO",
+      "situacaoVeiculo": "CIRCULACAO",
+      "tipoDocFaturado": "JURIDICA",
       "outrasRestricoes1": "NADA CONSTA",
       "outrasRestricoes2": "NADA CONSTA",
       "outrasRestricoes3": "NADA CONSTA",
@@ -133,521 +239,231 @@
       "outrasRestricoes6": "NADA CONSTA",
       "outrasRestricoes7": "NADA CONSTA",
       "outrasRestricoes8": "NADA CONSTA",
-      "placa": "ABC1234",
-      "renavam": "00999111222",
-      "restricao1": "NADA CONSTA",
-      "restricao2": "NADA CONSTA",
-      "restricao3": "NADA CONSTA",
-      "restricao4": "NADA CONSTA",
-      "restricaoDataInclusao": null,
-      "restricaoFinanciadora": "NADA CONSTA",
-      "restricaoFinanciamento": null,
-      "restricaoNomeAgente": null,
-      "restricaoTipoTransacao": "NADA CONSTA",
-      "situacaoVeiculo": "CIRCULACAO",
-      "tipoDocFaturado": "JURIDICA",
       "tipoDocImportadora": null,
       "tipoMarcacaoChassi": "NORMAL",
-      "tipoVeiculo": "AUTOMOVEL",
-      "uf": "SP",
-      "ufFaturado": null
+      "dtUltimaAtualizacao": "29/01/2024",
+      "restricaoNomeAgente": null,
+      "restricaoDataInclusao": null,
+      "restricaoFinanciadora": null,
+      "restricaoFinanciamento": null,
+      "restricaoTipoTransacao": "NADA CONSTA",
+      "indicadorRestricaoRenajud": "NAO",
+      "indicadorComunicacaoVendas": "NAO"
     },
-    "caixaCambio": null,
-    "capMaxTracao": "0,0000",
-    "capacidadeCarga": "00000",
-    "capacidadePassageiro": "5",
-    "categoria": "BU - SUV MEDIO",
-    "cestaBasica": {
-      "registros": [],
-      "veiculosFipe": []
+    "capMaxTracao": "0",
+    "tipoMontagem": "1",
+    "anoFabricacao": "2021",
+    "nacionalidade": "NACIONAL",
+    "numCarroceria": "INEXISTENTE",
+    "especieVeiculo": "PASSAGEIRO",
+    "situacaoChassi": "N",
+    "tipoCarroceria": "Não Aplicável",
+    "valorAnunciado": null,
+    "capacidadeCarga": "0",
+    "eixoTraseiroDif": null,
+    "indicioSinistro": {
+      "descricao": "NÃO CONSTA INDÍCIO DE SINISTRO PARA O VEÍCULO INFORMADO 😃",
+      "classificacao": null
     },
-    "chassi": "8AJZZZ999JZ123456",
-    "cidade": "NAO IDENTIFICADO",
-    "cilindradas": "1999",
-    "cmt": null,
-    "codigoCombustivel": "GASOLINA/EL",
-    "codigoFipe": [
-      {
-        "codigo": "002999-9",
-        "valorZeroKM": null
-      },
-      {
-        "codigo": "002998-1",
-        "valorZeroKM": null
-      }
-    ],
-    "codigoMarcaModelo": "909090",
-    "combustivel": "GASOLINA/EL",
-    "comparativoEspecificacoes": {
-      "opinioesDoDono": [],
-      "veiculoComparativo": []
+    "numTerceiroEixo": null,
+    "situacaoVeiculo": "S",
+    "tipoDocFaturado": "DESCONHECIDO",
+    "identImportadora": null,
+    "codigoCombustivel": "ALCOOL/GASOLINA",
+    "codigoMarcaModelo": "7694",
+    "historicoAnuncios": [],
+    "registroEmLocadora": {
+      "registroEmLocadora": false
     },
-    "corVeiculo": "AZUL",
-    "custoMedio": {
-      "custoCada10k": [],
-      "custoDesgastePecasTotal": 0,
-      "custoPlanoRevisaoTotal": 0,
-      "custoTotal": 0
-    },
+    "tipoDocImportadora": "DESCONHECIDO",
+    "ultimaDataInclusao": null,
+    "dtUltimaAtualizacao": "29/01/2024",
+    "limiteRestricaoTrib": null,
+    "capacidadePassageiro": "2",
     "dadosBasicosDoVeiculo": {
+      "marca": "YAMAHA",
+      "placa": "QYR8B57",
+      "chassi": "9C6RG5010M0073711",
+      "nacional": "NACIONAL",
+      "anoModelo": "2021",
+      "descricao": "FZ25 FAZER",
+      "codigoFipe": "8271070",
+      "cilindradas": "249",
+      "combustivel": "Alcool, Gasolina",
       "anoFabricacao": "2021",
-      "anoModelo": "2022",
-      "chassi": "8AJZZZ999JZ123456",
-      "cilindradas": "1999",
-      "codigoFipe": "002999",
-      "combustivel": "Gasolina, Eletrico",
-      "descricao": "SUV CONCEITO FLEX",
       "informacoesFipe": [
         {
-          "ano": "2022",
-          "combustivel": "Hibrido",
-          "fipeId": "002999",
+          "ano": "2021",
+          "marca": "YAMAHA",
+          "fipeId": "8271070",
+          "modelo": "FZ25",
+          "versao": "250 FAZER FLEX",
+          "valorAtual": "18649.00",
+          "combustivel": "Flex",
           "historicoPreco": [
             {
-              "ano": "2023",
-              "mes": "1",
-              "predicao": false,
-              "valor": "150000"
-            },
-            {
-              "ano": "2023",
+              "ano": "2020",
               "mes": "7",
-              "predicao": false,
-              "valor": "152500"
+              "valor": "15701",
+              "predicao": false
+            },
+            {
+              "ano": "2021",
+              "mes": "1",
+              "valor": "17137",
+              "predicao": false
+            },
+            {
+              "ano": "2022",
+              "mes": "1",
+              "valor": "19886",
+              "predicao": false
+            },
+            {
+              "ano": "2023",
+              "mes": "1",
+              "valor": "21302",
+              "predicao": false
             },
             {
               "ano": "2024",
               "mes": "1",
-              "predicao": false,
-              "valor": "154000"
-            },
-            {
-              "ano": "2024",
-              "mes": "6",
-              "predicao": false,
-              "valor": "155500"
+              "valor": "19168",
+              "predicao": false
             },
             {
               "ano": "2025",
               "mes": "1",
-              "predicao": false,
-              "valor": "158900"
+              "valor": "19216",
+              "predicao": false
+            },
+            {
+              "ano": "2026",
+              "mes": "9",
+              "valor": "18649",
+              "predicao": false
             }
-          ],
-          "marca": "Marca Ficticia",
-          "modelo": "Modelo Demo",
-          "valorAtual": "158900.00",
-          "versao": "Pack Tecnologia 2.0 Hibrido"
+          ]
+        },
+        {
+          "ano": "2021",
+          "marca": "YAMAHA",
+          "fipeId": "8271178",
+          "modelo": "FZ25",
+          "versao": "250 FAZER PANTERA NEGRA FLEX",
+          "valorAtual": "20952.00",
+          "combustivel": "Flex",
+          "historicoPreco": [
+            {
+              "ano": "2021",
+              "mes": "1",
+              "valor": "16860",
+              "predicao": false
+            },
+            {
+              "ano": "2024",
+              "mes": "1",
+              "valor": "19228",
+              "predicao": false
+            },
+            {
+              "ano": "2026",
+              "mes": "9",
+              "valor": "20952",
+              "predicao": false
+            }
+          ]
         }
       ],
       "informacoesGerais": [
         {
-          "fipeId": "002999",
-          "idVersao": "5555",
-          "marca": "Marca Ficticia",
-          "modelo": "SUV Demo",
-          "versao": "Pack Tecnologia 2.0"
-        }
-      ],
-      "marca": "MARCA FICTICIA",
-      "nacional": "NACIONAL",
-      "placa": "ABC1234"
-    },
-    "decodificadorPrecificador": {
-      "anoFabricacao": null,
-      "anoModelo": "2022",
-      "categoria": "AUTOMOVEL",
-      "chassi": "8AJZZZ999JZ123456",
-      "classificacao": null,
-      "codigoFipe": null,
-      "combustivel": null,
-      "comprimento": null,
-      "cor": null,
-      "distanciaEntreEixos": null,
-      "localFabricacao": "FABRICA TESTE / SP",
-      "marca": "MARCA FICTICIA",
-      "modelo": "SUV CONCEITO",
-      "motor": null,
-      "origem": "NACIONAL",
-      "pais": "BRASIL",
-      "pesoBruto": null,
-      "portas": null,
-      "potenciaMotor": "2.0",
-      "precificadorI": [
-        {
-          "codigo": "002999-9",
-          "combustivel": "H",
-          "dataRefFipe": null,
-          "graphMes1": null,
-          "graphMes10": null,
-          "graphMes11": null,
-          "graphMes12": null,
-          "graphMes2": null,
-          "graphMes3": null,
-          "graphMes4": null,
-          "graphMes5": null,
-          "graphMes6": null,
-          "graphMes7": null,
-          "graphMes8": null,
-          "graphMes9": null,
-          "graphValor1": null,
-          "graphValor10": null,
-          "graphValor11": null,
-          "graphValor12": null,
-          "graphValor2": null,
-          "graphValor3": null,
-          "graphValor4": null,
-          "graphValor5": null,
-          "graphValor6": null,
-          "graphValor7": null,
-          "graphValor8": null,
-          "graphValor9": null,
-          "marca": "Marca Ficticia",
-          "modelo": "SUV Conceito 2.0 Hibrido",
-          "valor": "168200",
-          "valorZeroKM": null
+          "marca": "Yamaha Motos",
+          "fipeId": "8271070",
+          "modelo": "Fazer 250 (2018 => 2021)",
+          "versao": "250cc Flex ABS",
+          "idVersao": "3686"
         },
         {
-          "codigo": "002998-1",
-          "combustivel": "F",
-          "dataRefFipe": null,
-          "graphMes1": null,
-          "graphMes10": null,
-          "graphMes11": null,
-          "graphMes12": null,
-          "graphMes2": null,
-          "graphMes3": null,
-          "graphMes4": null,
-          "graphMes5": null,
-          "graphMes6": null,
-          "graphMes7": null,
-          "graphMes8": null,
-          "graphMes9": null,
-          "graphValor1": null,
-          "graphValor10": null,
-          "graphValor11": null,
-          "graphValor12": null,
-          "graphValor2": null,
-          "graphValor3": null,
-          "graphValor4": null,
-          "graphValor5": null,
-          "graphValor6": null,
-          "graphValor7": null,
-          "graphValor8": null,
-          "graphValor9": null,
-          "marca": "Marca Ficticia",
-          "modelo": "SUV Conceito 2.0 Flex",
-          "valor": "161500",
-          "valorZeroKM": null
-        }
-      ],
-      "precificadorII": [
-        {
-          "combustivel": null,
-          "marca": "Marca Ficticia",
-          "modelo": "SUV CONCEITO",
-          "valor": "175000",
-          "versao": "2.0 HIBRIDO 4p Mec"
-        },
-        {
-          "combustivel": null,
-          "marca": "Marca Ficticia",
-          "modelo": "SUV CONCEITO",
-          "valor": "177500",
-          "versao": "2.0 HIBRIDO 4p Aut"
-        },
-        {
-          "combustivel": null,
-          "marca": "Marca Ficticia",
-          "modelo": "SUV CONCEITO",
-          "valor": "180000",
-          "versao": "2.0 PREMIUM 4p Aut"
-        }
-      ],
-      "quantidadeEixos": null,
-      "quantidadeIrregularidades": null,
-      "regiao": "BRASIL / TESTE",
-      "tipoCarroceria": "SUV",
-      "tipoFreio": null,
-      "tipoMotor": null,
-      "tracao": null,
-      "transmissao": null,
-      "versao": "HIBRIDO"
-    },
-    "docFaturado": "12345000000123",
-    "dtUltimaAtualizacao": null,
-    "eixoTraseiroDif": null,
-    "eixos": "2",
-    "especieVeiculo": "PASSAGEIRO",
-    "fichaTecnica": {
-      "registros": [],
-      "veiculosFipe": []
-    },
-    "fotos": [
-      "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e824b5d6bf-687e824c41ecb.jpg",
-      "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82bc54f8a-687e82bcafa77.jpg",
-      "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82fca9c2b-687e82fd903ef.jpg"
-    ],
-    "fotosLoteVeiculo": {
-      "conteudo": [
-        {
-          "url": "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e824b5d6bf-687e824c41ecb.jpg",
-          "descricao": "FRENTE DO VEÍCULO / LOTE",
-          "base64": null
-        },
-        {
-          "url": "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82bc54f8a-687e82bcafa77.jpg",
-          "descricao": "LATERAL E TRASEIRA",
-          "base64": null
-        },
-        {
-          "url": "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82fca9c2b-687e82fd903ef.jpg",
-          "descricao": "VISTA SUPERIOR / PÁTIO",
-          "base64": null
+          "marca": "Yamaha Motos",
+          "fipeId": "8271178",
+          "modelo": "Fazer 250 (2018 => 2021)",
+          "versao": "Pantera Negra 250cc Flex ABS",
+          "idVersao": "4669"
         }
       ]
     },
-    "gravame": [
-      {
-        "agente": "BANCO FICTICIO S/A",
-        "anoFabricacao": null,
-        "anoModelo": null,
-        "chassi": "8AJZZZ999JZ123456",
-        "codigoAgente": null,
-        "contrato": "SIRCAF: SIM 0",
-        "dataEmissao": null,
-        "dataInclusao": null,
-        "dataSituacao": null,
-        "dataVigencia": null,
-        "dataVigenciaContrato": null,
-        "documentoAgente": null,
-        "documentoFinanciado": "10020030040",
-        "gravame": "VEICULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
-        "intencao": null,
-        "municipio": null,
-        "numero": "80020010",
-        "observacoes": "Historico",
-        "placa": "ABC1234",
-        "renavam": "00999111222",
-        "responsavel": "FINANCEIRA",
-        "situacao": "VEICULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
-        "uf": null,
-        "ufPlaca": null
-      },
-      {
-        "agente": "COOPERATIVA DEMO CREDITO",
-        "anoFabricacao": null,
-        "anoModelo": null,
-        "chassi": "8AJZZZ999JZ123456",
-        "codigoAgente": null,
-        "contrato": "SIRCAF: SIM 0",
-        "dataEmissao": null,
-        "dataInclusao": null,
-        "dataSituacao": null,
-        "dataVigencia": null,
-        "dataVigenciaContrato": null,
-        "documentoAgente": null,
-        "documentoFinanciado": "50060070080",
-        "gravame": "VEICULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
-        "intencao": null,
-        "municipio": null,
-        "numero": "80020011",
-        "observacoes": "Historico",
-        "placa": "ABC1234",
-        "renavam": "00999111222",
-        "responsavel": "FINANCEIRA",
-        "situacao": "VEICULO TEVE GRAVAME BAIXADO PELO AGENTE FINANCEIRO",
-        "uf": null,
-        "ufPlaca": null
-      },
-      {
-        "agente": "FINTECH PILOTO LTDA",
-        "anoFabricacao": null,
-        "anoModelo": null,
-        "chassi": "8AJZZZ999JZ123456",
-        "codigoAgente": null,
-        "contrato": "SIRCAF: SIM 0",
-        "dataEmissao": null,
-        "dataInclusao": null,
-        "dataSituacao": null,
-        "dataVigencia": null,
-        "dataVigenciaContrato": "31/12/2025",
-        "documentoAgente": null,
-        "documentoFinanciado": "70080090010",
-        "gravame": "VEICULO COM ALIENACAO FIDUCIARIA PENDENTE EMISSAO DE DOCUMENTO",
-        "intencao": null,
-        "municipio": null,
-        "numero": "80020012",
-        "observacoes": "Atual",
-        "placa": "ABC9234",
-        "renavam": "00999111222",
-        "responsavel": "FINANCEIRA",
-        "situacao": "VEICULO COM ALIENACAO FIDUCIARIA PENDENTE EMISSAO DE DOCUMENTO",
-        "uf": null,
-        "ufPlaca": null
-      }
-    ],
-    "historicoAnuncios": [
-      {
-        "data": "03/05/2024 14:22:11",
-        "fotos": [],
-        "km": "12850",
-        "observacao": "Oferta teste exclusiva para ambiente de desenvolvimento.",
-        "opcionais": [
-          {
-            "descricao": "Direcao eletrica"
-          },
-          {
-            "descricao": "Camera de reverso"
-          },
-          {
-            "descricao": "Chave presencial"
-          }
-        ],
-        "placa": "ABC9234",
-        "valor": "125000.00"
-      }
-    ],
-    "historicoKm": [
-      {
-        "dataInclusao": "03/05/2024 14:22:11",
-        "km": "12850"
-      }
-    ],
+    "municipioEmplacamento": "OLINDA",
     "historicoProprietarios": [
       {
-        "anoExercicio": "2024",
-        "chassi": "8AJZZZ999JZ123456",
-        "correlacaoChassiRenavam": false,
-        "cpfCnpj": "10020030040",
+        "uf": "PE",
+        "placa": "QYR8B57",
+        "chassi": "9C6RG5010M0073711",
+        "cpfCnpj": "00000000000",
+        "renavam": "01253906693",
+        "municipio": null,
+        "ocorrencia": null,
+        "anoExercicio": "2026",
+        "proprietario": null,
+        "tipoDocumento": null,
         "dataEmplacamento": null,
         "dataProcessamento": null,
         "motivoTipoAutorizacao": null,
-        "municipio": null,
-        "ocorrencia": null,
-        "placa": "ABC1234",
-        "proprietario": "EMPRESA FICTICIA LTDA",
-        "renavam": "00999111222",
-        "tipoDocumento": null,
-        "uf": "SP"
-      },
-      {
-        "anoExercicio": "2023",
-        "chassi": "8AJZZZ999JZ123456",
-        "correlacaoChassiRenavam": false,
-        "cpfCnpj": "50060070080",
-        "dataEmplacamento": null,
-        "dataProcessamento": null,
-        "motivoTipoAutorizacao": null,
-        "municipio": null,
-        "ocorrencia": null,
-        "placa": "ABC9234",
-        "proprietario": "LOCADORA DEMO SA",
-        "renavam": "00999111222",
-        "tipoDocumento": null,
-        "uf": "SP"
-      },
-      {
-        "anoExercicio": "2022",
-        "chassi": "8AJZZZ999JZ123456",
-        "correlacaoChassiRenavam": false,
-        "cpfCnpj": "70080090010",
-        "dataEmplacamento": null,
-        "dataProcessamento": null,
-        "motivoTipoAutorizacao": null,
-        "municipio": null,
-        "ocorrencia": null,
-        "placa": "ABC1234",
-        "proprietario": "PESSOA FISICA TREINAMENTO",
-        "renavam": "00999111222",
-        "tipoDocumento": null,
-        "uf": "SP"
+        "correlacaoChassiRenavam": false
       }
     ],
-    "identImportadora": null,
-    "indicioSinistro": {
-      "classificacao": null,
-      "descricao": "NAO CONSTA INDICIO DE SINISTRO PARA O VEICULO INFORMADO"
+    "acessoriosCategorizados": {
+      "acessorios": [],
+      "categorias": []
     },
-    "leilao": {
-      "descricao": "Consta registro de leilão para o veículo informado",
-      "registros": [
-        {
-          "leiloeiro": "FREITAS LEILOEIRO OFICIAL",
-          "dataLeilao": "15/08/2021",
-          "lote": "1234",
-          "comitente": "PORTO SEGURO CIA DE SEGUROS GERAIS",
-          "condicaoGeral": "RECUPERAVEL / SUCATA",
-          "tipoSinistro": "COLISAO / PEQUENA MONTA",
-          "patio": "SAO PAULO / SP",
-          "chassi": "8AJZZZ999JZ123456",
-          "placa": "ABC1234",
-          "marcaModelo": "MARCA FICTICIA/SUV CONCEITO",
-          "fotos": [
-            "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e824b5d6bf-687e824c41ecb.jpg",
-            "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82bc54f8a-687e82bcafa77.jpg",
-            "https://static.suporteleiloes.com.br/leiloespbcombr/bens/29802/arquivos/687e82fca9c2b-687e82fd903ef.jpg"
-          ]
-        }
-      ],
-      "score": {
-        "aceitacao": "RESTRITA",
-        "exigenciaVistoriaEspecial": "SIM",
-        "percentualSobreRef": "70",
-        "pontuacao": "4",
-        "score": "ALTO RISCO"
-      }
+    "comparativoEspecificacoes": {
+      "opinioesDoDono": [],
+      "veiculoComparativo": []
     },
-    "limiteRestricaoTrib": null,
-    "marcaModelo": "MARCA FICTICIA/SUV CONCEITO",
-    "municipio": "NAO IDENTIFICADO",
-    "municipioEmplacamento": "NAO IDENTIFICADO",
-    "nacionalidade": "NACIONAL",
-    "numCarroceria": "INEXISTENTE",
-    "numFaturado": "12345000000123",
-    "numMotor": "XZ9JK123456",
-    "numTerceiroEixo": null,
-    "opcionais": [],
-    "pbt": "0,0180",
-    "placa": "ABC1234",
-    "potencia": "180",
-    "procedencia": "NACIONAL",
-    "qtdPax": "5",
-    "recall": {
-      "anoModelo": null,
-      "chassi": null,
-      "descricaoRetorno": null,
-      "detalhes": [],
+    "decodificadorPrecificador": {
+      "cor": null,
+      "pais": null,
       "marca": null,
+      "motor": null,
+      "chassi": null,
       "modelo": null,
-      "recallsPendente": []
-    },
-    "registroDi": null,
-    "registroEmLocadora": {
-      "registroEmLocadora": false
-    },
-    "renavam": "00999111222",
-    "restricoes": null,
-    "revisao": {
-      "veiculosFipe": []
-    },
-    "rouboFurto": {
-      "constaOcorrencia": false,
-      "constaOcorrenciaAtiva": false,
-      "historico": [],
-      "indicadorProcedencia": null,
-      "municipioEmplacamento": null
-    },
-    "situacaoChassi": " ",
-    "situacaoVeiculo": " ",
-    "tipoCarroceria": "Desconhecido",
-    "tipoDocFaturado": "JURIDICA",
-    "tipoDocImportadora": "DESCONHECIDA",
-    "tipoMontagem": "1",
-    "tipoVeiculo": "AUTOMOVEL",
-    "uf": "--",
-    "ufFaturado": "SP",
-    "ultimaDataInclusao": null,
-    "valorAnunciado": null
-  }
+      "origem": null,
+      "portas": null,
+      "regiao": null,
+      "tracao": null,
+      "versao": null,
+      "anoModelo": null,
+      "categoria": null,
+      "pesoBruto": null,
+      "tipoFreio": null,
+      "tipoMotor": null,
+      "codigoFipe": null,
+      "combustivel": null,
+      "comprimento": null,
+      "transmissao": null,
+      "anoFabricacao": null,
+      "classificacao": null,
+      "potenciaMotor": null,
+      "precificadorI": [],
+      "precificadorII": [],
+      "tipoCarroceria": null,
+      "localFabricacao": null,
+      "quantidadeEixos": null,
+      "distanciaEntreEixos": null,
+      "quantidadeIrregularidades": null
+    }
+  },
+  "user": {
+    "email": "afveiculospe@gmail.com",
+    "cellphone": "81985901175",
+    "first_name": "Anderson",
+    "notification": "yes"
+  },
+  "error": false,
+  "balance": "16,060",
+  "homolog": false,
+  "message": "Dados validos! Voce foi tarifado em R$ 30,00.",
+  "status_code": 200,
+  "api_limit_for": "credit",
+  "balance_before": "46,060",
+  "valor_consulta": 30
 }

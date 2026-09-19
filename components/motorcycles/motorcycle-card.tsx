@@ -91,7 +91,7 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
           <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] bg-[#0a0a0a] overflow-hidden">
             <Link
               href={`/motos/${motorcycle.slug}`}
-              className="block w-full h-full focus-visible:outline-none cursor-pointer"
+              className="relative block w-full h-full focus-visible:outline-none cursor-pointer"
               aria-label={`Ver detalhes de ${motorcycle.brand} ${motorcycle.model}`}
             >
               {motorcycle.image_url ? (

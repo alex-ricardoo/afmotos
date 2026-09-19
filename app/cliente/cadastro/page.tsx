@@ -23,8 +23,8 @@ interface CadastroPageProps {
 }
 
 export const metadata = {
-  title: 'Criar Conta | Portal do Cliente | AF Motos',
-  description: 'Cadastre-se na AF Motos para consultar placas, emitir laudos oficiais e gerenciar seu histórico veicular.',
+  title: 'Criar Conta | Portal do Cliente | AF Veículos PE',
+  description: 'Cadastre-se na AF Veículos PE para consultar placas, emitir laudos oficiais e gerenciar seu histórico veicular.',
 };
 
 export default async function CustomerCadastroPage({ searchParams }: CadastroPageProps) {
@@ -49,7 +49,7 @@ export default async function CustomerCadastroPage({ searchParams }: CadastroPag
           className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-white transition-all py-1.5 px-3 rounded-xl hover:bg-zinc-900/70 border border-transparent hover:border-zinc-800"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Voltar ao site da AF Motos</span>
+          <span>Voltar ao site da AF Veículos PE</span>
         </Link>
 
         <div className="flex items-center gap-2 text-xs">
@@ -77,7 +77,7 @@ export default async function CustomerCadastroPage({ searchParams }: CadastroPag
               <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-amber-500/40 shadow-md shadow-amber-500/10 bg-zinc-900 shrink-0">
                 <Image
                   src="/logo.jpg"
-                  alt="AF Motos"
+                  alt="AF Veículos PE"
                   fill
                   sizes="44px"
                   className="object-cover"
@@ -86,7 +86,7 @@ export default async function CustomerCadastroPage({ searchParams }: CadastroPag
               </div>
               <div>
                 <span className="text-sm font-black text-white tracking-tight font-heading block">
-                  AF MOTOS
+                  AF VEÍCULOS PE
                 </span>
                 <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">
                   Portal do Cliente
@@ -150,7 +150,7 @@ export default async function CustomerCadastroPage({ searchParams }: CadastroPag
           <div className="md:hidden flex items-center justify-center gap-2 mb-4">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-bold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Portal do Cliente AF Motos</span>
+              <span>Portal do Cliente AF Veículos PE</span>
             </span>
           </div>
 

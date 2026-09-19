@@ -97,7 +97,7 @@ describe('Vehicle Lookup Service & Cache Engine', () => {
     assert.strictEqual(result.record.is_mock, true);
     assert.strictEqual(result.record.charged_amount, 0);
     assert.strictEqual(result.record.plate_normalized, 'BRA2E19');
-    assert.strictEqual(result.record.brand, 'MARCA FICTICIA');
+    assert.strictEqual(result.record.brand, 'YAMAHA');
     assert.strictEqual(result.record.status, 'COMPLETED');
   });
 

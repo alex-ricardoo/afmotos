@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { getBaseSiteUrl } from '@/lib/seo';
 
 /**
- * AF Motos - Gerador dinâmico de robots.txt
+ * AF Veículos PE - Gerador dinâmico de robots.txt
  */
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = getBaseSiteUrl();

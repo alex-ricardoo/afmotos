@@ -40,7 +40,7 @@ export default function HistoricoVeicularLoading() {
           </div>
         ))}
       </div>
-      <span className="sr-only">Carregando consulta veicular da AF Motos...</span>
+      <span className="sr-only">Carregando consulta veicular da AF Veículos PE...</span>
     </div>
   );
 }

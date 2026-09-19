@@ -15,6 +15,15 @@ export interface CalculatedRiskMatrix {
   debts_total_amount: number;
 }
 
+export function normalizeText(text: unknown): string {
+  if (typeof text !== 'string') return '';
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim();
+}
+
 export function toVehicleRiskSummary(parsed: ApiBrasilVehicleResponse): CalculatedRiskMatrix {
   const d = parsed.data || parsed.dados;
   if (!d) {
@@ -33,21 +42,25 @@ export function toVehicleRiskSummary(parsed: ApiBrasilVehicleResponse): Calculat
   }
 
   // 1. Theft / Robbery
-  const baseNacOcorrencia = String(d.baseNacional?.ocorrencia || d.base_nacional?.situacao_roubo_furto || '');
+  const baseNacOcorrencia = normalizeText(d.baseNacional?.ocorrencia || d.base_nacional?.situacao_roubo_furto || '');
+  const restRouboEstadual = normalizeText(d.baseEstadual?.restricaoRouboFurto || '');
   const hasTheft = Boolean(
     d.rouboFurto?.constaOcorrencia === true ||
     d.rouboFurto?.constaOcorrenciaAtiva === true ||
     d.base_nacional?.alerta_roubo_furto === true ||
-    (baseNacOcorrencia.includes('ROUBO') && !baseNacOcorrencia.includes('NAO INDICA') && !baseNacOcorrencia.includes('SEM REGISTRO'))
+    (restRouboEstadual && !restRouboEstadual.includes('NADA CONSTA') && !restRouboEstadual.includes('NAO CONSTA')) ||
+    (baseNacOcorrencia.includes('ROUBO') && !baseNacOcorrencia.includes('NAO INDICA') && !baseNacOcorrencia.includes('SEM REGISTRO') && !baseNacOcorrencia.includes('NAO CONSTA'))
   );
 
   // 2. Judicial restriction (Renajud)
-  const restJudicial = String(d.baseEstadual?.restricaoJudicial || d.base_estadual?.restricao_judicial_descricao || '');
-  const restRenajud = String(d.baseEstadual?.restricaoRenajud || '');
+  const restJudicial = normalizeText(d.baseEstadual?.restricaoJudicial || d.base_estadual?.restricao_judicial_descricao || '');
+  const restRenajud = normalizeText(d.baseEstadual?.restricaoRenajud || '');
+  const indRenajudNacional = normalizeText(d.baseNacional?.indicadorRestricaoRenajud || '');
   const hasJudicial = Boolean(
     d.base_estadual?.tem_restricao_judicial === true ||
-    (restJudicial && !restJudicial.includes('NADA CONSTA') && restJudicial !== ' ') ||
-    (restRenajud && !restRenajud.includes('NADA CONSTA') && restRenajud !== ' ')
+    (indRenajudNacional === 'SIM') ||
+    (restJudicial && !restJudicial.includes('NADA CONSTA') && !restJudicial.includes('NAO CONSTA')) ||
+    (restRenajud && !restRenajud.includes('NADA CONSTA') && !restRenajud.includes('NAO CONSTA'))
   );
 
   // 3. Financial restriction / Gravamen
@@ -56,32 +69,38 @@ export function toVehicleRiskSummary(parsed: ApiBrasilVehicleResponse): Calculat
 
   if (Array.isArray(d.gravame)) {
     hasActiveGravamen = d.gravame.some((g: any) => {
-      const sit = String(g.situacao || g.gravame || '').toUpperCase();
-      return sit.includes('ALIENACAO') || sit.includes('PENDENTE') || sit.includes('ATIVO');
+      const sit = normalizeText(g.situacao || g.gravame || '');
+      const isBaixado = sit.includes('BAIXADO') || sit.includes('CANCELADO') || sit.includes('DESALIENADO');
+      if (isBaixado) return false;
+      return sit.includes('ALIENACAO') || sit.includes('PENDENTE') || sit.includes('ATIVO') || sit.includes('VIGENTE');
     });
     hasFinancial = hasActiveGravamen;
   } else if (d.gravame && typeof d.gravame === 'object') {
     hasActiveGravamen = Boolean(d.gravame.tem_gravame);
-    const sit = String(d.gravame.situacao || '').toUpperCase();
-    hasFinancial = hasActiveGravamen || sit.includes('ALIENADO');
+    const sit = normalizeText(d.gravame.situacao || '');
+    const isBaixado = sit.includes('BAIXADO') || sit.includes('CANCELADO') || sit.includes('DESALIENADO');
+    if (isBaixado) {
+      hasActiveGravamen = false;
+    }
+    hasFinancial = hasActiveGravamen || (!isBaixado && sit.includes('ALIENADO'));
   }
 
   // 4. Auction (Leilão) - Prioritize registros.length > 0
-  const leilaoDesc = String(d.leilao?.descricao || '');
+  const leilaoDesc = normalizeText(d.leilao?.descricao || '');
   const hasAuction = Boolean(
     (Array.isArray(d.leilao?.registros) && d.leilao.registros.length > 0) ||
-    d.leilao?.tem_leilao ||
+    d.leilao?.tem_leilao === true ||
     (d.leilao?.score && (d.leilao.score.score || d.leilao.score.aceitacao)) ||
     (Array.isArray(d.fotosLoteVeiculo?.conteudo) && d.fotosLoteVeiculo.conteudo.length > 0) ||
-    (leilaoDesc && !leilaoDesc.toLowerCase().includes('nao consta') && !leilaoDesc.toLowerCase().includes('sem registro'))
+    (leilaoDesc && !leilaoDesc.includes('NAO CONSTA') && !leilaoDesc.includes('SEM REGISTRO') && !leilaoDesc.includes('NADA CONSTA'))
   );
 
   // 5. Accident (Sinistro)
-  const sinistroDesc = String(d.indicioSinistro?.descricao || '');
+  const sinistroDesc = normalizeText(d.indicioSinistro?.descricao || '');
   const hasAccident = Boolean(
-    d.sinistro?.tem_sinistro ||
+    d.sinistro?.tem_sinistro === true ||
     (Array.isArray(d.sinistro?.registros) && d.sinistro.registros.length > 0) ||
-    (sinistroDesc && !sinistroDesc.toUpperCase().includes('NAO CONSTA'))
+    (sinistroDesc && !sinistroDesc.includes('NAO CONSTA') && !sinistroDesc.includes('NADA CONSTA') && !sinistroDesc.includes('SEM REGISTRO'))
   );
 
   // 6. Debts (Multas + IPVA + Licenciamento)
@@ -89,7 +108,7 @@ export function toVehicleRiskSummary(parsed: ApiBrasilVehicleResponse): Calculat
   const multasVal = parseBrazilianNumber(be.debitoMultas ?? be.multas_debito);
   const ipvaVal = parseBrazilianNumber(be.debitoIpva ?? be.ipva_debito);
   const licVal = parseBrazilianNumber(be.debitoLicenciamento ?? be.licenciamento_debito);
-  const totalDebts = parseBrazilianNumber(be.total_debitos) || multasVal + ipvaVal + licVal;
+  const totalDebts = parseBrazilianNumber(be.total_debitos) || (multasVal + ipvaVal + licVal);
   const hasDebts = totalDebts > 0;
 
   // 7. Calculate Risk Index & Level

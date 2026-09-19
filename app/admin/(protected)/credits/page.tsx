@@ -7,7 +7,7 @@ import {
 } from '@/components/admin/credits/credit-manager';
 
 export const metadata = {
-  title: 'Gestão de Créditos B2B | AF Motos Admin',
+  title: 'Gestão de Créditos B2B | AF Veículos PE Admin',
   description: 'Gerencie pacotes de créditos B2B de clientes para consultas veiculares.',
 };
 
