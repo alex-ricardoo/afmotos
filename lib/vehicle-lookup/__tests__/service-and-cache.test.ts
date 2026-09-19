@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { executeVehiclePlateLookup, findExistingConsultation } from '../service.ts';
+import { executeVehiclePlateLookup, findExistingConsultation, ProviderUnavailableError } from '../service.ts';
 import { normalizeBrazilianPlate } from '../plate.ts';
 import type { VehicleConsultationRecord } from '../types.ts';
 
@@ -172,5 +172,19 @@ describe('Vehicle Lookup Service & Cache Engine', () => {
     assert.strictEqual(result.success, true);
     assert.strictEqual(result.isCacheHit, true);
     assert.strictEqual(result.record.id, 'existing-id-1');
+  });
+
+  it('correctly constructs ProviderUnavailableError with retry diagnostics', () => {
+    const error = new ProviderUnavailableError(
+      'Instabilidade temporária nas bases do SENATRAN',
+      3,
+      503
+    );
+
+    assert.strictEqual(error.name, 'ProviderUnavailableError');
+    assert.strictEqual(error.attempts, 3);
+    assert.strictEqual(error.lastStatusCode, 503);
+    assert.strictEqual(error.isProviderUnavailable, true);
+    assert.ok(error.message.includes('Instabilidade temporária'));
   });
 });

@@ -35,6 +35,24 @@ export class InvalidTokenError extends Error {
   }
 }
 
+export class ProviderUnavailableError extends Error {
+  attempts: number;
+  lastStatusCode?: number;
+  isProviderUnavailable: boolean;
+
+  constructor(
+    message: string = 'Instabilidade temporária nas bases governamentais (SENATRAN/DETRAN) ou no gateway da API Brasil. Foram realizadas tentativas de conexão sem sucesso.',
+    attempts: number = 3,
+    lastStatusCode?: number,
+  ) {
+    super(message);
+    this.name = 'ProviderUnavailableError';
+    this.attempts = attempts;
+    this.lastStatusCode = lastStatusCode;
+    this.isProviderUnavailable = true;
+  }
+}
+
 export interface ExecuteLookupParams {
   plate: string;
   userId: string;
@@ -246,7 +264,7 @@ export async function executeVehiclePlateLookup(
   }
 
   // 2. Execution according to Mode (Live API vs Mock)
-  let rawPayload: Record<string, unknown>;
+  let rawPayload: Record<string, unknown> = {};
   let isMock = false;
   let isChargeable = true;
   let chargedAmount = defaultCostBrl;
@@ -271,132 +289,207 @@ export async function executeVehiclePlateLookup(
     const cleanToken = rawToken.replace(/^Bearer\s+/i, '');
     const authHeader = `Bearer ${cleanToken}`;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
+    const maxAttempts = 3;
+    const attemptTimeoutMs = 25_000;
+    let lastHttpStatus: number | undefined = undefined;
 
-    const startTime = Date.now();
-    console.log(`[API_BRASIL] 🚀 Disparando POST para API Brasil: ${config.apiBrasilBaseUrl}`);
-    console.log(`[API_BRASIL] 📤 Payload: { tipo: 'veiculos-total', placa: '${normalizedPlate}', homolog: false }`);
-    console.log(`[API_BRASIL] ⏳ Aguardando retorno da API Brasil (Timeout configurado: ${config.timeoutMs / 1000}s)...`);
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const attemptStartTime = Date.now();
+      console.log(`[API_BRASIL] 🚀 [Tentativa ${attempt}/${maxAttempts}] Disparando POST para API Brasil: ${config.apiBrasilBaseUrl}`);
+      console.log(`[API_BRASIL] 📤 Payload: { tipo: 'veiculos-total', placa: '${normalizedPlate}', homolog: false }`);
+      console.log(`[API_BRASIL] ⏳ Aguardando retorno da API Brasil (Timeout desta tentativa: ${attemptTimeoutMs / 1000}s)...`);
 
-    try {
-      const response = await fetch(config.apiBrasilBaseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: authHeader,
-        },
-        body: JSON.stringify({
-          tipo: 'veiculos-total',
-          placa: normalizedPlate,
-          homolog: false,
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeout);
-      const elapsedMs = Date.now() - startTime;
-      console.log(`[API_BRASIL] 📥 Resposta HTTP recebida da API Brasil | Status: ${response.status} ${response.statusText} (${elapsedMs}ms)`);
-
-      // Handle Authentication & Authorization errors
-      if (response.status === 401 || response.status === 403) {
-        console.error(`[API_BRASIL] ❌ Erro de Autenticação na API Brasil (HTTP ${response.status}). Token pode ser inválido ou revogado.`);
-        throw new InvalidTokenError();
-      }
-
-      const responseText = await response.text();
-      console.log(`[API_BRASIL] 📦 Tamanho do corpo da resposta: ${responseText.length} caracteres`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), attemptTimeoutMs);
 
       try {
-        rawPayload = JSON.parse(responseText) as Record<string, unknown>;
-      } catch (parseErr) {
-        console.error(`[API_BRASIL] ❌ Resposta da API Brasil não é um JSON válido:`, responseText.slice(0, 300));
-        throw new Error(
-          `Resposta inválida recebida da API Brasil (HTTP ${response.status}): ${responseText.slice(0, 200)}`,
-        );
-      }
+        const response = await fetch(config.apiBrasilBaseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+          },
+          body: JSON.stringify({
+            tipo: 'veiculos-total',
+            placa: normalizedPlate,
+            homolog: false,
+          }),
+          signal: controller.signal,
+        });
 
-      console.log(`[API_BRASIL] 📄 Retorno analisado: error=${rawPayload.error}, status_code=${rawPayload.status_code || response.status}, message="${rawPayload.message || 'OK'}"`);
+        clearTimeout(timeout);
+        const elapsedMs = Date.now() - attemptStartTime;
+        lastHttpStatus = response.status;
+        console.log(`[API_BRASIL] 📥 Resposta HTTP recebida da API Brasil [Tentativa ${attempt}/${maxAttempts}] | Status: ${response.status} ${response.statusText} (${elapsedMs}ms)`);
 
-      // Check for Insufficient Balance (Saldo Insuficiente)
-      if (
-        rawPayload.error === true &&
-        (String(rawPayload.message || '')
-          .toLowerCase()
-          .includes('saldo') ||
-          String(rawPayload.message || '')
-            .toLowerCase()
-            .includes('recarregue') ||
-          rawPayload.recharge_url)
-      ) {
-        const balanceStr = typeof rawPayload.balance === 'string' ? rawPayload.balance : 'R$ 0,00';
-        const rechargeUrl =
-          typeof rawPayload.recharge_url === 'string'
-            ? rawPayload.recharge_url
-            : 'https://app.apibrasil.io/dashboard?modal=recharge';
-
-        console.warn(`[API_BRASIL] ⚠️ Saldo insuficiente na conta da API Brasil: ${balanceStr}`);
-
-        throw new InsufficientBalanceError(
-          String(
-            rawPayload.message || 'Você não possui saldo suficiente para realizar essa consulta.',
-          ),
-          balanceStr,
-          rechargeUrl,
-        );
-      }
-
-      // Check for other API errors
-      if (rawPayload.error === true) {
-        const errMsg = String(rawPayload.message || 'Erro ao processar consulta na API Brasil.');
-        console.error(`[API_BRASIL] ❌ Erro no corpo da resposta da API Brasil: ${errMsg}`);
-        if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('autentic')) {
-          throw new InvalidTokenError(errMsg);
+        // Erros de autenticação: NUNCA retentar para não bloquear conta
+        if (response.status === 401 || response.status === 403) {
+          console.error(`[API_BRASIL] ❌ Erro de Autenticação na API Brasil (HTTP ${response.status}). Token inválido ou revogado.`);
+          throw new InvalidTokenError();
         }
-        throw new Error(`API Brasil: ${errMsg}`);
-      }
 
-      // Track balances if provided
-      if (typeof rawPayload.balance === 'string') {
-        const num = parseFloat(rawPayload.balance.replace(/[^\d,.-]/g, '').replace(',', '.'));
-        balanceBefore = !isNaN(num) ? num : null;
-      } else if (typeof rawPayload.balance === 'number') {
-        balanceBefore = rawPayload.balance;
-      }
+        // Se for erro de servidor temporário (500, 502, 503, 504, 429), tentar novamente se houver tentativas
+        if ([500, 502, 503, 504, 429].includes(response.status)) {
+          console.warn(`[API_BRASIL] ⚠️ Gateway da API Brasil retornou HTTP ${response.status} na tentativa ${attempt}/${maxAttempts}.`);
+          if (attempt < maxAttempts) {
+            const backoffMs = attempt === 1 ? 1500 : 2500;
+            console.log(`[API_BRASIL] ⏳ Aguardando ${backoffMs}ms antes da próxima tentativa...`);
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
+            continue;
+          }
+          throw new ProviderUnavailableError(
+            `As bases oficiais do SENATRAN/DETRAN ou o gateway da API Brasil apresentaram instabilidade temporária (HTTP ${response.status}). Foram realizadas ${maxAttempts} tentativas automáticas sem sucesso. Nenhum crédito foi tarifado.`,
+            maxAttempts,
+            response.status,
+          );
+        }
 
-      taxCharged = typeof rawPayload.tax === 'number' ? rawPayload.tax : defaultCostBrl;
-      if (balanceBefore != null && taxCharged != null) {
-        balanceAfter = balanceBefore - taxCharged;
-      }
+        const responseText = await response.text();
+        console.log(`[API_BRASIL] 📦 Tamanho do corpo da resposta: ${responseText.length} caracteres`);
 
-      console.log(`[API_BRASIL] 💰 Saldo anterior: ${balanceBefore ?? 'N/A'} | Taxa cobrada: ${taxCharged ?? 'N/A'} | Saldo posterior: ${balanceAfter ?? 'N/A'}`);
-    } catch (fetchErr: unknown) {
-      clearTimeout(timeout);
-      const elapsedMs = Date.now() - startTime;
-      console.error(`[API_BRASIL] ❌ Falha na requisição para a API Brasil após ${elapsedMs}ms:`, fetchErr);
+        let parsedJson: Record<string, unknown>;
+        try {
+          parsedJson = JSON.parse(responseText) as Record<string, unknown>;
+        } catch (parseErr) {
+          console.error(`[API_BRASIL] ❌ Resposta da API Brasil não é um JSON válido:`, responseText.slice(0, 300));
+          if (attempt < maxAttempts) {
+            const backoffMs = attempt === 1 ? 1500 : 2500;
+            console.log(`[API_BRASIL] ⏳ Resposta malformada. Aguardando ${backoffMs}ms para tentar novamente...`);
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
+            continue;
+          }
+          throw new ProviderUnavailableError(
+            `A API Brasil retornou dados em formato inesperado devido à instabilidade temporária nas bases oficiais. Foram realizadas ${maxAttempts} tentativas automáticas sem sucesso. Nenhum crédito foi tarifado.`,
+            maxAttempts,
+            response.status,
+          );
+        }
 
-      // Re-throw our specific custom domain errors
-      if (fetchErr instanceof InsufficientBalanceError || fetchErr instanceof InvalidTokenError) {
+        console.log(`[API_BRASIL] 📄 Retorno analisado: error=${parsedJson.error}, status_code=${parsedJson.status_code || response.status}, message="${parsedJson.message || 'OK'}"`);
+
+        // Check for Insufficient Balance (Saldo Insuficiente): NUNCA retentar
+        if (
+          parsedJson.error === true &&
+          (String(parsedJson.message || '')
+            .toLowerCase()
+            .includes('saldo') ||
+            String(parsedJson.message || '')
+              .toLowerCase()
+              .includes('recarregue') ||
+            parsedJson.recharge_url)
+        ) {
+          const balanceStr = typeof parsedJson.balance === 'string' ? parsedJson.balance : 'R$ 0,00';
+          const rechargeUrl =
+            typeof parsedJson.recharge_url === 'string'
+              ? parsedJson.recharge_url
+              : 'https://app.apibrasil.io/dashboard?modal=recharge';
+
+          console.warn(`[API_BRASIL] ⚠️ Saldo insuficiente na conta da API Brasil: ${balanceStr}`);
+
+          throw new InsufficientBalanceError(
+            String(
+              parsedJson.message || 'Você não possui saldo suficiente para realizar essa consulta.',
+            ),
+            balanceStr,
+            rechargeUrl,
+          );
+        }
+
+        // Check for other API errors
+        if (parsedJson.error === true) {
+          const errMsg = String(parsedJson.message || 'Erro ao processar consulta na API Brasil.');
+          console.error(`[API_BRASIL] ❌ Erro no corpo da resposta da API Brasil: ${errMsg}`);
+          if (errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('autentic')) {
+            throw new InvalidTokenError(errMsg);
+          }
+
+          // Verificar se é falha de comunicação com bases oficiais governamentais
+          const isTransientMessage =
+            errMsg.toLowerCase().includes('indispon') ||
+            errMsg.toLowerCase().includes('timeout') ||
+            errMsg.toLowerCase().includes('instab') ||
+            errMsg.toLowerCase().includes('tente novamente') ||
+            errMsg.toLowerCase().includes('fora do ar') ||
+            errMsg.toLowerCase().includes('comunicação') ||
+            errMsg.toLowerCase().includes('detran') ||
+            errMsg.toLowerCase().includes('senatran');
+
+          if (isTransientMessage && attempt < maxAttempts) {
+            const backoffMs = attempt === 1 ? 1500 : 2500;
+            console.log(`[API_BRASIL] ⏳ Mensagem de instabilidade nas bases detectada ("${errMsg}"). Aguardando ${backoffMs}ms para tentativa ${attempt + 1}...`);
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
+            continue;
+          }
+
+          if (isTransientMessage) {
+            throw new ProviderUnavailableError(
+              `As bases governamentais oficiais (SENATRAN/DETRAN) relataram indisponibilidade temporária: "${errMsg}". Foram realizadas ${maxAttempts} tentativas automáticas. Nenhum crédito foi cobrado.`,
+              maxAttempts,
+            );
+          }
+
+          throw new Error(`API Brasil: ${errMsg}`);
+        }
+
+        // Sucesso na consulta
+        rawPayload = parsedJson;
+
+        // Track balances if provided
+        if (typeof rawPayload.balance === 'string') {
+          const num = parseFloat(rawPayload.balance.replace(/[^\d,.-]/g, '').replace(',', '.'));
+          balanceBefore = !isNaN(num) ? num : null;
+        } else if (typeof rawPayload.balance === 'number') {
+          balanceBefore = rawPayload.balance;
+        }
+
+        taxCharged = typeof rawPayload.tax === 'number' ? rawPayload.tax : defaultCostBrl;
+        if (balanceBefore != null && taxCharged != null) {
+          balanceAfter = balanceBefore - taxCharged;
+        }
+
+        console.log(`[API_BRASIL] 💰 Saldo anterior: ${balanceBefore ?? 'N/A'} | Taxa cobrada: ${taxCharged ?? 'N/A'} | Saldo posterior: ${balanceAfter ?? 'N/A'}`);
+        // Sucesso comprovado, sai do loop de tentativas
+        break;
+      } catch (fetchErr: unknown) {
+        clearTimeout(timeout);
+        const elapsedMs = Date.now() - attemptStartTime;
+        console.error(`[API_BRASIL] ❌ Falha na tentativa ${attempt}/${maxAttempts} após ${elapsedMs}ms:`, fetchErr);
+
+        // Não retentar erros de negócio críticos
+        if (fetchErr instanceof InsufficientBalanceError || fetchErr instanceof InvalidTokenError) {
+          throw fetchErr;
+        }
+        if (fetchErr instanceof ProviderUnavailableError) {
+          throw fetchErr;
+        }
+
+        const isAbort = fetchErr instanceof Error && fetchErr.name === 'AbortError';
+        const isNetworkErr =
+          fetchErr instanceof TypeError ||
+          (fetchErr instanceof Error &&
+            (fetchErr.message.includes('fetch failed') ||
+              fetchErr.message.includes('socket hang up') ||
+              fetchErr.message.includes('ECONNRESET') ||
+              fetchErr.message.includes('ETIMEDOUT')));
+
+        if ((isAbort || isNetworkErr) && attempt < maxAttempts) {
+          const backoffMs = attempt === 1 ? 1500 : 2500;
+          console.log(`[API_BRASIL] ⏳ Falha transitória (${isAbort ? `Timeout de ${attemptTimeoutMs / 1000}s` : 'Queda de conexão'}). Aguardando ${backoffMs}ms para tentativa ${attempt + 1}...`);
+          await new Promise((resolve) => setTimeout(resolve, backoffMs));
+          continue;
+        }
+
+        if (attempt >= maxAttempts) {
+          executionStatus = 'CHARGE_STATUS_UNKNOWN';
+          throw new ProviderUnavailableError(
+            `Não foi possível obter resposta das bases governamentais (SENATRAN/DETRAN) ou do gateway da API Brasil devido a tempo limite ou oscilação de rede. Foram realizadas ${maxAttempts} tentativas automáticas sem sucesso. Nenhum crédito foi debitado.`,
+            maxAttempts,
+            lastHttpStatus,
+          );
+        }
+
         throw fetchErr;
       }
-
-      if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
-        throw new Error(
-          'A consulta na API Brasil excedeu o tempo limite de 120 segundos. Tente novamente.',
-        );
-      }
-
-      executionStatus = 'CHARGE_STATUS_UNKNOWN';
-      const errMsg =
-        fetchErr instanceof Error
-          ? fetchErr.message
-          : 'Falha de comunicação com gateway da API Brasil.';
-      rawPayload = {
-        error: true,
-        message: errMsg,
-        fetch_error: String(fetchErr),
-      };
-      throw fetchErr;
     }
   } else {
     // Mock Mode (Ambiente de desenvolvimento sem token)

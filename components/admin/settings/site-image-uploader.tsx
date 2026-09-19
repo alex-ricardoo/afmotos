@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Upload, Trash2, Loader2, ImagePlus } from 'lucide-react';
+import { Camera, Images, Upload, Trash2, Loader2, ImagePlus } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { uploadSiteBrandingAction } from '@/lib/actions/settings';
@@ -102,34 +102,60 @@ export function SiteImageUploader({ images = [], onImagesChange, maxImages = 5 }
 
       {images.length < maxImages && (
         <div className="w-full">
-          <label
-            className={`flex items-center justify-center gap-2 w-full p-4 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 transition-all cursor-pointer shadow-sm ${
-              uploading ? 'opacity-60 pointer-events-none' : ''
-            }`}
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
-                <span className="text-sm font-semibold text-white">Enviando...</span>
-              </>
-            ) : (
-              <>
-                <Upload className="w-5 h-5 text-zinc-400" />
-                <span className="text-sm font-semibold text-white">
-                  Tirar Foto / Galeria
-                </span>
-              </>
-            )}
-            <input
-              type="file"
-              className="hidden"
-              accept="image/png, image/jpeg, image/webp, image/avif"
-              multiple
-              capture="environment"
-              onChange={handleFileChange}
-              disabled={uploading}
-            />
-          </label>
+          {uploading ? (
+            <div className="flex items-center justify-center gap-2.5 w-full p-4 rounded-xl border border-zinc-800 bg-zinc-950/80 shadow-sm">
+              <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+              <span className="text-sm font-semibold text-white">Enviando fotos...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* Escolher da Galeria */}
+              <label className="flex items-center justify-center gap-3 p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/90 hover:bg-zinc-850 hover:border-amber-500/50 text-zinc-200 hover:text-white transition-all cursor-pointer shadow-sm active:scale-[0.99]">
+                <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+                  <Images className="w-5 h-5" />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <div className="text-xs sm:text-sm font-bold text-white leading-tight">
+                    Escolher da Galeria
+                  </div>
+                  <div className="text-[11px] text-zinc-400 truncate">
+                    Selecionar da galeria do celular
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/png, image/jpeg, image/webp, image/avif, image/heic, image/heif"
+                  multiple
+                  onChange={handleFileChange}
+                  disabled={uploading}
+                />
+              </label>
+
+              {/* Tirar Foto Direta */}
+              <label className="flex items-center justify-center gap-3 p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/90 hover:bg-zinc-850 hover:border-zinc-700 text-zinc-200 hover:text-white transition-all cursor-pointer shadow-sm active:scale-[0.99]">
+                <div className="w-9 h-9 rounded-lg bg-zinc-800 text-zinc-300 flex items-center justify-center shrink-0 border border-zinc-700">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <div className="text-xs sm:text-sm font-bold text-white leading-tight">
+                    Tirar Foto (Câmera)
+                  </div>
+                  <div className="text-[11px] text-zinc-400 truncate">
+                    Abrir a câmera do celular
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/png, image/jpeg, image/webp, image/avif"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  disabled={uploading}
+                />
+              </label>
+            </div>
+          )}
         </div>
       )}
 

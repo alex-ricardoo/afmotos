@@ -16,6 +16,8 @@ import {
   CreditCard,
   KeyRound,
   ExternalLink,
+  WifiOff,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatBrazilianPlate, isValidBrazilianPlate, normalizeBrazilianPlate } from '@/lib/vehicle-lookup/plate';
@@ -46,6 +48,10 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
     rechargeUrl?: string;
     balance?: string;
     isTokenError?: boolean;
+    isProviderUnavailable?: boolean;
+    userGuidance?: string;
+    attempts?: number;
+    failedPlate?: string;
   } | null>(null);
 
   // Auto-focus on plate input on mount
@@ -131,6 +137,21 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
             isTokenError: true,
           });
           toast.error(res.error, { duration: 10000 });
+          return;
+        }
+
+        if (res.isProviderUnavailable) {
+          setErrorDetails({
+            message: res.error,
+            isProviderUnavailable: true,
+            userGuidance: res.userGuidance,
+            attempts: res.attempts || 3,
+            failedPlate: confirmedPlate,
+          });
+          toast.error(
+            'Bases oficiais temporariamente indisponíveis após 3 tentativas. Nenhum crédito foi debitado.',
+            { duration: 8000 }
+          );
           return;
         }
 
@@ -248,6 +269,35 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   O token de autenticação da API Brasil expirou ou é inválido. Gere um novo token no dashboard da API Brasil e atualize a variável <code className="px-1.5 py-0.5 rounded bg-muted text-foreground font-mono text-[11px]">APIBRASIL_TOKEN</code> na Vercel ou contate o desenvolvedor Alex.
                 </p>
+              </div>
+            ) : errorDetails.isProviderUnavailable ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5 text-amber-500 font-bold text-sm">
+                  <WifiOff className="w-5 h-5 shrink-0" />
+                  Bases Oficiais Temporariamente Indisponíveis
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {errorDetails.userGuidance ||
+                    'Não foi possível concluir a consulta veicular no momento devido a instabilidade temporária nas bases do SENATRAN / DETRAN ou na API Brasil. Foram realizadas 3 tentativas automáticas sem sucesso.'}
+                </p>
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/40 border border-border/50 text-[11px] text-muted-foreground">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>
+                    <strong>Segurança de Cobrança:</strong> Nenhum crédito foi tarifado da sua conta nesta consulta.
+                  </span>
+                </div>
+                <div className="pt-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleExecuteConsultation(errorDetails.failedPlate || plateInput)}
+                    className="rounded-xl text-xs font-bold gap-2 cursor-pointer border-amber-500/40 text-amber-500 hover:bg-amber-500/10 transition-colors"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Tentar Novamente Agora
+                  </Button>
+                </div>
               </div>
             ) : (
               <p className="text-xs text-destructive">{errorDetails.message}</p>

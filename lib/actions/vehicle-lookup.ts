@@ -103,6 +103,18 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
       };
     }
 
+    if (err?.name === 'ProviderUnavailableError' || err?.isProviderUnavailable) {
+      console.warn(`[VEHICLE_LOOKUP] [executeAction] ⚠️ Bases oficiais ou API Brasil temporariamente indisponíveis após ${err.attempts || 3} tentativas.`);
+      return {
+        error: err.message,
+        isProviderUnavailable: true,
+        attempts: err.attempts || 3,
+        lastStatusCode: err.lastStatusCode,
+        userGuidance:
+          'Não foi possível consultar as bases oficiais no momento por instabilidade temporária no SENATRAN / DETRAN ou na API Brasil. Foram realizadas 3 tentativas automáticas sem sucesso. Nenhum crédito foi debitado. Você pode tentar novamente agora.',
+      };
+    }
+
     return {
       error: err?.message || 'Ocorreu um erro interno ao processar a consulta veicular na API Brasil.',
     };

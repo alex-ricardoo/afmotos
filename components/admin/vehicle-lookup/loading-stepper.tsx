@@ -78,6 +78,13 @@ export function LoadingStepper({ plateDisplay }: LoadingStepperProps) {
           );
         })}
       </div>
+
+      <div className="pt-2 text-center border-t border-border/40">
+        <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+          Resiliência ativa: até 3 tentativas automáticas em caso de oscilação nas bases oficiais.
+        </p>
+      </div>
     </div>
   );
 }
