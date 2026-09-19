@@ -20,7 +20,7 @@ Documento oficial registrado sob hash de integridade: \`{{CONTENT_HASH}}\`
 
 ## 1. Quem Somos e Escopo Desta Política
 
-A presente Política de Privacidade e Proteção de Dados Pessoais ("Política") aplica-se a todos os serviços, sistemas e plataformas digitais disponibilizados pela **{{STORE_NAME}}** (referida como "nós", "nosso" ou "AF Motos"), incluindo nosso website institucional, o Portal do Cliente, os formulários de contato e propostas comerciais, as consultas de histórico veicular por placa e os canais oficiais de atendimento.
+A presente Política de Privacidade e Proteção de Dados Pessoais ("Política") aplica-se a todos os serviços, sistemas e plataformas digitais disponibilizados pela **{{STORE_NAME}}** (referida como "nós", "nosso" ou "AF Veículos PE"), incluindo nosso website institucional, o Portal do Cliente, os formulários de contato e propostas comerciais, as consultas de histórico veicular por placa e os canais oficiais de atendimento.
 
 - **Razão Social / Identificação**: {{LEGAL_NAME}}
 - **CNPJ**: {{CNPJ}}
@@ -358,7 +358,7 @@ export function renderLegalTemplate(
     contentHash: string;
   },
 ): string {
-  const storeName = variables.siteName || 'AF Motos';
+  const storeName = variables.siteName || 'AF Veículos PE';
   const cnpj = variables.cnpj || '[CNPJ da Loja — Configurar no Painel]';
   const email = variables.contactEmail || '[E-mail de Contato / DPO — Configurar no Painel]';
   const phone = variables.whatsappPhone || '(81) 98973-2070';
@@ -414,7 +414,7 @@ export function getDefaultDocumentDefinition(
   const publishedAt = '2026-09-15T00:00:00.000Z';
   const effectiveAt = '2026-09-15T00:00:00.000Z';
 
-  const siteName = settings?.site_name || 'AF Motos';
+  const siteName = settings?.site_name || 'AF Veículos PE';
   const cnpj = settings?.cnpj || null;
   const contactEmail = settings?.contact_email || null;
   const whatsappPhone = settings?.whatsapp_phone || '(81) 98973-2070';

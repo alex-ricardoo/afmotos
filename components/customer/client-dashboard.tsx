@@ -61,6 +61,13 @@ function getStatusBadge(status: ConsultationStatus) {
           <span>Na Fila</span>
         </span>
       );
+    case 'retry_scheduled':
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/25 animate-pulse">
+          <Clock className="w-3 h-3" />
+          <span>Reprocessando</span>
+        </span>
+      );
     case 'pending':
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
@@ -69,10 +76,32 @@ function getStatusBadge(status: ConsultationStatus) {
         </span>
       );
     case 'failed':
+    case 'failed_permanent':
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-500/10 text-red-400 border border-red-500/25">
           <AlertTriangle className="w-3 h-3" />
           <span>Falha</span>
+        </span>
+      );
+    case 'refund_pending':
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
+          <Clock className="w-3 h-3" />
+          <span>Estorno Pendente</span>
+        </span>
+      );
+    case 'refunded':
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/25">
+          <CheckCircle2 className="w-3 h-3" />
+          <span>Estornado</span>
+        </span>
+      );
+    case 'manual_review':
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
+          <AlertTriangle className="w-3 h-3" />
+          <span>Em Análise</span>
         </span>
       );
     default:
@@ -305,7 +334,22 @@ export function ClientDashboard({ data, creditBalance = 0 }: ClientDashboardProp
               const vehicleTitle =
                 item.vehicle_data?.brand || item.vehicle_data?.model
                   ? [item.vehicle_data.brand, item.vehicle_data.model].filter(Boolean).join(' ')
-                  : 'Veículo Consultado';
+                  : item.status === 'failed' || item.status === 'failed_permanent'
+                    ? 'Consulta não concluída'
+                    : item.status === 'refund_pending' || item.status === 'refunded'
+                      ? 'Consulta cancelada'
+                      : item.status === 'pending'
+                        ? 'Aguardando pagamento'
+                        : 'Veículo Consultado';
+
+              const actionLabel =
+                item.status === 'pending'
+                  ? 'Pagar'
+                  : item.status === 'completed'
+                    ? 'Ver'
+                    : item.status === 'processing' || item.status === 'paid' || item.status === 'retry_scheduled'
+                      ? 'Acompanhar'
+                      : 'Detalhes';
 
               return (
                 <div
@@ -364,7 +408,7 @@ export function ClientDashboard({ data, creditBalance = 0 }: ClientDashboardProp
                               : 'bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700/80'
                           }`}
                         >
-                          <span>{item.status === 'pending' ? 'Pagar' : 'Ver'}</span>
+                          <span>{actionLabel}</span>
                           <ArrowRight className="w-3 h-3 text-[#c9a44c]" />
                         </Button>
                       </Link>

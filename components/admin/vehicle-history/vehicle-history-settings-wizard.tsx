@@ -92,7 +92,7 @@ export function VehicleHistorySettingsWizard({
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isPending, startTransition] = useTransition();
 
-  const siteName = initialSettings?.site_name || 'AF Motos';
+  const siteName = initialSettings?.site_name || 'AF Veículos PE';
   const resolvedDefaults = getVehicleHistorySettings(initialSettings);
 
   const form = useForm<FormValues>({

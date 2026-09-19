@@ -67,7 +67,7 @@ export function ContentTab({ form }: ContentTabProps) {
               </FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Ex: Veja as motos disponíveis ou anuncie a sua com a AF Motos."
+                  placeholder="Ex: Veja os veículos disponíveis ou anuncie o seu com a AF Veículos PE."
                   {...field}
                   value={field.value || ''}
                   className="bg-zinc-950 border-zinc-800 text-zinc-100 h-11 rounded-xl focus:border-amber-500 text-sm"
@@ -89,7 +89,7 @@ export function ContentTab({ form }: ContentTabProps) {
               </FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Ex: Olá! Gostaria de falar com a equipe da AF Motos."
+                  placeholder="Ex: Olá! Gostaria de falar com a equipe da AF Veículos PE."
                   {...field}
                   value={field.value || ''}
                   className="bg-zinc-950 border-zinc-800 text-zinc-100 h-11 rounded-xl focus:border-amber-500 text-sm"

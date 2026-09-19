@@ -469,7 +469,7 @@ export function LegalDocumentsManager({
             <div className="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-1">
               <span className="text-zinc-500 font-bold block">Nome Comercial</span>
               <span className="text-white font-semibold">
-                {storeSettings.site_name || 'AF Motos'}
+                {storeSettings.site_name || 'AF Veículos PE'}
               </span>
             </div>
 

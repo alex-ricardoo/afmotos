@@ -41,7 +41,7 @@ export async function generatePurchaseAgreementService(
   const supabase = await createClient();
   const settings = await getSiteSettings();
 
-  const storeName = settings?.site_name || 'AF Motos';
+  const storeName = settings?.site_name || 'AF Veículos PE';
   const storeAddress = settings?.address || 'Carpina, PE';
   const storePhone = settings?.whatsapp_phone || '(81) 98888-7777';
   const storeEmail = settings?.contact_email || null;
@@ -72,7 +72,7 @@ export async function generatePurchaseAgreementService(
 
   const isFullDischarge = input.payment_status === 'PAID_FULL' && input.is_full_discharge_confirmed;
   const dischargeStatement = isFullDischarge
-    ? `A AF Motos declara ter pago ao vendedor o valor total de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(input.purchase_amount)} pela aquisição da motocicleta, dando-se o vendedor por integralmente quitado quanto ao preço de compra, ressalvadas as responsabilidades por débitos, restrições e infrações anteriores à entrega.`
+    ? `A ${storeName} declara ter pago ao vendedor o valor total de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(input.purchase_amount)} pela aquisição da motocicleta, dando-se o vendedor por integralmente quitado quanto ao preço de compra, ressalvadas as responsabilidades por débitos, restrições e infrações anteriores à entrega.`
     : `O pagamento encontra-se em status ${input.payment_status}, restando pendente a quitação total de acordo com os termos pactuados entre as partes.`;
 
   const snapshot: PurchaseAgreementSnapshot = {
@@ -80,7 +80,7 @@ export async function generatePurchaseAgreementService(
     generated_at: generatedAt,
     generated_by: {
       user_id: userId,
-      name: 'Administrador AF Motos',
+      name: `Administrador ${storeName}`,
     },
     store: {
       name: storeName,
@@ -168,7 +168,7 @@ export async function generatePurchaseAgreementService(
       seller_role: 'Vendedor / Proprietário',
       buyer_name: storeName,
       buyer_document: storeCnpj,
-      buyer_role: 'AF Motos • Compradora / Representante Legal',
+      buyer_role: `${storeName} • Compradora / Representante Legal`,
       witness_1_name: null,
       witness_1_document: null,
       witness_2_name: null,

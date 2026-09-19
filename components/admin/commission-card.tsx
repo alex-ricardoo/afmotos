@@ -66,7 +66,7 @@ interface CommissionCardProps {
 export function CommissionCard({
   proposal,
   onCommissionChange,
-  storeName = 'AF Motos',
+  storeName = 'AF Veículos PE',
 }: CommissionCardProps) {
   const [commission, setCommission] = useState<ProposalCommissionRecord | null>(null);
   const [loading, setLoading] = useState(true);

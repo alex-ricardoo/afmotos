@@ -674,7 +674,7 @@ export async function createManualProposalAction(data: CreateManualProposalPaylo
     imagesToSave = [
       {
         url: '/logo.png',
-        altText: 'Logo AF Motos (Imagem Padrão)',
+        altText: 'Logo AF Veículos PE (Imagem Padrão)',
         provider: 'system',
         storage_path: null,
         delete_url: null,

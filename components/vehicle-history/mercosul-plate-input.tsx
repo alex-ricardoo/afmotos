@@ -27,7 +27,7 @@ export function MercosulPlateInput({
   className,
   disabled = false,
   autoFocus = false,
-  siteName = 'AF Motos',
+  siteName = 'AF Veículos PE',
 }: MercosulPlateInputProps) {
   const [displayValue, setDisplayValue] = useState(formatBrazilianPlate(value));
   const [isFocused, setIsFocused] = useState(false);
@@ -163,7 +163,7 @@ export function MercosulPlateInput({
           {/* Plate Sub-bar: Matte Gunmetal with Laser Engraved Text */}
           <div className="relative bg-gradient-to-r from-zinc-300 via-zinc-200 to-zinc-300 border-t border-zinc-400/80 px-2.5 sm:px-3 py-1 sm:py-1.5 flex items-center justify-between text-[9px] sm:text-[10px] font-bold text-zinc-700 shadow-inner gap-2 overflow-hidden">
             <span className="truncate drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">
-              {(siteName || 'AF Motos').toUpperCase()} • LAUDO
+              {(siteName || 'AF Veículos PE').toUpperCase()} • LAUDO
             </span>
             <span className="shrink-0 font-extrabold uppercase tracking-wider text-zinc-800 drop-shadow-[0_1px_0_rgba(255,255,255,0.9)]">
               {plateType === 'mercosul'

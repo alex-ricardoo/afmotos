@@ -53,7 +53,7 @@ export function PurchaseAgreementModal({
   onOpenChange,
   initialData,
   onSuccess,
-  storeName = 'AF Motos',
+  storeName = 'AF Veículos PE',
 }: PurchaseAgreementModalProps) {
   const [formData, setFormData] = useState<Partial<PurchaseAgreementPrepareInput>>(() => ({
     brand: '',

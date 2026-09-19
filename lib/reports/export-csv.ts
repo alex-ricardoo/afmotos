@@ -132,7 +132,7 @@ export function generateStockMovementCSV(
   dateRange: { startDate: string; endDate: string },
   storeName?: string,
 ): string {
-  const cleanStoreName = (storeName || 'AF Motos').trim();
+  const cleanStoreName = (storeName || 'AF Veículos PE').trim();
   const lines = [
     `${cleanStoreName.toUpperCase()} — DEMONSTRATIVO DE MOVIMENTAÇÃO DE ESTOQUE`,
     `Período: ${stock ? dateRange.startDate : ''} a ${stock ? dateRange.endDate : ''}`,
@@ -197,7 +197,7 @@ export function generateConsolidatedCSV(
   inventory: InventoryReportData,
   storeName?: string,
 ): string {
-  const cleanStoreName = (storeName || 'AF Motos').trim();
+  const cleanStoreName = (storeName || 'AF Veículos PE').trim();
   const lines = [
     `${cleanStoreName.toUpperCase()} — RELATÓRIO GERENCIAL CONSOLIDADO`,
     `Período: ${sales.dateRange.startDate} a ${sales.dateRange.endDate}`,

@@ -202,7 +202,7 @@ export function PaymentSimulation({ consultation, price }: PaymentSimulationProp
                 <span className="text-[11px] sm:text-xs text-zinc-400 block font-medium">Produto:</span>
                 <span className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5 mt-0.5 truncate">
                   <FileText className="w-3.5 h-3.5 text-[#c9a44c] shrink-0" />
-                  Laudo Veicular Completo AF Motos
+                  Laudo Veicular Completo AF Veículos PE
                 </span>
               </div>
 

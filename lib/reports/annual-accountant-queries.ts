@@ -64,7 +64,7 @@ export interface AnnualReportResult {
 
 export const ACCOUNTANT_LEGAL_DISCLAIMER =
   'AVISO LEGAL DE APOIO GERENCIAL: Este documento é um relatório gerencial de apoio à organização financeira ' +
-  'e contábil da AF Motos. Não substitui notas fiscais (NFS-e), livros fiscais, extratos bancários de conta corrente, ' +
+  'e contábil da AF Veículos PE. Não substitui notas fiscais (NFS-e), livros fiscais, extratos bancários de conta corrente, ' +
   'conciliação financeira bancária ou declaração tributária oficial perante os órgãos fazendários. Não constitui ' +
   'apuração fiscal de impostos nem orientação jurídica. Valide toda a escrituração e apuração de tributos diretamente ' +
   'com seu contador responsável.';

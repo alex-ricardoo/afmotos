@@ -29,7 +29,7 @@ interface CustomerMobileCardProps {
 
 export function CustomerMobileCard({
   customer,
-  storeName = 'AF Motos',
+  storeName = 'AF Veículos PE',
 }: CustomerMobileCardProps) {
   const rel = customer.relationships;
   const waLink = generateWhatsAppLink(

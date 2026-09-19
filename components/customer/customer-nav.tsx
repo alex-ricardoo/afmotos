@@ -103,11 +103,11 @@ export function CustomerNav({ user }: CustomerNavProps) {
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#080B11]/90 backdrop-blur-xl border-b border-zinc-800/70 z-40 px-4 flex items-center justify-between">
         <Link href="/cliente" className="flex items-center gap-2.5">
           <div className="relative w-8 h-8 rounded-xl overflow-hidden border border-[#c9a44c]/40 shadow-sm shadow-[#c9a44c]/10">
-            <Image src="/logo.jpg" alt="AF Motos" fill sizes="32px" className="object-cover" />
+            <Image src="/logo.jpg" alt="AF Veículos PE" fill sizes="32px" className="object-cover" />
           </div>
           <div>
             <span className="text-sm font-black text-white tracking-tight block leading-tight">
-              AF Motos
+              AF Veículos PE
             </span>
             <span className="text-[10px] text-[#c9a44c] font-semibold tracking-wider uppercase">
               Área do Cliente
@@ -249,12 +249,12 @@ export function CustomerNav({ user }: CustomerNavProps) {
         <div className="p-6 border-b border-zinc-800/60 relative z-10">
           <Link href="/cliente" className="flex items-center gap-3.5 group">
             <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-[#c9a44c]/40 shadow-lg shadow-[#c9a44c]/10 bg-zinc-900 group-hover:border-[#c9a44c] transition-colors">
-              <Image src="/logo.jpg" alt="AF Motos" fill sizes="40px" className="object-cover" />
+              <Image src="/logo.jpg" alt="AF Veículos PE" fill sizes="40px" className="object-cover" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-base font-black text-white tracking-tight leading-tight">
-                  AF Motos
+                  AF Veículos PE
                 </span>
                 <Sparkles className="w-3 h-3 text-[#c9a44c]" />
               </div>

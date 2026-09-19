@@ -108,8 +108,8 @@ export function toPublicVehicleReportDto(
     disclaimer:
       'Este relatório foi elaborado com base nas informações disponibilizadas pelas bases governamentais e conveniadas consultadas na data indicada. A ausência de apontamentos não substitui vistoria mecânica presencial ou conferência física do veículo.',
     issuer: customerDto.issuer || {
-      company_name: settings?.settings?.branding?.companyName || settings?.site_name || 'AF Motos Comércio e Locação Ltda',
-      trade_name: settings?.site_name || 'AF Motos',
+      company_name: settings?.settings?.branding?.companyName || settings?.site_name || 'AF Veículos PE Comércio e Locação Ltda',
+      trade_name: settings?.site_name || 'AF Veículos PE',
       cnpj: settings?.cnpj || '58.742.981/0001-08',
       city: settings?.settings?.address?.city || 'Recife',
       state: settings?.settings?.address?.state || 'PE',

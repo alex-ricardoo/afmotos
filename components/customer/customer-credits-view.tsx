@@ -208,7 +208,7 @@ export function CustomerCreditsView({
             perks: off.perks && off.perks.length > 0 ? off.perks.slice(0, 3) : defaultPerks,
             highlight: isPopular,
             contactOnly: isWaOnly,
-            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de cotação para o pacote de ${off.credits_quantity}+ créditos veiculares na AF Motos.`,
+            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de cotação para o pacote de ${off.credits_quantity}+ créditos veiculares na AF Veículos PE.`,
           };
         })
       : [
@@ -228,7 +228,7 @@ export function CustomerCreditsView({
             ],
             highlight: false,
             contactOnly: false,
-            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de fechar o Pacote Inicial de 5 créditos de consultas veiculares na AF Motos.`,
+            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e gostaria de fechar o Pacote Inicial de 5 créditos de consultas veiculares na AF Veículos PE.`,
           },
           {
             id: 'pro',
@@ -246,7 +246,7 @@ export function CustomerCreditsView({
             ],
             highlight: true,
             contactOnly: false,
-            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e quero ativar o Pacote Lojista de 15 créditos com desconto especial da AF Motos.`,
+            whatsappMessage: `Olá! Sou ${userName} (${userEmail}) e quero ativar o Pacote Lojista de 15 créditos com desconto especial da AF Veículos PE.`,
           },
           {
             id: 'business',

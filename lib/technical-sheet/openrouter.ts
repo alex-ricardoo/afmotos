@@ -63,7 +63,7 @@ Não invente, não misture versões e use null quando não houver evidência. Re
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': process.env.OPENROUTER_SITE_URL || 'http://localhost:3000',
-          'X-Title': process.env.OPENROUTER_APP_NAME || 'AF Motos',
+          'X-Title': process.env.OPENROUTER_APP_NAME || 'AF Veículos PE',
         },
         body: JSON.stringify({
           model,

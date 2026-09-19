@@ -192,6 +192,14 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
   };
 
   if (!dto) {
+    const isFailed =
+      consultation.status === 'failed' ||
+      consultation.status === 'failed_permanent' ||
+      consultation.status === 'refund_pending' ||
+      consultation.status === 'refunded';
+
+    const isPendingPayment = consultation.status === 'pending';
+
     return (
       <div className="space-y-6">
         <Link
@@ -202,34 +210,96 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
           <span>Voltar para Minhas Consultas</span>
         </Link>
 
-        <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl p-8 sm:p-12 text-center space-y-4 max-w-lg mx-auto shadow-2xl">
-          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-            <ShieldCheck className="w-8 h-8" />
+        <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl p-8 sm:p-12 text-center space-y-5 max-w-lg mx-auto shadow-2xl">
+          <div
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ${
+              isFailed
+                ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                : isPendingPayment
+                  ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
+                  : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+            }`}
+          >
+            {isFailed ? (
+              <AlertTriangle className="w-8 h-8" />
+            ) : isPendingPayment ? (
+              <CreditCard className="w-8 h-8" />
+            ) : (
+              <Loader2 className="w-8 h-8 animate-spin" />
+            )}
           </div>
-          <h2 className="text-xl font-bold text-white">Consulta da Placa {formattedPlate}</h2>
-          <p className="text-sm text-zinc-400">
-            {consultation.status === 'failed_permanent'
-              ? consultation.payment_coverage_type === 'platform_credit'
-                ? 'Não foi possível concluir a consulta neste momento. Seu crédito não foi consumido e continua disponível.'
-                : 'Não foi possível concluir a consulta veicular. Se o pagamento foi aprovado, o estorno foi acionado.'
-              : consultation.payment_coverage_type === 'platform_credit' &&
-                  (consultation as { credit_status?: string }).credit_status === 'reserved'
-                ? 'Seu crédito foi reservado. Estamos preparando o laudo.'
-                : consultation.status === 'pending'
-                  ? 'Esta consulta está aguardando a confirmação do pagamento para liberar o laudo completo.'
-                  : 'O relatório desta consulta está sendo processado. Aguarde alguns instantes.'}
-          </p>
 
-          {consultation.status === 'pending' && (
-            <div className="pt-3">
-              <Link href={`/cliente/pagamento/${consultation.id}`}>
-                <Button className="h-12 px-7 bg-gradient-to-r from-[#c9a44c] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold rounded-xl shadow-lg shadow-[#c9a44c]/20">
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Ir para Pagamento
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold">
+              {isFailed ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-500/10 text-red-400 border border-red-500/25">
+                  Consulta Não Concluída
+                </span>
+              ) : isPendingPayment ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/25">
+                  Aguardando Pagamento
+                </span>
+              ) : (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/25 animate-pulse">
+                  Processando Laudo
+                </span>
+              )}
+            </div>
+
+            <h2 className="text-xl font-bold text-white">Consulta da Placa {formattedPlate}</h2>
+            <p className="text-sm text-zinc-300 leading-relaxed max-w-md mx-auto">
+              {consultation.status === 'failed_permanent' || consultation.status === 'failed'
+                ? consultation.payment_coverage_type === 'platform_credit'
+                  ? 'Não foi possível concluir a consulta neste momento. Seu crédito não foi consumido e continua disponível na sua conta.'
+                  : 'Não foi possível concluir a consulta veicular neste momento. Se o pagamento foi aprovado, o estorno automático foi acionado.'
+                : consultation.status === 'refund_pending' || consultation.status === 'refunded'
+                  ? 'Esta consulta foi cancelada e o valor foi estornado.'
+                  : consultation.payment_coverage_type === 'platform_credit' &&
+                      (consultation as { credit_status?: string }).credit_status === 'reserved'
+                    ? 'Seu crédito foi reservado. Estamos preparando o laudo veicular.'
+                    : consultation.status === 'pending'
+                      ? 'Esta consulta está aguardando a confirmação do pagamento para liberar o laudo completo.'
+                      : 'O relatório desta consulta está sendo processado. Aguarde alguns instantes.'}
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            {isPendingPayment ? (
+              <Link href={`/cliente/pagamento/${consultation.id}`} className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto h-11 px-6 bg-gradient-to-r from-[#c9a44c] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold rounded-xl shadow-lg shadow-[#c9a44c]/20 flex items-center justify-center gap-2">
+                  <CreditCard className="w-4 h-4" />
+                  <span>Ir para Pagamento</span>
                 </Button>
               </Link>
-            </div>
-          )}
+            ) : isFailed ? (
+              <>
+                <Link
+                  href={`/cliente/consultas/nova?placa=${consultation.plate}`}
+                  className="w-full sm:w-auto"
+                >
+                  <Button className="w-full sm:w-auto h-11 px-6 bg-gradient-to-r from-[#c9a44c] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold rounded-xl shadow-lg shadow-[#c9a44c]/20">
+                    Tentar Nova Consulta
+                  </Button>
+                </Link>
+                <Link href="/cliente/consultas" className="w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto h-11 px-5 border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 rounded-xl"
+                  >
+                    Minhas Consultas
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+                className="w-full sm:w-auto h-11 px-6 border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 rounded-xl"
+              >
+                Atualizar Página
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );

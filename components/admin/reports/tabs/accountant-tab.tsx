@@ -26,7 +26,7 @@ interface AccountantTabProps {
   storeName?: string;
 }
 
-export function AccountantTab({ dateRange, storeName = 'AF Motos' }: AccountantTabProps) {
+export function AccountantTab({ dateRange, storeName = 'AF Veículos PE' }: AccountantTabProps) {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<string>(currentYear.toString());
   const [includePII, setIncludePII] = useState(false);

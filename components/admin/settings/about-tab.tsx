@@ -96,7 +96,7 @@ export function AboutTab({ form }: AboutTabProps) {
                 </FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Ex: Conheça a AF Motos"
+                    placeholder="Ex: Conheça a AF Veículos PE"
                     {...field}
                     value={field.value || ''}
                     className="bg-zinc-950 border-zinc-800 text-zinc-100 h-11 rounded-xl focus:border-amber-500 text-sm"

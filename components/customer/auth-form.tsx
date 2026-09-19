@@ -363,7 +363,7 @@ export function AuthForm({ mode, returnUrl: propReturnUrl, onSuccess }: AuthForm
                   >
                     Política de Privacidade
                   </Link>{' '}
-                  da AF Motos (LGPD).
+                  da AF Veículos PE (LGPD).
                 </p>
               </div>
             </div>

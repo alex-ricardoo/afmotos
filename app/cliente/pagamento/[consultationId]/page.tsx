@@ -24,7 +24,7 @@ interface PaymentPageProps {
 }
 
 export const metadata = {
-  title: 'Pagamento Seguro da Consulta | Área do Cliente | AF Motos',
+  title: 'Pagamento Seguro da Consulta | Área do Cliente | AF Veículos PE',
   description: 'Finalize o pagamento da sua consulta veicular com segurança pelo Mercado Pago.',
 };
 

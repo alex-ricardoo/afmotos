@@ -69,7 +69,7 @@ export function Footer({ settings }: { settings?: any }) {
       {/* Trust Seals & Value Proposition Bar */}
       {/* Trust Seals Bar - Compact & Sleek */}
       <section
-        aria-label="Diferenciais e Garantias AF Motos"
+        aria-label={`Diferenciais e Garantias ${siteName}`}
         className="border-b border-[#c9a44c]/20 bg-[#0d0d0d] py-4 sm:py-4.5 relative"
       >
         <div className="container mx-auto px-4 md:px-6">

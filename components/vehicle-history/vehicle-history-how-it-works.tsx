@@ -54,7 +54,7 @@ const HOW_IT_WORKS_STEPS: StepItem[] = [
  * Refatorada para mobile-first com StepList vertical e acabamento premium.
  */
 export function VehicleHistoryHowItWorks({
-  siteName = 'AF Motos',
+  siteName = 'AF Veículos PE',
 }: VehicleHistoryHowItWorksProps = {}) {
   const { scrollToSection } = useVehicleHistory();
 

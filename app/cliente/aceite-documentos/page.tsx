@@ -36,7 +36,7 @@ export default async function AceiteDocumentosPage({ searchParams }: AceiteDocum
   }
 
   const settings = await getSettings();
-  const siteName = settings?.site_name || 'AF Motos';
+  const siteName = settings?.site_name || 'AF Veículos PE';
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">

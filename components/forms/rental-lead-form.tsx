@@ -55,7 +55,7 @@ export function RentalLeadForm({
   defaultMotorcycleId,
   availableMotorcycles,
   whatsappPhone,
-  siteName = 'AF Motos',
+  siteName = 'AF Veículos PE',
 }: RentalLeadFormProps) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -134,8 +134,8 @@ export function RentalLeadForm({
 
   if (success) {
     const waMessage = submittedData
-      ? `Olá ${siteName || 'AF Motos'}! Gostaria de falar sobre minha proposta de aluguel enviada pelo site.\n\n*Nome:* ${submittedData.name}\n*Plano:* ${submittedData.desired_plan}\n*Início:* ${submittedData.expected_start_date.split('-').reverse().join('/')}\n*Moto:* ${submittedData.motoName}`
-      : `Olá! Enviei uma proposta de aluguel pelo site da ${siteName || 'AF Motos'}.`;
+      ? `Olá ${siteName || 'AF Veículos PE'}! Gostaria de falar sobre minha proposta de aluguel enviada pelo site.\n\n*Nome:* ${submittedData.name}\n*Plano:* ${submittedData.desired_plan}\n*Início:* ${submittedData.expected_start_date.split('-').reverse().join('/')}\n*Moto:* ${submittedData.motoName}`
+      : `Olá! Enviei uma proposta de aluguel pelo site da ${siteName || 'AF Veículos PE'}.`;
     
     const waUrl = generateWhatsAppLink(whatsappPhone, waMessage);
 

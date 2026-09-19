@@ -38,7 +38,7 @@ export function VehicleShareCard({
   plateDisplay,
   consultationStatus,
   initialShareDetails,
-  storeName = 'AF Motos',
+  storeName = 'AF Veículos PE',
 }: VehicleShareCardProps) {
   const [details, setDetails] = useState<AdminVehicleShareDetailsDto>(
     initialShareDetails || { hasActiveShare: false }

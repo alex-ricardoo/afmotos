@@ -112,8 +112,8 @@ describe('Public Vehicle Report DTO Sanitization (LGPD & Security)', () => {
 
   it('should include institutional disclaimer and issuer information', () => {
     const publicDto = toPublicVehicleReportDto(baseInternalDto);
-    assert.strictEqual(publicDto.issuer.company_name, 'AF Motos Comércio e Locação Ltda');
-    assert.strictEqual(publicDto.issuer.trade_name, 'AF Motos');
+    assert.strictEqual(publicDto.issuer.company_name, 'AF Veículos PE Comércio e Locação Ltda');
+    assert.strictEqual(publicDto.issuer.trade_name, 'AF Veículos PE');
     assert.strictEqual(publicDto.issuer.cnpj, '58.742.981/0001-08');
     assert.strictEqual(typeof publicDto.disclaimer, 'string');
   });

@@ -58,7 +58,7 @@ interface VehicleHistoryReportMockupProps {
   price?: number;
 }
 
-export function VehicleHistoryReportMockup({ siteName = 'AF Motos', price }: VehicleHistoryReportMockupProps = {}) {
+export function VehicleHistoryReportMockup({ siteName = 'AF Veículos PE', price }: VehicleHistoryReportMockupProps = {}) {
   const { scrollToSection } = useVehicleHistory();
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);

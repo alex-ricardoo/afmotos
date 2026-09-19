@@ -33,7 +33,7 @@ export function CommissionReceiveModal({
   open,
   onOpenChange,
   onSuccess,
-  storeName = 'AF Motos',
+  storeName = 'AF Veículos PE',
 }: CommissionReceiveModalProps) {
   const initialValue =
     commission?.commission_confirmed_value ?? commission?.commission_expected_value ?? 0;

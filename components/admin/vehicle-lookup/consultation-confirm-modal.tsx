@@ -26,7 +26,7 @@ export function ConsultationConfirmModal({
   cost,
   isMockMode = false,
   isExecuting,
-  storeName = 'AF Motos',
+  storeName = 'AF Veículos PE',
 }: ConsultationConfirmModalProps) {
   const [confirmedCheckbox, setConfirmedCheckbox] = useState(false);
   const [isNoticeExpanded, setIsNoticeExpanded] = useState(false);

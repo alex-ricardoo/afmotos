@@ -34,7 +34,7 @@ interface CustomerListProps {
   storeName?: string;
 }
 
-export function CustomerList({ customers, storeName = 'AF Motos' }: CustomerListProps) {
+export function CustomerList({ customers, storeName = 'AF Veículos PE' }: CustomerListProps) {
   return (
     <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
       <Table>

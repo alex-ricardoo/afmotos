@@ -21,7 +21,7 @@ export default async function TermosDeUsoPage() {
   const settings = await getSettings();
   const doc = await getPublishedDocument('terms_of_use');
 
-  const siteName = settings?.site_name || doc.institution.siteName || 'AF Motos';
+  const siteName = settings?.site_name || doc.institution.siteName || 'AF Veículos PE';
   const whatsappPhone = settings?.whatsapp_phone || doc.institution.whatsappPhone;
   const contactEmail = settings?.contact_email || doc.institution.contactEmail;
   const cnpj = settings?.cnpj || doc.institution.cnpj;

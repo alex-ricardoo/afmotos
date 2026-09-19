@@ -19,7 +19,7 @@ export function AboutContact({
   businessHours,
   siteName,
 }: AboutContactProps) {
-  const store = siteName || 'AF Motos';
+  const store = siteName || 'AF Veículos PE';
   const whatsappUrl = generateWhatsAppLink(
     phone,
     `Olá! Estava navegando pela página Sobre do site da ${store} e gostaria de tirar algumas dúvidas.`,

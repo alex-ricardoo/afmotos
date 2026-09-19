@@ -12,7 +12,7 @@ interface FinancialTabProps {
   storeName?: string;
 }
 
-export function FinancialTab({ data, storeName = 'AF Motos' }: FinancialTabProps) {
+export function FinancialTab({ data, storeName = 'AF Veículos PE' }: FinancialTabProps) {
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
       {/* 1. KPIs Financeiros */}

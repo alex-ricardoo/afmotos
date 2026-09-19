@@ -146,7 +146,7 @@ export function ManualProposalModal({
   open,
   onOpenChange,
   onSuccess,
-  siteName = 'AF Motos',
+  siteName = 'AF Veículos PE',
   siteLogo,
 }: ManualProposalModalProps) {
   // Step navigation state

@@ -32,7 +32,7 @@ export function generateExcelWorkbookXML(
   includeSensitiveCadastralData = false,
   storeName?: string,
 ): string {
-  const cleanStoreName = (storeName || 'AF Motos').trim();
+  const cleanStoreName = (storeName || 'AF Veículos PE').trim();
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"

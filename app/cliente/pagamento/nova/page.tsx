@@ -10,7 +10,7 @@ interface NovaConsultaPageProps {
 }
 
 export const metadata = {
-  title: 'Iniciando Consulta | Área do Cliente | AF Motos',
+  title: 'Iniciando Consulta | Área do Cliente | AF Veículos PE',
   description: 'Iniciando consulta veicular e preparando pagamento...',
 };
 

@@ -13,7 +13,7 @@ interface ReturnPageProps {
 }
 
 export const metadata = {
-  title: 'Retorno do Pagamento | Área do Cliente | AF Motos',
+  title: 'Retorno do Pagamento | Área do Cliente | AF Veículos PE',
   description: 'Confirmação e acompanhamento do pagamento da consulta veicular.',
   robots: {
     index: false,

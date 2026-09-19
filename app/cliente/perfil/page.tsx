@@ -10,8 +10,8 @@ import {
 } from '@/lib/legal/queries';
 
 export const metadata = {
-  title: 'Meu Perfil | Área do Cliente | AF Motos',
-  description: 'Gerencie seus dados pessoais, endereço e privacidade na AF Motos.',
+  title: 'Meu Perfil | Área do Cliente | AF Veículos PE',
+  description: 'Gerencie seus dados pessoais, endereço e privacidade na AF Veículos PE.',
 };
 
 export default async function CustomerProfilePage() {

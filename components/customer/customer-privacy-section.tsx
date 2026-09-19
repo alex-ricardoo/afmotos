@@ -326,7 +326,7 @@ export function CustomerPrivacySection({
           <span>Política Técnica de Cookies & Sessão</span>
         </div>
         <p className="leading-relaxed text-[11px]">
-          A AF Motos opera estritamente com cookies essenciais de autenticação e proteção contra
+          A AF Veículos PE opera estritamente com cookies essenciais de autenticação e proteção contra
           CSRF (Supabase Auth). Não implementamos rastreadores de publicidade, Meta Pixel ou scripts
           invasivos de terceiros. Se ferramentas de análise forem integradas no futuro, você poderá
           optar por habilitá-las diretamente nesta central.

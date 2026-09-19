@@ -60,7 +60,7 @@ interface CustomerRelationsTabsProps {
 
 export function CustomerRelationsTabs({
   customer,
-  storeName = 'AF Motos',
+  storeName = 'AF Veículos PE',
 }: CustomerRelationsTabsProps) {
   const sales = customer.sales || [];
   const sellRequests = customer.sell_requests || [];

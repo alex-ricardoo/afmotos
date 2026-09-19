@@ -279,7 +279,7 @@ export function AgreementSalePDF({
         {/* ASSINATURAS */}
         <ContractSignatures
           buyerName={storeName}
-          buyerRole="AF Motos • Intermediadora / Representante Legal"
+          buyerRole={`${storeName || 'AF Veículos PE'} • Intermediadora / Representante Legal`}
           buyerDocument={cnpj ? `CNPJ: ${cnpj}` : undefined}
           sellerName={sellerName}
           sellerRole="Vendedor / Proprietário"

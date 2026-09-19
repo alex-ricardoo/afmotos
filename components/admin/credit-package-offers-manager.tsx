@@ -790,7 +790,7 @@ export function CreditPackageOffersManager() {
                 <div>
                   <h3 className="text-lg font-black text-white">{off.name}</h3>
                   <p className="text-xs text-zinc-400 line-clamp-2 mt-1">
-                    {off.description || 'Pacote de consultas veiculares na AF Motos.'}
+                    {off.description || 'Pacote de consultas veiculares na AF Veículos PE.'}
                   </p>
                 </div>
 
@@ -1238,7 +1238,7 @@ export function CreditPackageOffersManager() {
                       className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white focus:border-[#c9a44c] focus:outline-hidden"
                     />
                     <p className="text-[11px] text-zinc-500">
-                      Por padrão, os créditos da AF Motos não expiram.
+                      Por padrão, os créditos da AF Veículos PE não expiram.
                     </p>
                   </div>
                 </div>

@@ -42,7 +42,7 @@ export function buildPackagePreferenceBody(
       {
         id: offer.slug || `credit-package-${order.offer_id}`,
         title: offer.name,
-        description: `Pacote de ${order.credits_quantity} consultas veiculares na plataforma AF Motos`,
+        description: `Pacote de ${order.credits_quantity} consultas veiculares na plataforma AF Veículos PE`,
         quantity: 1,
         unit_price: unitPrice,
         currency_id: 'BRL',

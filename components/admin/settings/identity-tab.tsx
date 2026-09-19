@@ -300,7 +300,7 @@ export function IdentityTab({ form }: IdentityTabProps) {
               </FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Ex: AF Motos"
+                  placeholder="Ex: AF Veículos PE"
                   {...field}
                   className="bg-zinc-950 border-zinc-800 text-zinc-100 h-11 rounded-xl focus:border-amber-500"
                 />
@@ -320,7 +320,7 @@ export function IdentityTab({ form }: IdentityTabProps) {
               </FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Ex: AF Motos"
+                  placeholder="Ex: AF Veículos PE"
                   {...field}
                   value={field.value || ''}
                   className="bg-zinc-950 border-zinc-800 text-zinc-100 h-11 rounded-xl focus:border-amber-500"

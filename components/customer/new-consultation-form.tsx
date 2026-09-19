@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -28,7 +28,12 @@ import { toast } from 'sonner';
 
 export function NewConsultationForm() {
   const router = useRouter();
-  const [plate, setPlate] = useState('');
+  const searchParams = useSearchParams();
+  const initialPlate = (searchParams?.get('placa') || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+
+  const [plate, setPlate] = useState(initialPlate);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [wantReconsultation, setWantReconsultation] = useState(false);
   const [existingConsultation, setExistingConsultation] = useState<ExistingConsultationInfo | null>(null);

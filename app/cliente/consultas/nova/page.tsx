@@ -1,9 +1,10 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { NewConsultationForm } from '@/components/customer/new-consultation-form';
 
 export const metadata = {
-  title: 'Nova Consulta Veicular | Área do Cliente | AF Motos',
+  title: 'Nova Consulta Veicular | Área do Cliente | AF Veículos PE',
   description: 'Digite a placa do veículo para consultar histórico, leilão, multas, débitos e restrições.',
 };
 
@@ -17,5 +18,9 @@ export default async function NovaConsultaPage() {
     redirect('/cliente/login?returnUrl=/cliente/consultas/nova');
   }
 
-  return <NewConsultationForm />;
+  return (
+    <Suspense fallback={<div className="text-center py-12 text-zinc-500 text-xs">Carregando formulário...</div>}>
+      <NewConsultationForm />
+    </Suspense>
+  );
 }

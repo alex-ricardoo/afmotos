@@ -253,7 +253,7 @@ function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
 
     customer: {
       id: row.customer_id || null,
-      name: row.customer_name || 'Cliente AF Motos',
+      name: row.customer_name || 'Cliente AF Veículos PE',
       email: row.customer_email || 'nao-informado@afmotos.com.br',
       phone: row.customer_phone || null,
     },

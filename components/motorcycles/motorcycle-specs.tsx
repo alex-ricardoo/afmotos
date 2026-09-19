@@ -35,7 +35,7 @@ interface MotorcycleSpecsProps {
   siteName?: string;
 }
 
-export function MotorcycleSpecs({ motorcycle, siteName = 'AF Motos' }: MotorcycleSpecsProps) {
+export function MotorcycleSpecs({ motorcycle, siteName = 'AF Veículos PE' }: MotorcycleSpecsProps) {
   const plateEndDigit =
     motorcycle.plate_end || (motorcycle.license_plate ? motorcycle.license_plate.slice(-1) : null);
   const fuelValue = motorcycle.fuel || motorcycle.fuel_type || 'Gasolina / Flex';

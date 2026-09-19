@@ -232,7 +232,7 @@ export function Header({ settings }: { settings?: any }) {
             items: [
               {
                 href: '/sobre',
-                label: 'Sobre a AF Motos',
+                label: `Sobre a ${siteName}`,
                 shortLabel: 'Sobre',
                 icon: Store,
                 description: 'Nossa história e compromisso',

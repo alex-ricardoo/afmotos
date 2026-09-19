@@ -52,6 +52,13 @@ function getStatusBadge(status: ConsultationStatus) {
           <span>Pago / Na Fila</span>
         </span>
       );
+    case 'retry_scheduled':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 animate-pulse">
+          <Clock className="w-3.5 h-3.5" />
+          <span>Reprocessando</span>
+        </span>
+      );
     case 'pending':
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
@@ -60,14 +67,72 @@ function getStatusBadge(status: ConsultationStatus) {
         </span>
       );
     case 'failed':
+    case 'failed_permanent':
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
           <AlertTriangle className="w-3.5 h-3.5" />
           <span>Falha</span>
         </span>
       );
+    case 'refund_pending':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <Clock className="w-3.5 h-3.5" />
+          <span>Estorno Pendente</span>
+        </span>
+      );
+    case 'refunded':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Estornado</span>
+        </span>
+      );
+    case 'manual_review':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>Em Análise</span>
+        </span>
+      );
     default:
       return null;
+  }
+}
+
+function getActionButtonConfig(status: ConsultationStatus, id: string) {
+  switch (status) {
+    case 'completed':
+      return {
+        label: 'Ver Laudo',
+        mobileLabel: 'Abrir Laudo Completo',
+        href: `/cliente/consultas/${id}`,
+      };
+    case 'pending':
+      return {
+        label: 'Pagar',
+        mobileLabel: 'Pagar Consulta',
+        href: `/cliente/pagamento/${id}`,
+      };
+    case 'processing':
+    case 'paid':
+    case 'retry_scheduled':
+      return {
+        label: 'Acompanhar',
+        mobileLabel: 'Acompanhar Status',
+        href: `/cliente/consultas/${id}`,
+      };
+    case 'failed':
+    case 'failed_permanent':
+    case 'refund_pending':
+    case 'refunded':
+    case 'manual_review':
+    default:
+      return {
+        label: 'Ver Detalhes',
+        mobileLabel: 'Ver Detalhes',
+        href: `/cliente/consultas/${id}`,
+      };
   }
 }
 
@@ -240,10 +305,7 @@ export function ConsultationHistory({
                       minute: '2-digit',
                     });
 
-                    const targetHref =
-                      item.status === 'pending'
-                        ? `/cliente/pagamento/${item.id}`
-                        : `/cliente/consultas/${item.id}`;
+                    const actionConfig = getActionButtonConfig(item.status, item.id);
 
                     return (
                       <tr key={item.id} className="hover:bg-zinc-900/30 transition-colors group">
@@ -266,6 +328,14 @@ export function ConsultationHistory({
                                 </span>
                               )}
                             </div>
+                          ) : item.status === 'failed' || item.status === 'failed_permanent' ? (
+                            <span className="text-xs text-red-400/80 font-medium">Consulta não concluída</span>
+                          ) : item.status === 'refund_pending' || item.status === 'refunded' ? (
+                            <span className="text-xs text-zinc-400 font-medium">Consulta cancelada</span>
+                          ) : item.status === 'pending' ? (
+                            <span className="text-xs text-yellow-500/80 font-medium">Aguardando pagamento</span>
+                          ) : item.status === 'retry_scheduled' ? (
+                            <span className="text-xs text-blue-400/80 font-medium">Reprocessando consulta...</span>
                           ) : (
                             <span className="text-xs text-zinc-500">Dados em processamento</span>
                           )}
@@ -295,13 +365,13 @@ export function ConsultationHistory({
                               </button>
                             )}
 
-                            <Link href={targetHref}>
+                            <Link href={actionConfig.href}>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 className="h-8 px-3 text-xs bg-zinc-900/60 hover:bg-zinc-800 border-zinc-700 text-zinc-200 group-hover:border-[#c9a44c]/50 rounded-lg inline-flex items-center gap-1.5"
                               >
-                                <span>{item.status === 'pending' ? 'Pagar' : 'Ver Laudo'}</span>
+                                <span>{actionConfig.label}</span>
                                 <ArrowRight className="w-3.5 h-3.5 text-[#c9a44c]" />
                               </Button>
                             </Link>
@@ -325,10 +395,7 @@ export function ConsultationHistory({
                   minute: '2-digit',
                 });
 
-                const targetHref =
-                  item.status === 'pending'
-                    ? `/cliente/pagamento/${item.id}`
-                    : `/cliente/consultas/${item.id}`;
+                const actionConfig = getActionButtonConfig(item.status, item.id);
 
                 return (
                   <div key={item.id} className="p-4 space-y-3">
@@ -343,7 +410,15 @@ export function ConsultationHistory({
                           {[item.vehicle_data.brand, item.vehicle_data.model].filter(Boolean).join(' ')}
                         </p>
                       ) : (
-                        <p className="text-xs text-zinc-400">Consulta de placa</p>
+                        <p className="text-xs text-zinc-400">
+                          {item.status === 'failed' || item.status === 'failed_permanent'
+                            ? 'Consulta não concluída'
+                            : item.status === 'refund_pending' || item.status === 'refunded'
+                              ? 'Consulta cancelada'
+                              : item.status === 'pending'
+                                ? 'Aguardando pagamento'
+                                : 'Dados em processamento'}
+                        </p>
                       )}
                       <p className="text-[11px] text-zinc-400 mt-0.5">{formattedDate}</p>
                     </div>
@@ -367,13 +442,13 @@ export function ConsultationHistory({
                           <span>{downloadingId === item.id ? 'Gerando...' : 'PDF'}</span>
                         </button>
                       )}
-                      <Link href={targetHref} className="flex-1 block">
+                      <Link href={actionConfig.href} className="flex-1 block">
                         <Button
                           variant="outline"
                           size="sm"
                           className="w-full h-9 text-xs bg-zinc-900 border-zinc-700 text-zinc-200 rounded-xl flex items-center justify-center gap-1.5"
                         >
-                          <span>{item.status === 'pending' ? 'Pagar Consulta' : 'Abrir Laudo Completo'}</span>
+                          <span>{actionConfig.mobileLabel}</span>
                           <ArrowRight className="w-3.5 h-3.5 text-[#c9a44c]" />
                         </Button>
                       </Link>

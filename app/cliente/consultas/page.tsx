@@ -11,8 +11,8 @@ interface ConsultasPageProps {
 }
 
 export const metadata = {
-  title: 'Minhas Consultas | Área do Cliente | AF Motos',
-  description: 'Histórico de laudos e consultas de veículos realizadas na AF Motos.',
+  title: 'Minhas Consultas | Área do Cliente | AF Veículos PE',
+  description: 'Histórico de laudos e consultas de veículos realizadas na AF Veículos PE.',
 };
 
 export default async function CustomerConsultasPage({ searchParams }: ConsultasPageProps) {

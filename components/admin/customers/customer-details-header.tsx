@@ -33,7 +33,7 @@ interface CustomerDetailsHeaderProps {
 
 export function CustomerDetailsHeader({
   customer,
-  storeName = 'AF Motos',
+  storeName = 'AF Veículos PE',
 }: CustomerDetailsHeaderProps) {
   const router = useRouter();
   const [copiedPhone, setCopiedPhone] = useState(false);

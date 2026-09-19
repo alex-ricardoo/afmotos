@@ -559,7 +559,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   settings,
   logoSrc,
 }) => {
-  const storeName = settings?.site_name || report.issuer?.trade_name || 'AF MOTOS';
+  const storeName = settings?.site_name || report.issuer?.trade_name || 'AF VEÍCULOS PE';
   const cnpj = settings?.cnpj || report.issuer?.cnpj || '58.742.981/0001-08';
   const formattedCnpj = cnpj ? formatCnpj(cnpj) : null;
   const storeAddress = settings?.address || 'Recife / PE • Loja Principal';

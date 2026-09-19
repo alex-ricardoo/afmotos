@@ -54,7 +54,7 @@ export function SeoTab({ form }: SeoTabProps) {
               </FormLabel>
               <FormControl>
                 <Input
-                  placeholder="AF Motos | Compra e Venda de Motos"
+                  placeholder="AF Veículos PE | Compra e Venda de Veículos"
                   {...field}
                   value={field.value || ''}
                   className="bg-zinc-950 border-zinc-800 text-zinc-100 h-11 rounded-xl focus:border-amber-500 text-sm"

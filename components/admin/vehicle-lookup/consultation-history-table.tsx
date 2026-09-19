@@ -20,7 +20,7 @@ interface ConsultationHistoryTableProps {
 export function ConsultationHistoryTable({
   initialConsultations,
   totalCount,
-  storeName = 'AF Motos',
+  storeName = 'AF Veículos PE',
 }: ConsultationHistoryTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRisk, setSelectedRisk] = useState('ALL');
