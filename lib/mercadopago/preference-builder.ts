@@ -7,6 +7,7 @@ import {
   resolveCheckoutProUrls,
   type DeploymentEnvironment,
 } from './checkout-pro-urls.ts';
+import { buildCheckoutPaymentMethodsPolicy } from './payment-method-policy.ts';
 
 export type PreferenceCreateBody = Parameters<Preference['create']>[0]['body'];
 
@@ -102,9 +103,7 @@ export function buildPreferenceBody(
     back_urls: resolvedUrls.backUrls,
     auto_return: resolvedUrls.autoReturn,
     notification_url: resolvedUrls.notificationUrl,
-    payment_methods: {
-      installments: 12,
-    },
+    payment_methods: buildCheckoutPaymentMethodsPolicy(12),
   };
 
   return removeEmptyFields(rawBody) as PreferenceCreateBody;

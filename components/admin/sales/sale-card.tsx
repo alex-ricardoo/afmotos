@@ -76,9 +76,16 @@ export function SaleCard({ sale }: SaleCardProps) {
         )}
 
         <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-sm text-white truncate">
-            {moto?.brand} {moto?.model} {moto?.version || ''}
-          </h4>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <h4 className="font-bold text-sm text-white truncate">
+              {moto?.brand} {moto?.model} {moto?.version || ''}
+            </h4>
+            {sale.is_repasse && (
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                Repasse
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2 text-xs text-zinc-400 mt-0.5 font-mono">
             <span>{moto?.year_model}</span>
             {moto?.license_plate && <span>• {moto.license_plate}</span>}

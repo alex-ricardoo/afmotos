@@ -1196,7 +1196,7 @@ export function CreditPackageOffersManager() {
                           </span>
                         </div>
                         <p className="text-[11px] text-zinc-400 leading-relaxed">
-                          Pagamento online automático via Pix, Cartão em até 12x ou Boleto, com
+                          Pagamento online automático via Pix, Cartão em até 12x ou Saldo Mercado Pago, com
                           liberação instantânea no saldo.
                         </p>
                       </div>

@@ -146,7 +146,9 @@ describe('Mercado Pago Preference Builder & Configuration', () => {
       assert.equal(body.auto_return, undefined);
       // notification_url must be undefined because localhost is not public HTTPS
       assert.equal(body.notification_url, undefined);
-      assert.deepEqual(body.payment_methods, { installments: 12 });
+      assert.equal(body.payment_methods?.installments, 12);
+      assert.deepEqual(body.payment_methods?.excluded_payment_types, [{ id: 'ticket' }]);
+      assert.ok(body.payment_methods?.excluded_payment_methods?.some((m) => m.id === 'bolbradesco'));
     } finally {
       process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
       process.env.MERCADO_PAGO_WEBHOOK_URL = originalWebhook;

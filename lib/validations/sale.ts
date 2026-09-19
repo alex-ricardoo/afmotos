@@ -57,6 +57,7 @@ export const saleSchema = z.object({
 
   // Termos e Observações
   legal_terms_accepted: z.boolean().default(true),
+  is_repasse: z.boolean().optional().default(false),
   receipt_number: z.string().optional().nullable(),
   receipt_notes: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),

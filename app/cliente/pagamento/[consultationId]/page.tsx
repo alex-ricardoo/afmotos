@@ -15,7 +15,6 @@ import {
   MercadoPagoBrandIcon,
   CreditCardBrandIcon,
   CaixaDebitBrandIcon,
-  BoletoBrandIcon,
 } from '@/components/customer/payment-brand-icons';
 
 interface PaymentPageProps {
@@ -208,18 +207,18 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
                   </span>
                 </div>
 
-                {/* Boleto Bancário com Código de Barras */}
-                <div className="group/item flex items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-amber-500/40 hover:bg-amber-500/[0.03] transition-all">
+                {/* Saldo Mercado Pago */}
+                <div className="group/item flex items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/90 hover:border-sky-500/40 hover:bg-sky-500/[0.03] transition-all">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-8 w-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
-                      <BoletoBrandIcon className="h-4.5 w-4.5 text-amber-400" />
+                    <div className="h-8 w-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
+                      <MercadoPagoBrandIcon className="h-4.5 w-4.5 text-sky-400" />
                     </div>
                     <p className="text-xs sm:text-sm font-bold text-zinc-200 group-hover/item:text-white transition-colors">
-                      Boleto / Saldo MP
+                      Saldo Mercado Pago
                     </p>
                   </div>
-                  <span className="shrink-0 text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
-                    À vista ou conta
+                  <span className="shrink-0 text-[10px] font-semibold text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-md">
+                    À vista em conta
                   </span>
                 </div>
               </div>

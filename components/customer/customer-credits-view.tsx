@@ -183,7 +183,7 @@ export function CustomerCreditsView({
           const defaultPerks = isWaOnly
             ? [
                 'Volume a partir de 50 consultas',
-                'Faturamento PJ via boleto bancário',
+                'Faturamento PJ sob consulta comercial',
                 'Atendimento comercial prioritário no WhatsApp',
               ]
             : [

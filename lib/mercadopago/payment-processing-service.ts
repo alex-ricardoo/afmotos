@@ -2,6 +2,7 @@ import { createAdminClient } from '../supabase/admin.ts';
 import { mapMercadoPagoStatus, canTransitionStatus } from './payment-status-mapper.ts';
 import { releaseVerifiedPaidConsultation } from './consultation-releaser.ts';
 import { logCheckoutProEvent } from './observability.ts';
+import { isBoletoPayment } from './payment-method-policy.ts';
 import { type PaymentTransactionStatus, type PaymentTransactionRecord } from './types.ts';
 
 export interface AuthoritativePaymentData {
@@ -136,6 +137,22 @@ export async function confirmAndProcessPaymentTransaction({
   const newStatus = mapMercadoPagoStatus(paymentData.status);
   let statusChanged = false;
   let reportUnlocked = false;
+
+  // Detecção e observabilidade segura para pagamentos offline/boleto não permitidos
+  if (isBoletoPayment(paymentData.paymentTypeId, paymentData.paymentMethodId)) {
+    logCheckoutProEvent(
+      'checkout_pro.unexpected_ticket_payment_detected',
+      {
+        flowId,
+        transactionId: transaction.id,
+        paymentId: paymentData.id,
+        paymentTypeId: paymentData.paymentTypeId || 'unknown',
+        paymentMethodId: paymentData.paymentMethodId || 'unknown',
+        status: newStatus,
+      },
+      'warn',
+    );
+  }
 
   if (canTransitionStatus(previousStatus, newStatus)) {
     const { error: updateError } = await adminDb

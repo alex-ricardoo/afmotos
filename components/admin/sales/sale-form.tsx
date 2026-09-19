@@ -24,6 +24,7 @@ import {
   Edit,
   AlertTriangle,
   Check,
+  Tag,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -120,8 +121,8 @@ const quickDeliveryTemplates = [
     text: 'Veículo aprovado em vistoria mecânica e estética. Documentação de transferência entregue para transferência obrigatória em 30 dias (Art. 123 do CTB).',
   },
   {
-    label: 'Moto na Troca',
-    text: 'Veículo usado recebido como parte de pagamento mediante vistoria prévia e termo de quitação mútua.',
+    label: 'Moto de Repasse (Sem Garantia)',
+    text: 'Venda realizada na modalidade REPASSE no estado em que se encontra, sem garantia comercial ou mecânica, por valor negociado abaixo do mercado. Comprador declara ter vistoriado e aprovado o bem.',
   },
 ];
 
@@ -178,6 +179,7 @@ export function SaleForm({
       financed_amount: 0,
       trade_amount: Number(initialSale?.trade_amount ?? 0),
       legal_terms_accepted: initialSale?.legal_terms_accepted ?? true,
+      is_repasse: Boolean((initialSale as any)?.is_repasse || false),
       receipt_number: initialSale?.receipt_number || initialReceiptNumber,
       receipt_notes: initialSale?.receipt_notes || '',
       notes: initialSale?.notes || '',
@@ -1503,32 +1505,60 @@ export function SaleForm({
             />
           </div>
 
-          {/* Resumo visual de discriminação sem financiamento */}
-          <div className="bg-zinc-950 border border-zinc-800/80 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
-            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-              <div>
-                <span className="text-zinc-500 block text-[11px]">Valor Venda</span>
-                <span className="font-bold text-white text-sm font-mono">{formatCurrency(salePrice)}</span>
-              </div>
-              <span className="text-zinc-600 font-bold">=</span>
-              <div>
-                <span className="text-zinc-500 block text-[11px]">Entrada</span>
-                <span className="font-medium text-zinc-300 font-mono">{formatCurrency(entryAmount)}</span>
-              </div>
-              <span className="text-zinc-600 font-bold">+</span>
-              <div>
-                <span className="text-zinc-500 block text-[11px]">Moto na Troca</span>
-                <span className="font-medium text-zinc-300 font-mono">{formatCurrency(tradeAmount)}</span>
-              </div>
-            </div>
+          {/* Resumo visual de discriminação financeira */}
+          {(() => {
+            const financedAmount = Number(form.watch('financed_amount')) || 0;
+            const hasTradeOrFinancing = tradeAmount > 0 || financedAmount > 0;
+            const diffAmount = Math.max(0, salePrice - tradeAmount - financedAmount - entryAmount);
+            const currentMethod = paymentMethods.find(m => m.value === form.watch('payment_method'))?.label || 'PIX / À Vista';
 
-            <div className="bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-lg text-left sm:text-right w-full sm:w-auto">
-              <span className="text-zinc-400 block text-[10px] uppercase font-mono">Saldo em Aberto</span>
-              <span className={`font-bold font-mono text-sm ${salePrice - (entryAmount + tradeAmount) > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                {formatCurrency(Math.max(0, salePrice - (entryAmount + tradeAmount)))}
-              </span>
-            </div>
-          </div>
+            return (
+              <div className="bg-zinc-950 border border-zinc-800/80 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+                <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                  <div>
+                    <span className="text-zinc-500 block text-[11px]">Valor Total da Venda</span>
+                    <span className="font-bold text-white text-sm font-mono">{formatCurrency(salePrice)}</span>
+                  </div>
+                  {tradeAmount > 0 && (
+                    <>
+                      <span className="text-zinc-600 font-bold">-</span>
+                      <div>
+                        <span className="text-purple-400 block text-[11px]">Moto na Troca</span>
+                        <span className="font-bold text-purple-300 font-mono">{formatCurrency(tradeAmount)}</span>
+                      </div>
+                    </>
+                  )}
+                  {financedAmount > 0 && (
+                    <>
+                      <span className="text-zinc-600 font-bold">-</span>
+                      <div>
+                        <span className="text-blue-400 block text-[11px]">Financiamento</span>
+                        <span className="font-bold text-blue-300 font-mono">{formatCurrency(financedAmount)}</span>
+                      </div>
+                    </>
+                  )}
+                  {entryAmount > 0 && (
+                    <>
+                      <span className="text-zinc-600 font-bold">-</span>
+                      <div>
+                        <span className="text-emerald-400 block text-[11px]">Valor de Entrada</span>
+                        <span className="font-bold text-emerald-300 font-mono">{formatCurrency(entryAmount)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="bg-zinc-900 border border-zinc-800 px-3.5 py-2 rounded-lg text-left sm:text-right w-full sm:w-auto">
+                  <span className="text-zinc-400 block text-[10px] uppercase font-mono">
+                    {hasTradeOrFinancing ? `Diferença a Pagar (${currentMethod})` : 'Saldo em Aberto'}
+                  </span>
+                  <span className={`font-bold font-mono text-sm ${diffAmount > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                    {formatCurrency(diffAmount)}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* 4. OBSERVAÇÕES COMERCIAIS & TERMOS LEGAIS */}
@@ -1549,6 +1579,112 @@ export function SaleForm({
           </div>
 
           <div className="space-y-4">
+            {/* Modalidade da Venda: Loja com Garantia vs Repasse sem Garantia */}
+            <FormField
+              control={form.control}
+              name="is_repasse"
+              render={({ field }) => (
+                <FormItem className="space-y-2.5">
+                  <FormLabel className="text-zinc-300 font-semibold text-sm flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-amber-500" />
+                    Modalidade da Venda & Garantia
+                  </FormLabel>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Opção 1: Venda Padrão com Garantia */}
+                    <div
+                      onClick={() => field.onChange(false)}
+                      className={cn(
+                        'p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 select-none',
+                        !field.value
+                          ? 'border-emerald-500/60 bg-emerald-950/20 shadow-md ring-1 ring-emerald-500/40'
+                          : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700 opacity-70 hover:opacity-100',
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
+                              !field.value
+                                ? 'border-emerald-400 bg-emerald-400'
+                                : 'border-zinc-600',
+                            )}
+                          >
+                            {!field.value && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
+                          </div>
+                          <span className="font-bold text-sm text-white">
+                            Venda Padrão de Loja
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                          Garantia 90 Dias
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-400 leading-relaxed">
+                        Inclui termo formal de garantia legal de 90 dias / 3.000 KM para motor e câmbio (CDC).
+                      </p>
+                    </div>
+
+                    {/* Opção 2: Moto de Repasse sem Garantia */}
+                    <div
+                      onClick={() => {
+                        field.onChange(true);
+                        if (!form.getValues('receipt_notes')) {
+                          form.setValue(
+                            'receipt_notes',
+                            'Venda realizada na modalidade REPASSE no estado em que se encontra, sem garantia comercial ou mecânica, por valor negociado abaixo do mercado. Comprador declara ter vistoriado e aprovado o bem.',
+                          );
+                        }
+                      }}
+                      className={cn(
+                        'p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 select-none',
+                        field.value
+                          ? 'border-amber-500/80 bg-amber-950/30 shadow-md ring-1 ring-amber-500/50'
+                          : 'border-zinc-800 bg-zinc-950/60 hover:border-zinc-700 opacity-70 hover:opacity-100',
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
+                              field.value
+                                ? 'border-amber-400 bg-amber-400'
+                                : 'border-zinc-600',
+                            )}
+                          >
+                            {field.value && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
+                          </div>
+                          <span className="font-bold text-sm text-amber-300">
+                            Moto de Repasse
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                          Sem Garantia
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-300 leading-relaxed">
+                        Venda no estado em que se encontra por preço abaixo de tabela. Remove a garantia de 90 dias no recibo e PDF.
+                      </p>
+                    </div>
+                  </div>
+
+                  {field.value && (
+                    <div className="p-3.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-xs text-amber-200/95 space-y-1">
+                      <div className="font-bold flex items-center gap-1.5 text-amber-300">
+                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                        Modalidade Repasse Ativada
+                      </div>
+                      <p className="leading-relaxed text-[11px] text-zinc-300">
+                        O recibo impresso e o PDF oficial desta venda <strong>não incluirão as cláusulas de 90 dias de garantia</strong>. Em seu lugar, será impressa a <strong>Cláusula de Venda em Modalidade Repasse</strong> (veículo alienado no estado em que se encontra, preço abaixo do mercado e vistoria prévia pelo comprador).
+                      </p>
+                    </div>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Atalhos de Texto Padrão */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-zinc-400 flex items-center gap-1 mr-1">

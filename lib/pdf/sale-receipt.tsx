@@ -328,9 +328,15 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
               </View>
             )}
             <Text style={styles.receiptDate}>Emissão: {formatDateBR(sale.sale_date)}</Text>
-            <Text style={{ fontSize: 6, color: '#15803d', fontFamily: 'Helvetica-Bold', marginTop: 1.5 }}>
-              COMPROVANTE OFICIAL DE ENTREGA
-            </Text>
+            {sale.is_repasse ? (
+              <Text style={{ fontSize: 6, color: '#b45309', fontFamily: 'Helvetica-Bold', marginTop: 1.5 }}>
+                MODALIDADE REPASSE (SEM GARANTIA)
+              </Text>
+            ) : (
+              <Text style={{ fontSize: 6, color: '#15803d', fontFamily: 'Helvetica-Bold', marginTop: 1.5 }}>
+                COMPROVANTE OFICIAL DE ENTREGA
+              </Text>
+            )}
           </View>
         </View>
 
@@ -424,84 +430,157 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
             <Text style={styles.sectionTitle}>3. Condições Financeiras & Quitação</Text>
             <Text style={styles.sectionSub}>Data: {formatDateBR(sale.sale_date)}</Text>
           </View>
-          <View style={styles.card}>
-            <View style={styles.table}>
-              <View style={styles.tableRowHeader}>
-                <Text style={styles.th1}>Discriminação</Text>
-                <Text style={styles.th2}>Modalidade</Text>
-                <Text style={styles.th3}>Situação</Text>
-                <Text style={styles.th4}>Valor (R$)</Text>
-              </View>
-              <View style={styles.tableRow}>
-                <Text style={styles.td1}>Valor Total do Veículo</Text>
-                <Text style={styles.td2}>{paymentLabels[sale.payment_method || 'PIX'] || sale.payment_method}</Text>
-                <Text style={styles.td3}>{sale.payment_status === 'PAID' ? 'Quitado' : 'Parcial'}</Text>
-                <Text style={styles.td4}>{formatCurrencyBRL(sale.sale_price)}</Text>
-              </View>
+          {(() => {
+            const salePrice = Number(sale.sale_price) || 0;
+            const tradeAmount = Number(sale.trade_amount) || 0;
+            const financedAmount = Number(sale.financed_amount) || 0;
+            const entryAmount = Number(sale.entry_amount) || 0;
+            const hasTradeOrFinancing = tradeAmount > 0 || financedAmount > 0;
+            const directPaidAmount = entryAmount > 0 
+              ? entryAmount 
+              : hasTradeOrFinancing 
+                ? Math.max(0, salePrice - tradeAmount - financedAmount) 
+                : 0;
 
-              {Number(sale.entry_amount) > 0 && (
-                <View style={styles.tableRow}>
-                  <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4 }]}>↳ Valor de Entrada</Text>
-                  <Text style={[styles.td2, { fontSize: 6.5 }]}>À Vista</Text>
-                  <Text style={[styles.td3, { fontSize: 6.5 }]}>Recebido</Text>
-                  <Text style={[styles.td4, { fontSize: 6.5 }]}>{formatCurrencyBRL(sale.entry_amount)}</Text>
+            const paymentMethodNames: Record<string, string> = {
+              PIX: 'PIX',
+              FINANCIAMENTO: 'Financiamento',
+              CARTAO: 'Cartão de Crédito',
+              DINHEIRO: 'Dinheiro',
+              TROCA: 'Moto na Troca',
+              TRANSFERENCIA: 'Transferência TED',
+              OUTRO: 'Outro',
+            };
+
+            const rawMethod = paymentMethodNames[sale.payment_method || 'PIX'] || sale.payment_method || 'PIX';
+
+            let compositionLabel = paymentLabels[sale.payment_method || 'PIX'] || sale.payment_method || 'À Vista';
+            if (tradeAmount > 0 && financedAmount > 0) {
+              compositionLabel = `Moto na Troca + Financiamento + ${rawMethod}`;
+            } else if (tradeAmount > 0) {
+              compositionLabel = directPaidAmount > 0 ? `Moto na Troca + ${rawMethod}` : 'Moto na Troca';
+            } else if (financedAmount > 0) {
+              compositionLabel = directPaidAmount > 0 ? `Financiamento + ${rawMethod}` : 'Financiamento Bancário';
+            }
+
+            return (
+              <View style={styles.card}>
+                <View style={styles.table}>
+                  <View style={styles.tableRowHeader}>
+                    <Text style={styles.th1}>Discriminação</Text>
+                    <Text style={styles.th2}>Modalidade</Text>
+                    <Text style={styles.th3}>Situação</Text>
+                    <Text style={styles.th4}>Valor (R$)</Text>
+                  </View>
+                  <View style={styles.tableRow}>
+                    <Text style={styles.td1}>Valor Total Negociado</Text>
+                    <Text style={styles.td2}>{compositionLabel}</Text>
+                    <Text style={styles.td3}>{sale.payment_status === 'PAID' ? 'Total Liquidado' : 'Saldo Pendente'}</Text>
+                    <Text style={styles.td4}>{formatCurrencyBRL(sale.sale_price)}</Text>
+                  </View>
+
+                  {tradeAmount > 0 && (
+                    <View style={styles.tableRow}>
+                      <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4, fontFamily: 'Helvetica-Bold' }]}>↳ Veículo na Troca (Moto de Entrada)</Text>
+                      <Text style={[styles.td2, { fontSize: 6.5 }]}>Avaliação Física</Text>
+                      <Text style={[styles.td3, { fontSize: 6.5, color: '#7e22ce' }]}>Recebido / Entregue</Text>
+                      <Text style={[styles.td4, { fontSize: 6.5, color: '#7e22ce', fontFamily: 'Helvetica-Bold' }]}>{formatCurrencyBRL(tradeAmount)}</Text>
+                    </View>
+                  )}
+
+                  {financedAmount > 0 && (
+                    <View style={styles.tableRow}>
+                      <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4, fontFamily: 'Helvetica-Bold' }]}>↳ Saldo Financiado</Text>
+                      <Text style={[styles.td2, { fontSize: 6.5 }]}>Instituição Bancária</Text>
+                      <Text style={[styles.td3, { fontSize: 6.5, color: '#1d4ed8' }]}>Aprovado</Text>
+                      <Text style={[styles.td4, { fontSize: 6.5, color: '#1d4ed8', fontFamily: 'Helvetica-Bold' }]}>{formatCurrencyBRL(financedAmount)}</Text>
+                    </View>
+                  )}
+
+                  {hasTradeOrFinancing && directPaidAmount > 0 && (
+                    <View style={styles.tableRow}>
+                      <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4, fontFamily: 'Helvetica-Bold' }]}>↳ Diferença Paga via {rawMethod}</Text>
+                      <Text style={[styles.td2, { fontSize: 6.5 }]}>{rawMethod} (À Vista)</Text>
+                      <Text style={[styles.td3, { fontSize: 6.5, color: '#15803d' }]}>Recebido / Quitado</Text>
+                      <Text style={[styles.td4, { fontSize: 6.5, color: '#15803d', fontFamily: 'Helvetica-Bold' }]}>{formatCurrencyBRL(directPaidAmount)}</Text>
+                    </View>
+                  )}
+
+                  {!hasTradeOrFinancing && entryAmount > 0 && (
+                    <View style={styles.tableRow}>
+                      <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4, fontFamily: 'Helvetica-Bold' }]}>↳ Valor de Entrada</Text>
+                      <Text style={[styles.td2, { fontSize: 6.5 }]}>{rawMethod} (À Vista)</Text>
+                      <Text style={[styles.td3, { fontSize: 6.5, color: '#15803d' }]}>Recebido</Text>
+                      <Text style={[styles.td4, { fontSize: 6.5, color: '#15803d', fontFamily: 'Helvetica-Bold' }]}>{formatCurrencyBRL(entryAmount)}</Text>
+                    </View>
+                  )}
                 </View>
-              )}
-              {Number(sale.financed_amount) > 0 && (
-                <View style={styles.tableRow}>
-                  <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4 }]}>↳ Financiamento</Text>
-                  <Text style={[styles.td2, { fontSize: 6.5 }]}>Bancário</Text>
-                  <Text style={[styles.td3, { fontSize: 6.5, color: '#1d4ed8' }]}>Aprovado</Text>
-                  <Text style={[styles.td4, { fontSize: 6.5 }]}>{formatCurrencyBRL(sale.financed_amount)}</Text>
-                </View>
-              )}
-              {Number(sale.trade_amount) > 0 && (
-                <View style={styles.tableRow}>
-                  <Text style={[styles.td1, { fontSize: 6.5, paddingLeft: 4 }]}>↳ Moto na Troca</Text>
-                  <Text style={[styles.td2, { fontSize: 6.5 }]}>Avaliação</Text>
-                  <Text style={[styles.td3, { fontSize: 6.5, color: '#7e22ce' }]}>Entregue</Text>
-                  <Text style={[styles.td4, { fontSize: 6.5 }]}>{formatCurrencyBRL(sale.trade_amount)}</Text>
-                </View>
-              )}
+
+                {sale.receipt_notes && (
+                  <View style={{ marginTop: 3, paddingTop: 2, borderTopWidth: 0.5, borderTopColor: '#cbd5e1' }}>
+                    <Text style={{ fontSize: 6, color: '#475569' }}>
+                      <Text style={{ fontFamily: 'Helvetica-Bold' }}>Obs:</Text> {sale.receipt_notes}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            );
+          })()}
+        </View>
+
+        {/* 4. SEÇÃO TERMOS LEGAIS (CONDICIONAL: REPASSE vs GARANTIA PADRÃO) */}
+        {sale.is_repasse ? (
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, { borderLeftColor: '#d97706', backgroundColor: '#fef3c7' }]}>
+              <Text style={[styles.sectionTitle, { color: '#78350f' }]}>4. Termo de Venda em Modalidade Repasse & Isenção de Garantia</Text>
+              <Text style={[styles.sectionSub, { color: '#92400e' }]}>Venda no Estado • Preço Abaixo de Mercado • Art. 123 e 134 CTB</Text>
             </View>
-
-            {sale.receipt_notes && (
-              <View style={{ marginTop: 3, paddingTop: 2, borderTopWidth: 0.5, borderTopColor: '#cbd5e1' }}>
-                <Text style={{ fontSize: 6, color: '#475569' }}>
-                  <Text style={{ fontFamily: 'Helvetica-Bold' }}>Obs:</Text> {sale.receipt_notes}
-                </Text>
-              </View>
-            )}
+            <View style={[styles.legalCard, { backgroundColor: '#fffbeb', borderColor: '#fde68a' }]}>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.1. Venda na Modalidade Repasse (Preço Reduzido):</Text> O COMPRADOR declara ter plena e inequívoca ciência de que o presente negócio jurídico é celebrado estritamente sob a modalidade comercial de REPASSE, tendo o valor da motocicleta sido pactuado em patamar substancialmente inferior ao preço médio de mercado e de tabela, em virtude de sua alienação direta no estado de conservação, uso e mecânica em que se encontra ("as is").
+              </Text>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.2. Inexistência de Garantia Comercial ou Mecânica:</Text> Em virtude do preço reduzido de repasse e da modalidade acordada, fica expressamente convencionado que a presente venda NÃO POSSUI QUALQUER GARANTIA mecânica, elétrica, estrutural, de motor, câmbio ou de quaisquer outros componentes por parte da Loja "{storeName}". O COMPRADOR assume de forma irrevogável e integral todos os riscos, custos e ônus de eventuais revisões, manutenções preventivas, corretivas ou substituições de peças a partir da presente data.
+              </Text>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.3. Vistoria Prévia, Teste e Aceitação Irrestrita:</Text> O COMPRADOR declara formalmente que inspecionou, avaliou, testou e aprovou as condições gerais do veículo (pessoalmente ou através de mecânico de sua estrita confiança), aceitando o bem no estado de conservação, lataria, mecânica, elétrica, pneus e quilometragem em que se encontra, nada tendo a reclamar a qualquer título ou pretexto.
+              </Text>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.4. Transporte e Despesas de Remoção:</Text> Quaisquer despesas com transporte, guincho, combustível ou deslocamento do veículo correm por conta e responsabilidade exclusiva do COMPRADOR.
+              </Text>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.5. Vistoria Cautelar, Multas e Transferência DETRAN (CTB):</Text> A partir da presente data e hora da entrega física, todas as responsabilidades civis, criminais e multas/infrações de trânsito recaem exclusivamente sobre o COMPRADOR, que se obriga a efetivar a transferência no DETRAN no prazo legal de 30 (trinta) dias (Art. 123 do CTB), ficando a LOJA autorizada a realizar a devida Comunicação de Venda (Art. 134 do CTB).
+              </Text>
+            </View>
           </View>
-        </View>
-
-        {/* 4. SEÇÃO TERMO DE GARANTIA (90 DIAS OU 3.000 KM) & PROTEÇÃO JURÍDICA */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>4. Termo de Garantia (90 Dias / 3.000 KM), Vistoria & Proteção Legal</Text>
-            <Text style={styles.sectionSub}>Art. 18 e 26 CDC & Art. 123 e 134 CTB</Text>
+        ) : (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>4. Termo de Garantia (90 Dias / 3.000 KM), Vistoria & Proteção Legal</Text>
+              <Text style={styles.sectionSub}>Art. 18 e 26 CDC & Art. 123 e 134 CTB</Text>
+            </View>
+            <View style={styles.legalCard}>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.1. Garantia Legal de 90 Dias ou 3.000 KM (Motor e Câmbio):</Text> A Loja "{storeName}" concede ao ADQUIRENTE garantia legal pelo prazo improrrogável de 90 (noventa) dias corridos ou 3.000 (três mil) quilômetros rodados, o que primeiro ocorrer, a contar da data de entrega do veículo, nos termos do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO.
+              </Text>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.2. Exclusões Expressas por Mau Uso, Modificações e Negligência:</Text> A garantia NÃO COBRE avarias decorrentes de: a) Mau uso, sobre-rotação ("corte de giro"), empinar/manobras, sobrecarga de carga/passageiros ou competições; b) Falta, atraso na troca de óleo, nível insuficiente de lubrificante ou uso de combustível adulterado; c) Quedas, colisões, acidentes ou submersão em água/alagamentos; d) Instalação de escapamento esportivo, remap de injeção, corte de chicote elétrico, alarmes ou rastreadores não homologados pela LOJA.
+              </Text>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.3. Perda Imediata da Garantia por Intervenção de Terceiros e Prazos:</Text> Havendo suspeita de anomalia, o ADQUIRENTE deve comunicar imediatamente a LOJA e apresentar o veículo na sede da {storeName}. Qualquer desmontagem, abertura de motor, rompimento de lacres ou tentativa de conserto por mecânicos terceiros sem autorização formal por escrito implicará na PERDA TOTAL E IMEDIATA DA GARANTIA. Em caso de reparo coberto, a LOJA disporá do prazo legal de até 30 (trinta) dias para solução do vício (Art. 18, § 1º do CDC).
+              </Text>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.4. Transporte e Despesas de Reboque:</Text> O transporte, guincho ou reboque do veículo até a sede da Loja "{storeName}" para diagnóstico ou reparo é de responsabilidade e custo exclusivo do ADQUIRENTE.
+              </Text>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.5. Itens de Desgaste Natural e Manutenção Preventiva:</Text> Fica expressamente convencionado que NÃO são cobertos pela garantia componentes sujeitos a desgaste natural por atrito e rodagem (pneus, câmaras de ar, pastilhas/lonas de freio, relação/transmissão, cabos de embreagem/acelerador, bateria, lâmpadas, velas e filtros), cabendo sua manutenção periódica exclusivamente ao COMPRADOR.
+              </Text>
+              <Text style={styles.legalText}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.6. Vistoria, Infrações e Transferência DETRAN (CTB):</Text> O COMPRADOR declara que vistoriou, testou e aprovou as condições estéticas, mecânicas e estruturais do veículo. A partir da presente data e hora da entrega física, todas as responsabilidades civis, criminais e multas/infrações de trânsito recaem exclusivamente sobre o COMPRADOR, que se obriga a efetivar a transferência no DETRAN no prazo legal de 30 (trinta) dias (Art. 123 do CTB), ficando a LOJA autorizada a realizar a devida Comunicação de Venda (Art. 134 do CTB).
+              </Text>
+            </View>
           </View>
-          <View style={styles.legalCard}>
-            <Text style={styles.legalText}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.1. Garantia Legal de 90 Dias ou 3.000 KM (Motor e Câmbio):</Text> A Loja "{storeName}" concede ao ADQUIRENTE garantia legal pelo prazo improrrogável de 90 (noventa) dias corridos ou 3.000 (três mil) quilômetros rodados, o que primeiro ocorrer, a contar da data de entrega do veículo, nos termos do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO.
-            </Text>
-            <Text style={styles.legalText}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.2. Exclusões Expressas por Mau Uso, Modificações e Negligência:</Text> A garantia NÃO COBRE avarias decorrentes de: a) Mau uso, sobre-rotação ("corte de giro"), empinar/manobras, sobrecarga de carga/passageiros ou competições; b) Falta, atraso na troca de óleo, nível insuficiente de lubrificante ou uso de combustível adulterado; c) Quedas, colisões, acidentes ou submersão em água/alagamentos; d) Instalação de escapamento esportivo, remap de injeção, corte de chicote elétrico, alarmes ou rastreadores não homologados pela LOJA.
-            </Text>
-            <Text style={styles.legalText}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.3. Perda Imediata da Garantia por Intervenção de Terceiros e Prazos:</Text> Havendo suspeita de anomalia, o ADQUIRENTE deve comunicar imediatamente a LOJA e apresentar o veículo na sede da {storeName}. Qualquer desmontagem, abertura de motor, rompimento de lacres ou tentativa de conserto por mecânicos terceiros sem autorização formal por escrito implicará na PERDA TOTAL E IMEDIATA DA GARANTIA. Em caso de reparo coberto, a LOJA disporá do prazo legal de até 30 (trinta) dias para solução do vício (Art. 18, § 1º do CDC).
-            </Text>
-            <Text style={styles.legalText}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.4. Transporte e Despesas de Reboque:</Text> O transporte, guincho ou reboque do veículo até a sede da Loja "{storeName}" para diagnóstico ou reparo é de responsabilidade e custo exclusivo do ADQUIRENTE.
-            </Text>
-            <Text style={styles.legalText}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.5. Itens de Desgaste Natural e Manutenção Preventiva:</Text> Fica expressamente convencionado que NÃO são cobertos pela garantia componentes sujeitos a desgaste natural por atrito e rodagem (pneus, câmaras de ar, pastilhas/lonas de freio, relação/transmissão, cabos de embreagem/acelerador, bateria, lâmpadas, velas e filtros), cabendo sua manutenção periódica exclusivamente ao COMPRADOR.
-            </Text>
-            <Text style={styles.legalText}>
-              <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.6. Vistoria, Infrações e Transferência DETRAN (CTB):</Text> O COMPRADOR declara que vistoriou, testou e aprovou as condições estéticas, mecânicas e estruturais do veículo. A partir da presente data e hora da entrega física, todas as responsabilidades civis, criminais e multas/infrações de trânsito recaem exclusivamente sobre o COMPRADOR, que se obriga a efetivar a transferência no DETRAN no prazo legal de 30 (trinta) dias (Art. 123 do CTB), ficando a LOJA autorizada a realizar a devida Comunicação de Venda (Art. 134 do CTB).
-            </Text>
-          </View>
-        </View>
+        )}
 
         {/* 5. SEÇÃO ASSINATURAS */}
         <View style={styles.signaturesContainer}>

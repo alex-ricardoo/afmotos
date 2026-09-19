@@ -142,6 +142,8 @@ export function CaixaDebitBrandIcon({ className = 'h-5 w-5', ...props }: IconPro
 
 /**
  * Ícone Oficial Boleto Bancário com Código de Barras
+ * @deprecated Retido exclusivamente para compatibilidade histórica de relatórios/testes legados.
+ * Não utilizar em novos componentes ou fluxos de checkout da AF Motos.
  */
 export function BoletoBrandIcon({ className = 'h-5 w-5', ...props }: IconProps) {
   return (

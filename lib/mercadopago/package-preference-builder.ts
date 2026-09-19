@@ -1,5 +1,6 @@
 import { resolveCheckoutProUrls, type DeploymentEnvironment } from './checkout-pro-urls.ts';
 import { removeEmptyFields, type PreferenceCreateBody } from './preference-builder.ts';
+import { buildCheckoutPaymentMethodsPolicy } from './payment-method-policy.ts';
 import { CheckoutProValidationError } from './error-normalizer.ts';
 import type { CreditPackageOrder, CreditPackageOffer } from '../credits/types.ts';
 
@@ -59,9 +60,7 @@ export function buildPackagePreferenceBody(
     back_urls: resolvedUrls.backUrls,
     auto_return: resolvedUrls.autoReturn,
     notification_url: resolvedUrls.notificationUrl,
-    payment_methods: {
-      installments: 12,
-    },
+    payment_methods: buildCheckoutPaymentMethodsPolicy(12),
   };
 
   return removeEmptyFields(rawBody) as PreferenceCreateBody;

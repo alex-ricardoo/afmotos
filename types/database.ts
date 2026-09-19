@@ -177,6 +177,7 @@ export interface Sale {
   renavam?: string | null;
   chassi?: string | null;
   legal_terms_accepted?: boolean;
+  is_repasse?: boolean | null;
   receipt_number: string | null;
   receipt_notes: string | null;
   consignment_id: string | null;

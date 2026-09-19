@@ -137,8 +137,8 @@ export default async function TermosDeUsoPage() {
             Créditos B2B disponibilizados na área do cliente.
           </p>
           <p>
-            Todos os pagamentos são intermediados de forma segura pelo gateway Mercado Pago (PIX ou
-            Cartão de Crédito). A liberação do laudo ou a adição de saldo à carteira do usuário
+            Todos os pagamentos são intermediados de forma segura pelo gateway Mercado Pago (PIX,
+            Cartão de Crédito, Débito ou Saldo Mercado Pago, conforme disponibilidade). A liberação do laudo ou a adição de saldo à carteira do usuário
             ocorre de forma automática e instantânea logo após a confirmação irrevogável do
             pagamento enviada pela instituição bancária.
           </p>

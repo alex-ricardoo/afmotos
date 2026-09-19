@@ -379,6 +379,7 @@ export async function POST(request: NextRequest) {
       paymentMethodsKeys: preferenceBody.payment_methods
         ? Object.keys(preferenceBody.payment_methods)
         : [],
+      payment_method_policy: 'boleto_excluded',
     });
 
     // 8. Inicialização do Cliente SDK

@@ -146,6 +146,7 @@ export async function createSaleAction(rawData: SaleFormValues) {
     renavam: data.renavam?.trim() || null,
     chassi: data.chassi?.trim() ? data.chassi.trim().toUpperCase() : null,
     legal_terms_accepted: data.legal_terms_accepted ?? true,
+    is_repasse: Boolean(data.is_repasse),
     receipt_number: receiptNumber,
     receipt_notes: data.receipt_notes?.trim() || null,
     notes: data.notes?.trim() || null,
@@ -263,16 +264,44 @@ export async function updateSaleAction(id: string, rawData: Partial<SaleFormValu
   const formattedAddress = addressParts.length > 0 ? addressParts.join(', ') : rawData.buyer_address?.trim() || null;
 
   const updateData: Record<string, any> = {
-    ...rawData,
     buyer_address: formattedAddress,
     updated_at: new Date().toISOString(),
   };
 
-  if (rawData.chassi) {
-    updateData.chassi = rawData.chassi.trim().toUpperCase();
+  if (rawData.customer_id !== undefined) updateData.customer_id = rawData.customer_id;
+  if (rawData.motorcycle_id !== undefined) updateData.motorcycle_id = rawData.motorcycle_id;
+  if (rawData.sale_price !== undefined) updateData.sale_price = rawData.sale_price;
+  if (rawData.sale_date !== undefined) updateData.sale_date = rawData.sale_date;
+  if (rawData.buyer_name !== undefined) updateData.buyer_name = rawData.buyer_name?.trim() || null;
+  if (rawData.buyer_phone !== undefined) updateData.buyer_phone = rawData.buyer_phone?.trim() || null;
+  if (rawData.buyer_email !== undefined) updateData.buyer_email = rawData.buyer_email?.trim() || null;
+  if (rawData.buyer_document !== undefined) updateData.buyer_document = rawData.buyer_document?.trim() || null;
+  if (rawData.buyer_cep !== undefined) updateData.buyer_cep = rawData.buyer_cep?.trim() || null;
+  if (rawData.buyer_street !== undefined) updateData.buyer_street = rawData.buyer_street?.trim() || null;
+  if (rawData.buyer_number !== undefined) updateData.buyer_number = rawData.buyer_number?.trim() || null;
+  if (rawData.buyer_complement !== undefined) updateData.buyer_complement = rawData.buyer_complement?.trim() || null;
+  if (rawData.buyer_neighborhood !== undefined) updateData.buyer_neighborhood = rawData.buyer_neighborhood?.trim() || null;
+  if (rawData.buyer_city !== undefined) updateData.buyer_city = rawData.buyer_city?.trim() || null;
+  if (rawData.buyer_state !== undefined) {
+    updateData.buyer_state = rawData.buyer_state?.trim() ? rawData.buyer_state.trim().toUpperCase().slice(0, 2) : null;
   }
-  if (rawData.renavam) {
-    updateData.renavam = rawData.renavam.trim();
+  if (rawData.payment_method !== undefined) updateData.payment_method = rawData.payment_method;
+  if (rawData.payment_status !== undefined) updateData.payment_status = rawData.payment_status;
+  if (rawData.amount_paid !== undefined) updateData.amount_paid = rawData.amount_paid;
+  if (rawData.entry_amount !== undefined) updateData.entry_amount = rawData.entry_amount;
+  if (rawData.financed_amount !== undefined) updateData.financed_amount = rawData.financed_amount;
+  if (rawData.trade_amount !== undefined) updateData.trade_amount = rawData.trade_amount;
+  if (rawData.delivery_km !== undefined) updateData.delivery_km = rawData.delivery_km;
+  if (rawData.legal_terms_accepted !== undefined) updateData.legal_terms_accepted = rawData.legal_terms_accepted;
+  if (rawData.is_repasse !== undefined) updateData.is_repasse = Boolean(rawData.is_repasse);
+  if (rawData.receipt_notes !== undefined) updateData.receipt_notes = rawData.receipt_notes?.trim() || null;
+  if (rawData.notes !== undefined) updateData.notes = rawData.notes?.trim() || null;
+
+  if (rawData.chassi !== undefined) {
+    updateData.chassi = rawData.chassi?.trim() ? rawData.chassi.trim().toUpperCase() : null;
+  }
+  if (rawData.renavam !== undefined) {
+    updateData.renavam = rawData.renavam?.trim() || null;
   }
 
   const { data: updatedSale, error } = await supabase

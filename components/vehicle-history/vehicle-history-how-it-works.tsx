@@ -33,9 +33,9 @@ const HOW_IT_WORKS_STEPS: StepItem[] = [
     badge: 'Mercado Pago Oficial',
     title: 'Checkout Seguro Mercado Pago',
     description:
-      'Pague com total segurança no ambiente oficial do Mercado Pago via Pix instantâneo, Cartão de Crédito em até 12x, Débito Caixa ou Boleto.',
+      'Pague com total segurança no ambiente oficial do Mercado Pago via Pix instantâneo, Cartão de Crédito em até 12x, Débito Caixa ou Saldo Mercado Pago.',
     icon: CreditCard,
-    pill: 'Pix, Cartão até 12x, Débito & Boleto',
+    pill: 'Pix, Cartão até 12x, Débito & Saldo MP',
   },
   {
     number: '03',

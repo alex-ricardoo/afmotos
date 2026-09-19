@@ -120,8 +120,15 @@ export function SalesTable({ sales }: SalesTableProps) {
 
                   {/* Veículo */}
                   <TableCell>
-                    <div className="font-bold text-white text-sm">
-                      {moto?.brand} {moto?.model} {moto?.version || ''}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="font-bold text-white text-sm">
+                        {moto?.brand} {moto?.model} {moto?.version || ''}
+                      </div>
+                      {sale.is_repasse && (
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                          Repasse
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-zinc-400 flex items-center gap-2 mt-0.5 font-mono">
                       <span>{moto?.year_model}</span>

@@ -15,7 +15,7 @@ export const VEHICLE_HISTORY_FAQS: VehicleHistoryFaqItem[] = [
     id: 'formas-pagamento-mercado-pago',
     question: 'Quais são as formas de pagamento e como funciona o Mercado Pago?',
     answer:
-      'O pagamento é processado com máxima segurança diretamente pelo Mercado Pago em ambiente oficial e criptografado. Aceitamos: Pix com aprovação imediata em segundos, Cartão de Crédito com parcelamento em até 12x, Cartão de Débito virtual da Caixa Econômica Federal, ou Boleto Bancário e Saldo em conta Mercado Pago.',
+      'O pagamento é processado com máxima segurança diretamente pelo Mercado Pago em ambiente oficial e criptografado. Aceitamos: Pix com aprovação imediata em segundos, Cartão de Crédito com parcelamento em até 12x, Cartão de Débito virtual da Caixa Econômica Federal e Saldo em conta Mercado Pago. Os meios exibidos no checkout podem variar conforme a elegibilidade e disponibilidade do Mercado Pago.',
   },
   {
     id: 'imprimir-pdf',

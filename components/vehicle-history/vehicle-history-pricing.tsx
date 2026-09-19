@@ -17,7 +17,6 @@ import {
   PixBrandIcon,
   CreditCardBrandIcon,
   CaixaDebitBrandIcon,
-  BoletoBrandIcon,
 } from '@/components/customer/payment-brand-icons';
 import { VehicleHistorySettings } from '@/types/site-settings';
 import { buildVehicleHistoryB2BWhatsAppUrl } from '@/lib/utils/whatsapp';
@@ -40,14 +39,14 @@ const B2C_FEATURES = [
   'Área do Cliente: laudos salvos com acesso vitalício',
   'Download do Laudo Oficial em PDF pronto para imprimir',
   'Plataforma multi-veículos: consulte quantas placas precisar',
-  'Ambiente Mercado Pago: Pix imediato, Cartão até 12x, Débito e Boleto',
+  'Ambiente Mercado Pago: Pix imediato, Cartão até 12x, Débito e Saldo MP',
 ];
 
 const PAYMENT_UTILITIES: UtilityItem[] = [
   { icon: PixBrandIcon, label: 'Pix Instantâneo' },
   { icon: CreditCardBrandIcon, label: 'Cartão até 12x' },
   { icon: CaixaDebitBrandIcon, label: 'Débito Caixa' },
-  { icon: BoletoBrandIcon, label: 'Boleto / Saldo MP' },
+  { icon: MercadoPagoBrandIcon, label: 'Saldo Mercado Pago' },
 ];
 
 /**
@@ -126,7 +125,7 @@ export function VehicleHistoryPricing({
           const defaultPerks = isWa
             ? [
                 'Volume a partir de 50 consultas',
-                'Faturamento corporativo via boleto PJ',
+                'Condições comerciais personalizadas',
                 'Atendimento comercial prioritário',
               ]
             : [
@@ -247,7 +246,7 @@ export function VehicleHistoryPricing({
             totalPrice: 'Sob consulta',
             perks: [
               'Volume a partir de 50 consultas',
-              'Faturamento corporativo via boleto PJ',
+              'Condições comerciais personalizadas',
               'Atendimento comercial prioritário',
             ],
             highlight: false,

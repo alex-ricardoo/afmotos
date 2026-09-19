@@ -158,6 +158,7 @@ export async function POST(
       flowId,
       orderId: order.id,
       preferenceId: preferenceResponse.id,
+      payment_method_policy: 'boleto_excluded',
       durationMs: Date.now() - startTime,
     });
 

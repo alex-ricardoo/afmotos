@@ -41,6 +41,7 @@ export type CheckoutProLogEvent =
   | 'checkout_pro.payment_fetch_started'
   | 'checkout_pro.payment_fetch_succeeded'
   | 'checkout_pro.payment_fetch_failed'
+  | 'checkout_pro.unexpected_ticket_payment_detected'
   | 'checkout_pro.transaction_updated'
   | 'checkout_pro.consultation_release_started'
   | 'checkout_pro.consultation_release_succeeded'
@@ -160,6 +161,8 @@ export interface LogContext {
   status?: string;
   statusDetail?: string;
   paymentId?: string;
+  paymentTypeId?: string | null;
+  payment_method_policy?: string | null;
   jobId?: string;
   jobIdMasked?: string | null;
   signatureValid?: boolean;
@@ -169,6 +172,7 @@ export interface LogContext {
   creditsConsumed?: number;
   creditsRemaining?: number;
   creditsRevoked?: number;
+  [key: string]: unknown;
 }
 
 /**

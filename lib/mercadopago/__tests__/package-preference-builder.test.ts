@@ -64,6 +64,10 @@ describe('Credit Package Preference Builder', () => {
 
       const backUrls = body.back_urls as { success?: string; pending?: string; failure?: string };
       assert.ok(backUrls.success?.includes('/cliente/pacotes/retorno/order-123-uuid'));
+
+      assert.equal(body.payment_methods?.installments, 12);
+      assert.deepEqual(body.payment_methods?.excluded_payment_types, [{ id: 'ticket' }]);
+      assert.ok(body.payment_methods?.excluded_payment_methods?.some((m) => m.id === 'bolbradesco'));
     } finally {
       process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
     }

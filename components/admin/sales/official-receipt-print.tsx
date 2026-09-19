@@ -197,9 +197,15 @@ export function OfficialReceiptPrint({
                   Emissão: {emissionDate}
                 </span>
               </div>
-              <span className="block text-[10px] uppercase font-bold tracking-wider text-emerald-700 mt-0.5">
-                Comprovante Oficial de Entrega
-              </span>
+              {sale.is_repasse ? (
+                <span className="inline-block text-[10px] uppercase font-bold tracking-wider text-amber-800 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded mt-0.5">
+                  Modalidade Repasse • Sem Garantia
+                </span>
+              ) : (
+                <span className="block text-[10px] uppercase font-bold tracking-wider text-emerald-700 mt-0.5">
+                  Comprovante Oficial de Entrega
+                </span>
+              )}
             </div>
           </div>
 
@@ -311,148 +317,226 @@ export function OfficialReceiptPrint({
               <span className="text-[10px] text-slate-500">Data da Venda: {formatDate(sale.sale_date)}</span>
             </div>
 
-            <div className="bg-slate-50/80 p-3 sm:p-3.5 rounded-lg border border-slate-200 text-xs">
-              {/* Layout Mobile (Cards empilhados verticais sem quebra de texto) */}
-              <div className="block sm:hidden print:hidden space-y-2.5">
-                <div className="bg-white p-3 rounded-lg border border-slate-200/90 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase font-semibold block">Valor Total</span>
-                    <span className="text-base font-black text-slate-950 font-mono">
-                      {formatCurrency(sale.sale_price)}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isPaid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                      {isPaid ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                      {isPaid ? 'Quitado Integralmente' : 'Parcial / Saldo Pendente'}
-                    </span>
-                    <span className="text-[11px] text-slate-600 block mt-0.5">
-                      {paymentLabels[sale.payment_method || 'PIX'] || sale.payment_method}
-                    </span>
-                  </div>
-                </div>
+            {(() => {
+              const salePrice = Number(sale.sale_price) || 0;
+              const tradeAmount = Number(sale.trade_amount) || 0;
+              const financedAmount = Number(sale.financed_amount) || 0;
+              const entryAmount = Number(sale.entry_amount) || 0;
+              const hasTradeOrFinancing = tradeAmount > 0 || financedAmount > 0;
+              const directPaidAmount = entryAmount > 0 
+                ? entryAmount 
+                : hasTradeOrFinancing 
+                  ? Math.max(0, salePrice - tradeAmount - financedAmount) 
+                  : 0;
 
-                {(Number(sale.entry_amount) > 0 || Number(sale.financed_amount) > 0 || Number(sale.trade_amount) > 0) && (
-                  <div className="bg-white p-2.5 rounded-lg border border-slate-200/70 space-y-1.5 text-[11px]">
-                    {Number(sale.entry_amount) > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600">↳ Valor Entrada:</span>
-                        <span className="font-mono font-bold text-slate-900">{formatCurrency(sale.entry_amount)}</span>
-                      </div>
-                    )}
-                    {Number(sale.financed_amount) > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600">↳ Financiamento:</span>
-                        <span className="font-mono font-bold text-slate-900">{formatCurrency(sale.financed_amount)}</span>
-                      </div>
-                    )}
-                    {Number(sale.trade_amount) > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600">↳ Moto na Troca:</span>
-                        <span className="font-mono font-bold text-slate-900">{formatCurrency(sale.trade_amount)}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              const paymentMethodNames: Record<string, string> = {
+                PIX: 'PIX',
+                FINANCIAMENTO: 'Financiamento',
+                CARTAO: 'Cartão de Crédito',
+                DINHEIRO: 'Dinheiro',
+                TROCA: 'Moto na Troca',
+                TRANSFERENCIA: 'Transferência TED',
+                OUTRO: 'Outro',
+              };
 
-              {/* Layout Desktop & Impressão (Tabela clássica A4 alinhada) */}
-              <div className="hidden sm:block print:block overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-[10px] text-slate-500 uppercase">
-                      <th className="pb-1.5 w-[35%]">Discriminação</th>
-                      <th className="pb-1.5 w-[25%]">Forma / Modalidade</th>
-                      <th className="pb-1.5 w-[22%]">Situação</th>
-                      <th className="pb-1.5 w-[18%] text-right">Valor (R$)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200/60 text-xs">
-                    <tr>
-                      <td className="py-2 font-bold text-slate-900">Valor Total Negociado</td>
-                      <td className="py-2 text-slate-700">{paymentLabels[sale.payment_method || 'PIX'] || sale.payment_method}</td>
-                      <td className="py-2 font-medium text-emerald-700">
-                        {isPaid ? 'Quitado Integralmente' : 'Parcial / Saldo Pendente'}
-                      </td>
-                      <td className="py-2 text-right font-bold text-slate-900 font-mono text-sm">
-                        {formatCurrency(sale.sale_price)}
-                      </td>
-                    </tr>
+              const rawMethod = paymentMethodNames[sale.payment_method || 'PIX'] || sale.payment_method || 'PIX';
 
-                    {(Number(sale.entry_amount) > 0 || Number(sale.financed_amount) > 0 || Number(sale.trade_amount) > 0) && (
-                      <>
-                        {Number(sale.entry_amount) > 0 && (
-                          <tr className="text-slate-600 text-[11px]">
-                            <td className="py-1 pl-3">↳ Valor de Entrada</td>
-                            <td className="py-1">À vista (PIX / Espécie)</td>
-                            <td className="py-1 text-emerald-600 font-medium">Recebido</td>
-                            <td className="py-1 text-right font-mono">{formatCurrency(sale.entry_amount)}</td>
-                          </tr>
+              let compositionLabel = paymentLabels[sale.payment_method || 'PIX'] || sale.payment_method || 'À Vista';
+              if (tradeAmount > 0 && financedAmount > 0) {
+                compositionLabel = `Moto na Troca + Financiamento + ${rawMethod}`;
+              } else if (tradeAmount > 0) {
+                compositionLabel = directPaidAmount > 0 ? `Moto na Troca + ${rawMethod}` : 'Moto na Troca';
+              } else if (financedAmount > 0) {
+                compositionLabel = directPaidAmount > 0 ? `Financiamento + ${rawMethod}` : 'Financiamento Bancário';
+              }
+
+              return (
+                <div className="bg-slate-50/80 p-3 sm:p-3.5 rounded-lg border border-slate-200 text-xs">
+                  {/* Layout Mobile (Cards empilhados verticais sem quebra de texto) */}
+                  <div className="block sm:hidden print:hidden space-y-2.5">
+                    <div className="bg-white p-3 rounded-lg border border-slate-200/90 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-slate-500 uppercase font-semibold block">Valor Total Negociado</span>
+                        <span className="text-base font-black text-slate-950 font-mono">
+                          {formatCurrency(sale.sale_price)}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isPaid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                          {isPaid ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                          {isPaid ? 'Total Liquidado' : 'Saldo Pendente'}
+                        </span>
+                        <span className="text-[11px] text-slate-600 block mt-0.5 font-medium">
+                          {compositionLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {(entryAmount > 0 || financedAmount > 0 || tradeAmount > 0 || (hasTradeOrFinancing && directPaidAmount > 0)) && (
+                      <div className="bg-white p-2.5 rounded-lg border border-slate-200/70 space-y-1.5 text-[11px]">
+                        {tradeAmount > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">↳ Moto na Troca (Entrada):</span>
+                            <span className="font-mono font-bold text-purple-700">{formatCurrency(tradeAmount)}</span>
+                          </div>
                         )}
-                        {Number(sale.financed_amount) > 0 && (
-                          <tr className="text-slate-600 text-[11px]">
-                            <td className="py-1 pl-3">↳ Saldo Financiado</td>
-                            <td className="py-1">Instituição Financeira</td>
-                            <td className="py-1 text-blue-600 font-medium">Aprovado</td>
-                            <td className="py-1 text-right font-mono">{formatCurrency(sale.financed_amount)}</td>
-                          </tr>
+                        {financedAmount > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">↳ Financiamento:</span>
+                            <span className="font-mono font-bold text-blue-700">{formatCurrency(financedAmount)}</span>
+                          </div>
                         )}
-                        {Number(sale.trade_amount) > 0 && (
+                        {hasTradeOrFinancing && directPaidAmount > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">↳ Diferença Paga via {rawMethod}:</span>
+                            <span className="font-mono font-bold text-emerald-700">{formatCurrency(directPaidAmount)}</span>
+                          </div>
+                        )}
+                        {!hasTradeOrFinancing && entryAmount > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-600">↳ Valor de Entrada:</span>
+                            <span className="font-mono font-bold text-slate-900">{formatCurrency(entryAmount)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Layout Desktop & Impressão (Tabela clássica A4 alinhada) */}
+                  <div className="hidden sm:block print:block overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-[10px] text-slate-500 uppercase">
+                          <th className="pb-1.5 w-[38%]">Discriminação</th>
+                          <th className="pb-1.5 w-[24%]">Forma / Modalidade</th>
+                          <th className="pb-1.5 w-[20%]">Situação</th>
+                          <th className="pb-1.5 w-[18%] text-right">Valor (R$)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200/60 text-xs">
+                        <tr>
+                          <td className="py-2 font-bold text-slate-900">Valor Total Negociado</td>
+                          <td className="py-2 font-medium text-slate-800">{compositionLabel}</td>
+                          <td className="py-2 font-medium text-emerald-700">
+                            {isPaid ? 'Total Liquidado' : 'Saldo Pendente'}
+                          </td>
+                          <td className="py-2 text-right font-bold text-slate-900 font-mono text-sm">
+                            {formatCurrency(sale.sale_price)}
+                          </td>
+                        </tr>
+
+                        {tradeAmount > 0 && (
                           <tr className="text-slate-600 text-[11px]">
-                            <td className="py-1 pl-3">↳ Veículo na Troca</td>
+                            <td className="py-1 pl-3 font-medium text-slate-800">↳ Veículo na Troca (Moto de Entrada)</td>
                             <td className="py-1">Avaliação Física</td>
-                            <td className="py-1 text-purple-600 font-medium">Recebido</td>
-                            <td className="py-1 text-right font-mono">{formatCurrency(sale.trade_amount)}</td>
+                            <td className="py-1 text-purple-700 font-medium">Recebido / Entregue</td>
+                            <td className="py-1 text-right font-mono font-semibold text-purple-800">{formatCurrency(tradeAmount)}</td>
                           </tr>
                         )}
-                      </>
-                    )}
-                  </tbody>
-                </table>
+
+                        {financedAmount > 0 && (
+                          <tr className="text-slate-600 text-[11px]">
+                            <td className="py-1 pl-3 font-medium text-slate-800">↳ Saldo Financiado</td>
+                            <td className="py-1">Instituição Bancária</td>
+                            <td className="py-1 text-blue-700 font-medium">Aprovado</td>
+                            <td className="py-1 text-right font-mono font-semibold text-blue-800">{formatCurrency(financedAmount)}</td>
+                          </tr>
+                        )}
+
+                        {hasTradeOrFinancing && directPaidAmount > 0 && (
+                          <tr className="text-slate-600 text-[11px]">
+                            <td className="py-1 pl-3 font-medium text-slate-800">↳ Diferença Paga via {rawMethod}</td>
+                            <td className="py-1">{rawMethod} (À Vista)</td>
+                            <td className="py-1 text-emerald-700 font-medium">Recebido / Quitado</td>
+                            <td className="py-1 text-right font-mono font-semibold text-emerald-800">{formatCurrency(directPaidAmount)}</td>
+                          </tr>
+                        )}
+
+                        {!hasTradeOrFinancing && entryAmount > 0 && (
+                          <tr className="text-slate-600 text-[11px]">
+                            <td className="py-1 pl-3 font-medium text-slate-800">↳ Valor de Entrada</td>
+                            <td className="py-1">{rawMethod} (À Vista)</td>
+                            <td className="py-1 text-emerald-700 font-medium">Recebido</td>
+                            <td className="py-1 text-right font-mono font-semibold">{formatCurrency(entryAmount)}</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {sale.receipt_notes && (
+                    <div className="mt-2.5 pt-2 border-t border-slate-200 text-[11px] text-slate-600">
+                      <strong>Observações Técnicas / Comerciais:</strong> {sale.receipt_notes}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* SEÇÃO 4: TERMOS LEGAIS (CONDICIONAL: REPASSE vs GARANTIA PADRÃO) */}
+          {sale.is_repasse ? (
+            <div className="mb-3.5 sm:mb-4">
+              <div className="bg-amber-50/80 px-3 py-1.5 rounded border-l-4 border-amber-500 mb-2 flex flex-wrap items-center justify-between gap-1">
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-950">
+                  4. Termo de Venda em Modalidade Repasse & Isenção de Garantia
+                </span>
+                <span className="text-[10px] text-amber-800 font-mono">Venda no Estado • Preço Abaixo de Mercado • Art. 123 e 134 CTB</span>
               </div>
 
-              {sale.receipt_notes && (
-                <div className="mt-2.5 pt-2 border-t border-slate-200 text-[11px] text-slate-600">
-                  <strong>Observações Técnicas / Comerciais:</strong> {sale.receipt_notes}
-                </div>
-              )}
+              <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200 text-[10px] sm:text-[10.5px] text-slate-700 space-y-2 leading-relaxed text-justify">
+                <p>
+                  <strong>4.1. Venda na Modalidade Repasse (Preço Reduzido):</strong> O COMPRADOR declara ter plena e inequívoca ciência de que o presente negócio jurídico é celebrado estritamente sob a <strong>modalidade comercial de REPASSE</strong>, tendo o valor da motocicleta sido pactuado em <strong>patamar substancialmente inferior ao preço médio de mercado e de tabela</strong>, em virtude de sua alienação direta no estado de conservação, uso e mecânica em que se encontra (&quot;as is&quot;).
+                </p>
+                <p>
+                  <strong>4.2. Inexistência de Garantia Comercial ou Mecânica:</strong> Em virtude do preço reduzido de repasse e da modalidade acordada, fica expressamente convencionado que a presente venda <strong>NÃO POSSUI QUALQUER GARANTIA</strong> mecânica, elétrica, estrutural, de motor, câmbio ou de quaisquer outros componentes por parte da Loja <strong>&quot;{storeName}&quot;</strong>. O COMPRADOR assume de forma irrevogável e integral todos os riscos, custos e ônus de eventuais revisões, manutenções preventivas, corretivas ou substituições de peças a partir da presente data.
+                </p>
+                <p>
+                  <strong>4.3. Vistoria Prévia, Teste e Aceitação Irrestrita:</strong> O COMPRADOR declara formalmente que inspecionou, avaliou, testou e aprovou as condições gerais do veículo (pessoalmente ou através de mecânico de sua estrita confiança), aceitando o bem no estado de conservação, lataria, mecânica, elétrica, pneus e quilometragem em que se encontra, nada tendo a reclamar a qualquer título ou pretexto.
+                </p>
+                <p>
+                  <strong>4.4. Transporte e Despesas de Remoção:</strong> Quaisquer despesas com transporte, guincho, combustível ou deslocamento do veículo correm por conta e responsabilidade exclusiva do COMPRADOR.
+                </p>
+                <p>
+                  <strong>4.5. Vistoria Cautelar, Multas e Transferência DETRAN (CTB):</strong> A partir da presente data e hora da entrega física, todas as responsabilidades civis, criminais e multas/infrações de trânsito recaem exclusivamente sobre o COMPRADOR, que se obriga a efetivar a transferência no DETRAN no prazo legal de 30 (trinta) dias (Art. 123 do CTB), ficando a LOJA autorizada a realizar a devida Comunicação de Venda (Art. 134 do CTB).
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mb-3.5 sm:mb-4">
+              <div className="bg-slate-100 px-3 py-1.5 rounded border-l-4 border-amber-500 mb-2 flex items-center justify-between">
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-800">
+                  4. Termo de Garantia (90 Dias / 3.000 KM), Vistoria & Proteção Legal
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">Art. 18 e 26 CDC & Art. 123 e 134 CTB</span>
+              </div>
 
-          {/* SEÇÃO 4: TERMO DE GARANTIA (90 DIAS OU 3.000 KM), VISTORIA & CLÁUSULAS LEGAIS */}
-          <div className="mb-3.5 sm:mb-4">
-            <div className="bg-slate-100 px-3 py-1.5 rounded border-l-4 border-amber-500 mb-2 flex items-center justify-between">
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-800">
-                4. Termo de Garantia (90 Dias / 3.000 KM), Vistoria & Proteção Legal
-              </span>
-              <span className="text-[10px] text-slate-500 font-mono">Art. 18 e 26 CDC & Art. 123 e 134 CTB</span>
+              <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200 text-[10px] sm:text-[10.5px] text-slate-700 space-y-2 leading-relaxed text-justify">
+                <p>
+                  <strong>4.1. Garantia Legal de 90 Dias ou 3.000 KM (Motor e Câmbio):</strong> A Loja <strong>&quot;{storeName}&quot;</strong> concede ao ADQUIRENTE garantia legal pelo prazo improrrogável de <strong>90 (noventa) dias corridos ou 3.000 (três mil) quilômetros rodados</strong>, o que primeiro ocorrer, a contar da data de entrega do veículo, nos termos do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é <strong>restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO</strong>.
+                </p>
+                <p>
+                  <strong>4.2. Exclusões Expressas por Mau Uso, Modificações e Negligência:</strong> A garantia <strong>NÃO COBRE</strong> avarias decorrentes de: 
+                  <strong> a)</strong> Mau uso, sobre-rotação (&quot;corte de giro&quot;), empinar/manobras, sobrecarga de carga/passageiros ou competições; 
+                  <strong> b)</strong> Falta, atraso na troca de óleo, nível insuficiente de lubrificante ou uso de combustível adulterado; 
+                  <strong> c)</strong> Quedas, colisões, acidentes ou submersão em água/alagamentos; 
+                  <strong> d)</strong> Instalação de escapamento esportivo, remap de injeção, corte de chicote elétrico, alarmes ou rastreadores não homologados pela LOJA.
+                </p>
+                <p>
+                  <strong>4.3. Perda Imediata da Garantia por Intervenção de Terceiros e Prazos:</strong> Havendo suspeita de anomalia, o ADQUIRENTE deve comunicar imediatamente a LOJA e apresentar o veículo na sede da <strong>Loja &quot;{storeName}&quot;</strong>. Qualquer desmontagem, abertura de motor, rompimento de lacres ou tentativa de conserto por mecânicos terceiros sem autorização formal por escrito implicará na <strong>PERDA TOTAL E IMEDIATA DA GARANTIA</strong>. Em caso de reparo coberto, a LOJA disporá do <strong>prazo legal de até 30 (trinta) dias para solução do vício (Art. 18, § 1º do CDC)</strong>.
+                </p>
+                <p>
+                  <strong>4.4. Transporte e Despesas de Reboque:</strong> O transporte, guincho ou reboque do veículo até a sede da Loja <strong>&quot;{storeName}&quot;</strong> para diagnóstico ou reparo é de <strong>responsabilidade e custo exclusivo do ADQUIRENTE</strong>.
+                </p>
+                <p>
+                  <strong>4.5. Itens de Desgaste Natural e Manutenção Preventiva:</strong> Fica expressamente convencionado que <strong>NÃO</strong> são cobertos pela garantia componentes sujeitos a desgaste natural por atrito e rodagem (pneus, câmaras de ar, pastilhas/lonas de freio, relação/transmissão, cabos de embreagem/acelerador, bateria, lâmpadas, velas e filtros), cabendo sua manutenção periódica exclusivamente ao COMPRADOR.
+                </p>
+                <p>
+                  <strong>4.6. Vistoria, Infrações e Transferência DETRAN (CTB):</strong> O COMPRADOR declara que vistoriou, testou e aprovou as condições estéticas, mecânicas e estruturais do veículo. A partir da presente data e hora da entrega física, todas as responsabilidades civis, criminais e multas/infrações de trânsito recaem exclusivamente sobre o COMPRADOR, que se obriga a efetivar a transferência no DETRAN no prazo legal de 30 (trinta) dias (Art. 123 do CTB), ficando a LOJA autorizada a realizar a devida Comunicação de Venda (Art. 134 do CTB).
+                </p>
+              </div>
             </div>
-
-            <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200 text-[10px] sm:text-[10.5px] text-slate-700 space-y-2 leading-relaxed text-justify">
-              <p>
-                <strong>4.1. Garantia Legal de 90 Dias ou 3.000 KM (Motor e Câmbio):</strong> A Loja <strong>"{storeName}"</strong> concede ao ADQUIRENTE garantia legal pelo prazo improrrogável de <strong>90 (noventa) dias corridos ou 3.000 (três mil) quilômetros rodados</strong>, o que primeiro ocorrer, a contar da data de entrega do veículo, nos termos do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é <strong>restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO</strong>.
-              </p>
-              <p>
-                <strong>4.2. Exclusões Expressas por Mau Uso, Modificações e Negligência:</strong> A garantia <strong>NÃO COBRE</strong> avarias decorrentes de: 
-                <strong> a)</strong> Mau uso, sobre-rotação ("corte de giro"), empinar/manobras, sobrecarga de carga/passageiros ou competições; 
-                <strong> b)</strong> Falta, atraso na troca de óleo, nível insuficiente de lubrificante ou uso de combustível adulterado; 
-                <strong> c)</strong> Quedas, colisões, acidentes ou submersão em água/alagamentos; 
-                <strong> d)</strong> Instalação de escapamento esportivo, remap de injeção, corte de chicote elétrico, alarmes ou rastreadores não homologados pela LOJA.
-              </p>
-              <p>
-                <strong>4.3. Perda Imediata da Garantia por Intervenção de Terceiros e Prazos:</strong> Havendo suspeita de anomalia, o ADQUIRENTE deve comunicar imediatamente a LOJA e apresentar o veículo na sede da <strong>Loja "{storeName}"</strong>. Qualquer desmontagem, abertura de motor, rompimento de lacres ou tentativa de conserto por mecânicos terceiros sem autorização formal por escrito implicará na <strong>PERDA TOTAL E IMEDIATA DA GARANTIA</strong>. Em caso de reparo coberto, a LOJA disporá do <strong>prazo legal de até 30 (trinta) dias para solução do vício (Art. 18, § 1º do CDC)</strong>.
-              </p>
-              <p>
-                <strong>4.4. Transporte e Despesas de Reboque:</strong> O transporte, guincho ou reboque do veículo até a sede da Loja <strong>"{storeName}"</strong> para diagnóstico ou reparo é de <strong>responsabilidade e custo exclusivo do ADQUIRENTE</strong>.
-              </p>
-              <p>
-                <strong>4.5. Itens de Desgaste Natural e Manutenção Preventiva:</strong> Fica expressamente convencionado que <strong>NÃO</strong> são cobertos pela garantia componentes sujeitos a desgaste natural por atrito e rodagem (pneus, câmaras de ar, pastilhas/lonas de freio, relação/transmissão, cabos de embreagem/acelerador, bateria, lâmpadas, velas e filtros), cabendo sua manutenção periódica exclusivamente ao COMPRADOR.
-              </p>
-              <p>
-                <strong>4.6. Vistoria, Infrações e Transferência DETRAN (CTB):</strong> O COMPRADOR declara que vistoriou, testou e aprovou as condições estéticas, mecânicas e estruturais do veículo. A partir da presente data e hora da entrega física, todas as responsabilidades civis, criminais e multas/infrações de trânsito recaem exclusivamente sobre o COMPRADOR, que se obriga a efetivar a transferência no DETRAN no prazo legal de 30 (trinta) dias (Art. 123 do CTB), ficando a LOJA autorizada a realizar a devida Comunicação de Venda (Art. 134 do CTB).
-              </p>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* SEÇÃO 5: ASSINATURAS FORMAIS */}

@@ -9,7 +9,6 @@ import { type PaymentMethod, CONSULTATION_PRICE_BRL } from '@/lib/customer/types
 import {
   QrCode,
   CreditCard,
-  Barcode,
   ShieldCheck,
   CheckCircle2,
   Loader2,
@@ -87,13 +86,6 @@ export function PaymentSimulation({ consultation, price }: PaymentSimulationProp
       tag: `Até 3x de R$ ${installmentValue}`,
       desc: 'Aprovação simulada na hora sem juros',
       icon: CreditCard,
-    },
-    {
-      id: 'boleto',
-      name: 'Boleto Bancário',
-      tag: 'Simulado',
-      desc: 'Compensação direta no ambiente de teste',
-      icon: Barcode,
     },
   ];
 

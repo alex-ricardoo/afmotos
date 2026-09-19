@@ -214,7 +214,7 @@ export default async function PoliticaPrivacidadePage() {
       content: (
         <p>
           A <strong>{siteName}</strong> não armazena números de cartões de crédito, códigos de
-          segurança ou senhas bancárias. Todo o processamento de pagamentos (PIX, boleto e cartão) é
+          segurança ou senhas bancárias. Todo o processamento de pagamentos (PIX, cartão e saldo Mercado Pago) é
           operado pelo gateway homologado Mercado Pago sob certificação PCI-DSS. Recebemos apenas a
           confirmação de aprovação, IDs da transação e metadados necessários para liberação do
           serviço e emissão de comprovantes fiscais.
