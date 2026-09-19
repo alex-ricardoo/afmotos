@@ -78,6 +78,14 @@ export function IdentityTab({ form }: IdentityTabProps) {
             shouldDirty: true,
           });
           form.setValue('settings.logo_path', res.url, { shouldDirty: true });
+          // Também salvar em Base64 para garantir disponibilidade offline imediata em geração de PDFs
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+              form.setValue('settings.branding.logoBase64', reader.result, { shouldDirty: true });
+            }
+          };
+          reader.readAsDataURL(fileToUpload);
           toast.success('Logotipo da loja atualizado com sucesso!');
         } else {
           form.setValue('settings.branding.faviconUrl', res.url, { shouldDirty: true });
@@ -100,6 +108,7 @@ export function IdentityTab({ form }: IdentityTabProps) {
 
   const removeLogo = () => {
     form.setValue('settings.branding.logoUrl', '', { shouldDirty: true });
+    form.setValue('settings.branding.logoBase64', '', { shouldDirty: true });
     form.setValue('settings.logo_path', '', { shouldDirty: true });
     toast.info('Logotipo removido. O site utilizará a logo padrão.');
   };

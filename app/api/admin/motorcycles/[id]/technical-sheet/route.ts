@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { motorcycleTechnicalSheetSchema } from '@/lib/technical-sheet/schema';
 import { TechnicalSheetPDF } from '@/lib/pdf/technical-sheet';
-import { loadLocalPdfImage, loadPdfImage } from '@/lib/pdf/assets';
+import { loadPdfImage, resolvePdfLogo } from '@/lib/pdf/assets';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,30 +43,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return new NextResponse('Ficha técnica inválida.', { status: 422 });
   try {
     const settings = await getSiteSettings();
-    const settingsValue = settings?.settings;
-    const branding =
-      settingsValue && typeof settingsValue === 'object' && !Array.isArray(settingsValue)
-        ? settingsValue.branding
-        : null;
-    const configuredLogo =
-      branding && typeof branding === 'object' && !Array.isArray(branding)
-        ? branding.logoUrl
-        : null;
-    const configuredLogoPath =
-      settingsValue && typeof settingsValue === 'object' && !Array.isArray(settingsValue)
-        ? settingsValue.logo_path
-        : null;
-    const logoUrl =
-      typeof configuredLogo === 'string'
-        ? configuredLogo
-        : typeof configuredLogoPath === 'string'
-          ? configuredLogoPath
-          : null;
     const [imageSrc, logoSrc] = await Promise.all([
       loadPdfImage(parsed.data.unitData.imageUrl),
-      (logoUrl ? loadPdfImage(logoUrl) : Promise.resolve(null))
-        .then((logo) => logo || loadLocalPdfImage('logo.png'))
-        .then((logo) => logo || loadLocalPdfImage('logo.jpg')),
+      resolvePdfLogo(settings),
     ]);
     console.info('[TechnicalSheetPDF] Assets resolvidos', {
       motorcycleId: id,

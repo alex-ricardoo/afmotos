@@ -8,27 +8,18 @@ import { getSiteLogo } from '@/lib/site-settings';
 import { SiteSettingsRecord } from '@/types/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { MotorcyclePurchaseAgreementPDF } from '@/lib/pdf/purchase-agreement';
+import { resolvePdfLogo } from '@/lib/pdf/assets';
 import { purchaseAgreementGenerateSchema, PurchaseAgreementGenerateInput } from './schema';
 import { formatAgreementNumber } from './formatters';
 import { PurchaseAgreementSnapshot } from '@/types/purchase-agreement';
 
 export async function getCurrentLogoDataUri(
   settings: Awaited<ReturnType<typeof getSiteSettings>>,
-  requestId: string,
+  requestId?: string,
 ): Promise<string | undefined> {
-  const logo = getSiteLogo(settings as SiteSettingsRecord | null);
-
   try {
-    if (logo.provider === 'local' || logo.src.startsWith('/')) {
-      const file = await fs.readFile(path.join(process.cwd(), 'public', logo.src.replace(/^\//, '')));
-      return `data:image/jpeg;base64,${file.toString('base64')}`;
-    }
-
-    const response = await fetch(logo.src, { cache: 'no-store' });
-    if (!response.ok) return undefined;
-    const contentType = response.headers.get('content-type') || 'image/jpeg';
-    const file = Buffer.from(await response.arrayBuffer());
-    return `data:${contentType};base64,${file.toString('base64')}`;
+    const logo = await resolvePdfLogo(settings);
+    return logo || undefined;
   } catch (error) {
     console.warn('[purchase-agreements.service] could not load store logo', { requestId, error });
     return undefined;

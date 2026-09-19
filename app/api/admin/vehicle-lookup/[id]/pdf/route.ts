@@ -1,13 +1,12 @@
 import React from 'react';
 import { NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
-import path from 'path';
-import fs from 'fs';
 import { createClient } from '@/lib/supabase/server';
 import { getVehicleConsultationById } from '@/lib/queries/vehicle-lookup';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { toCustomerVehicleReportDto } from '@/lib/vehicle-lookup/adapters/vehicle-pdf';
 import { VehicleReportPDF } from '@/lib/vehicle-lookup/pdf/vehicle-report-pdf';
+import { resolvePdfLogo } from '@/lib/pdf/assets';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,28 +59,8 @@ export async function GET(
       );
     }
 
-    // 3. Prepare Logo Base64
-    let logoBase64: string | undefined;
-    const customLogoUrl = (settings?.settings as any)?.branding?.logoUrl || (settings?.settings as any)?.logo_path;
-    if (customLogoUrl && (customLogoUrl.startsWith('http://') || customLogoUrl.startsWith('https://'))) {
-      logoBase64 = customLogoUrl;
-    } else {
-      try {
-        const logoPath = path.join(process.cwd(), 'public', 'logo.jpg');
-        if (fs.existsSync(logoPath)) {
-          const fileBuffer = fs.readFileSync(logoPath);
-          logoBase64 = `data:image/jpeg;base64,${fileBuffer.toString('base64')}`;
-        } else {
-          const pngPath = path.join(process.cwd(), 'public', 'logo.png');
-          if (fs.existsSync(pngPath)) {
-            const fileBuffer = fs.readFileSync(pngPath);
-            logoBase64 = `data:image/png;base64,${fileBuffer.toString('base64')}`;
-          }
-        }
-      } catch (e) {
-        console.warn('Could not load local logo for vehicle report:', e);
-      }
-    }
+    // 3. Prepare Logo (Prioritize database base64, then remote with timeout, then local fallback)
+    const logoBase64 = (await resolvePdfLogo(settings)) || undefined;
 
     // 4. Prepare Safe Customer DTO
     const customerDto = toCustomerVehicleReportDto(dto);

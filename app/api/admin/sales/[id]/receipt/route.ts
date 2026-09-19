@@ -1,12 +1,11 @@
 import React from 'react';
 import { NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
-import fs from 'fs';
-import path from 'path';
 import { getSaleById } from '@/lib/queries/sales';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { SaleReceiptPDF } from '@/lib/pdf/sale-receipt';
 import { createClient } from '@/lib/supabase/server';
+import { resolvePdfLogo } from '@/lib/pdf/assets';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,22 +45,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // 3. Fetch store settings
     const settings = await getSiteSettings();
 
-    // 4. Load official logo if exists
-    let logoBase64: string | undefined;
-    const customLogoUrl = (settings?.settings as any)?.branding?.logoUrl || (settings?.settings as any)?.logo_path;
-    if (customLogoUrl && (customLogoUrl.startsWith('http://') || customLogoUrl.startsWith('https://'))) {
-      logoBase64 = customLogoUrl;
-    } else {
-      try {
-        const logoPath = path.join(process.cwd(), 'public', 'logo.jpg');
-        if (fs.existsSync(logoPath)) {
-          const fileBuffer = fs.readFileSync(logoPath);
-          logoBase64 = `data:image/jpeg;base64,${fileBuffer.toString('base64')}`;
-        }
-      } catch (e) {
-        console.warn('Could not load local logo.jpg:', e);
-      }
-    }
+    // 4. Load official logo (Prioritize database base64, then remote with timeout, then local fallback)
+    const logoBase64 = (await resolvePdfLogo(settings)) || undefined;
 
     // 5. Render PDF to Buffer
     const element = React.createElement(SaleReceiptPDF, {

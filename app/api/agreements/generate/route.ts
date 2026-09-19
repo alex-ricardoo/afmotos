@@ -12,66 +12,20 @@ import { ptBR } from 'date-fns/locale';
 import { getSiteLogo, getSiteName } from '@/lib/site-settings';
 import { SiteSettingsRecord } from '@/types/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';
+import { resolvePdfLogo } from '@/lib/pdf/assets';
 
 export const dynamic = 'force-dynamic';
 
 async function getCurrentLogoDataUri(
   settings: Awaited<ReturnType<typeof getSiteSettings>>,
-  requestId: string,
+  requestId?: string,
 ): Promise<string | undefined> {
-  const customLogoUrl =
-    (settings?.settings as Record<string, unknown> | null)?.branding &&
-    typeof (settings?.settings as Record<string, unknown>).branding === 'object'
-      ? ((settings?.settings as Record<string, unknown>).branding as Record<string, unknown>)?.logoUrl as string
-      : ((settings?.settings as Record<string, unknown> | null)?.logo_path as string) ||
-        ((settings as unknown as Record<string, unknown> | null)?.logo_url as string);
-
-  const logo = getSiteLogo(settings as SiteSettingsRecord | null);
-  const targetUrl = customLogoUrl || logo?.src;
-
-  // 1. Se for URL remota (http/https), tentar converter para base64 com timeout
-  if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
-    try {
-      const response = await fetch(targetUrl, {
-        cache: 'no-store',
-        signal: AbortSignal.timeout(1500),
-      });
-
-      if (response.ok) {
-        const contentType = response.headers.get('content-type') || 'image/jpeg';
-        const file = Buffer.from(await response.arrayBuffer());
-        return `data:${contentType};base64,${file.toString('base64')}`;
-      }
-    } catch (error) {
-      console.warn('[agreements.generate] could not fetch remote logo via server fetch, using local fallback logo', { requestId, error });
-    }
-  }
-
-  // 2. Se for arquivo local relativo
-  if (targetUrl && targetUrl.startsWith('/')) {
-    try {
-      const filePath = path.join(process.cwd(), 'public', targetUrl.replace(/^\//, ''));
-      const file = await fs.readFile(filePath);
-      const mime = targetUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
-      return `data:${mime};base64,${file.toString('base64')}`;
-    } catch (error) {
-      console.warn('[agreements.generate] could not load local logo file', { requestId, error });
-    }
-  }
-
-  // 3. Fallback garantido para public/logo.jpg ou public/logo.png
   try {
-    const jpgPath = path.join(process.cwd(), 'public', 'logo.jpg');
-    const file = await fs.readFile(jpgPath);
-    return `data:image/jpeg;base64,${file.toString('base64')}`;
-  } catch {
-    try {
-      const pngPath = path.join(process.cwd(), 'public', 'logo.png');
-      const file = await fs.readFile(pngPath);
-      return `data:image/png;base64,${file.toString('base64')}`;
-    } catch {
-      return undefined;
-    }
+    const logo = await resolvePdfLogo(settings);
+    return logo || undefined;
+  } catch (error) {
+    console.warn('[agreements.generate] could not resolve logo', { requestId, error });
+    return undefined;
   }
 }
 

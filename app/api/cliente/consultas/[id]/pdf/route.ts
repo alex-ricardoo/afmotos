@@ -1,8 +1,6 @@
 import React from 'react';
 import { NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
-import path from 'path';
-import fs from 'fs';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getSiteSettings } from '@/lib/queries/settings';
@@ -10,6 +8,7 @@ import { toInternalVehicleConsultationDto } from '@/lib/vehicle-lookup/adapters/
 import { toCustomerVehicleReportDto } from '@/lib/vehicle-lookup/adapters/vehicle-pdf';
 import { VehicleReportPDF } from '@/lib/vehicle-lookup/pdf/vehicle-report-pdf';
 import type { VehicleConsultationRecord } from '@/lib/vehicle-lookup/types';
+import { resolvePdfLogo } from '@/lib/pdf/assets';
 
 export const dynamic = 'force-dynamic';
 
@@ -141,36 +140,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
     const settings = await getSiteSettings();
 
-    // 4. Prepare Logo Base64
-    let logoBase64: string | undefined;
-    const settingsObj = settings?.settings as Record<string, unknown> | null;
-    const brandingObj = settingsObj?.branding as Record<string, unknown> | undefined;
-    const customLogoUrl =
-      (typeof brandingObj?.logoUrl === 'string' ? brandingObj.logoUrl : undefined) ||
-      (typeof settingsObj?.logo_path === 'string' ? (settingsObj.logo_path as string) : undefined);
-
-    if (
-      customLogoUrl &&
-      (customLogoUrl.startsWith('http://') || customLogoUrl.startsWith('https://'))
-    ) {
-      logoBase64 = customLogoUrl;
-    } else {
-      try {
-        const logoPath = path.join(process.cwd(), 'public', 'logo.jpg');
-        if (fs.existsSync(logoPath)) {
-          const fileBuffer = fs.readFileSync(logoPath);
-          logoBase64 = `data:image/jpeg;base64,${fileBuffer.toString('base64')}`;
-        } else {
-          const pngPath = path.join(process.cwd(), 'public', 'logo.png');
-          if (fs.existsSync(pngPath)) {
-            const fileBuffer = fs.readFileSync(pngPath);
-            logoBase64 = `data:image/png;base64,${fileBuffer.toString('base64')}`;
-          }
-        }
-      } catch (e) {
-        console.warn('Could not load local logo for customer vehicle report:', e);
-      }
-    }
+    // 4. Prepare Logo (Prioritize database base64, then remote with timeout, then local fallback)
+    const logoBase64 = (await resolvePdfLogo(settings)) || undefined;
 
     // 5. Prepare Safe Customer DTO (Same standard as admin & public)
     const customerDto = toCustomerVehicleReportDto(dto);

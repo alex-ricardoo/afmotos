@@ -8,9 +8,11 @@ export interface BrandingSettings {
   logoProvider?: ImageStorageProvider;
   logoUrl?: string | null;
   logoPath?: string | null;
+  logoBase64?: string | null;
   faviconProvider?: ImageStorageProvider;
   faviconUrl?: string | null;
   faviconPath?: string | null;
+  faviconBase64?: string | null;
   primaryColor?: string;
   accentColor?: string;
 }
