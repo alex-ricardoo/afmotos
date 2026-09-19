@@ -7,3 +7,5 @@ export function maskEngine(engine: string | null | undefined): string {
   if (clean.length <= 5) return '***';
   return `${clean.slice(0, 3)}****${clean.slice(-3)}`;
 }
+
+export const maskEngineNumber = maskEngine;

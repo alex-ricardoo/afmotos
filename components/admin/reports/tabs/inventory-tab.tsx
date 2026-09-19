@@ -166,7 +166,7 @@ export function InventoryTab({ data }: InventoryTabProps) {
                     </td>
                     <td className="py-3.5 text-right">
                       <Link
-                        href={`/admin/motos/${moto.id}`}
+                        href={`/admin/motos/${moto.id}/editar`}
                         className="inline-flex items-center gap-1 text-[11px] font-bold text-[#c9a44c] hover:underline"
                       >
                         <span>Editar</span>

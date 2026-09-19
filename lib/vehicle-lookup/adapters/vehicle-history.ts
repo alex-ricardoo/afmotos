@@ -7,6 +7,7 @@ import type {
 } from '../types.ts';
 import { maskCpf, maskCnpj } from '../sanitizers/index.ts';
 import { normalizeText } from './vehicle-risk.ts';
+import { isPlaceholderDocument } from '../normalizers/availability-helpers.ts';
 
 const CORPORATE_KEYWORDS_REGEX = /\b(LTDA|S\/A|SA|LOCADORA|EIRELI|ME|EPP|CIA|COMPANHIA|BANCO|FINANCEIRA|COOPERATIVA|EMPRESA|COMERCIO|SERVICOS|AUTO|VEICULOS|MOTOS|TRANSPORTES|DISTRIBUIDORA|ASSOCIACAO|FUNDACAO)\b/i;
 
@@ -26,7 +27,7 @@ export function toVehicleHistorySummary(
     };
   }
 
-  // Previous owners - Tarefa A: Correção de Lógica de Negócio (Tipagem de Proprietários)
+  // Previous owners - with placeholder detection and unknown type support
   const rawOwners = Array.isArray(d.historicoProprietarios)
     ? d.historicoProprietarios
     : Array.isArray(d.proprietarios?.historico)
@@ -37,24 +38,49 @@ export function toVehicleHistorySummary(
     const rawDoc = String(o.cpfCnpj || o.documento || '');
     const cleanDoc = rawDoc.replace(/\D/g, '');
     const ownerName = String(o.proprietario || o.nome || '').trim().toUpperCase();
+    const placeholder = isPlaceholderDocument(rawDoc);
 
     // Check if corporate by length, keywords in company name, or explicit tipoDocumento
     const isPjByName = CORPORATE_KEYWORDS_REGEX.test(ownerName);
     const isExplicitPj = o.tipoDocumento === 'JURIDICA' || o.tipo_documento === 'PJ' || o.tipoDocumento === 'PJ';
-    const isPj = cleanDoc.length === 14 || isPjByName || isExplicitPj;
+    const isExplicitPf = o.tipoDocumento === 'FISICA' || o.tipo_documento === 'PF' || o.tipoDocumento === 'PF';
 
-    const docType: 'PF' | 'PJ' = isPj ? 'PJ' : 'PF';
+    // Determine document type — never assume PF when type is null and doc is placeholder
+    let docType: 'PF' | 'PJ' | 'unknown';
+    if (isExplicitPj || isPjByName) {
+      docType = 'PJ';
+    } else if (isExplicitPf) {
+      docType = 'PF';
+    } else if (!placeholder && cleanDoc.length === 14) {
+      docType = 'PJ';
+    } else if (!placeholder && cleanDoc.length === 11) {
+      docType = 'PF';
+    } else {
+      // Type not explicitly informed — don't assume
+      docType = placeholder ? 'unknown' : (cleanDoc.length === 14 ? 'PJ' : cleanDoc.length === 11 ? 'PF' : 'unknown');
+    }
 
+    // Mask document — never mask placeholders as valid documents
     let masked = o.documento_mascarado;
-    if (!masked && cleanDoc) {
-      masked = docType === 'PJ' ? maskCnpj(cleanDoc) : maskCpf(cleanDoc);
+    if (!masked) {
+      if (placeholder) {
+        masked = 'Não disponibilizado';
+      } else if (cleanDoc && docType === 'PJ') {
+        masked = maskCnpj(cleanDoc);
+      } else if (cleanDoc && docType === 'PF') {
+        masked = maskCpf(cleanDoc);
+      } else if (cleanDoc.length >= 6) {
+        masked = `${cleanDoc.slice(0, 3)}***${cleanDoc.slice(-3)}`;
+      } else {
+        masked = 'Não disponibilizado';
+      }
     }
 
     return {
-      state: o.uf || 'SP',
+      state: o.uf || undefined,
       period: o.anoExercicio || o.periodo || undefined,
       document_type: docType,
-      masked_document: masked || (docType === 'PJ' ? '**.***.***/****-**' : '***.***.***-**'),
+      masked_document: masked,
     };
   });
 

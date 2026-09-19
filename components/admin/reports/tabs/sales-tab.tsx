@@ -189,7 +189,7 @@ export function SalesTab({ data }: SalesTabProps) {
                     </td>
                     <td className="py-3.5 text-right">
                       <Link
-                        href={`/admin/vendas/${sale.id}`}
+                        href={`/admin/vendas/${sale.id}/recibo`}
                         className="inline-flex items-center gap-1 text-[11px] font-bold text-[#c9a44c] hover:underline"
                       >
                         <span>Ver</span>

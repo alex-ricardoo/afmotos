@@ -7,7 +7,7 @@ import type {
 import { toVehicleRiskSummary } from './vehicle-risk.ts';
 import { toVehicleDebtsSummary } from './vehicle-debts.ts';
 import { toVehicleHistorySummary } from './vehicle-history.ts';
-import { maskChassis, maskRenavam, maskEngine } from '../sanitizers/index.ts';
+import { maskChassis, maskRenavam, maskEngine, normalizePower, normalizeDisplacement } from '../sanitizers/index.ts';
 import { formatBrazilianPlate, normalizeBrazilianPlate } from '../plate.ts';
 import { parseBrazilianNumber } from './apibrasil-vehicle-total.ts';
 
@@ -286,8 +286,8 @@ export function toInternalVehicleConsultationDto(
       vehicle_type: record.vehicle_type || d.tipoVeiculo || 'AUTOMOVEL',
       species: d.especieVeiculo || d.baseEstadual?.especie || 'PASSAGEIRO',
       fuel: d.combustivel || d.dadosBasicosDoVeiculo?.combustivel || 'GASOLINA/EL',
-      power: d.potencia ? `${d.potencia} CV` : (d.decodificadorPrecificador?.potenciaMotor || '2.0'),
-      displacement: d.cilindradas ? `${d.cilindradas} cc` : '1999 cc',
+      power: normalizePower(d.potencia ?? d.decodificadorPrecificador?.potenciaMotor),
+      displacement: normalizeDisplacement(d.cilindradas),
       color: record.color || 'AZUL',
       year_manufacture: record.year_manufacture || 2021,
       year_model: record.year_model || 2022,

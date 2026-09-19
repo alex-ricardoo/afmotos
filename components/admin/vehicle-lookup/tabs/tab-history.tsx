@@ -28,13 +28,21 @@ export function TabHistory({ dto }: { dto: InternalVehicleConsultationDto }) {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-foreground">Proprietário #{idx + 1}</span>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                    owner.document_type === 'PJ' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30' : 'bg-muted text-muted-foreground'
+                    owner.document_type === 'PJ'
+                      ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30'
+                      : owner.document_type === 'PF'
+                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30'
+                        : 'bg-muted text-muted-foreground'
                   }`}>
-                    {owner.document_type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}
+                    {owner.document_type === 'PJ'
+                      ? 'Pessoa Jurídica'
+                      : owner.document_type === 'PF'
+                        ? 'Pessoa Física'
+                        : 'Não informado'}
                   </span>
                 </div>
                 <div className="text-muted-foreground font-mono font-semibold">
-                  Doc: {owner.masked_document || '***'}
+                  Doc: {owner.masked_document && owner.masked_document !== 'Documento não disponibilizado pela fonte' ? owner.masked_document : 'Não disponibilizado'}
                 </div>
                 <div className="text-muted-foreground">
                   UF: <strong className="text-foreground">{owner.state || 'SP'}</strong> • Exercício: <strong className="text-foreground">{owner.period || 'N/I'}</strong>

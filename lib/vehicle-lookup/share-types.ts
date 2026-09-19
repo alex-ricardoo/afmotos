@@ -164,8 +164,9 @@ export interface PublicVehicleReportDto {
     records: Array<{
       state?: string;
       period?: string;
-      document_type?: 'PF' | 'PJ';
+      document_type?: 'PF' | 'PJ' | 'unknown';
       masked_document?: string;
+      note?: string;
     }>;
   };
 

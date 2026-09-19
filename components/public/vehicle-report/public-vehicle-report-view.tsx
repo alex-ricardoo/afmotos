@@ -491,9 +491,11 @@ export function PublicVehicleReportView({
                     >
                       <div>
                         <span className="font-semibold text-slate-200">
-                          {idx + 1}º Proprietário ({owner.document_type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'})
+                          {idx + 1}º Proprietário ({owner.document_type === 'PJ' ? 'Pessoa Jurídica' : owner.document_type === 'PF' ? 'Pessoa Física' : 'Não informado'})
                         </span>
-                        <p className="text-[11px] text-slate-500">Documento: {owner.masked_document}</p>
+                        <p className="text-[11px] text-slate-500">
+                          Documento: {owner.masked_document && owner.masked_document !== 'Documento não disponibilizado pela fonte' ? owner.masked_document : 'Não disponibilizado'}
+                        </p>
                       </div>
                       <div className="text-right text-[11px] text-slate-400">
                         <span>{owner.state ? `UF: ${owner.state}` : ''}</span>

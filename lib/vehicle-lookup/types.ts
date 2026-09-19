@@ -423,8 +423,9 @@ export interface CustomerVehicleReportDto {
     records: Array<{
       state?: string;
       period?: string;
-      document_type?: 'PF' | 'PJ';
+      document_type?: 'PF' | 'PJ' | 'unknown';
       masked_document?: string;
+      note?: string;
     }>;
   };
 
@@ -467,6 +468,58 @@ export interface CustomerVehicleReportDto {
     sale_communication: string;
     has_sale_communication: boolean;
     vehicle_status: string;
+  };
+
+  // ─── Normalization v2 fields (added by normalizers layer) ───
+
+  /** Divergences detected between data sources (município, UF, etc.) */
+  source_consistency_warnings?: Array<{
+    field: string;
+    sources: Array<{ source: string; value: string }>;
+    recommendation: string;
+  }>;
+
+  /** Debt source date and staleness info */
+  debts_source_info?: {
+    licensing_year?: string;
+    last_update_date?: string;
+    is_stale: boolean;
+    stale_warning?: string;
+  };
+
+  /** Structured current gravame status (replaces flat gravamen_details for clarity) */
+  gravame_current?: {
+    status: 'active' | 'cleared' | 'not_informed';
+    label: string;
+    agent?: string;
+    inclusion_date?: string;
+  };
+
+  /** Historical gravame records (separate from current) */
+  gravame_history?: Array<{
+    agent: string;
+    status_label: string;
+    inclusion_date?: string;
+    observation?: string;
+  }>;
+
+  /** Explanation of how the primary FIPE reference was selected */
+  fipe_selection_note?: string;
+
+  /** Alternative FIPE references for this vehicle */
+  fipe_alternatives?: Array<{
+    code: string;
+    version: string;
+    price: number;
+    fuel?: string;
+  }>;
+
+  /** Report generation and source metadata */
+  report_metadata?: {
+    generated_at: string;
+    provider_name: string;
+    normalizer_version: string;
+    source_update_dates: Array<{ source: string; date: string | null }>;
   };
 
   disclaimer: string;

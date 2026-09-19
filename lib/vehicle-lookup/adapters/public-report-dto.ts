@@ -32,7 +32,12 @@ export function toPublicVehicleReportDto(
       state: owner.state,
       period: owner.period,
       document_type: owner.document_type,
-      masked_document: maskedDoc || 'Documento sigiloso',
+      masked_document:
+        maskedDoc &&
+        maskedDoc !== 'Documento não disponibilizado pela fonte' &&
+        maskedDoc !== 'Documento sigiloso'
+          ? maskedDoc
+          : 'Não disponibilizado',
     };
   }) || [];
 

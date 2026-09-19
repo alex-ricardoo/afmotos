@@ -100,7 +100,7 @@ export function CustomerRelationsTabs({
       title: `Venda Concluída — ${s.motorcycle?.brand || ''} ${s.motorcycle?.model || 'Motocicleta'}`,
       description: `Valor: ${formatCurrency(Number(s.sale_price))} • Recibo: ${s.receipt_number || 'S/N'}`,
       date: s.sale_date || s.created_at,
-      href: `/admin/vendas/${s.id}`,
+      href: `/admin/vendas/${s.id}/recibo`,
       icon: Receipt,
       colorClass: 'text-emerald-400 bg-emerald-950/30 border-emerald-800/40',
     })),
@@ -330,7 +330,7 @@ export function CustomerRelationsTabs({
                   </div>
 
                   <Link
-                    href={`/admin/vendas/${sale.id}`}
+                    href={`/admin/vendas/${sale.id}/recibo`}
                     className="inline-flex items-center justify-center h-9 px-3.5 rounded-xl border border-zinc-800 bg-zinc-900/90 text-xs text-zinc-200 hover:text-white hover:bg-zinc-800 transition-colors gap-1.5 font-bold cursor-pointer shrink-0"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-[#e3c56c]" />

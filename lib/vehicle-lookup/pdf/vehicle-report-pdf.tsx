@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/alt-text */
 import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import type { CustomerVehicleReportDto } from '../types.ts';
@@ -11,7 +12,7 @@ const styles = StyleSheet.create({
   page: {
     padding: 18,
     paddingTop: 14,
-    paddingBottom: 28,
+    paddingBottom: 32,
     fontSize: 7.5,
     fontFamily: 'Helvetica',
     color: '#0f172a',
@@ -53,12 +54,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Helvetica-Bold',
     color: '#f59e0b',
-  },
-  logoSub: {
-    fontSize: 4.8,
-    fontFamily: 'Helvetica-Bold',
-    color: '#cbd5e1',
-    marginTop: -2,
   },
   storeInfo: {
     flexDirection: 'column',
@@ -241,6 +236,54 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
   },
 
+  // Divergences Section
+  divergenceSection: {
+    backgroundColor: '#fffbeb',
+    borderRadius: 3,
+    borderWidth: 0.8,
+    borderColor: '#fcd34d',
+    padding: 4.5,
+    marginBottom: 5,
+  },
+  divergenceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2.5,
+  },
+  divergenceTitle: {
+    fontSize: 7.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#92400e',
+    textTransform: 'uppercase',
+    letterSpacing: 0.15,
+  },
+  divergenceBody: {
+    flexDirection: 'column',
+    gap: 2,
+  },
+  divergenceEntry: {
+    marginBottom: 2,
+  },
+  divergenceField: {
+    fontSize: 6.8,
+    fontFamily: 'Helvetica-Bold',
+    color: '#78350f',
+    marginBottom: 1,
+  },
+  divergenceSourceLine: {
+    fontSize: 6.2,
+    color: '#451a03',
+    marginLeft: 4,
+    lineHeight: 1.25,
+  },
+  divergenceRec: {
+    fontSize: 5.6,
+    color: '#92400e',
+    marginTop: 2,
+    lineHeight: 1.25,
+    fontFamily: 'Helvetica',
+  },
+
   // Commercial Chips
   chipRow: {
     flexDirection: 'row',
@@ -368,7 +411,51 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
 
-  // Footer
+  // Resumo para Negociação
+  negotiationSection: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 3,
+    borderWidth: 0.8,
+    borderColor: '#e2e8f0',
+    padding: 4.5,
+    marginTop: 1,
+    marginBottom: 4,
+  },
+  negotiationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  negotiationTitle: {
+    fontSize: 7.2,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1e293b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.15,
+  },
+  negotiationBody: {
+    flexDirection: 'column',
+  },
+  negotiationRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 1,
+  },
+  negotiationDot: {
+    fontSize: 6.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#d97706',
+    marginRight: 4,
+    lineHeight: 1.2,
+  },
+  negotiationText: {
+    fontSize: 6.2,
+    color: '#334155',
+    lineHeight: 1.25,
+    maxWidth: '96%',
+  },
+
+  // Structured Footer (3 blocks)
   footer: {
     position: 'absolute',
     bottom: 8,
@@ -379,23 +466,34 @@ const styles = StyleSheet.create({
     borderTopColor: '#e2e8f0',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
+  },
+  footerGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    maxWidth: '90%',
+    gap: 8,
+  },
+  footerCol: {
+    flex: 1,
+  },
+  footerHeading: {
+    fontSize: 5.4,
+    fontFamily: 'Helvetica-Bold',
+    color: '#334155',
+    marginBottom: 1,
+    textTransform: 'uppercase',
   },
   footerText: {
-    fontSize: 5.2,
+    fontSize: 4.9,
     color: '#64748b',
-    lineHeight: 1.25,
-  },
-  footerTrust: {
-    fontSize: 5.1,
-    color: '#334155',
-    fontFamily: 'Helvetica-Bold',
-    marginBottom: 0.8,
+    lineHeight: 1.2,
   },
   pageNumber: {
     fontSize: 5.8,
     fontFamily: 'Helvetica-Bold',
     color: '#64748b',
+    marginTop: 2,
   },
 });
 
@@ -474,8 +572,8 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   const bannerStyle = isApproved
     ? styles.verdictApproved
     : isRestricted
-    ? styles.verdictRestricted
-    : styles.verdictAttention;
+      ? styles.verdictRestricted
+      : styles.verdictAttention;
 
   const verdictTagBg = isApproved ? '#dcfce7' : isRestricted ? '#fee2e2' : '#fef3c7';
   const verdictTagColor = isApproved ? '#15803d' : isRestricted ? '#b91c1c' : '#b45309';
@@ -483,9 +581,54 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   const recallClear = report.risk_summary.recall_clear;
   const recallPendingCount = report.recalls_summary?.pending_count || 0;
   const hasRentalRecord = report.commercial_indicators?.has_rental_record || false;
-  const bullets = report.verdict_bullets && report.verdict_bullets.length > 0
-    ? report.verdict_bullets
-    : [report.verdict_description || 'Relatório de procedência e integridade cadastral.'];
+  const bullets =
+    report.verdict_bullets && report.verdict_bullets.length > 0
+      ? report.verdict_bullets
+      : [report.verdict_description || 'Relatório de procedência e integridade cadastral.'];
+
+  const hasLocationDivergence = Boolean(
+    report.source_consistency_warnings?.some((w) => w.field === 'Município' || w.field === 'UF'),
+  );
+
+  // Dynamic negotiation summary items
+  const negotiationPoints: string[] = [];
+  if (isApproved) {
+    negotiationPoints.push('Nenhuma restrição ativa identificada nas bases consultadas.');
+  } else if (isRestricted) {
+    negotiationPoints.push(
+      'Restrições ativas identificadas nas fontes consultadas. Recomenda-se regularização prévia.',
+    );
+  } else {
+    negotiationPoints.push(
+      'Apontamentos identificados nas fontes consultadas que requerem atenção antes da negociação.',
+    );
+  }
+
+  if (report.gravame_history && report.gravame_history.length > 0) {
+    negotiationPoints.push(
+      `Histórico de ${report.gravame_history.length} gravame(s) já baixado(s).`,
+    );
+  }
+
+  if (hasLocationDivergence) {
+    negotiationPoints.push(
+      'Divergência cadastral identificada entre fontes sobre município/dados do veículo (ver seção de divergências).',
+    );
+  }
+
+  if (report.debts_source_info?.last_update_date) {
+    negotiationPoints.push(
+      `Débitos com referência da base em ${report.debts_source_info.last_update_date}.`,
+    );
+  } else if ((report.debts_summary?.total_debts || 0) > 0) {
+    negotiationPoints.push(
+      `Débitos pendentes informados no total de ${formatCurrency(report.debts_summary?.total_debts)}.`,
+    );
+  }
+
+  negotiationPoints.push(
+    'Confirme documentos (CRLV-e), situação atual nos órgãos competentes e realize vistoria mecânica antes da transferência.',
+  );
 
   return (
     <Document title={`Laudo Veicular - ${report.plate_display} - ${storeName}`}>
@@ -511,10 +654,10 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 {formattedCnpj ? `CNPJ: ${formattedCnpj}` : 'Comércio de Motocicletas e Veículos'}
                 {storePhone ? ` • Telefone/WhatsApp: ${storePhone}` : ''}
               </Text>
-              <Text style={styles.storeContact}>
-                {storeAddress}
-                {storeEmail ? ` • E-mail: ${storeEmail}` : ''}
-              </Text>
+              <Text style={styles.storeContact}>{storeAddress}</Text>
+              {storeEmail ? (
+                <Text style={styles.storeContact}>E-mail: {storeEmail}</Text>
+              ) : null}
             </View>
           </View>
 
@@ -528,9 +671,9 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
         {/* CARD SUPERIOR DE APONTAMENTOS / VEREDITO */}
         {/* ========================================================================= */}
         <View style={[styles.verdictBanner, bannerStyle]}>
-          <View style={{ maxWidth: '80%' }}>
+          <View style={{ maxWidth: '78%' }}>
             <Text style={[styles.verdictTitle, { color: verdictTagColor }]}>
-              {report.verdict_label || 'Procedência Veicular'}
+              {report.verdict_label || 'Sem restrições ativas identificadas nas bases consultadas'}
             </Text>
             {bullets.map((bullet, idx) => (
               <View key={idx} style={styles.bulletRow}>
@@ -541,7 +684,11 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
           </View>
           <View style={[styles.verdictTag, { backgroundColor: verdictTagBg }]}>
             <Text style={{ color: verdictTagColor, fontSize: 6.8, fontFamily: 'Helvetica-Bold' }}>
-              {isApproved ? 'APROVADO' : isRestricted ? 'RESTRITO' : 'APONTAMENTOS'}
+              {isApproved
+                ? 'SEM RESTRIÇÕES ATIVAS'
+                : isRestricted
+                  ? 'RESTRIÇÃO ATIVA'
+                  : 'APONTAMENTOS'}
             </Text>
           </View>
         </View>
@@ -552,7 +699,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>I. Diagnóstico Geral de Risco e Segurança</Text>
-            <Text style={styles.sectionSub}>Bases Governamentais & Conveniadas</Text>
+            <Text style={styles.sectionSub}>Fontes consultadas: bases públicas e conveniadas</Text>
           </View>
 
           <View style={styles.grid}>
@@ -561,17 +708,24 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
               <View
                 style={[
                   styles.diagCard,
-                  report.risk_summary.theft_robbery_clear ? styles.diagCardClear : styles.diagCardDanger,
+                  report.risk_summary.theft_robbery_clear
+                    ? styles.diagCardClear
+                    : styles.diagCardDanger,
                 ]}
               >
                 <Text style={styles.diagLabel}>Roubo e Furto</Text>
                 <Text
                   style={[
                     styles.diagStatus,
-                    { color: report.risk_summary.theft_robbery_clear ? '#166534' : '#991b1b' },
+                    {
+                      color: report.risk_summary.theft_robbery_clear ? '#166534' : '#991b1b',
+                      fontSize: 6.2,
+                    },
                   ]}
                 >
-                  {report.risk_summary.theft_robbery_clear ? 'Nada Consta' : 'Alerta de Roubo'}
+                  {report.risk_summary.theft_robbery_clear
+                    ? 'Nenhuma ocorrência ativa'
+                    : 'Alerta de Roubo'}
                 </Text>
               </View>
             </View>
@@ -588,10 +742,13 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 <Text
                   style={[
                     styles.diagStatus,
-                    { color: report.risk_summary.judicial_clear ? '#166534' : '#991b1b' },
+                    {
+                      color: report.risk_summary.judicial_clear ? '#166534' : '#991b1b',
+                      fontSize: 6.2,
+                    },
                   ]}
                 >
-                  {report.risk_summary.judicial_clear ? 'Desimpedido' : 'Bloqueio Judicial'}
+                  {report.risk_summary.judicial_clear ? 'Nenhum apontamento' : 'Bloqueio Judicial'}
                 </Text>
               </View>
             </View>
@@ -601,17 +758,24 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
               <View
                 style={[
                   styles.diagCard,
-                  report.gravamen_details?.has_active_gravamen ? styles.diagCardAlert : styles.diagCardClear,
+                  report.gravame_current?.status === 'active'
+                    ? styles.diagCardAlert
+                    : styles.diagCardClear,
                 ]}
               >
                 <Text style={styles.diagLabel}>Alienação / Gravame</Text>
                 <Text
                   style={[
                     styles.diagStatus,
-                    { color: report.gravamen_details?.has_active_gravamen ? '#b45309' : '#166534' },
+                    {
+                      color: report.gravame_current?.status === 'active' ? '#b45309' : '#166534',
+                      fontSize: 6.2,
+                    },
                   ]}
                 >
-                  {report.gravamen_details?.has_active_gravamen ? 'Gravame Ativo' : 'Desalienado'}
+                  {report.gravame_current?.status === 'active'
+                    ? 'Gravame Ativo'
+                    : 'Nenhum gravame ativo'}
                 </Text>
               </View>
             </View>
@@ -628,10 +792,13 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 <Text
                   style={[
                     styles.diagStatus,
-                    { color: report.auction_details?.has_auction ? '#b45309' : '#166534' },
+                    {
+                      color: report.auction_details?.has_auction ? '#b45309' : '#166534',
+                      fontSize: 6.2,
+                    },
                   ]}
                 >
-                  {report.auction_details?.has_auction ? 'Consta Leilão' : 'Sem Registro'}
+                  {report.auction_details?.has_auction ? 'Consta Leilão' : 'Nenhum registro'}
                 </Text>
               </View>
             </View>
@@ -648,10 +815,13 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 <Text
                   style={[
                     styles.diagStatus,
-                    { color: report.claims_details?.has_claims ? '#b45309' : '#166534' },
+                    {
+                      color: report.claims_details?.has_claims ? '#b45309' : '#166534',
+                      fontSize: 6.2,
+                    },
                   ]}
                 >
-                  {report.claims_details?.has_claims ? 'Consta Sinistro' : 'Sem Registro'}
+                  {report.claims_details?.has_claims ? 'Consta Sinistro' : 'Nenhuma ocorrência'}
                 </Text>
               </View>
             </View>
@@ -668,10 +838,10 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 <Text
                   style={[
                     styles.diagStatus,
-                    { color: recallClear ? '#166534' : '#991b1b' },
+                    { color: recallClear ? '#166534' : '#991b1b', fontSize: 6.2 },
                   ]}
                 >
-                  {recallClear ? 'Sem Pendências' : `${recallPendingCount} Pendência(s)`}
+                  {recallClear ? 'Nenhuma ocorrência' : `${recallPendingCount} Pendência(s)`}
                 </Text>
               </View>
             </View>
@@ -688,10 +858,15 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 <Text
                   style={[
                     styles.diagStatus,
-                    { color: report.risk_summary.debts_clear ? '#166534' : '#b45309' },
+                    {
+                      color: report.risk_summary.debts_clear ? '#166534' : '#b45309',
+                      fontSize: 6.2,
+                    },
                   ]}
                 >
-                  {report.risk_summary.debts_clear ? 'Quitados (R$ 0,00)' : formatCurrency(report.debts_summary?.total_debts)}
+                  {report.risk_summary.debts_clear
+                    ? 'Sem débitos informados'
+                    : formatCurrency(report.debts_summary?.total_debts)}
                 </Text>
               </View>
             </View>
@@ -708,10 +883,12 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 <Text
                   style={[
                     styles.diagStatus,
-                    { color: hasRentalRecord ? '#b45309' : '#166534' },
+                    { color: hasRentalRecord ? '#b45309' : '#166534', fontSize: 6.2 },
                   ]}
                 >
-                  {hasRentalRecord ? 'Consta Registro' : 'Não Consta'}
+                  {hasRentalRecord
+                    ? 'Consta nas bases consultadas'
+                    : 'Não consta nas bases consultadas'}
                 </Text>
               </View>
             </View>
@@ -724,7 +901,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>II. Identificação Cadastral do Veículo</Text>
-            <Text style={styles.sectionSub}>Dados Oficiais Senatran & Detran</Text>
+            <Text style={styles.sectionSub}>Fonte: base de trânsito (SENATRAN / DETRAN)</Text>
           </View>
 
           <View style={styles.card}>
@@ -736,12 +913,15 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
               <View style={styles.col6}>
                 <Text style={styles.fieldLabel}>Marca / Modelo / Versão</Text>
                 <Text style={styles.fieldValueBold}>
-                  {report.brand} {report.model} {report.version && report.version !== report.model ? `• ${report.version}` : ''}
+                  {report.brand} {report.model}{' '}
+                  {report.version && report.version !== report.model ? `• ${report.version}` : ''}
                 </Text>
               </View>
               <View style={styles.col3}>
                 <Text style={styles.fieldLabel}>Ano Fab. / Modelo</Text>
-                <Text style={styles.fieldValueBold}>{report.year_manufacture || '-'} / {report.year_model || '-'}</Text>
+                <Text style={styles.fieldValueBold}>
+                  {report.year_manufacture || '-'} / {report.year_model || '-'}
+                </Text>
               </View>
 
               <View style={styles.col3}>
@@ -753,17 +933,36 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 <Text style={styles.fieldValue}>{report.fuel || '-'}</Text>
               </View>
               <View style={styles.col3}>
-                <Text style={styles.fieldLabel}>Potência / Cilindrada</Text>
-                <Text style={styles.fieldValue}>{report.power || '-'} • {report.engine_capacity || '-'}</Text>
+                <Text style={styles.fieldLabel}>Potência</Text>
+                <Text style={styles.fieldValue}>{report.power || 'Não informada pela fonte'}</Text>
               </View>
               <View style={styles.col3}>
-                <Text style={styles.fieldLabel}>Tipo / Espécie</Text>
-                <Text style={styles.fieldValue}>{report.vehicle_type} • {report.species || 'Passageiro'}</Text>
+                <Text style={styles.fieldLabel}>Cilindrada</Text>
+                <Text style={styles.fieldValue}>
+                  {report.displacement || report.engine_capacity || 'Não informada pela fonte'}
+                </Text>
               </View>
 
               <View style={styles.col3}>
+                <Text style={styles.fieldLabel}>Tipo / Espécie</Text>
+                <Text style={styles.fieldValue}>
+                  {report.vehicle_type} • {report.species || 'Passageiro'}
+                </Text>
+              </View>
+              <View style={styles.col3}>
                 <Text style={styles.fieldLabel}>Município / UF</Text>
-                <Text style={styles.fieldValue}>{report.city_state || '-'}</Text>
+                {hasLocationDivergence ? (
+                  <>
+                    <Text style={[styles.fieldValueBold, { color: '#b45309', fontSize: 6.6 }]}>
+                      Divergência entre fontes
+                    </Text>
+                    <Text style={{ fontSize: 5, color: '#64748b' }}>
+                      Ver seção de divergências cadastrais
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={styles.fieldValue}>{report.city_state || '-'}</Text>
+                )}
               </View>
               <View style={styles.col3}>
                 <Text style={styles.fieldLabel}>Procedência</Text>
@@ -771,11 +970,9 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
               </View>
               <View style={styles.col3}>
                 <Text style={styles.fieldLabel}>Câmbio / Tração</Text>
-                <Text style={styles.fieldValue}>{report.gearbox || 'Manual'} • {report.traction || 'Dianteira'}</Text>
-              </View>
-              <View style={styles.col3}>
-                <Text style={styles.fieldLabel}>Lugares</Text>
-                <Text style={styles.fieldValue}>{report.seat_capacity || 5} passageiros</Text>
+                <Text style={styles.fieldValue}>
+                  {report.gearbox || 'Manual'} • {report.traction || 'Traseira/Dianteira'}
+                </Text>
               </View>
 
               <View style={styles.col4}>
@@ -791,27 +988,71 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 <Text style={styles.fieldValueBold}>{report.engine_masked || 'Protegido'}</Text>
               </View>
 
-              {/* Chips de Status Comercial & Transferência */}
-              <View style={[styles.col12, { marginTop: 2, paddingTop: 2.5, borderTopWidth: 0.5, borderTopColor: '#e2e8f0' }]}>
-                <View style={styles.chipRow}>
-                  <Text style={[styles.fieldLabel, { marginRight: 4, marginBottom: 0 }]}>Status Comercial:</Text>
-                  
-                  <View style={[styles.chip, hasRentalRecord ? styles.chipWarning : styles.chipSuccess]}>
-                    <Text>Locadora: {report.commercial_indicators?.rental_label || 'Não Consta'}</Text>
+              {/* Status Comercial */}
+              <View style={[styles.col12, { marginTop: 3 }]}>
+                <Text style={styles.fieldLabel}>Status Comercial & Indicadores</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 2 }}>
+                  <View
+                    style={[styles.chip, hasRentalRecord ? styles.chipWarning : styles.chipSuccess]}
+                  >
+                    <Text>
+                      Locadora:{' '}
+                      {report.commercial_indicators?.rental_label ||
+                        'Não consta nas bases consultadas'}
+                    </Text>
                   </View>
 
-                  <View style={[styles.chip, report.commercial_indicators?.has_sale_communication ? styles.chipWarning : styles.chipSuccess]}>
-                    <Text>Comunicação de Venda: {report.commercial_indicators?.has_sale_communication ? 'Ativa' : 'Não Consta'}</Text>
+                  <View
+                    style={[
+                      styles.chip,
+                      report.commercial_indicators?.has_sale_communication
+                        ? styles.chipWarning
+                        : styles.chipSuccess,
+                    ]}
+                  >
+                    <Text>
+                      Comunicação de Venda:{' '}
+                      {report.commercial_indicators?.sale_communication ||
+                        'Não consta na base estadual consultada'}
+                    </Text>
                   </View>
 
                   <View style={[styles.chip, styles.chipNeutral]}>
-                    <Text>Situação: {report.commercial_indicators?.vehicle_status || 'Circulação'}</Text>
+                    <Text>
+                      Situação Cadastral:{' '}
+                      {report.commercial_indicators?.vehicle_status || 'Em circulação'}
+                    </Text>
                   </View>
                 </View>
               </View>
             </View>
           </View>
         </View>
+
+        {/* ========================================================================= */}
+        {/* SEÇÃO VISÍVEL: DIVERGÊNCIAS CADASTRAIS ENTRE FONTES */}
+        {/* Renderizada SOMENTE quando existir divergência real entre as bases */}
+        {/* ========================================================================= */}
+        {report.source_consistency_warnings && report.source_consistency_warnings.length > 0 ? (
+          <View style={styles.divergenceSection}>
+            <View style={styles.divergenceHeader}>
+              <Text style={styles.divergenceTitle}>Divergências cadastrais entre fontes</Text>
+            </View>
+            <View style={styles.divergenceBody}>
+              {report.source_consistency_warnings.map((entry, idx) => (
+                <View key={idx} style={styles.divergenceEntry}>
+                  <Text style={styles.divergenceField}>Campo: {entry.field}</Text>
+                  {entry.sources.map((src, sIdx) => (
+                    <Text key={sIdx} style={styles.divergenceSourceLine}>
+                      • {src.source}: {src.value}
+                    </Text>
+                  ))}
+                  <Text style={styles.divergenceRec}>Orientação: {entry.recommendation}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         {/* ========================================================================= */}
         {/* GRID BALANCEADO EM 2 COLUNAS (50% / 50%) */}
@@ -823,28 +1064,95 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>III. Restrições & Gravame</Text>
-                <Text style={styles.sectionSub}>Sircaf</Text>
+                <Text style={styles.sectionSub}>Fonte: Sircaf / base integrada de gravames</Text>
               </View>
               <View style={styles.card}>
                 <View style={styles.grid}>
                   <View style={styles.col12}>
-                    <Text style={styles.fieldLabel}>Situação do Gravame</Text>
-                    <Text style={[styles.fieldValueBold, { color: report.gravamen_details?.has_active_gravamen ? '#b45309' : '#166534' }]}>
-                      {report.gravamen_details?.status_label || 'Desalienado'}
+                    <Text style={styles.fieldLabel}>Situação Financeira Atual</Text>
+                    <Text
+                      style={[
+                        styles.fieldValueBold,
+                        {
+                          color:
+                            report.gravame_current?.status === 'active' ? '#b45309' : '#166534',
+                        },
+                      ]}
+                    >
+                      {report.gravame_current?.status === 'active'
+                        ? report.gravame_current?.label || 'Gravame Ativo'
+                        : 'Nenhum gravame ativo identificado nas bases consultadas.'}
                     </Text>
                   </View>
-                  <View style={styles.col12}>
+                  <View style={styles.col6}>
                     <Text style={styles.fieldLabel}>Agente Financeiro</Text>
-                    <Text style={styles.fieldValueBold}>{report.gravamen_details?.agent || 'Nenhum agente ativo'}</Text>
+                    <Text style={styles.fieldValueBold}>
+                      {report.gravame_current?.status === 'active'
+                        ? report.gravame_current?.agent || 'Nenhum agente identificado'
+                        : 'Sem gravame ativo'}
+                    </Text>
                   </View>
                   <View style={styles.col6}>
-                    <Text style={styles.fieldLabel}>Contrato</Text>
-                    <Text style={styles.fieldValue}>{report.gravamen_details?.contract || 'N/A'}</Text>
+                    <Text style={styles.fieldLabel}>Data de Inclusão</Text>
+                    <Text style={styles.fieldValue}>
+                      {report.gravame_current?.status === 'active'
+                        ? report.gravame_current?.inclusion_date || 'N/I'
+                        : '-'}
+                    </Text>
                   </View>
-                  <View style={styles.col6}>
-                    <Text style={styles.fieldLabel}>Vigência</Text>
-                    <Text style={styles.fieldValue}>{report.gravamen_details?.inclusion_date || 'N/A'}</Text>
-                  </View>
+
+                  {/* Histórico financeiro: registros anteriores */}
+                  {report.gravame_history && report.gravame_history.length > 0 ? (
+                    <View style={styles.col12}>
+                      <Text
+                        style={[
+                          styles.fieldLabel,
+                          {
+                            marginTop: 2,
+                            borderTopWidth: 0.5,
+                            borderTopColor: '#e2e8f0',
+                            paddingTop: 2,
+                          },
+                        ]}
+                      >
+                        Histórico financeiro: {report.gravame_history.length}{' '}
+                        {report.gravame_history.length === 1
+                          ? 'registro anterior'
+                          : 'registros anteriores'}
+                      </Text>
+                      <Text style={{ fontSize: 5.5, color: '#64748b', marginBottom: 2 }}>
+                        Foram identificados {report.gravame_history.length}{' '}
+                        {report.gravame_history.length === 1
+                          ? 'registro anterior de gravame já baixado.'
+                          : 'registros anteriores de gravame já baixado.'}
+                      </Text>
+                      {report.gravame_history.map((gh, ghIdx) => (
+                        <View
+                          key={ghIdx}
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            marginTop: 1.5,
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.fieldValueBold,
+                              { fontSize: 5.8, color: '#334155', maxWidth: '62%' },
+                            ]}
+                          >
+                            • {gh.agent}
+                          </Text>
+                          <Text style={{ fontSize: 5.5, color: '#64748b' }}>
+                            Situação: Gravame baixado
+                            {gh.inclusion_date ? ` • Data: ${gh.inclusion_date}` : ''}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : null}
                 </View>
               </View>
             </View>
@@ -853,31 +1161,49 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>IV. Leilão & Sinistro</Text>
-                <Text style={styles.sectionSub}>Bases Integradas</Text>
+                <Text style={styles.sectionSub}>
+                  Fonte: bases integradas de leilão e seguradoras
+                </Text>
               </View>
               <View style={styles.card}>
                 <View style={styles.grid}>
                   <View style={styles.col6}>
                     <Text style={styles.fieldLabel}>Leilão</Text>
-                    <Text style={[styles.fieldValueBold, { color: report.auction_details?.has_auction ? '#b45309' : '#166534' }]}>
-                      {report.auction_details?.status_label || (report.auction_details?.has_auction ? 'Consta Registro' : 'Sem Registro')}
+                    <Text
+                      style={[
+                        styles.fieldValueBold,
+                        { color: report.auction_details?.has_auction ? '#b45309' : '#166534' },
+                      ]}
+                    >
+                      {report.auction_details?.has_auction
+                        ? report.auction_details?.status_label || 'Consta Registro'
+                        : 'Nenhum registro identificado nas bases consultadas'}
                     </Text>
-                    {report.auction_details?.has_auction && report.auction_details.records?.[0]?.bidder ? (
-                      <Text style={[styles.fieldValue, { fontSize: 5.8, color: '#475569', marginTop: 1 }]}>
+                    {report.auction_details?.has_auction &&
+                    report.auction_details.records?.[0]?.bidder ? (
+                      <Text
+                        style={[
+                          styles.fieldValue,
+                          { fontSize: 5.8, color: '#475569', marginTop: 1 },
+                        ]}
+                      >
                         Comitente: {report.auction_details.records[0].bidder}
                       </Text>
                     ) : null}
                   </View>
                   <View style={styles.col6}>
-                    <Text style={styles.fieldLabel}>Sinistro / Condição</Text>
-                    <Text style={[styles.fieldValueBold, { color: report.claims_details?.has_claims || report.auction_details?.records?.[0]?.claim_type ? '#b45309' : '#166534' }]}>
-                      {report.auction_details?.records?.[0]?.claim_type || report.claims_details?.status_label || 'Sem Registro'}
+                    <Text style={styles.fieldLabel}>Sinistro</Text>
+                    <Text
+                      style={[
+                        styles.fieldValueBold,
+                        { color: report.claims_details?.has_claims ? '#b45309' : '#166534' },
+                      ]}
+                    >
+                      {report.claims_details?.has_claims
+                        ? report.claims_details?.status_label || 'Consta Sinistro'
+                        : 'Nenhuma ocorrência identificada nas bases consultadas'}
                     </Text>
-                    {report.auction_details?.has_auction && report.auction_details.records?.[0]?.condition ? (
-                      <Text style={[styles.fieldValue, { fontSize: 5.8, color: '#475569', marginTop: 1 }]}>
-                        Condição: {report.auction_details.records[0].condition}
-                      </Text>
-                    ) : report.claims_details?.has_claims && report.claims_details.records?.[0] ? (
+                    {report.claims_details?.has_claims && report.claims_details.records?.[0] ? (
                       <Text style={[styles.fieldValue, { fontSize: 5.8, marginTop: 1 }]}>
                         {report.claims_details.records[0].damage_level || 'Média Monta'}
                       </Text>
@@ -891,14 +1217,18 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                         <Text style={styles.fieldLabel}>Leiloeiro / Lote</Text>
                         <Text style={[styles.fieldValue, { fontSize: 6 }]}>
                           {report.auction_details.records[0].auctioneer || 'Leiloeiro Oficial'}
-                          {report.auction_details.records[0].lot ? ` • Lote: ${report.auction_details.records[0].lot}` : ''}
+                          {report.auction_details.records[0].lot
+                            ? ` • Lote: ${report.auction_details.records[0].lot}`
+                            : ''}
                         </Text>
                       </View>
                       <View style={[styles.col6, { marginTop: 2 }]}>
                         <Text style={styles.fieldLabel}>Data / Pátio</Text>
                         <Text style={[styles.fieldValue, { fontSize: 6 }]}>
                           {report.auction_details.records[0].auction_date || 'N/I'}
-                          {report.auction_details.records[0].yard ? ` • ${report.auction_details.records[0].yard}` : ''}
+                          {report.auction_details.records[0].yard
+                            ? ` • ${report.auction_details.records[0].yard}`
+                            : ''}
                         </Text>
                       </View>
                     </>
@@ -911,7 +1241,9 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                         Score & Segurabilidade de Mercado:
                       </Text>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <Text style={{ fontSize: 5.8, fontFamily: 'Helvetica-Bold', color: '#b45309' }}>
+                        <Text
+                          style={{ fontSize: 5.8, fontFamily: 'Helvetica-Bold', color: '#b45309' }}
+                        >
                           Aceitação: {report.auction_details.score.acceptance || 'Restrita'}
                         </Text>
                         {report.auction_details.score.reference_percentage ? (
@@ -921,12 +1253,10 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                         ) : null}
                         {report.auction_details.score.special_inspection_required != null ? (
                           <Text style={{ fontSize: 5.8, color: '#334155' }}>
-                            Vistoria Especial: {String(report.auction_details.score.special_inspection_required).toUpperCase()}
-                          </Text>
-                        ) : null}
-                        {report.auction_details.score.score_label ? (
-                          <Text style={{ fontSize: 5.8, fontFamily: 'Helvetica-Bold', color: '#dc2626' }}>
-                            {report.auction_details.score.score_label}
+                            Vistoria Especial:{' '}
+                            {String(
+                              report.auction_details.score.special_inspection_required,
+                            ).toUpperCase()}
                           </Text>
                         ) : null}
                       </View>
@@ -940,7 +1270,12 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                     <View style={styles.col12}>
                       <View style={styles.auctionPhotoGrid}>
                         {report.auction_details.photos
-                          .filter((p) => p.preview_src && (p.preview_src.startsWith('http') || p.preview_src.startsWith('data:image')))
+                          .filter(
+                            (p) =>
+                              p.preview_src &&
+                              (p.preview_src.startsWith('http') ||
+                                p.preview_src.startsWith('data:image')),
+                          )
                           .slice(0, 4)
                           .map((photo, pIdx) => (
                             <View key={pIdx} style={styles.auctionPhotoItem}>
@@ -949,8 +1284,16 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                           ))}
                       </View>
                       {report.auction_details.photos.length > 4 ? (
-                        <Text style={{ fontSize: 4.8, color: '#64748b', marginTop: 1.5, textAlign: 'right' }}>
-                          +{report.auction_details.photos.length - 4} foto(s) no laudo digital completo
+                        <Text
+                          style={{
+                            fontSize: 4.8,
+                            color: '#64748b',
+                            marginTop: 1.5,
+                            textAlign: 'right',
+                          }}
+                        >
+                          +{report.auction_details.photos.length - 4} foto(s) no laudo digital
+                          completo
                         </Text>
                       ) : null}
                     </View>
@@ -963,27 +1306,120 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>V. Débitos Estaduais</Text>
-                <Text style={styles.sectionSub}>Detran / Sefaz</Text>
+                <Text style={styles.sectionSub}>
+                  Fonte: base estadual de trânsito (DETRAN / SEFAZ)
+                </Text>
               </View>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <View style={styles.miniDebtBox}>
-                  <Text style={styles.fieldLabel}>Multas</Text>
-                  <Text style={styles.fieldValueBold}>{formatCurrency(report.debts_summary?.fines_pending)}</Text>
-                </View>
-                <View style={styles.miniDebtBox}>
-                  <Text style={styles.fieldLabel}>IPVA</Text>
-                  <Text style={styles.fieldValueBold}>{formatCurrency(report.debts_summary?.ipva_pending)}</Text>
-                </View>
-                <View style={styles.miniDebtBox}>
-                  <Text style={styles.fieldLabel}>Licenc.</Text>
-                  <Text style={styles.fieldValueBold}>{formatCurrency(report.debts_summary?.licensing_pending)}</Text>
-                </View>
-                <View style={[styles.miniDebtBox, { borderColor: (report.debts_summary?.total_debts || 0) > 0 ? '#fcd34d' : '#e2e8f0' }]}>
-                  <Text style={styles.fieldLabel}>Total</Text>
-                  <Text style={[styles.fieldValueBold, { color: (report.debts_summary?.total_debts || 0) > 0 ? '#b45309' : '#166534' }]}>
-                    {formatCurrency(report.debts_summary?.total_debts)}
+              <View style={styles.card}>
+                {/* Referência da base e Exercício informado */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 2.5,
+                    borderBottomWidth: 0.5,
+                    borderBottomColor: '#e2e8f0',
+                    paddingBottom: 2,
+                  }}
+                >
+                  <Text style={{ fontSize: 5.8, color: '#475569' }}>
+                    Referência da base:{' '}
+                    <Text style={{ fontFamily: 'Helvetica-Bold', color: '#1e293b' }}>
+                      {report.debts_source_info?.last_update_date || 'Conforme base'}
+                    </Text>
+                  </Text>
+                  <Text style={{ fontSize: 5.8, color: '#475569' }}>
+                    Exercício informado:{' '}
+                    <Text style={{ fontFamily: 'Helvetica-Bold', color: '#1e293b' }}>
+                      {report.debts_source_info?.licensing_year || '-'}
+                    </Text>
                   </Text>
                 </View>
+
+                {/* Status textual */}
+                <Text
+                  style={[
+                    styles.fieldValueBold,
+                    {
+                      fontSize: 6.8,
+                      color: (report.debts_summary?.total_debts || 0) > 0 ? '#b45309' : '#166534',
+                      marginBottom: 2.5,
+                    },
+                  ]}
+                >
+                  {(report.debts_summary?.total_debts || 0) > 0
+                    ? `Débitos identificados na base consultada (${formatCurrency(report.debts_summary?.total_debts)})`
+                    : 'Sem débitos financeiros informados na base consultada'}
+                </Text>
+
+                {/* 4 Mini Debt Boxes */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <View style={styles.miniDebtBox}>
+                    <Text style={styles.fieldLabel}>Multas</Text>
+                    <Text style={styles.fieldValueBold}>
+                      {formatCurrency(report.debts_summary?.fines_pending)}
+                    </Text>
+                  </View>
+                  <View style={styles.miniDebtBox}>
+                    <Text style={styles.fieldLabel}>IPVA</Text>
+                    <Text style={styles.fieldValueBold}>
+                      {formatCurrency(report.debts_summary?.ipva_pending)}
+                    </Text>
+                  </View>
+                  <View style={styles.miniDebtBox}>
+                    <Text style={styles.fieldLabel}>Licenc.</Text>
+                    <Text style={styles.fieldValueBold}>
+                      {formatCurrency(report.debts_summary?.licensing_pending)}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.miniDebtBox,
+                      {
+                        borderColor:
+                          (report.debts_summary?.total_debts || 0) > 0 ? '#fcd34d' : '#e2e8f0',
+                      },
+                    ]}
+                  >
+                    <Text style={styles.fieldLabel}>Total Inf.</Text>
+                    <Text
+                      style={[
+                        styles.fieldValueBold,
+                        {
+                          color:
+                            (report.debts_summary?.total_debts || 0) > 0 ? '#b45309' : '#166534',
+                        },
+                      ]}
+                    >
+                      {formatCurrency(report.debts_summary?.total_debts)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Stale Warning Badge se a base for antiga */}
+                {report.debts_source_info?.is_stale ? (
+                  <View
+                    style={{
+                      marginTop: 2.5,
+                      padding: 2,
+                      backgroundColor: '#fef3c7',
+                      borderRadius: 2,
+                      borderWidth: 0.5,
+                      borderColor: '#fcd34d',
+                    }}
+                  >
+                    <Text style={{ fontSize: 5.2, color: '#92400e', fontFamily: 'Helvetica-Bold' }}>
+                      BASE COM ATUALIZAÇÃO ANTERIOR À DATA DE EMISSÃO (
+                      {report.debts_source_info.last_update_date})
+                    </Text>
+                  </View>
+                ) : null}
+
+                {/* Nota explicativa de fechamento da seção */}
+                <Text style={{ fontSize: 4.8, color: '#64748b', marginTop: 2, lineHeight: 1.2 }}>
+                  Os valores refletem a última atualização disponibilizada pela fonte. Confirme a
+                  situação atual no órgão competente antes da transferência.
+                </Text>
               </View>
             </View>
           </View>
@@ -993,38 +1429,82 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
             {/* VI. HISTÓRICO DE PROPRIETÁRIOS (LGPD) */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>VI. Proprietários Anteriores (LGPD)</Text>
-                <Text style={styles.sectionSub}>{report.owners_history?.owners_count || 1} registro(s)</Text>
+                <Text style={styles.sectionTitle}>VI. Histórico de Proprietários</Text>
+                <Text style={styles.sectionSub}>Fonte: histórico registral de trânsito</Text>
               </View>
 
-              <View style={styles.table}>
-                <View style={styles.tableHeader}>
-                  <Text style={[styles.th, { width: '18%' }]}>Ano</Text>
-                  <Text style={[styles.th, { width: '12%' }]}>UF</Text>
-                  <Text style={[styles.th, { width: '32%' }]}>Tipo Titular</Text>
-                  <Text style={[styles.th, { width: '38%' }]}>Doc. Mascarado</Text>
+              <View style={styles.card}>
+                <View
+                  style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}
+                >
+                  <Text style={{ fontSize: 5.8, color: '#475569' }}>
+                    Registros disponibilizados:{' '}
+                    <Text style={{ fontFamily: 'Helvetica-Bold', color: '#1e293b' }}>
+                      {report.owners_history?.records?.length ||
+                        report.owners_history?.owners_count ||
+                        1}
+                    </Text>
+                  </Text>
                 </View>
 
-                {report.owners_history && report.owners_history.records.length > 0 ? (
-                  report.owners_history.records.map((owner, idx) => (
-                    <View key={idx} style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}>
-                      <Text style={[styles.tdBold, { width: '18%' }]}>{owner.period || '-'}</Text>
-                      <Text style={[styles.td, { width: '12%' }]}>{owner.state || 'SP'}</Text>
-                      <Text style={[styles.td, { width: '32%', color: owner.document_type === 'PJ' ? '#1e40af' : '#334155', fontFamily: 'Helvetica-Bold' }]}>
-                        {owner.document_type === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física'}
-                      </Text>
-                      <Text style={[styles.tdBold, { width: '38%', color: '#334155' }]}>
-                        {owner.masked_document || (owner.document_type === 'PJ' ? '**.***.***/****-**' : '***.***.***-**')}
+                <View style={styles.table}>
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.th, { width: '15%' }]}>Ano</Text>
+                    <Text style={[styles.th, { width: '12%' }]}>UF</Text>
+                    <Text style={[styles.th, { width: '35%' }]}>Tipo Titular</Text>
+                    <Text style={[styles.th, { width: '38%' }]}>Documento</Text>
+                  </View>
+
+                  {report.owners_history && report.owners_history.records.length > 0 ? (
+                    report.owners_history.records.map((owner, idx) => (
+                      <View
+                        key={idx}
+                        style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}
+                      >
+                        <Text style={[styles.tdBold, { width: '15%' }]}>{owner.period || '-'}</Text>
+                        <Text style={[styles.td, { width: '12%' }]}>{owner.state || '-'}</Text>
+                        <Text
+                          style={[
+                            styles.td,
+                            {
+                              width: '35%',
+                              color:
+                                owner.document_type === 'PJ'
+                                    ? '#1e40af'
+                                    : owner.document_type === 'unknown'
+                                      ? '#64748b'
+                                      : '#334155',
+                              fontFamily: 'Helvetica-Bold',
+                            },
+                          ]}
+                        >
+                          {owner.document_type === 'PJ'
+                            ? 'Pessoa Jurídica'
+                            : owner.document_type === 'PF'
+                              ? 'Pessoa Física'
+                              : 'Não informado'}
+                        </Text>
+                        <Text style={[styles.tdBold, { width: '38%', color: '#334155' }]}>
+                          {owner.masked_document &&
+                          owner.masked_document !== 'Documento não disponibilizado pela fonte'
+                            ? owner.masked_document
+                            : 'Não disponibilizado'}
+                        </Text>
+                      </View>
+                    ))
+                  ) : (
+                    <View style={styles.tableRow}>
+                      <Text style={[styles.td, { width: '100%', color: '#64748b' }]}>
+                        Nenhum registro histórico de proprietário anterior retornado pela fonte.
                       </Text>
                     </View>
-                  ))
-                ) : (
-                  <View style={styles.tableRow}>
-                    <Text style={[styles.td, { width: '100%', color: '#64748b' }]}>
-                      Primeiro proprietário registrado ou sem histórico anterior.
-                    </Text>
-                  </View>
-                )}
+                  )}
+                </View>
+
+                <Text style={{ fontSize: 5, color: '#64748b', lineHeight: 1.25 }}>
+                  A fonte disponibilizou registro histórico, mas não forneceu detalhes adicionais do
+                  titular.
+                </Text>
               </View>
             </View>
 
@@ -1032,24 +1512,95 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>VII. Referência Tabela FIPE</Text>
-                <Text style={styles.sectionSub}>Oficial FIPE</Text>
+                <Text style={styles.sectionSub}>Fonte: referência de mercado (FIPE)</Text>
               </View>
               <View style={styles.card}>
                 <View style={styles.grid}>
-                  <View style={styles.col6}>
-                    <Text style={styles.fieldLabel}>Código FIPE</Text>
-                    <Text style={styles.fieldValueBold}>{report.fipe_reference?.code || 'N/A'}</Text>
+                  <View style={styles.col12}>
+                    <Text style={[styles.fieldLabel, { color: '#b45309' }]}>
+                      Referência principal sugerida
+                    </Text>
                   </View>
                   <View style={styles.col6}>
-                    <Text style={styles.fieldLabel}>Preço Médio Atual</Text>
+                    <Text style={styles.fieldLabel}>Código FIPE</Text>
+                    <Text style={styles.fieldValueBold}>
+                      {report.fipe_reference?.code || 'N/A'}
+                    </Text>
+                  </View>
+                  <View style={styles.col6}>
+                    <Text style={styles.fieldLabel}>Valor Médio de Referência</Text>
                     <Text style={[styles.fieldValueBold, { fontSize: 8.8, color: '#b45309' }]}>
                       {formatCurrency(report.fipe_reference?.price)}
                     </Text>
                   </View>
-                  <View style={styles.col12}>
+                  <View style={styles.col6}>
                     <Text style={styles.fieldLabel}>Mês de Referência</Text>
-                    <Text style={styles.fieldValue}>{report.fipe_reference?.reference_month || 'Atual'}</Text>
+                    <Text style={styles.fieldValue}>
+                      {report.fipe_reference?.reference_month || 'Atual'}
+                    </Text>
                   </View>
+                  <View style={styles.col6}>
+                    <Text style={styles.fieldLabel}>Versão</Text>
+                    <Text style={[styles.fieldValue, { fontSize: 5.8 }]}>
+                      {report.fipe_reference?.model || 'N/I'}
+                    </Text>
+                  </View>
+
+                  {/* Nota visível e discreta sobre FIPE */}
+                  <View
+                    style={[
+                      styles.col12,
+                      {
+                        marginTop: 2,
+                        paddingVertical: 1.5,
+                        borderTopWidth: 0.5,
+                        borderTopColor: '#e2e8f0',
+                      },
+                    ]}
+                  >
+                    <Text style={{ fontSize: 5, color: '#64748b', lineHeight: 1.25 }}>
+                      A FIPE é uma referência de mercado. Não representa preço de venda garantido,
+                      avaliação final ou valor obrigatório de negociação.
+                    </Text>
+                  </View>
+
+                  {/* Tabela de Outras referências compatíveis */}
+                  {report.fipe_alternatives && report.fipe_alternatives.length > 0 ? (
+                    <View style={[styles.col12, { marginTop: 2 }]}>
+                      <Text style={[styles.fieldLabel, { fontSize: 5.4, marginBottom: 1.5 }]}>
+                        Outras referências compatíveis
+                      </Text>
+                      <View style={styles.table}>
+                        <View style={styles.tableHeader}>
+                          <Text style={[styles.th, { width: '22%' }]}>Código</Text>
+                          <Text style={[styles.th, { width: '52%' }]}>Versão</Text>
+                          <Text style={[styles.th, { width: '26%', textAlign: 'right' }]}>
+                            Valor de Referência
+                          </Text>
+                        </View>
+                        {report.fipe_alternatives.slice(0, 3).map((alt, altIdx) => (
+                          <View
+                            key={altIdx}
+                            style={[styles.tableRow, altIdx % 2 === 1 ? styles.tableRowAlt : {}]}
+                          >
+                            <Text style={[styles.tdBold, { width: '22%' }]}>{alt.code}</Text>
+                            <Text style={[styles.td, { width: '52%' }]}>
+                              {alt.version}
+                              {alt.fuel ? ` (${alt.fuel})` : ''}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.tdBold,
+                                { width: '26%', textAlign: 'right', color: '#0f172a' },
+                              ]}
+                            >
+                              {formatCurrency(alt.price)}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ) : null}
                 </View>
               </View>
             </View>
@@ -1058,7 +1609,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>VIII. Último Anúncio & Quilometragem</Text>
-                <Text style={styles.sectionSub}>Bases Web & Odômetro</Text>
+                <Text style={styles.sectionSub}>Fonte: histórico de mercado e odômetro</Text>
               </View>
               <View style={styles.card}>
                 <View style={styles.grid}>
@@ -1067,39 +1618,62 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                     <Text style={[styles.fieldValueBold, { fontSize: 8.8, color: '#15803d' }]}>
                       {report.latest_km_record?.announced_price
                         ? formatCurrency(report.latest_km_record.announced_price)
-                        : (report.ads_history?.[0]?.price ? formatCurrency(report.ads_history[0].price) : 'Não registrado')}
+                        : report.ads_history?.[0]?.price
+                          ? formatCurrency(report.ads_history[0].price)
+                          : 'Não registrado'}
                     </Text>
                   </View>
                   <View style={styles.col6}>
                     <Text style={styles.fieldLabel}>Quilometragem do Odômetro</Text>
                     <Text style={[styles.fieldValueBold, { fontSize: 8.8, color: '#0f172a' }]}>
-                      {formatKm(report.latest_km_record?.mileage ?? report.ads_history?.[0]?.mileage)}
+                      {formatKm(
+                        report.latest_km_record?.mileage ?? report.ads_history?.[0]?.mileage,
+                      )}
                     </Text>
                   </View>
 
                   <View style={styles.col6}>
                     <Text style={styles.fieldLabel}>Data do Registro</Text>
                     <Text style={styles.fieldValue}>
-                      {report.latest_km_record?.date || report.ads_history?.[0]?.date || 'Registro recente'}
+                      {report.latest_km_record?.date ||
+                        report.ads_history?.[0]?.date ||
+                        'Registro recente'}
                     </Text>
                   </View>
                   <View style={styles.col6}>
                     <Text style={styles.fieldLabel}>Origem / Portal</Text>
                     <Text style={styles.fieldValue}>
-                      {report.latest_km_record?.source || report.ads_history?.[0]?.portal || 'Portal de Anúncios'}
+                      {report.latest_km_record?.source ||
+                        report.ads_history?.[0]?.portal ||
+                        'Portal de Anúncios'}
                     </Text>
                   </View>
 
                   {/* Comparativo FIPE x Anúncio */}
                   {Boolean(
                     (report.latest_km_record?.announced_price || report.ads_history?.[0]?.price) &&
-                    report.fipe_reference?.price
+                    report.fipe_reference?.price,
                   ) && (
-                    <View style={[styles.col12, { marginTop: 2, paddingTop: 2, borderTopWidth: 0.5, borderTopColor: '#e2e8f0' }]}>
-                      <Text style={[styles.fieldLabel, { fontSize: 5.2 }]}>Relação com Tabela FIPE:</Text>
+                    <View
+                      style={[
+                        styles.col12,
+                        {
+                          marginTop: 2,
+                          paddingTop: 2,
+                          borderTopWidth: 0.5,
+                          borderTopColor: '#e2e8f0',
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.fieldLabel, { fontSize: 5.2 }]}>
+                        Relação com Tabela FIPE:
+                      </Text>
                       <Text style={[styles.fieldValue, { fontSize: 6, color: '#475569' }]}>
                         {(() => {
-                          const adPrice = report.latest_km_record?.announced_price || report.ads_history?.[0]?.price || 0;
+                          const adPrice =
+                            report.latest_km_record?.announced_price ||
+                            report.ads_history?.[0]?.price ||
+                            0;
                           const fipePrice = report.fipe_reference?.price || 0;
                           const ratio = Math.round((adPrice / fipePrice) * 100);
                           const diff = adPrice - fipePrice;
@@ -1121,16 +1695,54 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
         </View>
 
         {/* ========================================================================= */}
-        {/* RODAPÉ INSTITUCIONAL & NOTA DE ORIGEM GOVERNAMENTAL */}
+        {/* IX. RESUMO PARA NEGOCIAÇÃO */}
+        {/* Síntese compacta para tomada de decisão, aproveitando o espaço da página */}
+        {/* ========================================================================= */}
+        <View style={styles.negotiationSection}>
+          <View style={styles.negotiationHeader}>
+            <Text style={styles.negotiationTitle}>Resumo para negociação</Text>
+          </View>
+          <View style={styles.negotiationBody}>
+            {negotiationPoints.map((point, pIdx) => (
+              <View key={pIdx} style={styles.negotiationRow}>
+                <Text style={styles.negotiationDot}>•</Text>
+                <Text style={styles.negotiationText}>{point}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ========================================================================= */}
+        {/* RODAPÉ INSTITUCIONAL & NOTAS ESTRUTURADAS (3 GRUPOS) */}
         {/* ========================================================================= */}
         <View style={styles.footer} fixed>
-          <View style={{ maxWidth: '86%' }}>
-            <Text style={styles.footerTrust}>
-              Origem dos Dados: Coletados e consolidados via API Brasil com integração direta aos sistemas governamentais oficiais (SENATRAN, DETRAN Estaduais, Renajud, Sircaf e bases conveniadas).
-            </Text>
-            <Text style={styles.footerText}>
-              Documento gerado eletronicamente pelo Sistema de Gestão {storeName}. Consulta cadastral informativa para verificação de procedência e integridade veicular.
-            </Text>
+          <View style={styles.footerGrid}>
+            <View style={styles.footerCol}>
+              <Text style={styles.footerHeading}>Origem dos dados</Text>
+              <Text style={styles.footerText}>
+                Dados consolidados a partir de fontes integradas, como bases veiculares, estaduais,
+                financeiras e conveniadas (via API Brasil).
+              </Text>
+            </View>
+            <View style={styles.footerCol}>
+              <Text style={styles.footerHeading}>Limitações do relatório</Text>
+              <Text style={styles.footerText}>
+                Este relatório é complementar e não substitui vistoria mecânica presencial, perícia,
+                conferência do CRLV-e ou validação junto aos órgãos competentes.
+              </Text>
+            </View>
+            <View style={styles.footerCol}>
+              <Text style={styles.footerHeading}>Atualização das fontes</Text>
+              <Text style={styles.footerText}>
+                {report.report_metadata?.source_update_dates &&
+                report.report_metadata.source_update_dates.some((s) => s.date)
+                  ? report.report_metadata.source_update_dates
+                      .filter((s) => s.date)
+                      .map((s) => `${s.source}: ${s.date}`)
+                      .join(' • ')
+                  : `Base estadual: ${report.debts_source_info?.last_update_date || 'Conforme base'} • Base nacional: Conforme base`}
+              </Text>
+            </View>
           </View>
           <Text
             style={styles.pageNumber}
