@@ -12,8 +12,9 @@ import { VehicleHistoryPricing } from '@/components/vehicle-history/vehicle-hist
 import { VehicleHistoryReasons } from '@/components/vehicle-history/vehicle-history-reasons';
 import { VehicleHistoryDisclaimer } from '@/components/vehicle-history/vehicle-history-disclaimer';
 import { VehicleHistoryFaq } from '@/components/vehicle-history/vehicle-history-faq';
-import { VEHICLE_HISTORY_FAQS } from '@/components/vehicle-history/vehicle-history-faq-data';
+import { getVehicleHistoryFaqs } from '@/components/vehicle-history/vehicle-history-faq-data';
 import { VehicleHistoryCtaFinal } from '@/components/vehicle-history/vehicle-history-cta-final';
+import { VehicleHistorySeoGuide } from '@/components/vehicle-history/vehicle-history-seo-guide';
 import { buildPageMetadata, JsonLd, SEO_CONFIG } from '@/lib/seo';
 import { buildVehicleHistoryServiceSchema } from '@/lib/seo/schemas/vehicle-history';
 import { getVehicleHistorySettings } from '@/lib/site-settings';
@@ -49,14 +50,35 @@ export async function generateMetadata(): Promise<Metadata> {
     currency: 'BRL',
   });
 
-  const title = `Consulta Veicular Oficial | Qualquer Veículo por Placa | ${siteName}`;
-  const description = `Não caia em golpes. Consulte histórico completo de leilão, sinistro, gravames, multas e débitos em todo o Brasil por apenas ${priceFormatted} na ${siteName}. Pagamento seguro via Mercado Pago, plataforma com laudos salvos vitalícios e PDF pronto para imprimir.`;
+  const title = 'Histórico Veicular Completo por Placa | Consulta Oficial';
+  const description = `Consulte o histórico veicular completo por placa: leilão, sinistro, multas, débitos e gravames em todo o Brasil por apenas ${priceFormatted} na ${siteName}.`;
+
+  const keywords = [
+    'histórico veicular',
+    'historico veicular',
+    'consulta historico veicular',
+    'consulta de placa',
+    'consulta veicular por placa',
+    'consultar placa carro',
+    'consultar placa moto',
+    'laudo cautelar veicular',
+    'laudo veicular online',
+    'historico veicular leilao',
+    'historico veicular sinistro',
+    'debitos veiculares placa',
+    'consulta placa senatran',
+    'AF Veículos',
+    'AF Veículos PE',
+    'AF Motos',
+    'consulta veicular Pernambuco',
+  ];
 
   return buildPageMetadata({
     title,
     description,
     path: '/historico-veicular',
     ogImage: settings.logo?.src,
+    keywords,
   });
 }
 
@@ -92,12 +114,17 @@ export default async function HistoricoVeicularPage() {
     );
   }
 
+  const formattedPrice = vehicleHistory.price.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: vehicleHistory.currency || 'BRL',
+  });
+
   const schemas = buildVehicleHistoryServiceSchema({
     siteName: settings.siteName,
     price: vehicleHistory.price,
     currency: vehicleHistory.currency,
     description: vehicleHistory.heroSubtitle,
-    faqs: VEHICLE_HISTORY_FAQS.map((f) => ({
+    faqs: getVehicleHistoryFaqs(formattedPrice).map((f) => ({
       question: f.question,
       answer: f.answer,
     })),
@@ -139,7 +166,13 @@ export default async function HistoricoVeicularPage() {
           offers={creditOffers}
         />
 
-        {/* G. Vantagens na Negociação (Compra e Venda) */}
+        {/* G. Guia de Procedência e Tabela Comparativa (Otimizado para Busca Orgânica e IAs) */}
+        <VehicleHistorySeoGuide
+          siteName={settings.siteName}
+          priceFormatted={formattedPrice}
+        />
+
+        {/* H. Vantagens na Negociação (Compra e Venda) */}
         <VehicleHistoryReasons />
 
         {/* H. Transparência & Limitações do Serviço */}

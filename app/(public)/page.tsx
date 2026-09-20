@@ -12,6 +12,8 @@ import {
   Megaphone,
   BadgeCheck,
   ClipboardCheck,
+  FileSearch,
+  Search,
 } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { buttonVariants } from '@/components/ui/button';
@@ -32,11 +34,24 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteName = settings?.site_name || SEO_CONFIG.defaultStoreName;
 
   return buildPageMetadata({
-    title: `${siteName} | Motos usadas e seminovas em Cabo de Santo Agostinho - PE`,
+    title: `${siteName} | Veículos, Motos e Histórico Veicular em Cabo de Santo Agostinho - PE`,
     description:
       settings?.settings?.description ||
-      `Encontre motos usadas e seminovas na ${siteName}, em Cabo de Santo Agostinho - PE. Confira nosso estoque revisado com laudo cautelar aprovado e garantia. Fale conosco pelo WhatsApp.`,
+      `Encontre veículos e motos na ${siteName}, em Cabo de Santo Agostinho - PE. Estoque revisado, laudo cautelar aprovado e consulta oficial de histórico veicular por placa. Fale conosco pelo WhatsApp.`,
     path: '/',
+    keywords: [
+      'AF Veículos',
+      'AF Veículos PE',
+      'AF Motos',
+      'histórico veicular',
+      'consulta veicular por placa',
+      'consulta de placa',
+      'veículos seminovos Cabo de Santo Agostinho',
+      'motos usadas Cabo de Santo Agostinho',
+      'comprar moto Recife',
+      'laudo veicular online',
+      siteName,
+    ],
   });
 }
 
@@ -207,6 +222,77 @@ export default async function HomePage() {
           >
             Ver todas as motos
           </Link>
+        </div>
+      </section>
+
+      {/* 3.5. Histórico Veicular Oficial Feature Section (Internal Link Juice & High Conversion) */}
+      <section className="container mx-auto px-4 md:px-6">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-[#0f172a] to-slate-950 border border-blue-500/30 p-8 sm:p-10 md:p-12 shadow-2xl shadow-black/80">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-8 space-y-4 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-xs font-extrabold text-blue-400">
+                <FileSearch className="w-3.5 h-3.5" />
+                <span>Serviço Oficial {siteName}</span>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white font-heading">
+                Histórico Veicular por Placa:{' '}
+                <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-amber-300 bg-clip-text text-transparent">
+                  Evite Golpes Antes de Comprar
+                </span>
+              </h2>
+
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                Consulte em segundos qualquer carro, moto ou caminhão em todo o Brasil. Verifique histórico de leilão,
+                sinistro, gravames, restrições judiciais e débitos com laudo salvo vitalício na sua conta.
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
+                <Link
+                  href="/historico-veicular"
+                  className={cn(
+                    buttonVariants({ size: 'lg' }),
+                    'bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 px-6 rounded-xl shadow-lg shadow-blue-900/40 flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]'
+                  )}
+                >
+                  <Search className="w-4 h-4" />
+                  <span>Consultar Histórico Veicular</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  href="/historico-veicular#precos-historico"
+                  className="text-xs sm:text-sm font-semibold text-slate-300 hover:text-amber-400 underline underline-offset-4 transition-colors py-2"
+                >
+                  Ver o que está incluso no laudo completo &rarr;
+                </Link>
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 flex flex-col gap-3">
+              <div className="p-4 rounded-2xl bg-slate-950/70 border border-white/10 space-y-1">
+                <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                  <BadgeCheck className="w-4 h-4" />
+                  100% Oficial e Seguro
+                </span>
+                <p className="text-xs text-slate-400">
+                  Dados cruzados do Senatran, Detrans estaduais e bases judiciais de todo o Brasil.
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-950/70 border border-white/10 space-y-1">
+                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                  <FileCheck className="w-4 h-4" />
+                  PDF Pronto para Imprimir
+                </span>
+                <p className="text-xs text-slate-400">
+                  Laudo digital completo com botão de download em PDF para levar na hora da negociação.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

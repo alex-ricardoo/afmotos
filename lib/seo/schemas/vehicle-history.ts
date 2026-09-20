@@ -26,19 +26,25 @@ export function buildVehicleHistoryServiceSchema({
   const serviceSchema = {
     '@context': 'https://schema.org',
     '@type': 'Service',
-    name: 'Histórico Veicular para Motos',
-    serviceType: 'Consulta e Relatório Veicular Digital',
+    name: 'Consulta de Histórico Veicular Completo por Placa',
+    alternateName: [
+      'Histórico Veicular',
+      'Consulta Veicular por Placa',
+      'Laudo Cautelar Veicular',
+      'Consulta de Procedência Veicular',
+    ],
+    serviceType: 'Consulta e Relatório de Procedência Veicular Online',
     description:
       description ||
-      'Relatório de histórico veicular completo para motocicletas por placa. Verificação de roubo e furto, leilão, sinistro, gravames, multas e débitos.',
+      'Relatório oficial de histórico veicular completo por placa para carros, motos e caminhões em todo o Brasil. Verificação de leilão, sinistro, roubo e furto, gravames, multas, débitos e restrições judiciais com emissão imediata em PDF.',
     provider: {
       '@type': 'AutoDealer',
       name: siteName,
       url: baseUrl,
     },
     areaServed: {
-      '@type': 'AdministrativeArea',
-      name: 'Pernambuco',
+      '@type': 'Country',
+      name: 'Brasil',
     },
     offers: {
       '@type': 'Offer',
@@ -46,10 +52,32 @@ export function buildVehicleHistoryServiceSchema({
       priceCurrency: currency,
       availability: 'https://schema.org/InStock',
       url: pageUrl,
+      seller: {
+        '@type': 'AutoDealer',
+        name: siteName,
+      },
     },
   };
 
-  // 2. BreadcrumbList Schema
+  // 2. WebApplication Schema (Otimizado para buscas do Google e extração por IAs)
+  const webAppSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: `Consulta de Histórico Veicular - ${siteName}`,
+    url: pageUrl,
+    applicationCategory: 'UtilityApplication',
+    operatingSystem: 'All',
+    browserRequirements: 'Requires JavaScript. Requires HTML5.',
+    description:
+      'Ferramenta online para consulta imediata de histórico veicular e antecedentes por placa veicular Mercosul ou padrão antigo.',
+    offers: {
+      '@type': 'Offer',
+      price: price.toFixed(2),
+      priceCurrency: currency,
+    },
+  };
+
+  // 3. BreadcrumbList Schema
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -69,7 +97,7 @@ export function buildVehicleHistoryServiceSchema({
     ],
   };
 
-  // 3. FAQPage Schema
+  // 4. FAQPage Schema
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -83,5 +111,5 @@ export function buildVehicleHistoryServiceSchema({
     })),
   };
 
-  return [serviceSchema, breadcrumbSchema, faqSchema];
+  return [serviceSchema, webAppSchema, breadcrumbSchema, faqSchema];
 }

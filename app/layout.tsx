@@ -31,12 +31,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteName = settings?.siteName || SEO_CONFIG.defaultStoreName;
   const description =
     settings?.description ||
-    `Encontre motos usadas e seminovas na ${siteName}, em Cabo de Santo Agostinho - PE. Confira nosso estoque revisado, com laudo cautelar aprovado e garantia. Atendimento direto pelo WhatsApp.`;
+    `Encontre veículos e motos seminovas na ${siteName}, em Cabo de Santo Agostinho - PE. Consulta oficial de histórico veicular por placa, procedência checada e atendimento direto pelo WhatsApp.`;
   const logoUrl = settings?.logo?.src || `${getBaseSiteUrl()}/logo.jpg`;
 
   return {
     title: {
-      default: `${siteName} | Motos usadas e seminovas em Cabo de Santo Agostinho - PE`,
+      default: `${siteName} | Veículos, Motos e Histórico Veicular em Cabo de Santo Agostinho - PE`,
       template: `%s | ${siteName}`,
     },
     description,
@@ -45,15 +45,25 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: siteName }],
     generator: 'Next.js',
     keywords: [
+      'histórico veicular',
+      'consulta veicular por placa',
+      'consulta de placa',
+      'laudo veicular',
+      'laudo cautelar',
+      'consulta placa leilão',
+      'AF Veículos',
+      'AF Veículos PE',
+      'AF Motos',
+      'veículos seminovos Cabo de Santo Agostinho',
       'motos usadas Cabo de Santo Agostinho',
       'motos seminovas Pernambuco',
       'comprar moto Recife',
       'venda de motos usadas',
       siteName,
-      'consignação de motos PE',
+      'consignação de veículos PE',
     ],
     openGraph: {
-      title: `${siteName} | Motos usadas e seminovas em Cabo de Santo Agostinho - PE`,
+      title: `${siteName} | Veículos, Motos e Histórico Veicular em Cabo de Santo Agostinho - PE`,
       description,
       url: getBaseSiteUrl(),
       siteName,
@@ -62,15 +72,15 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [
         {
           url: logoUrl,
-          width: 800,
-          height: 800,
+          width: 1200,
+          height: 630,
           alt: siteName,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${siteName} | Motos usadas e seminovas em Cabo de Santo Agostinho - PE`,
+      title: `${siteName} | Veículos, Motos e Histórico Veicular em Cabo de Santo Agostinho - PE`,
       description,
       images: [logoUrl],
     },

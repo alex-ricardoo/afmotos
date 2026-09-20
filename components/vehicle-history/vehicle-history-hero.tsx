@@ -144,11 +144,11 @@ export function VehicleHistoryHero({ settings, siteName, defaultPhone }: Vehicle
             <ArrowRight className="w-3 h-3 text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
           </Link>
 
-          {/* Headline de Alta Conversão */}
+          {/* Headline de Alta Conversão & SEO */}
           <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black text-slate-50 tracking-tight leading-[1.15] max-w-4xl font-heading drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
-            Evite perder dinheiro.{' '}
+            Histórico Veicular por Placa.{' '}
             <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500 bg-clip-text text-transparent">
-              Consulte o histórico antes de fechar o negócio.
+              Consulte procedência antes de fechar negócio.
             </span>
           </h1>
 

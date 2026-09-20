@@ -5,7 +5,7 @@ import { ChevronDown, HelpCircle } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { cn } from '@/lib/utils';
 import { buildVehicleHistoryWhatsAppUrl } from '@/lib/utils/whatsapp';
-import { VEHICLE_HISTORY_FAQS } from './vehicle-history-faq-data';
+import { VEHICLE_HISTORY_FAQS, getVehicleHistoryFaqs } from './vehicle-history-faq-data';
 
 export { VEHICLE_HISTORY_FAQS };
 
@@ -29,7 +29,12 @@ export function VehicleHistoryFaq({
   phone,
   price,
 }: VehicleHistoryFaqProps) {
-  const [openId, setOpenId] = useState<string | null>(VEHICLE_HISTORY_FAQS[0].id);
+  const priceFormatted = price.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+  const faqs = getVehicleHistoryFaqs(priceFormatted);
+  const [openId, setOpenId] = useState<string | null>(faqs[0]?.id || null);
 
   const toggleFaq = (id: string) => {
     setOpenId((prev) => (prev === id ? null : id));
@@ -67,7 +72,7 @@ export function VehicleHistoryFaq({
 
         {/* Lista Accordion com Áreas de Toque Mínimas de 48px */}
         <div className="space-y-3.5">
-          {VEHICLE_HISTORY_FAQS.map((faq) => {
+          {faqs.map((faq) => {
             const isOpen = openId === faq.id;
             return (
               <div

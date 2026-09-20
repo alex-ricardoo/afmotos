@@ -12,8 +12,8 @@ export const SEO_CONFIG = {
   defaultAddress:
     'Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54350-655',
   defaultTitleTemplate: `%s | ${CONSTANTS.STORE_NAME}`,
-  defaultTitle: `${CONSTANTS.STORE_NAME} | Motos usadas e seminovas em Cabo de Santo Agostinho - PE`,
-  defaultDescription: `Encontre motos usadas e seminovas na ${CONSTANTS.STORE_NAME}, em Cabo de Santo Agostinho - PE. Confira nosso estoque revisado, com laudo cautelar aprovado e garantia. Atendimento direto pelo WhatsApp.`,
+  defaultTitle: `${CONSTANTS.STORE_NAME} | Veículos, Motos e Histórico Veicular em Cabo de Santo Agostinho - PE`,
+  defaultDescription: `Encontre veículos e motos na ${CONSTANTS.STORE_NAME}, em Cabo de Santo Agostinho - PE. Consulta de histórico veicular completo por placa, procedência garantida e atendimento direto no WhatsApp.`,
   defaultOgImage: '/logo.jpg',
   defaultFallbackSiteUrl: 'https://aflocacoesevendas.com.br',
   locale: 'pt_BR',

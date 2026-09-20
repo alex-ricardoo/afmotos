@@ -14,6 +14,7 @@ export interface PageMetadataInput {
   ogType?: 'website' | 'article' | 'profile';
   noIndex?: boolean;
   keywords?: string[];
+  exactTitle?: boolean;
 }
 
 /**
@@ -24,8 +25,15 @@ export function buildPageMetadata(input: PageMetadataInput): Metadata {
   const absoluteOgImage = ensureAbsoluteImageUrl(input.ogImage);
   const isNoIndex = input.noIndex || shouldBlockIndexing();
 
+  const isAbsolute =
+    input.exactTitle ||
+    input.path === '/' ||
+    input.path === '' ||
+    input.title.includes(SEO_CONFIG.defaultStoreName) ||
+    input.title.includes('AF Veículos');
+
   const metadata: Metadata = {
-    title: input.title,
+    title: isAbsolute ? { absolute: input.title } : input.title,
     description: input.description,
     alternates: {
       canonical,

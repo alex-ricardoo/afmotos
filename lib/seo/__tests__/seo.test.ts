@@ -217,10 +217,11 @@ describe('Schema.org Builders', () => {
       ],
     });
 
-    assert.strictEqual(schemas.length, 3);
-    const [service, breadcrumb, faq] = schemas;
+    assert.strictEqual(schemas.length, 4);
+    const [service, webApp, breadcrumb, faq] = schemas;
     assert.strictEqual(service['@type'], 'Service');
     assert.strictEqual((service.offers as Record<string, unknown>).price, '39.99');
+    assert.strictEqual(webApp['@type'], 'WebApplication');
     assert.strictEqual(breadcrumb['@type'], 'BreadcrumbList');
     assert.strictEqual(faq['@type'], 'FAQPage');
   });

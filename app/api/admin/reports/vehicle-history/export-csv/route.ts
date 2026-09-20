@@ -253,7 +253,7 @@ export async function GET(request: NextRequest) {
     // UTF-8 BOM (\uFEFF)
     const csvContent = '\uFEFF' + lines.join('\r\n');
     const dateStamp = new Date().toISOString().slice(0, 10);
-    const filename = `relatorio-historico-veicular-afmotos-${dateStamp}.csv`;
+    const filename = `relatorio-historico-veicular-af-veiculos-pe-${dateStamp}.csv`;
 
     return new NextResponse(csvContent, {
       status: 200,

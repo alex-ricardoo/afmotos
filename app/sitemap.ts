@@ -81,13 +81,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
 
-    // Inclui a página /historico-veicular apenas se o serviço estiver ativo
+    // Inclui a página /historico-veicular com prioridade máxima comercial (0.9) e revalidação diária
     if (!siteSettings?.vehicleHistory || siteSettings.vehicleHistory.isEnabled !== false) {
       staticRoutes.push({
         url: `${baseUrl}/historico-veicular`,
         lastModified: currentDate,
-        changeFrequency: 'weekly',
-        priority: 0.8,
+        changeFrequency: 'daily',
+        priority: 0.9,
       });
     }
 
