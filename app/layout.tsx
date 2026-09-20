@@ -88,6 +88,9 @@ export async function generateMetadata(): Promise<Metadata> {
       icon: '/icon.png',
       apple: '/icon.png',
     },
+    verification: {
+      google: 'google543d5b2965f85aa8',
+    },
     robots: shouldBlockIndexing()
       ? {
           index: false,
