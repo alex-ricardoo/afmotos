@@ -19,7 +19,6 @@ const geistMono = Geist_Mono({
 const oswald = Oswald({
   variable: '--font-mercosul-plate',
   subsets: ['latin'],
-  weight: ['600', '700'],
   display: 'swap',
 });
 
