@@ -171,7 +171,7 @@ export function getVehicleHistorySettings(raw?: SiteSettingsRecord | null): Vehi
  * Resolve a logo ativa da loja com cadeia de fallback estrita:
  * 1. Logo configurada em site_settings.settings.branding.logoUrl
  * 2. Logo em site_settings.settings.logo_path (legado)
- * 3. Logo local padrão '/logo.jpg'
+ * 3. Logo local padrão '/logo.png'
  */
 export function getSiteLogo(
   settings?: SiteSettingsRecord | SiteSettingsData | null,
@@ -215,7 +215,7 @@ export function getSiteLogo(
 
   // 3. Fallback para arquivo local padrão
   return {
-    src: '/logo.jpg',
+    src: '/logo.png',
     provider: 'local',
     alt: siteName,
     isCustom: false,

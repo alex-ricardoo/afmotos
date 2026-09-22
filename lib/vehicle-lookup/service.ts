@@ -221,7 +221,9 @@ export async function executeVehiclePlateLookup(
   const normalizedPlate = normalizeBrazilianPlate(params.plate);
 
   console.log(`\n[API_BRASIL] 🔍 ========================================================`);
-  console.log(`[API_BRASIL] 🔍 [executeVehiclePlateLookup] Iniciando processamento para placa: "${params.plate}" (normalizada: "${normalizedPlate}")`);
+  console.log(
+    `[API_BRASIL] 🔍 [executeVehiclePlateLookup] Iniciando processamento para placa: "${params.plate}" (normalizada: "${normalizedPlate}")`,
+  );
 
   if (!isValidBrazilianPlate(normalizedPlate)) {
     console.warn(`[API_BRASIL] ❌ Placa inválida: "${params.plate}"`);
@@ -231,17 +233,19 @@ export async function executeVehiclePlateLookup(
   }
 
   const pricingConfig = await getVehicleHistoryPricingConfig(supabase).catch(() => null);
-  const activeCostCents =
-    params.costSnapshotCents ?? pricingConfig?.apiBrasilLiveCostCents ?? 3000;
-  const activePricingVersionId =
-    params.pricingVersionId ?? pricingConfig?.versionId ?? null;
+  const activeCostCents = params.costSnapshotCents ?? pricingConfig?.apiBrasilLiveCostCents ?? 3000;
+  const activePricingVersionId = params.pricingVersionId ?? pricingConfig?.versionId ?? null;
   const defaultCostBrl = activeCostCents / 100;
 
   const config = getVehicleLookupConfig(defaultCostBrl);
   const currentMode: VehicleLookupMode = config.mode;
 
-  console.log(`[API_BRASIL] ⚙️ Modo ativo: [${currentMode.toUpperCase()}] | URL Base: ${config.apiBrasilBaseUrl}`);
-  console.log(`[API_BRASIL] 🔑 Token configurado? ${Boolean(config.apiBrasilToken)} ${config.apiBrasilToken ? `(tamanho: ${config.apiBrasilToken.length} caracteres)` : '(TOKEN AUSENTE!)'}`);
+  console.log(
+    `[API_BRASIL] ⚙️ Modo ativo: [${currentMode.toUpperCase()}] | URL Base: ${config.apiBrasilBaseUrl}`,
+  );
+  console.log(
+    `[API_BRASIL] 🔑 Token configurado? ${Boolean(config.apiBrasilToken)} ${config.apiBrasilToken ? `(tamanho: ${config.apiBrasilToken.length} caracteres)` : '(TOKEN AUSENTE!)'}`,
+  );
 
   // 1. Cache-first check (unless forceRefresh is explicitly requested)
   if (!params.forceRefresh) {
@@ -249,7 +253,9 @@ export async function executeVehiclePlateLookup(
     const requireLiveOnly = currentMode === 'live' || Boolean(params.requireLiveOnly);
     const existing = await findExistingConsultation(normalizedPlate, supabase, { requireLiveOnly });
     if (existing && existing.status === 'COMPLETED') {
-      console.log(`[API_BRASIL] ✅ Cache HIT local! Consulta prévia reaproveitada (ID: ${existing.id}, Custo: R$ 0,00)`);
+      console.log(
+        `[API_BRASIL] ✅ Cache HIT local! Consulta prévia reaproveitada (ID: ${existing.id}, Custo: R$ 0,00)`,
+      );
       console.log(`[API_BRASIL] 🔍 ========================================================\n`);
       return {
         success: true,
@@ -275,7 +281,9 @@ export async function executeVehiclePlateLookup(
 
   if (currentMode === 'live') {
     if (!config.apiBrasilToken) {
-      console.error(`[API_BRASIL] ❌ Erro: APIBRASIL_TOKEN não configurado no ambiente e modo live solicitado!`);
+      console.error(
+        `[API_BRASIL] ❌ Erro: APIBRASIL_TOKEN não configurado no ambiente e modo live solicitado!`,
+      );
       throw new InvalidTokenError(
         'Token da API Brasil não configurado. Por favor, configure a variável de ambiente APIBRASIL_TOKEN com o token obtido em https://app.apibrasil.io ou entre em contato com o desenvolvedor Alex.',
       );
@@ -289,15 +297,21 @@ export async function executeVehiclePlateLookup(
     const cleanToken = rawToken.replace(/^Bearer\s+/i, '');
     const authHeader = `Bearer ${cleanToken}`;
 
-    const maxAttempts = 3;
-    const attemptTimeoutMs = 25_000;
+    const maxAttempts = 2; // 1 initial + 1 fast retry — keeps total budget ~31s (safe for Vercel 60s limit)
+    const attemptTimeoutMs = config.timeoutMs;
     let lastHttpStatus: number | undefined = undefined;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const attemptStartTime = Date.now();
-      console.log(`[API_BRASIL] 🚀 [Tentativa ${attempt}/${maxAttempts}] Disparando POST para API Brasil: ${config.apiBrasilBaseUrl}`);
-      console.log(`[API_BRASIL] 📤 Payload: { tipo: 'veiculos-total', placa: '${normalizedPlate}', homolog: false }`);
-      console.log(`[API_BRASIL] ⏳ Aguardando retorno da API Brasil (Timeout desta tentativa: ${attemptTimeoutMs / 1000}s)...`);
+      console.log(
+        `[API_BRASIL] 🚀 [Tentativa ${attempt}/${maxAttempts}] Disparando POST para API Brasil: ${config.apiBrasilBaseUrl}`,
+      );
+      console.log(
+        `[API_BRASIL] 📤 Payload: { tipo: 'veiculos-total', placa: '${normalizedPlate}', homolog: false }`,
+      );
+      console.log(
+        `[API_BRASIL] ⏳ Aguardando retorno da API Brasil (Timeout desta tentativa: ${attemptTimeoutMs / 1000}s)...`,
+      );
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), attemptTimeoutMs);
@@ -320,22 +334,37 @@ export async function executeVehiclePlateLookup(
         clearTimeout(timeout);
         const elapsedMs = Date.now() - attemptStartTime;
         lastHttpStatus = response.status;
-        console.log(`[API_BRASIL] 📥 Resposta HTTP recebida da API Brasil [Tentativa ${attempt}/${maxAttempts}] | Status: ${response.status} ${response.statusText} (${elapsedMs}ms)`);
+        console.log(
+          `[API_BRASIL] 📥 Resposta HTTP recebida da API Brasil [Tentativa ${attempt}/${maxAttempts}] | Status: ${response.status} ${response.statusText} (${elapsedMs}ms)`,
+        );
 
         // Erros de autenticação: NUNCA retentar para não bloquear conta
         if (response.status === 401 || response.status === 403) {
-          console.error(`[API_BRASIL] ❌ Erro de Autenticação na API Brasil (HTTP ${response.status}). Token inválido ou revogado.`);
+          console.error(
+            `[API_BRASIL] ❌ Erro de Autenticação na API Brasil (HTTP ${response.status}). Token inválido ou revogado.`,
+          );
           throw new InvalidTokenError();
         }
 
-        // Se for erro de servidor temporário (500, 502, 503, 504, 429), tentar novamente se houver tentativas
+        // Se for erro de servidor temporário (500, 502, 503, 504, 429), avaliar fast retry
         if ([500, 502, 503, 504, 429].includes(response.status)) {
-          console.warn(`[API_BRASIL] ⚠️ Gateway da API Brasil retornou HTTP ${response.status} na tentativa ${attempt}/${maxAttempts}.`);
+          console.warn(
+            `[API_BRASIL] ⚠️ Gateway da API Brasil retornou HTTP ${response.status} na tentativa ${attempt}/${maxAttempts}.`,
+          );
           if (attempt < maxAttempts) {
-            const backoffMs = attempt === 1 ? 1500 : 2500;
-            console.log(`[API_BRASIL] ⏳ Aguardando ${backoffMs}ms antes da próxima tentativa...`);
-            await new Promise((resolve) => setTimeout(resolve, backoffMs));
-            continue;
+            const { isEligibleForFastRetry, sleep: retrySleep } = await import('./fast-retry.ts');
+            const eligibility = isEligibleForFastRetry(
+              new Error(`HTTP ${response.status}`),
+              response.status,
+              attempt,
+            );
+            if (eligibility.eligible) {
+              console.log(
+                `[API_BRASIL] ⏳ live_provider_fast_retry_scheduled | backoffMs=${eligibility.backoffMs} | attempt=${attempt} | failureCode=${eligibility.classified.failureCode}`,
+              );
+              await retrySleep(eligibility.backoffMs);
+              continue;
+            }
           }
           throw new ProviderUnavailableError(
             `As bases oficiais do SENATRAN/DETRAN ou o gateway da API Brasil apresentaram instabilidade temporária (HTTP ${response.status}). Foram realizadas ${maxAttempts} tentativas automáticas sem sucesso. Nenhum crédito foi tarifado.`,
@@ -345,18 +374,32 @@ export async function executeVehiclePlateLookup(
         }
 
         const responseText = await response.text();
-        console.log(`[API_BRASIL] 📦 Tamanho do corpo da resposta: ${responseText.length} caracteres`);
+        console.log(
+          `[API_BRASIL] 📦 Tamanho do corpo da resposta: ${responseText.length} caracteres`,
+        );
 
         let parsedJson: Record<string, unknown>;
         try {
           parsedJson = JSON.parse(responseText) as Record<string, unknown>;
         } catch (parseErr) {
-          console.error(`[API_BRASIL] ❌ Resposta da API Brasil não é um JSON válido:`, responseText.slice(0, 300));
+          console.error(
+            `[API_BRASIL] ❌ Resposta da API Brasil não é um JSON válido:`,
+            responseText.slice(0, 300),
+          );
           if (attempt < maxAttempts) {
-            const backoffMs = attempt === 1 ? 1500 : 2500;
-            console.log(`[API_BRASIL] ⏳ Resposta malformada. Aguardando ${backoffMs}ms para tentar novamente...`);
-            await new Promise((resolve) => setTimeout(resolve, backoffMs));
-            continue;
+            const { isEligibleForFastRetry, sleep: retrySleep } = await import('./fast-retry.ts');
+            const eligibility = isEligibleForFastRetry(
+              new Error('Resposta inválida (JSON parse)'),
+              response.status,
+              attempt,
+            );
+            if (eligibility.eligible) {
+              console.log(
+                `[API_BRASIL] ⏳ live_provider_fast_retry_scheduled | backoffMs=${eligibility.backoffMs} | attempt=${attempt} | failureCode=${eligibility.classified.failureCode}`,
+              );
+              await retrySleep(eligibility.backoffMs);
+              continue;
+            }
           }
           throw new ProviderUnavailableError(
             `A API Brasil retornou dados em formato inesperado devido à instabilidade temporária nas bases oficiais. Foram realizadas ${maxAttempts} tentativas automáticas sem sucesso. Nenhum crédito foi tarifado.`,
@@ -365,7 +408,9 @@ export async function executeVehiclePlateLookup(
           );
         }
 
-        console.log(`[API_BRASIL] 📄 Retorno analisado: error=${parsedJson.error}, status_code=${parsedJson.status_code || response.status}, message="${parsedJson.message || 'OK'}"`);
+        console.log(
+          `[API_BRASIL] 📄 Retorno analisado: error=${parsedJson.error}, status_code=${parsedJson.status_code || response.status}, message="${parsedJson.message || 'OK'}"`,
+        );
 
         // Check for Insufficient Balance (Saldo Insuficiente): NUNCA retentar
         if (
@@ -378,7 +423,8 @@ export async function executeVehiclePlateLookup(
               .includes('recarregue') ||
             parsedJson.recharge_url)
         ) {
-          const balanceStr = typeof parsedJson.balance === 'string' ? parsedJson.balance : 'R$ 0,00';
+          const balanceStr =
+            typeof parsedJson.balance === 'string' ? parsedJson.balance : 'R$ 0,00';
           const rechargeUrl =
             typeof parsedJson.recharge_url === 'string'
               ? parsedJson.recharge_url
@@ -415,10 +461,15 @@ export async function executeVehiclePlateLookup(
             errMsg.toLowerCase().includes('senatran');
 
           if (isTransientMessage && attempt < maxAttempts) {
-            const backoffMs = attempt === 1 ? 1500 : 2500;
-            console.log(`[API_BRASIL] ⏳ Mensagem de instabilidade nas bases detectada ("${errMsg}"). Aguardando ${backoffMs}ms para tentativa ${attempt + 1}...`);
-            await new Promise((resolve) => setTimeout(resolve, backoffMs));
-            continue;
+            const { isEligibleForFastRetry, sleep: retrySleep } = await import('./fast-retry.ts');
+            const eligibility = isEligibleForFastRetry(new Error(errMsg), response.status, attempt);
+            if (eligibility.eligible) {
+              console.log(
+                `[API_BRASIL] ⏳ live_provider_fast_retry_scheduled | backoffMs=${eligibility.backoffMs} | attempt=${attempt} | failureCode=${eligibility.classified.failureCode}`,
+              );
+              await retrySleep(eligibility.backoffMs);
+              continue;
+            }
           }
 
           if (isTransientMessage) {
@@ -447,13 +498,21 @@ export async function executeVehiclePlateLookup(
           balanceAfter = balanceBefore - taxCharged;
         }
 
-        console.log(`[API_BRASIL] 💰 Saldo anterior: ${balanceBefore ?? 'N/A'} | Taxa cobrada: ${taxCharged ?? 'N/A'} | Saldo posterior: ${balanceAfter ?? 'N/A'}`);
+        console.log(
+          `[API_BRASIL] 💰 Saldo anterior: ${balanceBefore ?? 'N/A'} | Taxa cobrada: ${taxCharged ?? 'N/A'} | Saldo posterior: ${balanceAfter ?? 'N/A'}`,
+        );
+        if (attempt > 1) {
+          console.log(`[API_BRASIL] ✅ live_provider_fast_retry_succeeded | attempt=${attempt}`);
+        }
         // Sucesso comprovado, sai do loop de tentativas
         break;
       } catch (fetchErr: unknown) {
         clearTimeout(timeout);
         const elapsedMs = Date.now() - attemptStartTime;
-        console.error(`[API_BRASIL] ❌ Falha na tentativa ${attempt}/${maxAttempts} após ${elapsedMs}ms:`, fetchErr);
+        console.error(
+          `[API_BRASIL] ❌ Falha na tentativa ${attempt}/${maxAttempts} após ${elapsedMs}ms:`,
+          fetchErr,
+        );
 
         // Não retentar erros de negócio críticos
         if (fetchErr instanceof InsufficientBalanceError || fetchErr instanceof InvalidTokenError) {
@@ -473,14 +532,22 @@ export async function executeVehiclePlateLookup(
               fetchErr.message.includes('ETIMEDOUT')));
 
         if ((isAbort || isNetworkErr) && attempt < maxAttempts) {
-          const backoffMs = attempt === 1 ? 1500 : 2500;
-          console.log(`[API_BRASIL] ⏳ Falha transitória (${isAbort ? `Timeout de ${attemptTimeoutMs / 1000}s` : 'Queda de conexão'}). Aguardando ${backoffMs}ms para tentativa ${attempt + 1}...`);
-          await new Promise((resolve) => setTimeout(resolve, backoffMs));
-          continue;
+          const { isEligibleForFastRetry, sleep: retrySleep } = await import('./fast-retry.ts');
+          const eligibility = isEligibleForFastRetry(fetchErr, undefined, attempt);
+          if (eligibility.eligible) {
+            console.log(
+              `[API_BRASIL] ⏳ live_provider_fast_retry_scheduled | backoffMs=${eligibility.backoffMs} | attempt=${attempt} | type=${isAbort ? 'timeout' : 'network'} | failureCode=${eligibility.classified.failureCode}`,
+            );
+            await retrySleep(eligibility.backoffMs);
+            continue;
+          }
         }
 
         if (attempt >= maxAttempts) {
           executionStatus = 'CHARGE_STATUS_UNKNOWN';
+          console.warn(
+            `[API_BRASIL] ⚠️ live_provider_fast_retry_exhausted | attempts=${maxAttempts} | lastHttpStatus=${lastHttpStatus ?? 'none'}`,
+          );
           throw new ProviderUnavailableError(
             `Não foi possível obter resposta das bases governamentais (SENATRAN/DETRAN) ou do gateway da API Brasil devido a tempo limite ou oscilação de rede. Foram realizadas ${maxAttempts} tentativas automáticas sem sucesso. Nenhum crédito foi debitado.`,
             maxAttempts,
@@ -493,7 +560,9 @@ export async function executeVehiclePlateLookup(
     }
   } else {
     // Mock Mode (Ambiente de desenvolvimento sem token)
-    console.log(`[API_BRASIL] 🧪 Modo MOCK ativo. Carregando dados simulados para placa: "${normalizedPlate}"`);
+    console.log(
+      `[API_BRASIL] 🧪 Modo MOCK ativo. Carregando dados simulados para placa: "${normalizedPlate}"`,
+    );
     isMock = true;
     isChargeable = false;
     chargedAmount = 0.0;
@@ -504,10 +573,14 @@ export async function executeVehiclePlateLookup(
   console.log(`[API_BRASIL] ⚙️ Parseando campos e extraindo colunas do veículo...`);
   const parsedResponse = parseApiBrasilVehicleResponse(rawPayload);
   const summaryCols = extractDatabaseSummaryColumns(parsedResponse, rawPayload);
-  console.log(`[API_BRASIL] 📋 Veículo identificado: ${summaryCols.brand || 'N/A'} ${summaryCols.model || 'N/A'} (${summaryCols.year_manufacture || '-'}/${summaryCols.year_model || '-'}) | Chassi: ${summaryCols.chassis_masked ? summaryCols.chassis_masked : 'N/A'}`);
+  console.log(
+    `[API_BRASIL] 📋 Veículo identificado: ${summaryCols.brand || 'N/A'} ${summaryCols.model || 'N/A'} (${summaryCols.year_manufacture || '-'}/${summaryCols.year_model || '-'}) | Chassi: ${summaryCols.chassis_masked ? summaryCols.chassis_masked : 'N/A'}`,
+  );
 
   // 4. Persist to Database
-  console.log(`[API_BRASIL] 💾 Gravando consulta no Supabase (tabela vehicle_plate_consultations)...`);
+  console.log(
+    `[API_BRASIL] 💾 Gravando consulta no Supabase (tabela vehicle_plate_consultations)...`,
+  );
   const insertPayload = {
     ...summaryCols,
     consultation_type: 'veiculos-total',

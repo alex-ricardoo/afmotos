@@ -95,6 +95,6 @@ export async function resolvePdfLogo(settings?: any): Promise<string | null> {
   }
 
   // 3. Fallback to local files
-  return (await loadLocalPdfImage('logo.jpg')) || (await loadLocalPdfImage('logo.png')) || null;
+  return (await loadLocalPdfImage('logo.png')) || (await loadLocalPdfImage('logo.png')) || null;
 }
 

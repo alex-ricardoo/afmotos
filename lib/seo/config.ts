@@ -14,7 +14,7 @@ export const SEO_CONFIG = {
   defaultTitleTemplate: `%s | ${CONSTANTS.STORE_NAME}`,
   defaultTitle: `${CONSTANTS.STORE_NAME} | Veículos, Motos e Histórico Veicular em Cabo de Santo Agostinho - PE`,
   defaultDescription: `Encontre veículos e motos na ${CONSTANTS.STORE_NAME}, em Cabo de Santo Agostinho - PE. Consulta de histórico veicular completo por placa, procedência garantida e atendimento direto no WhatsApp.`,
-  defaultOgImage: '/logo.jpg',
+  defaultOgImage: '/logo.png',
   defaultFallbackSiteUrl: 'https://aflocacoesevendas.com.br',
   locale: 'pt_BR',
 };

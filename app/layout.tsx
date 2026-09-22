@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Oswald } from 'next/font/google';
+import { Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { SEO_CONFIG, getBaseSiteUrl, shouldBlockIndexing } from '@/lib/seo';
 import './globals.css';
@@ -16,12 +16,6 @@ const geistMono = Geist_Mono({
   display: 'swap',
 });
 
-const oswald = Oswald({
-  variable: '--font-mercosul-plate',
-  subsets: ['latin'],
-  display: 'swap',
-});
-
 
 import { getPublicSiteSettings } from '@/lib/settings/server-queries';
 
@@ -31,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const description =
     settings?.description ||
     `Encontre veículos e motos seminovas na ${siteName}, em Cabo de Santo Agostinho - PE. Consulta oficial de histórico veicular por placa, procedência checada e atendimento direto pelo WhatsApp.`;
-  const logoUrl = settings?.logo?.src || `${getBaseSiteUrl()}/logo.jpg`;
+  const logoUrl = settings?.logo?.src || `${getBaseSiteUrl()}/logo.png`;
 
   return {
     title: {
@@ -118,7 +112,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="pt-BR"
       data-scroll-behavior="smooth"
-      className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} dark h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#050505] text-[#f4f4f2] font-sans selection:bg-[#c9a44c] selection:text-black">
         {children}
