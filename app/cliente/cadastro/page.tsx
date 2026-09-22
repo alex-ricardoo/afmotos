@@ -76,7 +76,7 @@ export default async function CustomerCadastroPage({ searchParams }: CadastroPag
             <div className="flex items-center gap-3">
               <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-amber-500/40 shadow-md shadow-amber-500/10 bg-zinc-900 shrink-0">
                 <Image
-                  src="/logo.jpg"
+                  src="/logo.png"
                   alt="AF Veículos PE"
                   fill
                   sizes="44px"

@@ -19,8 +19,9 @@ export function classifyProviderFailure(
   httpStatus?: number | null,
   retryAfterHeader?: string | null,
 ): ClassifiedProviderFailure {
+  const errName = error instanceof Error ? error.name : '';
   const errMsg = error instanceof Error ? error.message : String(error || '');
-  const lowerMsg = errMsg.toLowerCase();
+  const lowerMsg = `${errName} ${errMsg}`.toLowerCase();
 
   // 1. Extrai Retry-After se informado
   let retryAfterSeconds: number | null = null;

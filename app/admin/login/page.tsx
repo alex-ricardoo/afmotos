@@ -17,7 +17,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [logoSrc, setLogoSrc] = useState<string>('/logo.jpg');
+  const [logoSrc, setLogoSrc] = useState<string>('/logo.png');
   const [siteName, setSiteName] = useState<string>('AF Veículos PE');
   const [isCustomLogo, setIsCustomLogo] = useState(false);
   const [unauthorizedError, setUnauthorizedError] = useState(false);

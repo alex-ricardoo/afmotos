@@ -83,8 +83,8 @@ describe('SEO Centralized Configuration & Helpers', () => {
       ensureAbsoluteImageUrl('https://i.ibb.co/pic.jpg'),
       'https://i.ibb.co/pic.jpg',
     );
-    assert.strictEqual(ensureAbsoluteImageUrl('/logo.jpg'), 'https://afmotos.com.br/logo.jpg');
-    assert.strictEqual(ensureAbsoluteImageUrl(null), 'https://afmotos.com.br/logo.jpg');
+    assert.strictEqual(ensureAbsoluteImageUrl('/logo.png'), 'https://afmotos.com.br/logo.png');
+    assert.strictEqual(ensureAbsoluteImageUrl(null), 'https://afmotos.com.br/logo.png');
   });
 
   it('sanitizes JSON-LD strings against script tags and HTML injection', () => {
