@@ -10,6 +10,8 @@ export interface AuthoritativePaymentData {
   status: string;
   statusDetail: string | null;
   externalReference: string | null;
+  preferenceId?: string | null;
+  metadata?: Record<string, unknown> | null;
   transactionAmount: number;
   paymentMethodId: string | null;
   paymentTypeId: string | null;
@@ -29,6 +31,7 @@ export interface ProcessPaymentConfirmationParams {
         status: string;
         transaction_amount: number | string;
         mp_payment_id?: string | null;
+        mp_preference_id?: string | null;
         payment_method_id?: string | null;
         payment_type_id?: string | null;
         payer_email?: string | null;
@@ -74,12 +77,19 @@ export async function confirmAndProcessPaymentTransaction({
   const adminDb = (dbClient as ReturnType<typeof createAdminClient>) || createAdminClient();
   const previousStatus = transaction.status as PaymentTransactionStatus;
 
-  // 1. Validação de Referência Externa (suporta tanto transaction.id quanto credit_package_order_id)
+  // 1. Validação de Referência Externa (suporta tanto transaction.id quanto credit_package_order_id e metadata)
+  const metadataOrderId =
+    typeof paymentData.metadata?.order_id === 'string'
+      ? paymentData.metadata.order_id
+      : null;
+
   const matchesRef =
     !paymentData.externalReference ||
     paymentData.externalReference === transaction.id ||
     (Boolean(transaction.credit_package_order_id) &&
-      paymentData.externalReference === transaction.credit_package_order_id);
+      paymentData.externalReference === transaction.credit_package_order_id) ||
+    (Boolean(transaction.credit_package_order_id) &&
+      metadataOrderId === transaction.credit_package_order_id);
 
   if (!matchesRef) {
     const mismatchMsg = `external_reference do provedor (${paymentData.externalReference}) diverge da transação interna (${transaction.id}) e do pedido de pacote (${transaction.credit_package_order_id || 'n/a'}).`;
@@ -200,25 +210,44 @@ export async function confirmAndProcessPaymentTransaction({
 
   if (effectiveStatus === 'approved') {
     if (isCreditPackage && transaction.credit_package_order_id) {
-      // 4a. Atualiza o pedido de pacote para 'paid'
-      await adminDb
+      const nowIso = new Date().toISOString();
+
+      // 4a. Atualiza o pedido de pacote para 'paid' com paid_at oficial
+      const { error: orderUpdateErr } = await adminDb
         .from('credit_package_orders')
         .update({
           status: 'paid',
           mp_payment_id: paymentData.id,
-          updated_at: new Date().toISOString(),
+          paid_at: nowIso,
+          updated_at: nowIso,
         })
         .eq('id', transaction.credit_package_order_id);
 
+      if (orderUpdateErr) {
+        logCheckoutProEvent(
+          'credit_package.order_update_failed',
+          {
+            flowId,
+            orderId: transaction.credit_package_order_id,
+            errorMessage: orderUpdateErr.message,
+          },
+          'error',
+        );
+      }
+
       // 4b. Concessão atômica e idempotente via RPC
-      const { error: rpcError } = await adminDb.rpc(
+      const { data: rpcData, error: rpcError } = await adminDb.rpc(
         'grant_credit_package_from_paid_order',
         {
           p_order_id: transaction.credit_package_order_id,
         },
       );
 
-      if (rpcError) {
+      const rpcResult = rpcData as { success?: boolean; code?: string; message?: string } | null;
+
+      if (rpcError || (rpcResult && rpcResult.success === false)) {
+        const errorMsg =
+          rpcError?.message || rpcResult?.message || 'Falha ao conceder pacote de créditos via RPC.';
         logCheckoutProEvent(
           'credit_package.grant_failed',
           {
@@ -226,10 +255,23 @@ export async function confirmAndProcessPaymentTransaction({
             orderId: transaction.credit_package_order_id,
             transactionId: transaction.id,
             paymentId: paymentData.id,
-            errorMessage: rpcError.message,
+            errorMessage: errorMsg,
+            rpcCode: rpcResult?.code,
           },
           'error',
         );
+
+        return {
+          success: false,
+          transactionId: transaction.id,
+          previousStatus,
+          currentStatus: effectiveStatus,
+          statusChanged,
+          reportUnlocked: false,
+          packageGranted: false,
+          message: errorMsg,
+          error: errorMsg,
+        };
       } else {
         packageGranted = true;
         logCheckoutProEvent('credit_package.payment_confirmed', {

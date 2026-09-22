@@ -51,24 +51,43 @@ export async function reconcilePaymentTransaction(
 
   const previousStatus = transaction.status as PaymentTransactionStatus;
 
-  // Se a transação já estiver aprovada e a consulta concluída, responde imediatamente
+  // Se a transação já estiver aprovada e o produto liberado, responde imediatamente
   if (previousStatus === 'approved') {
-    const { data: consultation } = await adminDb
-      .from('customer_plate_consultations')
-      .select('status, vehicle_data')
-      .eq('id', transaction.consultation_id)
-      .maybeSingle();
+    if (transaction.purpose === 'credit_package' || transaction.credit_package_order_id) {
+      const { data: pkgOrder } = await adminDb
+        .from('credit_package_orders')
+        .select('status, granted_at')
+        .eq('id', transaction.credit_package_order_id)
+        .maybeSingle();
 
-    if (consultation?.status === 'completed' && consultation?.vehicle_data) {
-      return {
-        success: true,
-        transactionId,
-        previousStatus,
-        currentStatus: 'approved',
-        reconciled: true,
-        reportUnlocked: true,
-        message: 'Transação já aprovada e laudo veicular liberado.',
-      };
+      if (pkgOrder?.status === 'paid' && pkgOrder?.granted_at) {
+        return {
+          success: true,
+          transactionId,
+          previousStatus,
+          currentStatus: 'approved',
+          reconciled: true,
+          message: 'Transação de pacote já aprovada e créditos concedidos.',
+        };
+      }
+    } else if (transaction.consultation_id) {
+      const { data: consultation } = await adminDb
+        .from('customer_plate_consultations')
+        .select('status, vehicle_data')
+        .eq('id', transaction.consultation_id)
+        .maybeSingle();
+
+      if (consultation?.status === 'completed' && consultation?.vehicle_data) {
+        return {
+          success: true,
+          transactionId,
+          previousStatus,
+          currentStatus: 'approved',
+          reconciled: true,
+          reportUnlocked: true,
+          message: 'Transação já aprovada e laudo veicular liberado.',
+        };
+      }
     }
   }
 
@@ -78,15 +97,23 @@ export async function reconcilePaymentTransaction(
   if (!paymentIdToFetch) {
     try {
       const paymentClient = getPaymentClient();
-      const searchResult = await paymentClient.search({
-        options: {
-          external_reference: transaction.id,
-        },
-      });
+      const searchRefs = [
+        transaction.id,
+        transaction.credit_package_order_id,
+      ].filter(Boolean) as string[];
 
-      const firstResult = searchResult.results?.[0];
-      if (firstResult && firstResult.id) {
-        paymentIdToFetch = String(firstResult.id);
+      for (const ref of searchRefs) {
+        const searchResult = await paymentClient.search({
+          options: {
+            external_reference: ref,
+          },
+        });
+
+        const firstResult = searchResult.results?.[0];
+        if (firstResult && firstResult.id) {
+          paymentIdToFetch = String(firstResult.id);
+          break;
+        }
       }
     } catch (err) {
       console.warn('[reconcilePaymentTransaction] Falha ao buscar por external_reference:', err);

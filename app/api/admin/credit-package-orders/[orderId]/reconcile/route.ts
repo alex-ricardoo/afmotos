@@ -3,6 +3,7 @@ import { requireActiveAdmin, AdminAuthorizationError } from '@/lib/admin/admin-a
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchAuthoritativePayment } from '@/lib/mercadopago/webhook-service';
 import { confirmAndProcessPaymentTransaction } from '@/lib/mercadopago/payment-processing-service';
+import { getPaymentClient } from '@/lib/mercadopago/client';
 
 export async function POST(
   request: NextRequest,
@@ -56,16 +57,47 @@ export async function POST(
       );
     }
 
-    const mpPaymentId = order.mp_payment_id || transaction.mp_payment_id;
+    let mpPaymentId = order.mp_payment_id || transaction.mp_payment_id;
+
+    // Se mpPaymentId for nulo, busca ativamente no Mercado Pago por referências externas
+    if (!mpPaymentId) {
+      try {
+        const paymentClient = getPaymentClient();
+        const searchRefs = [
+          order.id,
+          order.external_reference,
+          transaction.id,
+        ].filter(Boolean) as string[];
+
+        for (const ref of searchRefs) {
+          const searchResult = await paymentClient.search({
+            options: {
+              external_reference: ref,
+            },
+          });
+
+          const firstResult = searchResult.results?.[0];
+          if (firstResult && firstResult.id) {
+            mpPaymentId = String(firstResult.id);
+            break;
+          }
+        }
+      } catch (searchErr) {
+        console.warn(
+          '[admin_package_reconcile] Falha ao consultar Mercado Pago por external_reference:',
+          searchErr,
+        );
+      }
+    }
 
     if (!mpPaymentId) {
       return NextResponse.json(
         {
           success: false,
           error:
-            'Nenhum identificador de pagamento no Mercado Pago foi registrado para este pedido ainda.',
+            'Nenhum pagamento correspondente identificado no Mercado Pago para este pedido até o momento.',
         },
-        { status: 422 },
+        { status: 404 },
       );
     }
 

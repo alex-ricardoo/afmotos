@@ -254,34 +254,90 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 6. Localiza a transação correspondente em payment_transactions
+  // 6. Localiza a transação correspondente em payment_transactions por resolução em cascata
   let transaction = null;
 
-  if (paymentData.externalReference) {
+  // 6a. Resolução por mp_payment_id
+  const { data: txByPaymentId } = await adminDb
+    .from('payment_transactions')
+    .select('*')
+    .eq('mp_payment_id', paymentData.id)
+    .maybeSingle();
+
+  if (txByPaymentId) {
+    transaction = txByPaymentId;
+  }
+
+  // 6b. Resolução por external_reference (como id da transação ou credit_package_order_id)
+  if (!transaction && paymentData.externalReference) {
     const { data: txByRef } = await adminDb
       .from('payment_transactions')
       .select('*')
       .eq('id', paymentData.externalReference)
       .maybeSingle();
-    transaction = txByRef;
 
-    if (!transaction) {
+    if (txByRef) {
+      transaction = txByRef;
+    } else {
       const { data: txByOrder } = await adminDb
         .from('payment_transactions')
         .select('*')
         .eq('credit_package_order_id', paymentData.externalReference)
         .maybeSingle();
-      transaction = txByOrder;
+
+      if (txByOrder) {
+        transaction = txByOrder;
+      }
     }
   }
 
-  if (!transaction) {
-    const { data: txByPaymentId } = await adminDb
+  // 6c. Resolução por mp_preference_id (na transação ou no pedido de pacote)
+  if (!transaction && paymentData.preferenceId) {
+    const { data: txByPref } = await adminDb
       .from('payment_transactions')
       .select('*')
-      .eq('mp_payment_id', paymentData.id)
+      .eq('mp_preference_id', paymentData.preferenceId)
       .maybeSingle();
-    transaction = txByPaymentId;
+
+    if (txByPref) {
+      transaction = txByPref;
+    } else {
+      const { data: orderWithPref } = await adminDb
+        .from('credit_package_orders')
+        .select('payment_transaction_id')
+        .eq('mp_preference_id', paymentData.preferenceId)
+        .maybeSingle();
+
+      if (orderWithPref?.payment_transaction_id) {
+        const { data: txFromOrder } = await adminDb
+          .from('payment_transactions')
+          .select('*')
+          .eq('id', orderWithPref.payment_transaction_id)
+          .maybeSingle();
+
+        if (txFromOrder) {
+          transaction = txFromOrder;
+        }
+      }
+    }
+  }
+
+  // 6d. Resolução por metadata.order_id
+  const metadataOrderId =
+    typeof paymentData.metadata?.order_id === 'string'
+      ? paymentData.metadata.order_id
+      : null;
+
+  if (!transaction && metadataOrderId) {
+    const { data: txByMetadataOrder } = await adminDb
+      .from('payment_transactions')
+      .select('*')
+      .eq('credit_package_order_id', metadataOrderId)
+      .maybeSingle();
+
+    if (txByMetadataOrder) {
+      transaction = txByMetadataOrder;
+    }
   }
 
   if (!transaction) {

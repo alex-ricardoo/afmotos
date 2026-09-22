@@ -5,6 +5,7 @@ import { Search, X, AlertCircle, Clock, Undo2, SlidersHorizontal } from 'lucide-
 
 export interface FilterState {
   search: string;
+  purpose: string;
   status: string;
   deliveryStatus: string;
   refundStatus: string;
@@ -28,6 +29,7 @@ export function PaymentsFiltersBar({
 }: PaymentsFiltersBarProps) {
   const activeCount = [
     Boolean(filters.search),
+    Boolean(filters.purpose),
     Boolean(filters.status),
     Boolean(filters.deliveryStatus),
     Boolean(filters.refundStatus),
@@ -45,7 +47,7 @@ export function PaymentsFiltersBar({
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input
             type="text"
-            placeholder="Buscar por placa (ex: PGF3G12), ID do pagamento, nome ou e-mail..."
+            placeholder="Buscar por placa, pacote, ID do pedido, transação, MP payment, nome ou e-mail..."
             value={filters.search}
             onChange={(e) => onFilterChange({ search: e.target.value })}
             className="w-full rounded-xl bg-zinc-900/90 border border-zinc-800 pl-10 pr-9 py-2.5 text-xs sm:text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-[#c9a44c] focus:ring-2 focus:ring-[#c9a44c]/20 transition-all shadow-inner"
@@ -63,6 +65,18 @@ export function PaymentsFiltersBar({
 
         {/* Dropdowns de Filtro */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+          {/* Tipo de Operação */}
+          <select
+            aria-label="Filtrar por Tipo de Operação"
+            value={filters.purpose}
+            onChange={(e) => onFilterChange({ purpose: e.target.value })}
+            className="rounded-xl bg-zinc-900 border border-zinc-800 px-3 py-2.5 text-xs font-medium text-zinc-200 focus:outline-none focus:border-[#c9a44c] focus:ring-1 focus:ring-[#c9a44c]/30 cursor-pointer shadow-xs"
+          >
+            <option value="">Tipo (Todos)</option>
+            <option value="vehicle_consultation">🚗 Consultas Veiculares</option>
+            <option value="credit_package">📦 Pacotes de Créditos</option>
+          </select>
+
           {/* Status do Pagamento */}
           <select
             aria-label="Filtrar por Status de Pagamento"

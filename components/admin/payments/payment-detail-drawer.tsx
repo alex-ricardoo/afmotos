@@ -141,59 +141,80 @@ export function PaymentDetailDrawer({
             )}
             <span>
               {item.purpose === 'credit_package'
-                ? 'Dados do Pacote de Créditos B2B'
+                ? 'Dados do Pacote de Créditos'
                 : 'Dados da Consulta Veicular'}
             </span>
           </h3>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <span className="text-zinc-500 block">
-                {item.purpose === 'credit_package' ? 'ID do Pedido de Pacote:' : 'ID da Consulta:'}
-              </span>
-              <span className="font-mono text-zinc-300">
-                {maskId(
-                  item.purpose === 'credit_package'
-                    ? item.creditPackageOrderId || item.consultationId
-                    : item.consultationId,
-                )}
-              </span>
+          {item.purpose === 'credit_package' ? (
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-zinc-500 block">Pacote / Oferta:</span>
+                <span className="font-bold text-amber-300">
+                  {item.package?.offerName || 'Pacote de Créditos'}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Quantidade de Créditos:</span>
+                <span className="font-bold text-white">
+                  {item.package?.creditsQuantity || 0} créditos
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">ID do Pedido:</span>
+                <span className="font-mono text-zinc-300">
+                  {item.package?.orderId || item.creditPackageOrderId || 'N/A'}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Status da Concessão:</span>
+                <span
+                  className={`font-semibold ${
+                    item.package?.isGranted ? 'text-emerald-400' : 'text-yellow-400'
+                  }`}
+                >
+                  {item.package?.isGranted
+                    ? '✅ Créditos Liberados na Conta'
+                    : '⏳ Aguardando Concessão de Créditos'}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Data da Concessão:</span>
+                <span className="text-zinc-300 font-mono">
+                  {formatDateTime(item.package?.grantedAt || '')}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Cliente:</span>
+                <span className="font-semibold text-zinc-200">{item.customer.name}</span>
+              </div>
             </div>
-            <div>
-              <span className="text-zinc-500 block">Status:</span>
-              <span className="font-semibold text-white capitalize">
-                {item.purpose === 'credit_package'
-                  ? item.paymentStatus === 'approved'
-                    ? 'Créditos Concedidos'
-                    : item.paymentStatus
-                  : item.consultationStatus}
-              </span>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-zinc-500 block">ID da Consulta:</span>
+                <span className="font-mono text-zinc-300">{maskId(item.consultationId)}</span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Status da Consulta:</span>
+                <span className="font-semibold text-white capitalize">{item.consultationStatus}</span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Laudo Entregue:</span>
+                <span
+                  className={`font-semibold ${
+                    item.hasReportData ? 'text-emerald-400' : 'text-zinc-400'
+                  }`}
+                >
+                  {item.hasReportData ? 'Sim (Disponível)' : 'Não'}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block">Cliente:</span>
+                <span className="font-semibold text-zinc-200">{item.customer.name}</span>
+              </div>
             </div>
-            <div>
-              <span className="text-zinc-500 block">
-                {item.purpose === 'credit_package' ? 'Tipo de Operação:' : 'Laudo Entregue:'}
-              </span>
-              <span
-                className={`font-semibold ${
-                  item.purpose === 'credit_package'
-                    ? 'text-indigo-300'
-                    : item.hasReportData
-                      ? 'text-emerald-400'
-                      : 'text-zinc-400'
-                }`}
-              >
-                {item.purpose === 'credit_package'
-                  ? 'Créditos em Conta'
-                  : item.hasReportData
-                    ? 'Sim (Disponível)'
-                    : 'Não'}
-              </span>
-            </div>
-            <div>
-              <span className="text-zinc-500 block">Cliente:</span>
-              <span className="font-semibold text-zinc-200">{item.customer.name}</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Bloco 2: Pagamento Mercado Pago */}
@@ -333,7 +354,11 @@ export function PaymentDetailDrawer({
             </button>
           )}
 
-          {(item.refund.status === 'pending' || item.refund.status === 'failed') && (
+          {(item.refund.status === 'pending' ||
+            item.refund.status === 'failed' ||
+            (item.purpose === 'credit_package' &&
+              (item.paymentStatus === 'pending' ||
+                (item.paymentStatus === 'approved' && !item.package?.isGranted)))) && (
             <button
               type="button"
               onClick={() => onReconcile(item)}

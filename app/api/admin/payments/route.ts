@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '20', 10)));
   const search = searchParams.get('search') || undefined;
+  const purpose = searchParams.get('purpose') || undefined;
   const status = searchParams.get('status') || undefined;
   const deliveryStatus = searchParams.get('deliveryStatus') || undefined;
   const refundStatus = searchParams.get('refundStatus') || undefined;
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
         page,
         pageSize,
         search,
+        purpose,
         status,
         deliveryStatus,
         refundStatus,
