@@ -63,42 +63,32 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ord
       });
     }
 
-    // Se o pedido ainda está pendente no banco, verifica se a transação financeira vinculada foi aprovada
+    // Se o pedido ainda está pendente no banco, tenta reconciliar ativamente com o Mercado Pago
     if (order.payment_transaction_id) {
-      const { data: tx } = await adminDb
-        .from('payment_transactions')
-        .select('*')
-        .eq('id', order.payment_transaction_id)
-        .maybeSingle();
+      try {
+        const { reconcilePaymentTransaction } = await import(
+          '@/lib/mercadopago/reconciliation-service'
+        );
+        await reconcilePaymentTransaction(order.payment_transaction_id, user.id, 'customer');
+      } catch (recErr) {
+        console.warn('[GET /orders/[orderId]/status] Falha transitória na reconciliação:', recErr);
+      }
 
-      if (tx && tx.status === 'approved') {
-        // Dispara a RPC atômica caso o webhook ainda não tenha finalizado
-        await adminDb
-          .from('credit_package_orders')
-          .update({
-            status: 'paid',
-            mp_payment_id: tx.mp_payment_id,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', order.id);
-
-        await adminDb.rpc('grant_credit_package_from_paid_order', {
-          p_order_id: order.id,
-        });
-
+      // Recarrega o estado atualizado do pedido após a tentativa de reconciliação
+      const freshOrder = await getPackageOrderById(orderId, user.id);
+      if (freshOrder && (freshOrder.status === 'paid' || freshOrder.granted_at)) {
         const updatedBalance = await getUserCreditBalance(user.id);
-
         return NextResponse.json({
           success: true,
-          orderId: order.id,
-          status: 'paid',
+          orderId: freshOrder.id,
+          status: freshOrder.status,
           isPaid: true,
           isGranted: true,
-          creditsQuantity: order.credits_quantity,
+          creditsQuantity: freshOrder.credits_quantity,
           newAvailableBalance: updatedBalance,
           amountFormatted,
-          grantedAt: new Date().toISOString(),
-          message: `Pagamento aprovado! ${order.credits_quantity} créditos foram adicionados ao seu saldo com sucesso.`,
+          grantedAt: freshOrder.granted_at || freshOrder.paid_at || new Date().toISOString(),
+          message: `Pagamento aprovado! ${freshOrder.credits_quantity} créditos foram adicionados ao seu saldo com sucesso.`,
         });
       }
     }

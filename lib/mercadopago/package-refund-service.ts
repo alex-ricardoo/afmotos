@@ -82,9 +82,55 @@ export async function evaluatePackageRefundEligibility(
     };
   }
 
+  if (order.status === 'refunded') {
+    return {
+      eligible: false,
+      action: 'blocked_fully_consumed',
+      creditsGranted: order.credits_quantity,
+      creditsRemaining: 0,
+      creditsConsumed: 0,
+      orderStatus: order.status,
+      mpPaymentId: order.mp_payment_id,
+      message: 'Este pedido já foi estornado anteriormente.',
+    };
+  }
+
   const creditsGranted = pkg.credits_granted;
   const creditsRemaining = pkg.credits_remaining;
   const creditsConsumed = Math.max(0, creditsGranted - creditsRemaining);
+
+  // Validação de balanço do cliente e reservas ativas
+  const { data: balance } = await adminDb
+    .from('customer_credit_balances')
+    .select('available_credits, reserved_credits')
+    .eq('user_id', order.user_id)
+    .maybeSingle();
+
+  if ((balance?.available_credits || 0) < creditsGranted) {
+    return {
+      eligible: false,
+      action: 'blocked_fully_consumed',
+      creditsGranted,
+      creditsRemaining,
+      creditsConsumed: Math.max(0, creditsGranted - (balance?.available_credits || 0)),
+      orderStatus: order.status,
+      mpPaymentId: order.mp_payment_id,
+      message: `Saldo disponível atual do cliente (${balance?.available_credits || 0}) é inferior aos créditos do pacote (${creditsGranted}). Estorno bloqueado.`,
+    };
+  }
+
+  if ((balance?.reserved_credits || 0) > 0) {
+    return {
+      eligible: false,
+      action: 'requires_manual_review',
+      creditsGranted,
+      creditsRemaining,
+      creditsConsumed,
+      orderStatus: order.status,
+      mpPaymentId: order.mp_payment_id,
+      message: `O cliente possui ${balance?.reserved_credits} crédito(s) em reserva ativa. Requer revisão manual.`,
+    };
+  }
 
   // Sem consumo (100% íntegro) -> Revogação automática total
   if (creditsRemaining >= creditsGranted) {
@@ -296,6 +342,21 @@ export async function processPackageRefund({
         updated_at: nowIso,
       })
       .eq('id', order.payment_transaction_id);
+
+    // Registra o estorno formal na tabela payment_refunds
+    await adminDb.from('payment_refunds').insert({
+      transaction_id: order.payment_transaction_id,
+      credit_package_order_id: order.id,
+      provider: 'mercadopago',
+      provider_payment_id: order.mp_payment_id || 'manual_unrecorded',
+      provider_refund_id: mpRefundId,
+      amount_cents: order.price_cents,
+      currency: order.currency || 'BRL',
+      status: 'confirmed',
+      reason_code: 'PACKAGE_FULL_REFUND',
+      reason_safe: reason || 'Estorno total de pacote sem utilização',
+      confirmed_at: nowIso,
+    });
   }
 
   // 3e. Auditoria

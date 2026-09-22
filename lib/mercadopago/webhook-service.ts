@@ -227,15 +227,26 @@ export async function fetchAuthoritativePayment(paymentId: string | number) {
     throw new Error(`Pagamento ${paymentId} não encontrado no Mercado Pago.`);
   }
 
+  const rawPayment = payment as unknown as Record<string, unknown>;
+  const orderObj = rawPayment.order as Record<string, unknown> | undefined;
+  const metadataObj = rawPayment.metadata as Record<string, unknown> | undefined;
+
+  const preferenceId =
+    (typeof rawPayment.preference_id === 'string' && rawPayment.preference_id) ||
+    (typeof orderObj?.id === 'string' && orderObj.id) ||
+    null;
+
   return {
     id: String(payment.id),
     status: payment.status || 'pending',
     statusDetail: payment.status_detail || null,
     externalReference: payment.external_reference || null,
+    preferenceId,
+    metadata: metadataObj || null,
     transactionAmount: payment.transaction_amount || 0,
     paymentMethodId: payment.payment_method_id || null,
     paymentTypeId: payment.payment_type_id || null,
     payerEmail: payment.payer?.email || null,
-    rawResponse: payment as unknown as Record<string, unknown>,
+    rawResponse: rawPayment,
   };
 }
