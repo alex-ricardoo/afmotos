@@ -226,8 +226,13 @@ export function PaymentsTable({
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 shadow-inner">
                       <Package className="h-3.5 w-3.5 text-amber-400" />
                       <span className="font-mono text-xs font-black tracking-wider text-amber-200">
-                        PACOTE B2B
+                        {item.package?.offerName || 'PACOTE B2B'}
                       </span>
+                      {item.package?.creditsQuantity ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold">
+                          {item.package.creditsQuantity} cr
+                        </span>
+                      ) : null}
                     </div>
                   ) : (
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black border border-zinc-700 shadow-inner">
@@ -275,10 +280,22 @@ export function PaymentsTable({
 
                 {/* Laudo ou Pacote B2B */}
                 {item.purpose === 'credit_package' ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border bg-indigo-500/15 text-indigo-300 border-indigo-500/40 font-semibold">
-                    <Coins className="h-3 w-3" />
-                    <span>Créditos em Conta</span>
-                  </span>
+                  item.package?.isGranted ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border bg-emerald-500/15 text-emerald-300 border-emerald-500/40 font-bold">
+                      <Coins className="h-3 w-3" />
+                      <span>Créditos Concedidos</span>
+                    </span>
+                  ) : item.paymentStatus === 'approved' ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border bg-yellow-500/20 text-yellow-300 border-yellow-500/40 font-bold animate-pulse">
+                      <Clock className="h-3 w-3" />
+                      <span>Aguardando Liberação</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border bg-zinc-800 text-zinc-400 border-zinc-700 font-medium">
+                      <Coins className="h-3 w-3" />
+                      <span>Aguardando Pagamento</span>
+                    </span>
+                  )
                 ) : (
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] border ${delBadge.className}`}
@@ -330,7 +347,9 @@ export function PaymentsTable({
 
                 {(item.refund.status === 'pending' ||
                   item.refund.status === 'failed' ||
-                  (item.purpose === 'credit_package' && item.paymentStatus === 'pending')) && (
+                  (item.purpose === 'credit_package' &&
+                    (item.paymentStatus === 'pending' ||
+                      (item.paymentStatus === 'approved' && !item.package?.isGranted)))) && (
                   <button
                     type="button"
                     onClick={() => onReconcile(item)}
@@ -418,11 +437,18 @@ export function PaymentsTable({
                     {/* Placa ou Pacote B2B */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       {item.purpose === 'credit_package' ? (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-300 shadow-inner">
-                          <Package className="h-3.5 w-3.5 text-amber-400" />
-                          <span className="font-mono text-xs font-black text-amber-200 tracking-wider">
-                            PACOTE B2B
-                          </span>
+                        <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-amber-500/15 border border-amber-500/40 text-amber-300 shadow-inner">
+                          <Package className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                          <div className="flex flex-col">
+                            <span className="font-mono text-xs font-black text-amber-200 tracking-wider">
+                              {item.package?.offerName || 'PACOTE B2B'}
+                            </span>
+                            {item.package?.creditsQuantity ? (
+                              <span className="text-[10px] text-amber-300/80 font-semibold">
+                                {item.package.creditsQuantity} créditos
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                       ) : (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black border border-zinc-700 shadow-inner">
@@ -477,10 +503,30 @@ export function PaymentsTable({
                     <td className="py-3.5 px-4">
                       {item.purpose === 'credit_package' ? (
                         <div className="flex flex-col gap-0.5">
-                          <span className="inline-flex items-center gap-1 w-fit px-2.5 py-0.5 rounded-full text-[10px] border bg-indigo-500/15 text-indigo-300 border-indigo-500/40 font-semibold">
-                            <Coins className="h-3 w-3" />
-                            <span>Créditos B2B</span>
-                          </span>
+                          {item.package?.isGranted ? (
+                            <span className="inline-flex items-center gap-1 w-fit px-2.5 py-0.5 rounded-full text-[10px] border bg-emerald-500/15 text-emerald-300 border-emerald-500/40 font-bold">
+                              <Coins className="h-3 w-3" />
+                              <span>Créditos Concedidos</span>
+                            </span>
+                          ) : item.paymentStatus === 'approved' ? (
+                            <span className="inline-flex items-center gap-1 w-fit px-2.5 py-0.5 rounded-full text-[10px] border bg-yellow-500/20 text-yellow-300 border-yellow-500/40 font-bold animate-pulse">
+                              <Clock className="h-3 w-3" />
+                              <span>Aguardando Liberação</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 w-fit px-2.5 py-0.5 rounded-full text-[10px] border bg-zinc-800 text-zinc-400 border-zinc-700 font-medium">
+                              <Coins className="h-3 w-3" />
+                              <span>Aguardando Pagamento</span>
+                            </span>
+                          )}
+                          {item.package?.orderId && (
+                            <span
+                              className="text-[9px] text-zinc-500 font-mono truncate max-w-[140px]"
+                              title={item.package.orderId}
+                            >
+                              Ord: {item.package.orderId.slice(0, 8)}...
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <div className="flex flex-col gap-0.5">
@@ -551,7 +597,8 @@ export function PaymentsTable({
                         {(item.refund.status === 'pending' ||
                           item.refund.status === 'failed' ||
                           (item.purpose === 'credit_package' &&
-                            item.paymentStatus === 'pending')) && (
+                            (item.paymentStatus === 'pending' ||
+                              (item.paymentStatus === 'approved' && !item.package?.isGranted)))) && (
                           <button
                             type="button"
                             onClick={() => onReconcile(item)}

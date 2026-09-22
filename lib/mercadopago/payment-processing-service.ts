@@ -260,6 +260,18 @@ export async function confirmAndProcessPaymentTransaction({
           },
           'error',
         );
+
+        return {
+          success: false,
+          transactionId: transaction.id,
+          previousStatus,
+          currentStatus: effectiveStatus,
+          statusChanged,
+          reportUnlocked: false,
+          packageGranted: false,
+          message: errorMsg,
+          error: errorMsg,
+        };
       } else {
         packageGranted = true;
         logCheckoutProEvent('credit_package.payment_confirmed', {

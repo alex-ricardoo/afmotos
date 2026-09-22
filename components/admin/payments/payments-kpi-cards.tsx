@@ -11,6 +11,7 @@ import {
   Undo2,
   CheckCheck,
   ChevronRight,
+  Package,
 } from 'lucide-react';
 import { type AdminPaymentSummary } from '@/lib/admin/payments-service';
 
@@ -23,16 +24,41 @@ interface PaymentsKpiCardsProps {
 export function PaymentsKpiCards({ summary, activeFilter, onSelectFilter }: PaymentsKpiCardsProps) {
   const cards = [
     {
-      id: 'approved',
-      title: 'Pagamentos Aprovados',
-      count: summary.totalApproved,
-      subtitle: 'Mercado Pago Checkout Pro',
-      icon: CheckCircle2,
+      id: 'approved_consultations',
+      title: 'Consultas Aprovadas',
+      count: summary.totalApprovedConsultations,
+      subtitle: 'Placas individuais pagas',
+      icon: FileCheck2,
       color: 'text-emerald-400',
       iconBg: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
       bg: 'from-emerald-950/30 via-zinc-900/60 to-zinc-950 border-emerald-900/30 hover:border-emerald-500/40',
       activeBorder: 'border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-950/40',
-      filterKey: 'status:approved',
+      filterKey: 'purpose:vehicle_consultation',
+    },
+    {
+      id: 'approved_packages',
+      title: 'Pacotes de Créditos',
+      count: summary.totalApprovedPackages,
+      subtitle: 'Pacotes veiculares B2B',
+      icon: Package,
+      color: 'text-amber-400',
+      iconBg: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+      bg: 'from-amber-950/30 via-zinc-900/60 to-zinc-950 border-amber-900/30 hover:border-amber-500/40',
+      activeBorder: 'border-amber-500 ring-2 ring-amber-500/30 bg-amber-950/40',
+      filterKey: 'purpose:credit_package',
+    },
+    {
+      id: 'pending_grant',
+      title: 'Pacotes Pendentes Liberação',
+      count: summary.packagesPendingGrant,
+      subtitle: 'Pago sem liberação de crédito',
+      icon: AlertTriangle,
+      color: 'text-yellow-400',
+      iconBg: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40',
+      bg: 'from-yellow-950/40 via-zinc-900/60 to-zinc-950 border-yellow-900/40 hover:border-yellow-500/60 shadow-[0_0_20px_rgba(234,179,8,0.1)]',
+      activeBorder: 'border-yellow-500 ring-2 ring-yellow-500/40 bg-yellow-950/50',
+      filterKey: 'packages:pending_grant',
+      hasAlert: summary.packagesPendingGrant > 0,
     },
     {
       id: 'completed',

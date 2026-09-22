@@ -42,6 +42,7 @@ export function PaymentsDashboardClient({
   // Estados dos filtros
   const [filters, setFilters] = useState<FilterState>({
     search: searchParams.get('search') || '',
+    purpose: searchParams.get('purpose') || '',
     status: searchParams.get('status') || '',
     deliveryStatus: searchParams.get('deliveryStatus') || '',
     refundStatus: searchParams.get('refundStatus') || '',
@@ -80,6 +81,7 @@ export function PaymentsDashboardClient({
         query.set('pageSize', String(pageSize));
 
         if (currentFilters.search) query.set('search', currentFilters.search);
+        if (currentFilters.purpose) query.set('purpose', currentFilters.purpose);
         if (currentFilters.status) query.set('status', currentFilters.status);
         if (currentFilters.deliveryStatus)
           query.set('deliveryStatus', currentFilters.deliveryStatus);
@@ -125,6 +127,7 @@ export function PaymentsDashboardClient({
   const handleResetFilters = () => {
     const empty: FilterState = {
       search: '',
+      purpose: '',
       status: '',
       deliveryStatus: '',
       refundStatus: '',
@@ -191,6 +194,30 @@ export function PaymentsDashboardClient({
         refundStatus: 'pending',
         status: '',
         deliveryStatus: '',
+        insufficientCreditsOnly: false,
+      });
+    } else if (filterKey === 'purpose:credit_package') {
+      handleFilterChange({
+        purpose: 'credit_package',
+        status: '',
+        deliveryStatus: '',
+        refundStatus: '',
+        insufficientCreditsOnly: false,
+      });
+    } else if (filterKey === 'purpose:vehicle_consultation') {
+      handleFilterChange({
+        purpose: 'vehicle_consultation',
+        status: '',
+        deliveryStatus: '',
+        refundStatus: '',
+        insufficientCreditsOnly: false,
+      });
+    } else if (filterKey === 'packages:pending_grant') {
+      handleFilterChange({
+        purpose: 'credit_package',
+        status: 'approved',
+        deliveryStatus: '',
+        refundStatus: '',
         insufficientCreditsOnly: false,
       });
     } else if (filterKey === 'refund:confirmed') {

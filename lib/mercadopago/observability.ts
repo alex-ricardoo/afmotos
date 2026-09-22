@@ -59,6 +59,7 @@ export type CheckoutProLogEvent =
   | 'credit_package.payment_approved'
   | 'credit_package.payment_rejected'
   | 'credit_package.payment_confirmed'
+  | 'credit_package.order_update_failed'
   | 'credit_package.grant_started'
   | 'credit_package.granted'
   | 'credit_package.grant_failed'

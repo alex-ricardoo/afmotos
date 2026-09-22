@@ -99,54 +99,7 @@ export async function evaluatePackageRefundEligibility(
   const creditsRemaining = pkg.credits_remaining;
   const creditsConsumed = Math.max(0, creditsGranted - creditsRemaining);
 
-  // Validação de balanço do cliente e reservas ativas
-  const { data: balance } = await adminDb
-    .from('customer_credit_balances')
-    .select('available_credits, reserved_credits')
-    .eq('user_id', order.user_id)
-    .maybeSingle();
-
-  if ((balance?.available_credits || 0) < creditsGranted) {
-    return {
-      eligible: false,
-      action: 'blocked_fully_consumed',
-      creditsGranted,
-      creditsRemaining,
-      creditsConsumed: Math.max(0, creditsGranted - (balance?.available_credits || 0)),
-      orderStatus: order.status,
-      mpPaymentId: order.mp_payment_id,
-      message: `Saldo disponível atual do cliente (${balance?.available_credits || 0}) é inferior aos créditos do pacote (${creditsGranted}). Estorno bloqueado.`,
-    };
-  }
-
-  if ((balance?.reserved_credits || 0) > 0) {
-    return {
-      eligible: false,
-      action: 'requires_manual_review',
-      creditsGranted,
-      creditsRemaining,
-      creditsConsumed,
-      orderStatus: order.status,
-      mpPaymentId: order.mp_payment_id,
-      message: `O cliente possui ${balance?.reserved_credits} crédito(s) em reserva ativa. Requer revisão manual.`,
-    };
-  }
-
-  // Sem consumo (100% íntegro) -> Revogação automática total
-  if (creditsRemaining >= creditsGranted) {
-    return {
-      eligible: true,
-      action: 'full_package_revocation',
-      creditsGranted,
-      creditsRemaining,
-      creditsConsumed: 0,
-      orderStatus: order.status,
-      mpPaymentId: order.mp_payment_id,
-      message: 'Pacote íntegro sem consumo de créditos. Elegível para estorno automático total.',
-    };
-  }
-
-  // Totalmente consumido -> Não elegível para estorno automático
+  // 1. Totalmente consumido -> Bloqueado
   if (creditsRemaining <= 0) {
     return {
       eligible: false,
@@ -160,16 +113,63 @@ export async function evaluatePackageRefundEligibility(
     };
   }
 
-  // Consumo parcial -> Requer revisão manual
+  // 2. Consumo parcial -> Requer revisão manual e cálculo pro-rata
+  if (creditsRemaining < creditsGranted) {
+    return {
+      eligible: false,
+      action: 'requires_manual_review',
+      creditsGranted,
+      creditsRemaining,
+      creditsConsumed,
+      orderStatus: order.status,
+      mpPaymentId: order.mp_payment_id,
+      message: `O cliente consumiu ${creditsConsumed} de ${creditsGranted} créditos deste pacote. O estorno automático foi bloqueado; requer revisão manual para cálculo de ressarcimento pro-rata.`,
+    };
+  }
+
+  // 3. Pacote 100% íntegro: Valida reservas ativas e consistência de balanço do cliente
+  const { data: balance } = await adminDb
+    .from('customer_credit_balances')
+    .select('available_credits, reserved_credits')
+    .eq('user_id', order.user_id)
+    .maybeSingle();
+
+  if (balance && typeof balance.reserved_credits === 'number' && balance.reserved_credits > 0) {
+    return {
+      eligible: false,
+      action: 'requires_manual_review',
+      creditsGranted,
+      creditsRemaining,
+      creditsConsumed: 0,
+      orderStatus: order.status,
+      mpPaymentId: order.mp_payment_id,
+      message: `O cliente possui ${balance.reserved_credits} crédito(s) em reserva ativa. Requer revisão manual.`,
+    };
+  }
+
+  if (balance && typeof balance.available_credits === 'number' && balance.available_credits < creditsGranted) {
+    return {
+      eligible: false,
+      action: 'blocked_fully_consumed',
+      creditsGranted,
+      creditsRemaining,
+      creditsConsumed: Math.max(0, creditsGranted - balance.available_credits),
+      orderStatus: order.status,
+      mpPaymentId: order.mp_payment_id,
+      message: `Saldo disponível atual do cliente (${balance.available_credits}) é inferior aos créditos do pacote (${creditsGranted}). Estorno bloqueado.`,
+    };
+  }
+
+  // Sem consumo (100% íntegro) e saldo consistente -> Revogação automática total
   return {
-    eligible: false,
-    action: 'requires_manual_review',
+    eligible: true,
+    action: 'full_package_revocation',
     creditsGranted,
     creditsRemaining,
-    creditsConsumed,
+    creditsConsumed: 0,
     orderStatus: order.status,
     mpPaymentId: order.mp_payment_id,
-    message: `O cliente consumiu ${creditsConsumed} de ${creditsGranted} créditos. Requer revisão manual e cálculo pro-rata.`,
+    message: 'Pacote íntegro sem consumo de créditos. Elegível para estorno automático total.',
   };
 }
 

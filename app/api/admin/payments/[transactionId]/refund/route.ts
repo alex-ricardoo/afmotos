@@ -98,6 +98,45 @@ export async function POST(
       );
     }
 
+    if (transaction.purpose === 'credit_package' || transaction.credit_package_order_id) {
+      if (!transaction.credit_package_order_id) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Ordem de pacote de créditos não vinculada à transação.',
+            code: 'PACKAGE_ORDER_NOT_LINKED',
+          },
+          { status: 400 },
+        );
+      }
+
+      const { processPackageRefund } = await import('@/lib/mercadopago/package-refund-service');
+      const reasonSafe = `[ADMIN_ACTION] ${reasonCode}${adminNote ? `: ${adminNote}` : ''}`;
+      const pkgResult = await processPackageRefund({
+        orderId: transaction.credit_package_order_id,
+        reason: reasonSafe,
+        adminUserId: auth.user.id,
+      });
+
+      if (!pkgResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: pkgResult.error || pkgResult.message,
+            code: pkgResult.code || 'REFUND_INELIGIBLE',
+            result: pkgResult,
+          },
+          { status: 422 },
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: pkgResult.message || 'Estorno de pacote processado com sucesso.',
+        result: pkgResult,
+      });
+    }
+
     const { data: consultation, error: consError } = await adminDb
       .from('customer_plate_consultations')
       .select('*')

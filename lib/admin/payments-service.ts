@@ -5,6 +5,7 @@ export interface AdminPaymentFilterParams {
   page?: number;
   pageSize?: number;
   search?: string;
+  purpose?: 'all' | 'vehicle_consultation' | 'credit_package' | string;
   status?: string;
   deliveryStatus?: string;
   refundStatus?: string;
@@ -25,6 +26,12 @@ export interface AdminPaymentSummary {
   totalPendingRefunds: number;
   totalConfirmedRefunds: number;
   totalInsufficientCredits: number;
+  // Métricas segmentadas para pacotes vs consultas
+  totalApprovedConsultations: number;
+  totalApprovedPackages: number;
+  packagesPendingGrant: number;
+  revenueConsultationsCents: number;
+  revenuePackagesCents: number;
 }
 
 export interface AdminPaymentItemDTO {
@@ -41,6 +48,19 @@ export interface AdminPaymentItemDTO {
   mpPreferenceId: string | null;
   purpose?: string;
   creditPackageOrderId?: string | null;
+
+  package?: {
+    orderId: string | null;
+    offerName: string | null;
+    creditsQuantity: number;
+    orderStatus: string | null;
+    paidAt: string | null;
+    grantedAt: string | null;
+    packageId: string | null;
+    creditsRemaining?: number;
+    isGranted: boolean;
+    isRefundEligible: boolean;
+  } | null;
 
   consultationId: string;
   plate: string;
@@ -138,6 +158,18 @@ interface RawPaymentRow {
   payment_type_id?: string | null;
   payment_status_detail?: string | null;
   status_detail?: string | null;
+  purpose?: string | null;
+  credit_package_order_id?: string | null;
+  package_order_id?: string | null;
+  package_offer_name?: string | null;
+  package_credits_quantity?: number | null;
+  package_order_status?: string | null;
+  package_paid_at?: string | null;
+  package_granted_at?: string | null;
+  is_package_granted?: boolean | null;
+  is_package_refund_eligible?: boolean | null;
+  package_id?: string | null;
+  package_credits_remaining?: number | null;
   consultation_id?: string | null;
   plate?: string | null;
   plate_normalized?: string | null;
@@ -180,7 +212,7 @@ interface RawPaymentRow {
 /**
  * Mapeia linha do banco (View ou fallback) para DTO higienizado
  */
-function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
+export function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
   const isInsufficient = Boolean(
     row.is_insufficient_credits ??
       (row.delivery_last_error_code === 'APIBRASIL_INSUFFICIENT_CREDITS' ||
@@ -193,38 +225,81 @@ function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
   const paymentStatus = row.payment_status || row.status;
   const deliveryStatus = row.delivery_status || 'none';
 
-  // Lógica defensiva de elegibilidade caso não venha da View
-  const isRefundEligible = Boolean(
-    row.is_refund_eligible ??
-      (paymentStatus === 'approved' &&
-        !hasReport &&
-        !['requested', 'pending', 'confirmed'].includes(refundStatus) &&
-        Boolean(row.mp_payment_id)),
-  );
+  const isCreditPackage =
+    row.purpose === 'credit_package' ||
+    Boolean(row.credit_package_order_id) ||
+    Boolean(row.package_order_id);
 
-  const isReprocessEligible = Boolean(
-    row.is_reprocess_eligible ??
-      (paymentStatus === 'approved' &&
-        !hasReport &&
-        !['requested', 'pending', 'confirmed'].includes(refundStatus) &&
-        deliveryStatus !== 'processing'),
-  );
+  const packageData = isCreditPackage
+    ? {
+        orderId: (row.package_order_id || row.credit_package_order_id || null) as string | null,
+        offerName: (row.package_offer_name || 'Pacote de Créditos') as string,
+        creditsQuantity: Number(row.package_credits_quantity ?? 0),
+        orderStatus: (row.package_order_status || row.payment_status || 'pending') as string,
+        paidAt: (row.package_paid_at || null) as string | null,
+        grantedAt: (row.package_granted_at || null) as string | null,
+        packageId: (row.package_id || null) as string | null,
+        creditsRemaining:
+          row.package_credits_remaining != null ? Number(row.package_credits_remaining) : undefined,
+        isGranted: Boolean(row.is_package_granted ?? Boolean(row.package_granted_at)),
+        isRefundEligible: Boolean(
+          row.is_package_refund_eligible ??
+            (paymentStatus === 'approved' &&
+              Boolean(row.mp_payment_id) &&
+              !['requested', 'pending', 'confirmed'].includes(refundStatus)),
+        ),
+      }
+    : null;
+
+  // Lógica defensiva de elegibilidade caso não venha da View
+  const isRefundEligible = isCreditPackage
+    ? Boolean(packageData?.isRefundEligible)
+    : Boolean(
+        row.is_refund_eligible ??
+          (paymentStatus === 'approved' &&
+            !hasReport &&
+            !['requested', 'pending', 'confirmed'].includes(refundStatus) &&
+            Boolean(row.mp_payment_id)),
+      );
+
+  const isReprocessEligible =
+    !isCreditPackage &&
+    Boolean(
+      row.is_reprocess_eligible ??
+        (paymentStatus === 'approved' &&
+          !hasReport &&
+          !['requested', 'pending', 'confirmed'].includes(refundStatus) &&
+          deliveryStatus !== 'processing'),
+    );
 
   let requiresAttention = false;
   let attentionReason: string | null = null;
 
-  if (isInsufficient) {
-    requiresAttention = true;
-    attentionReason = 'Saldo insuficiente na API Brasil (Recarga necessária).';
-  } else if (refundStatus === 'failed' || refundStatus === 'manual_review') {
-    requiresAttention = true;
-    attentionReason = 'Estorno falhou ou requer revisão manual no Mercado Pago.';
-  } else if (refundStatus === 'pending') {
-    requiresAttention = true;
-    attentionReason = 'Estorno pendente de reconciliação no gateway.';
-  } else if (paymentStatus === 'approved' && !hasReport && deliveryStatus === 'failed_permanent') {
-    requiresAttention = true;
-    attentionReason = 'Falha permanente na entrega do laudo; ação necessária.';
+  if (isCreditPackage) {
+    if (paymentStatus === 'approved' && !packageData?.isGranted) {
+      requiresAttention = true;
+      attentionReason = 'Pacote aprovado no Mercado Pago aguardando liberação de créditos.';
+    } else if (refundStatus === 'failed' || refundStatus === 'manual_review') {
+      requiresAttention = true;
+      attentionReason = 'Estorno de pacote falhou ou requer revisão manual.';
+    } else if (refundStatus === 'pending') {
+      requiresAttention = true;
+      attentionReason = 'Estorno de pacote pendente de confirmação no gateway.';
+    }
+  } else {
+    if (isInsufficient) {
+      requiresAttention = true;
+      attentionReason = 'Saldo insuficiente na API Brasil (Recarga necessária).';
+    } else if (refundStatus === 'failed' || refundStatus === 'manual_review') {
+      requiresAttention = true;
+      attentionReason = 'Estorno falhou ou requer revisão manual no Mercado Pago.';
+    } else if (refundStatus === 'pending') {
+      requiresAttention = true;
+      attentionReason = 'Estorno pendente de reconciliação no gateway.';
+    } else if (paymentStatus === 'approved' && !hasReport && deliveryStatus === 'failed_permanent') {
+      requiresAttention = true;
+      attentionReason = 'Falha permanente na entrega do laudo; ação necessária.';
+    }
   }
 
   return {
@@ -239,16 +314,21 @@ function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
     paymentStatusDetail: row.payment_status_detail ?? row.status_detail ?? null,
     mpPaymentId: row.mp_payment_id ?? null,
     mpPreferenceId: row.mp_preference_id ?? null,
-    purpose: (row.purpose as string) || (row.credit_package_order_id ? 'credit_package' : 'vehicle_consultation'),
-    creditPackageOrderId: (row.credit_package_order_id as string) || null,
+    purpose: isCreditPackage ? 'credit_package' : ((row.purpose as string) || 'vehicle_consultation'),
+    creditPackageOrderId: (row.package_order_id || row.credit_package_order_id as string) || null,
+    package: packageData,
 
     consultationId: row.consultation_id || '',
-    plate: row.plate || 'SEM PLACA',
-    plateNormalized:
-      row.plate_normalized || (row.plate ? row.plate.replace(/[^A-Z0-9]/gi, '').toUpperCase() : ''),
-    consultationStatus: row.consultation_status || 'pending',
-    consultationPaymentStatus: row.consultation_payment_status || 'unpaid',
-    hasReportData: hasReport,
+    plate: isCreditPackage ? 'PACOTE DE CRÉDITOS' : (row.plate || 'SEM PLACA'),
+    plateNormalized: isCreditPackage
+      ? 'PACOTE'
+      : (row.plate_normalized || (row.plate ? row.plate.replace(/[^A-Z0-9]/gi, '').toUpperCase() : '')),
+    consultationStatus: isCreditPackage
+      ? (packageData?.isGranted ? 'completed' : 'pending')
+      : (row.consultation_status || 'pending'),
+    consultationPaymentStatus:
+      row.consultation_payment_status || (paymentStatus === 'approved' ? 'paid' : 'unpaid'),
+    hasReportData: isCreditPackage ? Boolean(packageData?.isGranted) : hasReport,
     consultationProcessedAt: row.consultation_processed_at || null,
 
     customer: {
@@ -299,7 +379,8 @@ export async function getAdminPaymentSummary(): Promise<AdminPaymentSummary> {
   const adminDb = createAdminClient();
 
   const [
-    approvedRes,
+    approvedConsultationsRes,
+    approvedPackagesRes,
     completedRes,
     processingRes,
     retryRes,
@@ -307,11 +388,19 @@ export async function getAdminPaymentSummary(): Promise<AdminPaymentSummary> {
     pendingRefundsRes,
     confirmedRefundsRes,
     insufficientRes,
+    pendingGrantRes,
+    approvedTransactionsRes,
   ] = await Promise.all([
     adminDb
       .from('payment_transactions')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'approved'),
+      .eq('status', 'approved')
+      .or('purpose.eq.vehicle_consultation,purpose.is.null'),
+    adminDb
+      .from('payment_transactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'approved')
+      .eq('purpose', 'credit_package'),
     adminDb
       .from('customer_plate_consultations')
       .select('*', { count: 'exact', head: true })
@@ -340,10 +429,35 @@ export async function getAdminPaymentSummary(): Promise<AdminPaymentSummary> {
       .from('consultation_delivery_jobs')
       .select('*', { count: 'exact', head: true })
       .eq('last_error_code', 'APIBRASIL_INSUFFICIENT_CREDITS'),
+    adminDb
+      .from('credit_package_orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'paid')
+      .is('granted_at', null),
+    adminDb
+      .from('payment_transactions')
+      .select('amount, purpose')
+      .eq('status', 'approved'),
   ]);
 
+  let revenueConsultationsCents = 0;
+  let revenuePackagesCents = 0;
+  if (approvedTransactionsRes.data) {
+    for (const tx of approvedTransactionsRes.data) {
+      const amtCents = Math.round(Number(tx.amount || 0) * 100);
+      if (tx.purpose === 'credit_package') {
+        revenuePackagesCents += amtCents;
+      } else {
+        revenueConsultationsCents += amtCents;
+      }
+    }
+  }
+
+  const totalApprovedConsultations = approvedConsultationsRes.count ?? 0;
+  const totalApprovedPackages = approvedPackagesRes.count ?? 0;
+
   return {
-    totalApproved: approvedRes.count ?? 0,
+    totalApproved: totalApprovedConsultations + totalApprovedPackages,
     totalReportsCompleted: completedRes.count ?? 0,
     totalInProcessing: processingRes.count ?? 0,
     totalRetryScheduled: retryRes.count ?? 0,
@@ -351,6 +465,11 @@ export async function getAdminPaymentSummary(): Promise<AdminPaymentSummary> {
     totalPendingRefunds: pendingRefundsRes.count ?? 0,
     totalConfirmedRefunds: confirmedRefundsRes.count ?? 0,
     totalInsufficientCredits: insufficientRes.count ?? 0,
+    totalApprovedConsultations,
+    totalApprovedPackages,
+    packagesPendingGrant: pendingGrantRes.count ?? 0,
+    revenueConsultationsCents,
+    revenuePackagesCents,
   };
 }
 
@@ -379,9 +498,31 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
         .trim()
         .replace(/[^a-zA-Z0-9]/g, '')
         .toUpperCase();
-      query = query.or(
-        `plate.ilike.%${cleanSearch}%,plate_normalized.ilike.%${plateSearch}%,transaction_id.eq.${params.search.trim()},mp_payment_id.ilike.%${cleanSearch}%,customer_email.ilike.%${cleanSearch}%,customer_name.ilike.%${cleanSearch}%`,
-      );
+      const rawSearch = params.search.trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawSearch);
+
+      const searchClauses = [
+        `plate.ilike.%${cleanSearch}%`,
+        `plate_normalized.ilike.%${plateSearch}%`,
+        `mp_payment_id.ilike.%${cleanSearch}%`,
+        `customer_email.ilike.%${cleanSearch}%`,
+        `customer_name.ilike.%${cleanSearch}%`,
+        `package_offer_name.ilike.%${cleanSearch}%`,
+      ];
+      if (isUuid) {
+        searchClauses.push(`transaction_id.eq.${rawSearch}`);
+        searchClauses.push(`package_order_id.eq.${rawSearch}`);
+        searchClauses.push(`credit_package_order_id.eq.${rawSearch}`);
+      }
+      query = query.or(searchClauses.join(','));
+    }
+
+    if (params.purpose && params.purpose !== 'all') {
+      if (params.purpose === 'credit_package') {
+        query = query.eq('purpose', 'credit_package');
+      } else if (params.purpose === 'vehicle_consultation') {
+        query = query.or('purpose.eq.vehicle_consultation,purpose.is.null');
+      }
     }
 
     if (params.status) {
@@ -437,8 +578,12 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
     .select(
       `
       *,
-      customer_plate_consultations!inner (
+      customer_plate_consultations (
         id, plate, plate_normalized, status, payment_status, vehicle_data, processed_at,
+        customer_profiles ( id, full_name, email, phone )
+      ),
+      credit_package_orders (
+        id, offer_name, credits_quantity, status, paid_at, granted_at,
         customer_profiles ( id, full_name, email, phone )
       ),
       consultation_delivery_jobs (
@@ -452,6 +597,14 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
     )
     .order('created_at', { ascending: false })
     .range(offset, offset + pageSize - 1);
+
+  if (params.purpose && params.purpose !== 'all') {
+    if (params.purpose === 'credit_package') {
+      fallbackQuery = fallbackQuery.eq('purpose', 'credit_package');
+    } else if (params.purpose === 'vehicle_consultation') {
+      fallbackQuery = fallbackQuery.or('purpose.eq.vehicle_consultation,purpose.is.null');
+    }
+  }
 
   if (params.status) {
     fallbackQuery = fallbackQuery.eq('status', params.status);
@@ -480,6 +633,20 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
         phone?: string;
       } | null;
     } | null;
+    credit_package_orders?: {
+      id?: string;
+      offer_name?: string;
+      credits_quantity?: number;
+      status?: string;
+      paid_at?: string;
+      granted_at?: string;
+      customer_profiles?: {
+        id?: string;
+        full_name?: string;
+        email?: string;
+        phone?: string;
+      } | null;
+    } | null;
     consultation_delivery_jobs?: Array<RawPaymentRow> | RawPaymentRow | null;
     payment_refunds?: Array<RawPaymentRow> | RawPaymentRow | null;
   }
@@ -487,6 +654,9 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
   const items = ((fallbackRows as unknown as FallbackRow[]) || []).map((row) => {
     const cpc = row.customer_plate_consultations;
     const cp = cpc?.customer_profiles;
+    const pkgOrder = row.credit_package_orders;
+    const pkgProfile = pkgOrder?.customer_profiles;
+
     const deliveryJob = Array.isArray(row.consultation_delivery_jobs)
       ? (row.consultation_delivery_jobs[row.consultation_delivery_jobs.length - 1] as
           RawPaymentRow | undefined)
@@ -504,10 +674,17 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
       consultation_payment_status: cpc?.payment_status,
       has_report_data: Boolean(cpc?.vehicle_data),
       consultation_processed_at: cpc?.processed_at,
-      customer_id: cp?.id,
-      customer_name: cp?.full_name,
-      customer_email: cp?.email,
-      customer_phone: cp?.phone,
+      customer_id: cp?.id || pkgProfile?.id,
+      customer_name: cp?.full_name || pkgProfile?.full_name,
+      customer_email: cp?.email || pkgProfile?.email,
+      customer_phone: cp?.phone || pkgProfile?.phone,
+      package_order_id: pkgOrder?.id,
+      package_offer_name: pkgOrder?.offer_name,
+      package_credits_quantity: pkgOrder?.credits_quantity,
+      package_order_status: pkgOrder?.status,
+      package_paid_at: pkgOrder?.paid_at,
+      package_granted_at: pkgOrder?.granted_at,
+      is_package_granted: Boolean(pkgOrder?.granted_at),
       delivery_job_id: deliveryJob?.id,
       delivery_status: deliveryJob?.status,
       delivery_attempt_count: deliveryJob?.attempt_count,
@@ -560,10 +737,20 @@ export async function getAdminPaymentDetails(
   }
 
   // 2. Carrega a timeline cronológica de auditoria
+  const orderId = item.package?.orderId || item.creditPackageOrderId;
+  const auditClauses = [`transaction_id.eq.${transactionId}`];
+  if (item.consultationId) {
+    auditClauses.push(`consultation_id.eq.${item.consultationId}`);
+  }
+  if (orderId) {
+    auditClauses.push(`details->>order_id.eq.${orderId}`);
+    auditClauses.push(`details->>orderId.eq.${orderId}`);
+  }
+
   const { data: auditLogs, error: auditError } = await adminDb
     .from('consultation_audit_logs')
     .select('*')
-    .or(`transaction_id.eq.${transactionId},consultation_id.eq.${item.consultationId}`)
+    .or(auditClauses.join(','))
     .order('created_at', { ascending: true });
 
   if (auditError) {

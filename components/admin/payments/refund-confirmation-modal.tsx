@@ -28,6 +28,13 @@ const REASON_OPTIONS = [
   { value: 'OUTRO', label: 'Outro motivo (requer nota administrativa)' },
 ];
 
+const PACKAGE_REASON_OPTIONS = [
+  { value: 'DECISAO_MANUAL_SUPORTE', label: 'Cancelamento acordado com suporte ao cliente' },
+  { value: 'PACOTE_CANCELAMENTO_CLIENTE', label: 'Desistência da compra pelo comprador' },
+  { value: 'PACOTE_ERRO_CONCESSAO', label: 'Problema na concessão de créditos ou duplicidade' },
+  { value: 'OUTRO', label: 'Outro motivo (requer nota administrativa)' },
+];
+
 export function RefundConfirmationModal({
   isOpen,
   item,
@@ -71,8 +78,15 @@ function RefundDialogContent({
   }) => Promise<void>;
   isSubmitting?: boolean;
 }) {
+  const isPackage = item.purpose === 'credit_package';
+  const reasonList = isPackage ? PACKAGE_REASON_OPTIONS : REASON_OPTIONS;
+
   const [reasonCode, setReasonCode] = useState(
-    item.flags.isInsufficientCredits ? 'APIBRASIL_INSUFFICIENT_CREDITS' : 'DECISAO_MANUAL_SUPORTE',
+    isPackage
+      ? 'DECISAO_MANUAL_SUPORTE'
+      : item.flags.isInsufficientCredits
+        ? 'APIBRASIL_INSUFFICIENT_CREDITS'
+        : 'DECISAO_MANUAL_SUPORTE',
   );
   const [adminNote, setAdminNote] = useState('');
   const [confirmationInput, setConfirmationInput] = useState('');
@@ -138,10 +152,19 @@ function RefundDialogContent({
       <form onSubmit={handleSubmit} className="mt-5 space-y-4">
         {/* Resumo da Transação */}
         <div className="rounded-2xl border border-zinc-900 bg-zinc-950/60 p-4 space-y-2 text-xs">
-          <div className="flex items-center justify-between text-zinc-400">
-            <span>Placa Consultada:</span>
-            <span className="font-mono font-bold text-white">{item.plate}</span>
-          </div>
+          {isPackage ? (
+            <div className="flex items-center justify-between text-zinc-400">
+              <span>Pacote / Créditos:</span>
+              <span className="font-bold text-amber-300">
+                {item.package?.offerName || 'Pacote de Créditos'} ({item.package?.creditsQuantity || 0} cr)
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between text-zinc-400">
+              <span>Placa Consultada:</span>
+              <span className="font-mono font-bold text-white">{item.plate}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between text-zinc-400">
             <span>Valor a Estornar:</span>
             <span className="font-bold text-rose-400 text-sm">{item.amountFormatted}</span>
@@ -171,7 +194,7 @@ function RefundDialogContent({
             onChange={(e) => setReasonCode(e.target.value)}
             className="w-full rounded-xl bg-zinc-900 border border-zinc-800 px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
           >
-            {REASON_OPTIONS.map((opt) => (
+            {reasonList.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
