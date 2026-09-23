@@ -30,6 +30,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Clock,
+  Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CustomerPlateBadge } from './customer-plate-badge';
@@ -192,11 +194,13 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
   };
 
   if (!dto) {
+    const isRefunded = consultation.status === 'refunded';
+    const isRefundPending = consultation.status === 'refund_pending';
     const isFailed =
       consultation.status === 'failed' ||
       consultation.status === 'failed_permanent' ||
-      consultation.status === 'refund_pending' ||
-      consultation.status === 'refunded';
+      isRefundPending ||
+      isRefunded;
 
     const isPendingPayment = consultation.status === 'pending';
 
@@ -213,14 +217,22 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
         <div className="rounded-3xl border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl p-8 sm:p-12 text-center space-y-5 max-w-lg mx-auto shadow-2xl">
           <div
             className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ${
-              isFailed
-                ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
-                : isPendingPayment
-                  ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
-                  : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+              isRefunded
+                ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400'
+                : isRefundPending
+                  ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                  : isFailed
+                    ? 'bg-red-500/10 border border-red-500/20 text-red-400'
+                    : isPendingPayment
+                      ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
+                      : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
             }`}
           >
-            {isFailed ? (
+            {isRefunded ? (
+              <CheckCircle2 className="w-8 h-8" />
+            ) : isRefundPending ? (
+              <Clock className="w-8 h-8 animate-pulse" />
+            ) : isFailed ? (
               <AlertTriangle className="w-8 h-8" />
             ) : isPendingPayment ? (
               <CreditCard className="w-8 h-8" />
@@ -229,9 +241,17 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold">
-              {isFailed ? (
+              {isRefunded ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/25">
+                  Estorno Confirmado
+                </span>
+              ) : isRefundPending ? (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
+                  Estorno Solicitado
+                </span>
+              ) : isFailed ? (
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-500/10 text-red-400 border border-red-500/25">
                   Consulta Não Concluída
                 </span>
@@ -248,19 +268,57 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
 
             <h2 className="text-xl font-bold text-white">Consulta da Placa {formattedPlate}</h2>
             <p className="text-sm text-zinc-300 leading-relaxed max-w-md mx-auto">
-              {consultation.status === 'failed_permanent' || consultation.status === 'failed'
-                ? consultation.payment_coverage_type === 'platform_credit'
-                  ? 'Não foi possível concluir a consulta neste momento. Seu crédito não foi consumido e continua disponível na sua conta.'
-                  : 'Não foi possível concluir a consulta veicular neste momento. Se o pagamento foi aprovado, o estorno automático foi acionado.'
-                : consultation.status === 'refund_pending' || consultation.status === 'refunded'
-                  ? 'Esta consulta foi cancelada e o valor foi estornado.'
-                  : consultation.payment_coverage_type === 'platform_credit' &&
-                      (consultation as { credit_status?: string }).credit_status === 'reserved'
-                    ? 'Seu crédito foi reservado. Estamos preparando o laudo veicular.'
-                    : consultation.status === 'pending'
-                      ? 'Esta consulta está aguardando a confirmação do pagamento para liberar o laudo completo.'
-                      : 'O relatório desta consulta está sendo processado. Aguarde alguns instantes.'}
+              {isRefunded ? (
+                <>
+                  Identificamos uma{' '}
+                  <strong className="text-zinc-100">instabilidade temporária</strong> no sistema ao
+                  consultar os dados desta placa. Por isso, a consulta não pôde ser emitida e seu
+                  pagamento foi{' '}
+                  <strong className="text-purple-300 font-semibold">estornado integralmente</strong>
+                  . Você pode tentar realizar uma nova consulta mais tarde ou entrar em contato com
+                  nosso suporte.
+                </>
+              ) : isRefundPending ? (
+                <>
+                  Devido a uma instabilidade temporária no serviço de dados, não foi possível
+                  concluir a emissão do laudo. O estorno integral do seu pagamento já foi solicitado
+                  e está sendo processado pelo Mercado Pago.
+                </>
+              ) : consultation.status === 'failed_permanent' || consultation.status === 'failed' ? (
+                consultation.payment_coverage_type === 'platform_credit' ? (
+                  'Não foi possível concluir a consulta neste momento devido a uma instabilidade temporária. Seu crédito não foi consumido e continua disponível na sua conta.'
+                ) : (
+                  'Não foi possível concluir a consulta veicular neste momento devido a uma instabilidade temporária. Se o pagamento foi aprovado, o estorno automático foi acionado.'
+                )
+              ) : consultation.payment_coverage_type === 'platform_credit' &&
+                (consultation as { credit_status?: string }).credit_status === 'reserved' ? (
+                'Seu crédito foi reservado. Estamos preparando o laudo veicular.'
+              ) : consultation.status === 'pending' ? (
+                'Esta consulta está aguardando a confirmação do pagamento para liberar o laudo completo.'
+              ) : (
+                'O relatório desta consulta está sendo processado. Aguarde alguns instantes.'
+              )}
             </p>
+
+            {isRefunded && (
+              <div className="text-left bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-3.5 space-y-2 text-xs text-zinc-400 max-w-md mx-auto">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    <strong className="text-zinc-200">Motivo:</strong> Instabilidade temporária de
+                    comunicação com as bases de consulta veicular.
+                  </p>
+                </div>
+                <div className="flex items-start gap-2 pt-1 border-t border-zinc-800/60">
+                  <Clock className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    <strong className="text-zinc-300">Prazo para crédito:</strong> No Pix, o valor
+                    retorna em instantes na mesma conta; no cartão de crédito, o prazo depende da
+                    sua instituição financeira e da data de fechamento da fatura.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -277,7 +335,13 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
                   href={`/cliente/consultas/nova?placa=${consultation.plate}`}
                   className="w-full sm:w-auto"
                 >
-                  <Button className="w-full sm:w-auto h-11 px-6 bg-gradient-to-r from-[#c9a44c] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold rounded-xl shadow-lg shadow-[#c9a44c]/20">
+                  <Button
+                    className={`w-full sm:w-auto h-11 px-6 ${
+                      isRefunded
+                        ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-950/20'
+                        : 'bg-gradient-to-r from-[#c9a44c] to-[#b38e3a] hover:brightness-110 text-zinc-950 shadow-[#c9a44c]/20'
+                    } font-bold rounded-xl shadow-lg`}
+                  >
                     Tentar Nova Consulta
                   </Button>
                 </Link>
