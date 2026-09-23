@@ -60,6 +60,9 @@ export async function reconcilePaymentTransaction(
         .eq('id', transaction.credit_package_order_id)
         .maybeSingle();
 
+      // Só retorna early-exit se os créditos JÁ FORAM concedidos (granted_at preenchido).
+      // Se granted_at é null, DEVE prosseguir para re-tentar a concessão via RPC,
+      // pois o estado 'approved + paid + granted_at null' é recuperável.
       if (pkgOrder?.status === 'paid' && pkgOrder?.granted_at) {
         return {
           success: true,
@@ -70,6 +73,8 @@ export async function reconcilePaymentTransaction(
           message: 'Transação de pacote já aprovada e créditos concedidos.',
         };
       }
+      // Se granted_at é null, cai no fluxo normal abaixo (confirmAndProcessPaymentTransaction)
+      // que chamará a RPC para tentar a concessão novamente.
     } else if (transaction.consultation_id) {
       const { data: consultation } = await adminDb
         .from('customer_plate_consultations')
@@ -97,10 +102,9 @@ export async function reconcilePaymentTransaction(
   if (!paymentIdToFetch) {
     try {
       const paymentClient = getPaymentClient();
-      const searchRefs = [
-        transaction.id,
-        transaction.credit_package_order_id,
-      ].filter(Boolean) as string[];
+      const searchRefs = [transaction.id, transaction.credit_package_order_id].filter(
+        Boolean,
+      ) as string[];
 
       for (const ref of searchRefs) {
         const searchResult = await paymentClient.search({

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mapRowToDTO, type AdminPaymentItemDTO } from '../payments-service.ts';
+import { mapRowToDTO } from '../payments-service.ts';
 
 describe('Admin Payments Service - Credit Package Mapping & DTO', () => {
   it('mapeia corretamente linha de visualização de pacote concedido', () => {
@@ -105,5 +105,41 @@ describe('Admin Payments Service - Credit Package Mapping & DTO', () => {
     assert.equal(dto.consultationId, 'cons-001');
     assert.equal(dto.consultationStatus, 'completed');
     assert.equal(dto.hasReportData, true);
+  });
+
+  it('adota package_id como contrato oficial e suporta customer_credit_package_id como fallback', () => {
+    // 1. Contrato oficial primário: package_id presente
+    const rowPrimary = {
+      transaction_id: 'tx-pkg-prim',
+      payment_status: 'approved',
+      purpose: 'credit_package',
+      package_order_id: 'ord-1',
+      package_id: 'pkg-uuid-primary',
+    };
+    const dtoPrimary = mapRowToDTO(rowPrimary);
+    assert.equal(dtoPrimary.package?.packageId, 'pkg-uuid-primary');
+
+    // 2. Fallback temporário: apenas customer_credit_package_id presente
+    const rowFallback = {
+      transaction_id: 'tx-pkg-fall',
+      payment_status: 'approved',
+      purpose: 'credit_package',
+      package_order_id: 'ord-2',
+      customer_credit_package_id: 'pkg-uuid-fallback',
+    };
+    const dtoFallback = mapRowToDTO(rowFallback);
+    assert.equal(dtoFallback.package?.packageId, 'pkg-uuid-fallback');
+
+    // 3. Precedência: se ambos estiverem presentes, package_id vence
+    const rowBoth = {
+      transaction_id: 'tx-pkg-both',
+      payment_status: 'approved',
+      purpose: 'credit_package',
+      package_order_id: 'ord-3',
+      package_id: 'pkg-uuid-primary',
+      customer_credit_package_id: 'pkg-uuid-fallback',
+    };
+    const dtoBoth = mapRowToDTO(rowBoth);
+    assert.equal(dtoBoth.package?.packageId, 'pkg-uuid-primary');
   });
 });

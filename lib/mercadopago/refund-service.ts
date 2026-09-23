@@ -260,7 +260,7 @@ export async function initiateRefundForFailedDelivery({
     const { releaseConsultationCredit } = await import('../credits/credit-service.ts');
     // Em payment_transactions o campo user_id armazena o dono
     const released = await releaseConsultationCredit(transaction.user_id, consultationId, adminDb);
-    
+
     if (released) {
       const nowIso = new Date().toISOString();
       await adminDb
@@ -282,13 +282,13 @@ export async function initiateRefundForFailedDelivery({
           updated_at: nowIso,
         })
         .eq('id', consultation.id);
-        
+
       await adminDb.from('consultation_audit_logs').insert({
         consultation_id: consultation.id,
         transaction_id: transaction.id,
         actor_type: 'system',
         event: 'credit_refund_confirmed',
-        details: { reason_code: reasonCode }
+        details: { reason_code: reasonCode },
       });
 
       return {
@@ -319,6 +319,7 @@ export async function initiateRefundForFailedDelivery({
     .insert({
       transaction_id: transaction.id,
       consultation_id: consultation.id,
+      credit_package_order_id: null,
       provider: 'mercadopago',
       provider_payment_id: mpPaymentId,
       amount_cents: amountCents,

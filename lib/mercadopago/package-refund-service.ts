@@ -127,14 +127,17 @@ export async function evaluatePackageRefundEligibility(
     };
   }
 
-  // 3. Pacote 100% íntegro: Valida reservas ativas e consistência de balanço do cliente
-  const { data: balance } = await adminDb
-    .from('customer_credit_balances')
-    .select('available_credits, reserved_credits')
-    .eq('user_id', order.user_id)
-    .maybeSingle();
+  // 3. Pacote 100% íntegro: Valida reservas ativas no pacote alvo e consistência de balanço do cliente
+  const { data: activeReservations, count: reservationCount } = await adminDb
+    .from('customer_credit_reservations')
+    .select('id', { count: 'exact', head: true })
+    .eq('package_id', pkg.id)
+    .eq('status', 'reserved');
 
-  if (balance && typeof balance.reserved_credits === 'number' && balance.reserved_credits > 0) {
+  const activeReservationCount =
+    reservationCount ?? (activeReservations ? activeReservations.length : 0);
+
+  if (activeReservationCount > 0) {
     return {
       eligible: false,
       action: 'requires_manual_review',
@@ -143,11 +146,21 @@ export async function evaluatePackageRefundEligibility(
       creditsConsumed: 0,
       orderStatus: order.status,
       mpPaymentId: order.mp_payment_id,
-      message: `O cliente possui ${balance.reserved_credits} crédito(s) em reserva ativa. Requer revisão manual.`,
+      message: `O pacote possui ${activeReservationCount} crédito(s) em reserva ativa. Requer revisão manual.`,
     };
   }
 
-  if (balance && typeof balance.available_credits === 'number' && balance.available_credits < creditsGranted) {
+  const { data: balance } = await adminDb
+    .from('customer_credit_balances')
+    .select('available_credits')
+    .eq('user_id', order.user_id)
+    .maybeSingle();
+
+  if (
+    balance &&
+    typeof balance.available_credits === 'number' &&
+    balance.available_credits < creditsGranted
+  ) {
     return {
       eligible: false,
       action: 'blocked_fully_consumed',
@@ -346,6 +359,7 @@ export async function processPackageRefund({
     // Registra o estorno formal na tabela payment_refunds
     await adminDb.from('payment_refunds').insert({
       transaction_id: order.payment_transaction_id,
+      consultation_id: null,
       credit_package_order_id: order.id,
       provider: 'mercadopago',
       provider_payment_id: order.mp_payment_id || 'manual_unrecorded',

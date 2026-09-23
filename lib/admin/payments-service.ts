@@ -169,6 +169,7 @@ interface RawPaymentRow {
   is_package_granted?: boolean | null;
   is_package_refund_eligible?: boolean | null;
   package_id?: string | null;
+  customer_credit_package_id?: string | null;
   package_credits_remaining?: number | null;
   consultation_id?: string | null;
   plate?: string | null;
@@ -215,8 +216,8 @@ interface RawPaymentRow {
 export function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
   const isInsufficient = Boolean(
     row.is_insufficient_credits ??
-      (row.delivery_last_error_code === 'APIBRASIL_INSUFFICIENT_CREDITS' ||
-        row.delivery_last_http_status === 402),
+    (row.delivery_last_error_code === 'APIBRASIL_INSUFFICIENT_CREDITS' ||
+      row.delivery_last_http_status === 402),
   );
 
   const amount = Number(row.amount ?? row.transaction_amount ?? 0);
@@ -238,15 +239,15 @@ export function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
         orderStatus: (row.package_order_status || row.payment_status || 'pending') as string,
         paidAt: (row.package_paid_at || null) as string | null,
         grantedAt: (row.package_granted_at || null) as string | null,
-        packageId: (row.package_id || null) as string | null,
+        packageId: (row.package_id || row.customer_credit_package_id || null) as string | null,
         creditsRemaining:
           row.package_credits_remaining != null ? Number(row.package_credits_remaining) : undefined,
         isGranted: Boolean(row.is_package_granted ?? Boolean(row.package_granted_at)),
         isRefundEligible: Boolean(
           row.is_package_refund_eligible ??
-            (paymentStatus === 'approved' &&
-              Boolean(row.mp_payment_id) &&
-              !['requested', 'pending', 'confirmed'].includes(refundStatus)),
+          (paymentStatus === 'approved' &&
+            Boolean(row.mp_payment_id) &&
+            !['requested', 'pending', 'confirmed'].includes(refundStatus)),
         ),
       }
     : null;
@@ -256,20 +257,20 @@ export function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
     ? Boolean(packageData?.isRefundEligible)
     : Boolean(
         row.is_refund_eligible ??
-          (paymentStatus === 'approved' &&
-            !hasReport &&
-            !['requested', 'pending', 'confirmed'].includes(refundStatus) &&
-            Boolean(row.mp_payment_id)),
+        (paymentStatus === 'approved' &&
+          !hasReport &&
+          !['requested', 'pending', 'confirmed'].includes(refundStatus) &&
+          Boolean(row.mp_payment_id)),
       );
 
   const isReprocessEligible =
     !isCreditPackage &&
     Boolean(
       row.is_reprocess_eligible ??
-        (paymentStatus === 'approved' &&
-          !hasReport &&
-          !['requested', 'pending', 'confirmed'].includes(refundStatus) &&
-          deliveryStatus !== 'processing'),
+      (paymentStatus === 'approved' &&
+        !hasReport &&
+        !['requested', 'pending', 'confirmed'].includes(refundStatus) &&
+        deliveryStatus !== 'processing'),
     );
 
   let requiresAttention = false;
@@ -296,7 +297,11 @@ export function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
     } else if (refundStatus === 'pending') {
       requiresAttention = true;
       attentionReason = 'Estorno pendente de reconciliação no gateway.';
-    } else if (paymentStatus === 'approved' && !hasReport && deliveryStatus === 'failed_permanent') {
+    } else if (
+      paymentStatus === 'approved' &&
+      !hasReport &&
+      deliveryStatus === 'failed_permanent'
+    ) {
       requiresAttention = true;
       attentionReason = 'Falha permanente na entrega do laudo; ação necessária.';
     }
@@ -314,18 +319,21 @@ export function mapRowToDTO(row: RawPaymentRow): AdminPaymentItemDTO {
     paymentStatusDetail: row.payment_status_detail ?? row.status_detail ?? null,
     mpPaymentId: row.mp_payment_id ?? null,
     mpPreferenceId: row.mp_preference_id ?? null,
-    purpose: isCreditPackage ? 'credit_package' : ((row.purpose as string) || 'vehicle_consultation'),
-    creditPackageOrderId: (row.package_order_id || row.credit_package_order_id as string) || null,
+    purpose: isCreditPackage ? 'credit_package' : (row.purpose as string) || 'vehicle_consultation',
+    creditPackageOrderId: row.package_order_id || (row.credit_package_order_id as string) || null,
     package: packageData,
 
     consultationId: row.consultation_id || '',
-    plate: isCreditPackage ? 'PACOTE DE CRÉDITOS' : (row.plate || 'SEM PLACA'),
+    plate: isCreditPackage ? 'PACOTE DE CRÉDITOS' : row.plate || 'SEM PLACA',
     plateNormalized: isCreditPackage
       ? 'PACOTE'
-      : (row.plate_normalized || (row.plate ? row.plate.replace(/[^A-Z0-9]/gi, '').toUpperCase() : '')),
+      : row.plate_normalized ||
+        (row.plate ? row.plate.replace(/[^A-Z0-9]/gi, '').toUpperCase() : ''),
     consultationStatus: isCreditPackage
-      ? (packageData?.isGranted ? 'completed' : 'pending')
-      : (row.consultation_status || 'pending'),
+      ? packageData?.isGranted
+        ? 'completed'
+        : 'pending'
+      : row.consultation_status || 'pending',
     consultationPaymentStatus:
       row.consultation_payment_status || (paymentStatus === 'approved' ? 'paid' : 'unpaid'),
     hasReportData: isCreditPackage ? Boolean(packageData?.isGranted) : hasReport,
@@ -434,10 +442,7 @@ export async function getAdminPaymentSummary(): Promise<AdminPaymentSummary> {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'paid')
       .is('granted_at', null),
-    adminDb
-      .from('payment_transactions')
-      .select('amount, purpose')
-      .eq('status', 'approved'),
+    adminDb.from('payment_transactions').select('amount, purpose').eq('status', 'approved'),
   ]);
 
   let revenueConsultationsCents = 0;
@@ -499,12 +504,15 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
         .replace(/[^a-zA-Z0-9]/g, '')
         .toUpperCase();
       const rawSearch = params.search.trim();
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawSearch);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        rawSearch,
+      );
 
       const searchClauses = [
         `plate.ilike.%${cleanSearch}%`,
         `plate_normalized.ilike.%${plateSearch}%`,
         `mp_payment_id.ilike.%${cleanSearch}%`,
+        `mp_preference_id.ilike.%${cleanSearch}%`,
         `customer_email.ilike.%${cleanSearch}%`,
         `customer_name.ilike.%${cleanSearch}%`,
         `package_offer_name.ilike.%${cleanSearch}%`,
@@ -513,6 +521,7 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
         searchClauses.push(`transaction_id.eq.${rawSearch}`);
         searchClauses.push(`package_order_id.eq.${rawSearch}`);
         searchClauses.push(`credit_package_order_id.eq.${rawSearch}`);
+        searchClauses.push(`package_id.eq.${rawSearch}`);
       }
       query = query.or(searchClauses.join(','));
     }
