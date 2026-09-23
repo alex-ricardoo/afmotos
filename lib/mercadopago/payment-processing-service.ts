@@ -79,9 +79,7 @@ export async function confirmAndProcessPaymentTransaction({
 
   // 1. Validação de Referência Externa (suporta tanto transaction.id quanto credit_package_order_id e metadata)
   const metadataOrderId =
-    typeof paymentData.metadata?.order_id === 'string'
-      ? paymentData.metadata.order_id
-      : null;
+    typeof paymentData.metadata?.order_id === 'string' ? paymentData.metadata.order_id : null;
 
   const matchesRef =
     !paymentData.externalReference ||
@@ -233,6 +231,34 @@ export async function confirmAndProcessPaymentTransaction({
           },
           'error',
         );
+
+        // Persistir auditoria de falha no banco para rastreabilidade operacional
+        await adminDb.from('consultation_audit_logs').insert({
+          consultation_id: null,
+          transaction_id: transaction.id,
+          actor_id: actorId || null,
+          actor_type: actorType,
+          event: 'credit_package_order_update_failed',
+          details: {
+            order_id: transaction.credit_package_order_id,
+            mp_payment_id: paymentData.id,
+            error_message: orderUpdateErr.message,
+            origin: actorType,
+          },
+        });
+
+        // NÃO chamar a RPC se o update da ordem falhou
+        return {
+          success: false,
+          transactionId: transaction.id,
+          previousStatus,
+          currentStatus: effectiveStatus,
+          statusChanged,
+          reportUnlocked: false,
+          packageGranted: false,
+          message: 'Falha ao atualizar status do pedido de pacote para pago.',
+          error: orderUpdateErr.message,
+        };
       }
 
       // 4b. Concessão atômica e idempotente via RPC
@@ -247,7 +273,9 @@ export async function confirmAndProcessPaymentTransaction({
 
       if (rpcError || (rpcResult && rpcResult.success === false)) {
         const errorMsg =
-          rpcError?.message || rpcResult?.message || 'Falha ao conceder pacote de créditos via RPC.';
+          rpcError?.message ||
+          rpcResult?.message ||
+          'Falha ao conceder pacote de créditos via RPC.';
         logCheckoutProEvent(
           'credit_package.grant_failed',
           {
@@ -260,6 +288,22 @@ export async function confirmAndProcessPaymentTransaction({
           },
           'error',
         );
+
+        // Persistir auditoria de falha da RPC no banco (não apenas Vercel logs)
+        await adminDb.from('consultation_audit_logs').insert({
+          consultation_id: null,
+          transaction_id: transaction.id,
+          actor_id: actorId || null,
+          actor_type: actorType,
+          event: 'credit_package_grant_failed',
+          details: {
+            order_id: transaction.credit_package_order_id,
+            mp_payment_id: paymentData.id,
+            error_message: errorMsg,
+            rpc_code: rpcResult?.code || 'RPC_ERROR',
+            origin: actorType,
+          },
+        });
 
         return {
           success: false,

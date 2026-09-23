@@ -26,29 +26,65 @@ describe('User Story 6: Package Refund Policy & Consumption Guard (T030)', () =>
       status: 'active',
     };
 
-    const mockDb = {
-      from: (table: string) => ({
-        select: () => ({
-          eq: () => ({
-            maybeSingle: async () => ({
-              data: table === 'credit_package_orders' ? mockOrder : mockPackage,
-              error: null,
-            }),
-            single: async () => ({
-              data: table === 'credit_package_orders' ? mockOrder : mockPackage,
-              error: null,
-            }),
-          }),
-        }),
-        update: () => ({ eq: () => Promise.resolve({ error: null }) }),
-        insert: () => Promise.resolve({ error: null }),
-      }),
-    };
+    const createMockDb = (reservations: any[] = [], balanceAvailable = 5) => ({
+      from: (table: string) => {
+        const queryState: Record<string, any> = {};
+        const chain: any = {
+          select: () => chain,
+          eq: (col: string, val: any) => {
+            queryState[col] = val;
+            return chain;
+          },
+          maybeSingle: async () => {
+            if (table === 'credit_package_orders') return { data: mockOrder, error: null };
+            if (table === 'customer_credit_packages') return { data: mockPackage, error: null };
+            if (table === 'customer_credit_balances')
+              return { data: { available_credits: balanceAvailable }, error: null };
+            return { data: null, error: null };
+          },
+          single: async () => {
+            if (table === 'credit_package_orders') return { data: mockOrder, error: null };
+            if (table === 'customer_credit_packages') return { data: mockPackage, error: null };
+            return { data: null, error: null };
+          },
+          then: (resolve: any) => {
+            if (table === 'customer_credit_reservations') {
+              const matches = reservations.filter(
+                (r) => !queryState.package_id || r.package_id === queryState.package_id,
+              );
+              return resolve({ data: matches, count: matches.length, error: null });
+            }
+            return resolve({ data: [], count: 0, error: null });
+          },
+        };
+        return {
+          ...chain,
+          update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+          insert: () => Promise.resolve({ error: null }),
+        };
+      },
+    });
 
-    const eligibility = await evaluatePackageRefundEligibility(orderId, mockDb as any);
+    const eligibility = await evaluatePackageRefundEligibility(orderId, createMockDb() as any);
     assert.equal(eligibility.eligible, true);
     assert.equal(eligibility.action, 'full_package_revocation');
     assert.equal(eligibility.creditsConsumed, 0);
+
+    // Valida que reservas ativas NO PACOTE ALVO bloqueiam o estorno
+    const eligibilityWithTargetReservation = await evaluatePackageRefundEligibility(
+      orderId,
+      createMockDb([{ id: 'res-1', package_id: 'pkg-1', status: 'reserved' }]) as any,
+    );
+    assert.equal(eligibilityWithTargetReservation.eligible, false);
+    assert.equal(eligibilityWithTargetReservation.action, 'requires_manual_review');
+
+    // Valida que reservas ativas EM OUTRO PACOTE não bloqueiam este pacote
+    const eligibilityWithOtherReservation = await evaluatePackageRefundEligibility(
+      orderId,
+      createMockDb([{ id: 'res-2', package_id: 'other-pkg-999', status: 'reserved' }]) as any,
+    );
+    assert.equal(eligibilityWithOtherReservation.eligible, true);
+    assert.equal(eligibilityWithOtherReservation.action, 'full_package_revocation');
   });
 
   it('2. Partially consumed package is blocked from automatic refund and routed to manual_review', async () => {
