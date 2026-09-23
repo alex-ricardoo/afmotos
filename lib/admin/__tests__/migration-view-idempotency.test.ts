@@ -399,4 +399,160 @@ describe('Migration & Schema Compatibility Test (Production baseline without 202
     assert.equal(pkgPending.package_id, null);
     assert.equal(pkgPending.is_package_granted, false);
   });
+
+  it('7. Compara a ordem das 44 colunas legadas e garante que campos novos são estritamente append-only ao final', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+
+    // 44 Colunas Legadas na ordem exata da migration 20260913210000 (produção)
+    const expectedLegacy44Columns = [
+      'transaction_id',
+      'payment_created_at',
+      'payment_updated_at',
+      'payment_status',
+      'payment_status_detail',
+      'amount',
+      'payment_method_id',
+      'payment_type_id',
+      'mp_payment_id',
+      'mp_preference_id',
+      'consultation_id', // Posição 11 obrigatória
+      'plate',
+      'plate_normalized',
+      'consultation_status',
+      'consultation_payment_status',
+      'has_report_data',
+      'consultation_processed_at',
+      'lookup_error_message',
+      'customer_id',
+      'customer_name',
+      'customer_email',
+      'customer_phone',
+      'delivery_job_id',
+      'delivery_status',
+      'delivery_attempt_count',
+      'delivery_max_attempts',
+      'delivery_next_retry_at',
+      'delivery_last_error_code',
+      'delivery_last_error_message_safe',
+      'delivery_last_http_status',
+      'delivery_last_failure_class',
+      'delivery_provider',
+      'refund_id',
+      'refund_status',
+      'provider_refund_id',
+      'refund_reason_code',
+      'refund_reason_safe',
+      'refund_requested_at',
+      'refund_confirmed_at',
+      'refund_last_error_code',
+      'refund_last_error_safe',
+      'is_insufficient_credits',
+      'is_refund_eligible',
+      'is_reprocess_eligible', // Posição 44 (última coluna legada)
+    ];
+
+    // 15 Colunas novas de pacote e propósito (Posições 45 a 59 - Append-Only)
+    const expectedAppendedColumns = [
+      'purpose', // Posição 45
+      'package_order_id',
+      'package_offer_name',
+      'package_credits_quantity',
+      'package_unit_price_cents',
+      'package_order_status',
+      'package_paid_at',
+      'package_granted_at',
+      'package_id',
+      'customer_credit_package_id',
+      'package_credits_remaining',
+      'package_credits_granted',
+      'package_status',
+      'is_package_granted',
+      'is_package_refund_eligible', // Posição 59
+    ];
+
+    const expectedFullColumns = [...expectedLegacy44Columns, ...expectedAppendedColumns];
+    assert.equal(expectedFullColumns.length, 59);
+
+    // Lê o arquivo SQL real da migration de hotfix
+    const migrationPath = path.resolve(
+      process.cwd(),
+      'supabase/migrations/20260923100000_hotfix_credit_package_grant_and_admin_view.sql',
+    );
+    const sqlContent = fs.readFileSync(migrationPath, 'utf-8');
+
+    // Extrai o bloco de SELECT da View
+    const viewMatch = sqlContent.match(
+      /CREATE\s+OR\s+REPLACE\s+VIEW\s+public\.admin_payment_consultations_view\s+AS\s+SELECT([\s\S]*?)FROM\s+public\.payment_transactions/i,
+    );
+    assert.ok(viewMatch, 'Bloco da View deve ser encontrado no arquivo SQL');
+
+    const selectClause = viewMatch[1];
+
+    // Faz o parse das 59 expressões de coluna dividindo por vírgulas de nível superior (ignorando parênteses internos de CASE/COALESCE)
+    const columns: string[] = [];
+    let parenDepth = 0;
+    let currentToken = '';
+
+    for (let i = 0; i < selectClause.length; i++) {
+      const char = selectClause[i];
+      if (char === '(') parenDepth++;
+      else if (char === ')') parenDepth--;
+
+      if (char === ',' && parenDepth === 0) {
+        columns.push(currentToken.trim());
+        currentToken = '';
+      } else {
+        currentToken += char;
+      }
+    }
+    if (currentToken.trim().length > 0) {
+      columns.push(currentToken.trim());
+    }
+
+    const aliases = columns
+      .map((colExpr) => {
+        // Remove comentários
+        const cleaned = colExpr.replace(/--.*$/gm, '').trim();
+        const asMatch = cleaned.match(/AS\s+([a-zA-Z0-9_]+)\s*$/i);
+        if (asMatch) return asMatch[1];
+        const dotMatch = cleaned.match(/\.([a-zA-Z0-9_]+)\s*$/);
+        if (dotMatch) return dotMatch[1];
+        return cleaned;
+      })
+      .filter(Boolean);
+
+    // Valida que o total de colunas extraídas é exatamente 59
+    assert.equal(
+      aliases.length,
+      59,
+      `View deve expor exatamente 59 colunas. Encontradas: ${aliases.length}`,
+    );
+
+    // Valida que as primeiras 44 colunas coincidem 100% com as legadas
+    const actualLegacy44 = aliases.slice(0, 44);
+    assert.deepEqual(
+      actualLegacy44,
+      expectedLegacy44Columns,
+      'As primeiras 44 colunas da nova view devem ter exatamente os mesmos nomes e ordem da view existente em produção',
+    );
+
+    // Valida consultation_id especificamente na posição 11 (índice 10)
+    assert.equal(aliases[10], 'consultation_id', 'consultation_id precisa continuar na posição 11');
+
+    // Valida purpose especificamente na posição 45 (índice 44)
+    assert.equal(
+      aliases[44],
+      'purpose',
+      'purpose precisa iniciar após a última coluna legada (posição 45)',
+    );
+
+    // Valida que as 15 colunas seguintes são exatamente os campos de pacote append-only
+    const actualAppended = aliases.slice(44);
+    assert.deepEqual(
+      actualAppended,
+      expectedAppendedColumns,
+      'Campos de pacotes e propósito devem ser adicionados estritamente como append-only a partir da posição 45',
+    );
+  });
 });
