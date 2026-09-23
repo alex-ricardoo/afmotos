@@ -13,6 +13,7 @@ import {
   MessageCircle,
   ArrowRight,
   AlertTriangle,
+  Info,
 } from 'lucide-react';
 import {
   type TransactionStatusResponse,
@@ -307,37 +308,80 @@ export function PaymentReturnStatus({
           <CheckCircle2 className="h-9 w-9" />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h1 className="text-2xl font-bold text-white tracking-tight">Estorno Confirmado</h1>
-          <p className="text-sm text-zinc-300">Seu pagamento foi estornado integralmente.</p>
-          <p className="text-xs text-zinc-400 bg-zinc-900/80 p-3 rounded-lg border border-zinc-800">
-            O prazo para o valor aparecer depende do método de pagamento e da instituição
-            financeira.
+          <p className="text-sm text-zinc-300 leading-relaxed">
+            Identificamos uma <strong className="text-zinc-100">instabilidade temporária</strong> no
+            serviço de dados ao consultar a placa{' '}
+            <span className="font-mono font-bold text-white">{plate}</span>. Para garantir sua
+            segurança e comodidade, seu pagamento foi{' '}
+            <span className="font-semibold text-purple-300">estornado integralmente</span>.
+          </p>
+
+          <div className="text-left bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-4 space-y-2.5 text-xs text-zinc-400">
+            <div className="flex items-start gap-2.5">
+              <Info className="h-4 w-4 text-purple-400 shrink-0 mt-0.5" />
+              <p className="leading-relaxed">
+                <strong className="text-zinc-200 font-medium">O que você pode fazer agora:</strong>{' '}
+                Você pode tentar realizar uma nova consulta mais tarde quando o sistema estiver
+                normalizado, ou entrar em contato com nossa equipe no botão de suporte abaixo para
+                qualquer esclarecimento.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5 pt-2 border-t border-zinc-800/60">
+              <Clock className="h-4 w-4 text-zinc-400 shrink-0 mt-0.5" />
+              <p className="leading-relaxed">
+                <strong className="text-zinc-300 font-medium">Prazo para crédito:</strong> No Pix, o
+                valor geralmente retorna em instantes na mesma conta bancária utilizada. No cartão
+                de crédito, o prazo depende da operadora do cartão e da data de fechamento da sua
+                fatura.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs text-zinc-500 font-mono">
+            Ref. da consulta: {consultationId.slice(0, 8)}
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Link href="/cliente/consultas/nova" className="flex-1">
+            <Button
+              type="button"
+              className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl"
+            >
+              Tentar Novamente Mais Tarde
+            </Button>
+          </Link>
           <Link href="/cliente/consultas" className="flex-1">
             <Button
               type="button"
-              className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl"
+              variant="outline"
+              className="w-full border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 font-semibold rounded-xl"
             >
               Minhas Consultas
             </Button>
           </Link>
-          {safeSupportUrl && (
-            <a href={safeSupportUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+        </div>
+
+        {safeSupportUrl && (
+          <div className="pt-1">
+            <a
+              href={safeSupportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full"
+            >
               <Button
                 type="button"
-                variant="outline"
-                className="w-full border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 flex items-center justify-center gap-2"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/30"
               >
-                <MessageCircle className="h-4 w-4 text-emerald-400" />
-                Falar com Suporte
+                <MessageCircle className="h-4 w-4" />
+                Falar com Suporte no WhatsApp
               </Button>
             </a>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -354,28 +398,43 @@ export function PaymentReturnStatus({
           <AlertTriangle className="h-9 w-9" />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h1 className="text-2xl font-bold text-white tracking-tight">
             Finalizando Confirmação do Estorno
           </h1>
-          <p className="text-sm text-zinc-300">
-            Estamos finalizando a confirmação do seu estorno. Nossa equipe foi avisada e você pode
-            falar com o suporte informando esta consulta.
+          <p className="text-sm text-zinc-300 leading-relaxed">
+            Houve uma instabilidade temporária ao consultar os dados da placa{' '}
+            <span className="font-mono font-semibold text-white">{plate}</span> e a devolução do seu
+            pagamento já foi acionada.
           </p>
-          <p className="text-xs text-red-300 bg-red-950/40 p-3 rounded-lg border border-red-800/40">
+
+          <div className="text-left bg-zinc-900/90 border border-zinc-800/80 rounded-xl p-4 space-y-2 text-xs text-zinc-400">
+            <p className="leading-relaxed">
+              <strong className="text-zinc-200 font-medium">Por que está em finalização?</strong>{' '}
+              Para assegurar que a devolução ocorra com precisão, o estorno está passando por uma
+              breve validação preventiva com nossa equipe e a operadora de pagamento.
+            </p>
+            <p className="leading-relaxed text-zinc-300">
+              Fique tranquilo: <strong className="text-white">nenhum valor será retido</strong>.
+              Você pode clicar em &quot;Verificar Novamente&quot; para atualizar o status ou falar
+              diretamente com nosso suporte para agilizar o atendimento.
+            </p>
+          </div>
+
+          <p className="text-xs text-red-300/90 bg-red-950/40 p-2.5 rounded-lg border border-red-800/40 font-medium">
             Referência da consulta:{' '}
             <span className="font-mono font-bold text-white">{consultationId.slice(0, 8)}</span>{' '}
             (Placa {plate})
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button
             type="button"
             variant="outline"
             disabled={isManualChecking}
             onClick={handleManualRefresh}
-            className="flex-1 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 flex items-center justify-center gap-2"
+            className="flex-1 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 flex items-center justify-center gap-2 rounded-xl"
           >
             {isManualChecking ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -389,7 +448,7 @@ export function PaymentReturnStatus({
             <a href={safeSupportUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
               <Button
                 type="button"
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2 rounded-xl"
               >
                 <MessageCircle className="h-4 w-4" />
                 Falar com Suporte

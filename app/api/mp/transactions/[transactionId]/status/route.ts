@@ -163,7 +163,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       nextAction = 'contact_support';
       customerTitle = 'Estorno confirmado';
       customerMessage =
-        'Seu pagamento foi estornado integralmente. O prazo para o valor aparecer depende do método de pagamento e da instituição financeira.';
+        'Devido a uma instabilidade temporária no sistema de consultas, seu pagamento foi estornado integralmente. Você pode tentar novamente mais tarde ou entrar em contato com o suporte.';
     } else if (refundRecord?.status === 'pending') {
       nextAction = 'wait';
       customerTitle = 'Estorno pendente';
@@ -185,7 +185,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       nextAction = 'contact_support';
       customerTitle = 'Finalizando confirmação do estorno';
       customerMessage =
-        'Estamos finalizando a confirmação do seu estorno. Nossa equipe foi avisada e você pode falar com o suporte informando esta consulta.';
+        'Devido a uma instabilidade temporária, o estorno foi acionado e está passando por validação manual com a equipe. Seu dinheiro está seguro e você pode falar com o suporte.';
     } else if (consultationStatus === 'retry_scheduled' || job?.status === 'retry_scheduled') {
       nextAction = 'wait';
       retryable = true;
