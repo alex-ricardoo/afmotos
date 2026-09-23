@@ -1,0 +1,311 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - link "AF Motos AF Motos Compra e Venda de Motos" [ref=f1e4] [cursor=pointer]:
+        - /url: /
+        - img "AF Motos" [ref=f1e6]
+        - generic [ref=f1e7]:
+          - generic [ref=f1e8]: AF Motos
+          - generic [ref=f1e10]: Compra e Venda de Motos
+      - button "Abrir menu de navegação" [ref=f1e12] [cursor=pointer]
+  - main [ref=f1e13]:
+    - generic [ref=f1e14]:
+      - generic [ref=f1e18]:
+        - heading "Encontre sua próxima moto." [level=1] [ref=f1e19]
+        - paragraph [ref=f1e20]: Veja as motos disponíveis ou anuncie a sua com a AF Motos. Todas revisadas, com garantia de 90 dias e atendimento direto pelo WhatsApp.
+        - generic [ref=f1e21]:
+          - link "Ver Estoque Completo" [ref=f1e22] [cursor=pointer]:
+            - /url: /motos
+          - link "Anuncie sua Moto" [ref=f1e26] [cursor=pointer]:
+            - /url: /anunciar-sua-moto
+      - generic [ref=f1e29]:
+        - generic [ref=f1e30]:
+          - generic [ref=f1e31]: Marca / Fabricante
+          - generic [ref=f1e37]:
+            - combobox [ref=f1e38]:
+              - generic [ref=f1e39]: Todas as marcas
+              - img [aria-hidden]: ▼
+            - textbox [aria-hidden] [ref=f1e40]: all
+        - generic [ref=f1e41]:
+          - generic [ref=f1e42]: Faixa de Preço
+          - generic [ref=f1e46]:
+            - combobox [ref=f1e47]:
+              - generic [ref=f1e48]: Qualquer valor
+              - img [aria-hidden]: ▼
+            - textbox [aria-hidden] [ref=f1e49]: all
+        - button "Buscar motos" [ref=f1e51] [cursor=pointer]
+      - generic [ref=f1e53]:
+        - generic [ref=f1e54]:
+          - generic [ref=f1e55]:
+            - heading "Motos em destaque" [level=2] [ref=f1e56]
+            - paragraph [ref=f1e57]: Confira os modelos anunciados e fale diretamente com a gente no WhatsApp para saber mais.
+          - link "Ver todas as motos" [ref=f1e58] [cursor=pointer]:
+            - /url: /motos
+        - generic [ref=f1e60]:
+          - generic [ref=f1e62]:
+            - generic [ref=f1e63]:
+              - link "Ver detalhes de HONDA CG 150 FAN ESi/ 150 FAN ESi FLEX" [ref=f1e64] [cursor=pointer]:
+                - /url: /motos/honda-cg-150-fan-esi-150-fan-esi-flex-2010
+                - img "HONDA CG 150 FAN ESi/ 150 FAN ESi FLEX 2010 à venda na AF Motos" [ref=f1e66]
+              - generic: Destaque
+              - button "Compartilhar esta moto" [ref=f1e67] [cursor=pointer]
+            - generic [ref=f1e74]:
+              - generic [ref=f1e75]:
+                - generic [ref=f1e76]: HONDA
+                - link "Ver detalhes de HONDA CG 150 FAN ESi/ 150 FAN ESi FLEX" [ref=f1e78] [cursor=pointer]:
+                  - /url: /motos/honda-cg-150-fan-esi-150-fan-esi-flex-2010
+                  - heading "CG 150 FAN ESi/ 150 FAN ESi FLEX Fan" [level=3] [ref=f1e79]:
+                    - text: CG 150 FAN ESi/ 150 FAN ESi FLEX
+                    - generic [ref=f1e80]: Fan
+              - link "2010/2010 • 51.657 km • 150cc" [ref=f1e81] [cursor=pointer]:
+                - /url: /motos/honda-cg-150-fan-esi-150-fan-esi-flex-2010
+                - generic "Ano" [ref=f1e82]: 2010/2010
+                - generic [ref=f1e86]: •
+                - generic "Quilometragem" [ref=f1e87]: 51.657 km
+                - generic [ref=f1e92]: •
+                - generic "Motor" [ref=f1e93]: 150cc
+              - generic [ref=f1e97]:
+                - generic [ref=f1e98]:
+                  - generic [ref=f1e99]: Histórico Verificado
+                  - generic [ref=f1e104]: Garantia 90 dias
+                - link "R$ 9.990,00" [ref=f1e105] [cursor=pointer]:
+                  - /url: /motos/honda-cg-150-fan-esi-150-fan-esi-flex-2010
+                - generic [ref=f1e108]:
+                  - generic [ref=f1e109]: Dinheiro
+                  - generic [ref=f1e113]: PIX
+                  - generic [ref=f1e116]: Cartão até 18x
+                  - generic [ref=f1e119]: Financiamento
+                  - generic [ref=f1e122]: Moto na entrada
+                - generic [ref=f1e128]:
+                  - button "Compartilhar HONDA CG 150 FAN ESi/ 150 FAN ESi FLEX" [ref=f1e129] [cursor=pointer]
+                  - link "Ver detalhes de HONDA CG 150 FAN ESi/ 150 FAN ESi FLEX" [ref=f1e136] [cursor=pointer]:
+                    - /url: /motos/honda-cg-150-fan-esi-150-fan-esi-flex-2010
+                    - generic [ref=f1e137]: Ver Detalhes
+          - generic [ref=f1e141]:
+            - generic [ref=f1e148]:
+              - heading "Procurando outro modelo?" [level=3] [ref=f1e149]
+              - paragraph [ref=f1e150]: Não encontrou o ano ou a versão exata que você quer? Encomende com a gente.
+            - link "Encomendar no WhatsApp" [ref=f1e151] [cursor=pointer]:
+              - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20N%C3%A3o%20encontrei%20a%20moto%20que%20estou%20procurando%20no%20estoque.%20Voc%C3%AAs%20t%C3%AAm%20previs%C3%A3o%20de%20novos%20modelos%3F
+        - generic [ref=f1e155]:
+          - generic [ref=f1e156]:
+            - generic [ref=f1e157]:
+              - generic [ref=f1e158]: 💳
+              - generic [ref=f1e159]:
+                - paragraph [ref=f1e160]: Facilidades para comprar
+                - paragraph [ref=f1e161]: Escolha a melhor forma para você
+            - generic [ref=f1e162]:
+              - generic [ref=f1e163]: Dinheiro
+              - generic [ref=f1e167]: PIX
+              - generic [ref=f1e170]: Cartão até 18x
+              - generic [ref=f1e173]: Financiamento
+              - generic [ref=f1e176]: Moto na entrada
+          - generic [ref=f1e182]:
+            - generic [ref=f1e183]:
+              - text: Cartão em até
+              - generic [ref=f1e185]: 18x
+              - text: com acréscimo da maquineta
+            - generic [ref=f1e186]: •
+            - generic [ref=f1e187]: Financiamento sujeito à análise e aprovação
+            - generic [ref=f1e189]: •
+            - generic [ref=f1e190]: Aceitamos sua moto como entrada mediante avaliação
+      - generic [ref=f1e194]:
+        - generic [ref=f1e195]:
+          - generic [ref=f1e196]: Venda Rápida ou Anúncio Fácil
+          - generic [ref=f1e201]:
+            - heading "Quer vender ou anunciar sua moto?" [level=2] [ref=f1e202]
+            - paragraph [ref=f1e203]: "Na AF Motos você escolhe o melhor caminho: a gente compra a sua moto à vista com pagamento no PIX, ou coloca para anunciar no nosso site para vender rápido e sem dor de cabeça."
+          - generic [ref=f1e204]:
+            - generic [ref=f1e205]: Pagamento rápido à vista no PIX
+            - generic [ref=f1e211]: Avaliação justa e na hora
+            - generic [ref=f1e217]: Divulgação para centenas de compradores
+            - generic [ref=f1e223]: Atendimento direto pelo WhatsApp
+        - generic [ref=f1e229]:
+          - generic [ref=f1e230]:
+            - text: 100% Gratuito & Sem Compromisso
+            - heading "Escolha como quer negociar" [level=3] [ref=f1e231]
+            - paragraph [ref=f1e232]: Envie os dados e fotos da sua moto em menos de 2 minutos.
+          - generic [ref=f1e233]:
+            - link "Quero Vender Minha Moto" [ref=f1e234] [cursor=pointer]:
+              - /url: /vender-minha-moto
+            - link "Quero Anunciar no Site" [ref=f1e238] [cursor=pointer]:
+              - /url: /anunciar-sua-moto
+            - link "Prefiro conversar pelo WhatsApp" [ref=f1e240] [cursor=pointer]:
+              - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Gostaria%20de%20conversar%20sobre%20a%20venda%20ou%20an%C3%BAncio%20da%20minha%20moto%20com%20a%20AF%20Motos.
+      - generic [ref=f1e245]:
+        - generic [ref=f1e247]:
+          - generic [ref=f1e252]:
+            - text: Compre com tranquilidade
+            - heading "Histórico Veicular & Garantia de 90 dias" [level=3] [ref=f1e253]
+            - paragraph [ref=f1e254]: Toda moto vendida pela AF Motos possui Histórico Veicular oficial verificado (livre de leilão, roubo e gravames), passa por revisão rigorosa e sai com 3 meses de garantia no motor e câmbio.
+          - generic [ref=f1e255]:
+            - generic [ref=f1e256]: Histórico 100% Verificado
+            - generic [ref=f1e261]: Revisada
+            - generic [ref=f1e267]: 90 dias garantia
+        - generic [ref=f1e272]:
+          - text: Transparência
+          - heading "Como trabalhamos na AF Motos" [level=2] [ref=f1e273]
+          - paragraph [ref=f1e274]: Negociação direta, honesta e sem complicações em cada etapa.
+        - generic [ref=f1e275]:
+          - generic [ref=f1e276]:
+            - heading "Negociação Transparente" [level=3] [ref=f1e281]
+            - paragraph [ref=f1e282]: Combinamos valores e condições de forma clara antes de qualquer decisão, sem surpresas.
+          - generic [ref=f1e283]:
+            - heading "Revisada e com Garantia" [level=3] [ref=f1e289]
+            - paragraph [ref=f1e290]: Toda moto é revisada antes da venda e sai com 90 dias de garantia. Você compra sabendo o que está levando.
+          - generic [ref=f1e291]:
+            - heading "Histórico 100% Verificado" [level=3] [ref=f1e296]
+            - paragraph [ref=f1e297]: Todas as motos possuem consulta oficial de histórico veicular sem apontamentos de leilão, roubo ou gravames.
+          - generic [ref=f1e298]:
+            - heading "Atendimento Direto" [level=3] [ref=f1e302]
+            - paragraph [ref=f1e303]: Fale diretamente pelo WhatsApp para tirar dúvidas, agendar visita ou negociar sua moto.
+      - generic [ref=f1e304]:
+        - generic [ref=f1e305]:
+          - text: Nossos Serviços
+          - heading "O que fazemos" [level=2] [ref=f1e306]
+          - paragraph [ref=f1e307]: Soluções completas para você comprar, vender ou anunciar sua moto com facilidade e segurança.
+        - generic [ref=f1e308]:
+          - generic [ref=f1e309]:
+            - generic [ref=f1e310]:
+              - heading "Compre sua Moto" [level=3] [ref=f1e315]
+              - paragraph [ref=f1e316]: Motos revisadas, com procedência garantida e documentação pronta para rodar sem dor de cabeça.
+              - generic [ref=f1e317]: Garantia de 90 dias
+              - list [ref=f1e322]:
+                - listitem [ref=f1e323]:
+                  - generic [ref=f1e327]: Toda moto é revisada antes da venda
+                - listitem [ref=f1e328]:
+                  - generic [ref=f1e332]: Financiamento para facilitar sua compra, sujeito à análise e aprovação
+                - listitem [ref=f1e333]:
+                  - generic [ref=f1e337]: Aceitamos sua moto como entrada mediante avaliação
+                - listitem [ref=f1e338]:
+                  - generic [ref=f1e342]: Documentação em dia, IPVA pago e pronta para transferir
+            - link "Ver Motos Disponíveis" [ref=f1e344] [cursor=pointer]:
+              - /url: /motos
+          - generic [ref=f1e345]:
+            - generic [ref=f1e346]:
+              - heading "Venda sua Moto pra Nós" [level=3] [ref=f1e351]
+              - paragraph [ref=f1e352]: Quer vender rápido? Avaliamos sua moto na hora e pagamos à vista no PIX com segurança total.
+              - list [ref=f1e353]:
+                - listitem [ref=f1e354]:
+                  - generic [ref=f1e358]: Avaliação justa e sem enrolação
+                - listitem [ref=f1e359]:
+                  - generic [ref=f1e363]: Pagamento imediato na conta
+            - link "Quero Vender Minha Moto" [ref=f1e365] [cursor=pointer]:
+              - /url: /vender-minha-moto
+          - generic [ref=f1e366]:
+            - generic [ref=f1e367]:
+              - heading "Anunciamos sua Moto" [level=3] [ref=f1e372]
+              - paragraph [ref=f1e373]: Colocamos sua moto no nosso site e redes sociais. Cuidamos das mensagens e da negociação por uma comissão justa.
+              - list [ref=f1e374]:
+                - listitem [ref=f1e375]:
+                  - generic [ref=f1e379]: Você não se preocupa em atender curiosos
+                - listitem [ref=f1e380]:
+                  - generic [ref=f1e384]: Só paga a comissão quando a moto vender
+            - link "Anunciar com a Gente" [ref=f1e386] [cursor=pointer]:
+              - /url: /anunciar-sua-moto
+  - region "Notifications alt+T"
+  - generic:
+    - generic: Falar no WhatsApp
+    - link "Falar conosco pelo WhatsApp" [ref=f1e387] [cursor=pointer]:
+      - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20AF%20Motos%20e%20gostaria%20de%20saber%20mais%20sobre%20as%20motos%20dispon%C3%ADveis.
+  - contentinfo [ref=f1e392]:
+    - region "Diferenciais e Garantias AF Motos" [ref=f1e393]:
+      - generic [ref=f1e395]:
+        - link "Todas com Histórico Veicular Procedência 100% garantida" [ref=f1e396] [cursor=pointer]:
+          - /url: /historico-veicular
+          - generic [ref=f1e403]:
+            - generic [ref=f1e404]: Todas com Histórico Veicular
+            - generic [ref=f1e405]: Procedência 100% garantida
+        - link "Atendimento Direto no WhatsApp Sem intermediários" [ref=f1e406] [cursor=pointer]:
+          - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20AF%20Motos.
+          - generic [ref=f1e411]:
+            - generic [ref=f1e412]: Atendimento Direto no WhatsApp
+            - generic [ref=f1e413]: Sem intermediários
+        - generic [ref=f1e420]:
+          - generic [ref=f1e421]: Documentação 100% Clara
+          - generic [ref=f1e422]: Transferência orientada
+        - generic [ref=f1e428]:
+          - generic [ref=f1e429]: Negociação Transparente
+          - generic [ref=f1e430]: Preço justo & troca
+    - generic [ref=f1e432]:
+      - generic [ref=f1e433]:
+        - link "AF Motos AF Motos Compra e venda de motos com procedência" [ref=f1e434] [cursor=pointer]:
+          - /url: /
+          - img "AF Motos" [ref=f1e436]
+          - generic [ref=f1e437]:
+            - generic [ref=f1e438]: AF Motos
+            - generic [ref=f1e440]: Compra e venda de motos com procedência
+        - paragraph [ref=f1e441]: Compra e venda de motos com atendimento direto e transparente pelo WhatsApp.
+        - generic [ref=f1e442]:
+          - generic [ref=f1e443]: Siga a AF Motos
+          - link "Acessar nosso Instagram" [ref=f1e445] [cursor=pointer]:
+            - /url: https://www.instagram.com/af_motos2026/
+        - link "Falar no WhatsApp" [ref=f1e450] [cursor=pointer]:
+          - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20AF%20Motos.
+      - generic [ref=f1e454]:
+        - heading "Motos & Catálogo" [level=4] [ref=f1e455]
+        - list [ref=f1e456]:
+          - listitem [ref=f1e457]:
+            - link "Início" [ref=f1e458] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=f1e459]:
+            - link "Sobre a AF Motos" [ref=f1e460] [cursor=pointer]:
+              - /url: /sobre
+          - listitem [ref=f1e461]:
+            - link "Motos Disponíveis" [ref=f1e462] [cursor=pointer]:
+              - /url: /motos
+          - listitem [ref=f1e463]:
+            - link "Motos Vendidas" [ref=f1e464] [cursor=pointer]:
+              - /url: /motos-vendidas
+      - generic [ref=f1e465]:
+        - heading "Serviços" [level=4] [ref=f1e466]
+        - list [ref=f1e467]:
+          - listitem [ref=f1e468]:
+            - link "Venda sua Moto" [ref=f1e469] [cursor=pointer]:
+              - /url: /vender-minha-moto
+          - listitem [ref=f1e470]:
+            - link "Anuncie sua Moto" [ref=f1e471] [cursor=pointer]:
+              - /url: /anunciar-sua-moto
+          - listitem [ref=f1e472]:
+            - link "Histórico Veicular" [ref=f1e473] [cursor=pointer]:
+              - /url: /historico-veicular
+          - listitem [ref=f1e474]:
+            - link "Termos de Uso" [ref=f1e475] [cursor=pointer]:
+              - /url: /termos-de-uso
+          - listitem [ref=f1e476]:
+            - link "Privacidade & Dados" [ref=f1e477] [cursor=pointer]:
+              - /url: /politica-de-privacidade
+      - generic [ref=f1e478]:
+        - heading "Atendimento & Loja" [level=4] [ref=f1e479]
+        - list [ref=f1e480]:
+          - listitem [ref=f1e481]:
+            - link "(81) 9 8590-1175" [ref=f1e482] [cursor=pointer]:
+              - /url: tel:81985901175
+          - listitem [ref=f1e486]:
+            - link "afmotos2026@gmail.com" [ref=f1e487] [cursor=pointer]:
+              - /url: mailto:afmotos2026@gmail.com
+          - listitem [ref=f1e492]:
+            - link "Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655 Ver no Google Maps" [ref=f1e493] [cursor=pointer]:
+              - /url: https://www.google.com/maps/search/?api=1&query=Rua%20Milton%20Adolfo%20de%20Jesus%2C%2068%2C%20S%C3%A3o%20Francisco%2C%20Cabo%20de%20Santo%20Agostinho%2C%20PE%2C%2054530-655
+              - generic [ref=f1e497]:
+                - generic [ref=f1e498]: Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655
+                - generic [ref=f1e499]: Ver no Google Maps
+          - listitem [ref=f1e505]:
+            - generic [ref=f1e509]:
+              - paragraph [ref=f1e510]: "Segunda a Sexta: 08:00 às 18:00"
+              - paragraph [ref=f1e511]: "Sábado: 08:00 às 13:00"
+              - paragraph [ref=f1e512]: "Domingo: Fechado"
+    - generic [ref=f1e514]:
+      - paragraph [ref=f1e515]: © 2026 AF Motos. Todos os direitos reservados.
+      - generic [ref=f1e516]:
+        - link "Termos de Uso" [ref=f1e517] [cursor=pointer]:
+          - /url: /termos-de-uso
+        - link "Política de Privacidade" [ref=f1e518] [cursor=pointer]:
+          - /url: /politica-de-privacidade
+        - link "Área Restrita" [ref=f1e519] [cursor=pointer]:
+          - /url: /admin/login
+        - link "Desenvolvido por alex._ricardo" [ref=f1e520] [cursor=pointer]:
+          - /url: https://instagram.com/alex._ricardo
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f1e526] [cursor=pointer]
+  - alert [ref=f1e530]

@@ -1,0 +1,37 @@
+- generic [active] [ref=f12e1]:
+  - generic [ref=f12e4]:
+    - generic [ref=f12e5]:
+      - link "Voltar ao site público" [ref=f12e6] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f12e10]: Painel Seguro
+    - generic [ref=f12e15]:
+      - generic [ref=f12e17]:
+        - img "AF Motos Logo" [ref=f12e21]
+        - generic [ref=f12e22]:
+          - generic [ref=f12e23]:
+            - heading "AF Motos" [level=1] [ref=f12e24]
+            - generic [ref=f12e25]: Admin
+          - paragraph [ref=f12e26]: Painel restrito de gestão de estoque, vendas e propostas.
+      - generic [ref=f12e27]:
+        - generic [ref=f12e28]:
+          - generic [ref=f12e29]: E-mail Corporativo
+          - textbox "E-mail Corporativo" [ref=f12e35]:
+            - /placeholder: seu.email@empresa.com.br
+        - generic [ref=f12e36]:
+          - generic [ref=f12e37]: Senha de Acesso
+          - generic [ref=f12e42]:
+            - textbox "Senha de Acesso" [ref=f12e43]:
+              - /placeholder: ••••••••••••
+            - button "Ver senha" [ref=f12e44] [cursor=pointer]
+        - button "Acessar Painel" [ref=f12e48] [cursor=pointer]
+      - generic [ref=f12e49]: Acesso protegido com criptografia SSL
+    - paragraph [ref=f12e54]: © 2026 AF Motos. Todos os direitos reservados.
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f12e60] [cursor=pointer]:
+    - generic [ref=f12e63]:
+      - text: Compiling
+      - generic [ref=f12e64]:
+        - generic [ref=f12e65]: .
+        - generic [ref=f12e66]: .
+        - generic [ref=f12e67]: .
+  - alert [ref=f12e68]

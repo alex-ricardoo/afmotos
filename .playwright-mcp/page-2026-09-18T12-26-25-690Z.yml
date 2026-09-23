@@ -1,0 +1,156 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "AF Motos AF Motos Compra e Venda de Motos" [ref=f2e4] [cursor=pointer]:
+        - /url: /
+        - img "AF Motos" [ref=f2e6]
+        - generic [ref=f2e7]:
+          - generic [ref=f2e8]: AF Motos
+          - generic [ref=f2e10]: Compra e Venda de Motos
+      - button "Abrir menu de navegação" [ref=f2e12] [cursor=pointer]
+  - main [ref=f2e13]:
+    - status "Carregando catálogo de motos..." [ref=f2e14]:
+      - status "Carregando barra de filtros..." [ref=f2e15]:
+        - generic [ref=f2e25]: Carregando barra de controles do estoque...
+      - generic [ref=f2e27]:
+        - status "Carregando filtros laterais..." [ref=f2e28]:
+          - generic [ref=f2e45]: Carregando opções de filtros...
+        - status "Carregando estoque de motos..." [ref=f2e47]:
+          - status "Carregando motocicleta..." [ref=f2e49]:
+            - generic [ref=f2e58]:
+              - generic [ref=f2e60]: •
+              - generic [ref=f2e62]: •
+            - generic [ref=f2e71]: Carregando card da motocicleta...
+          - status "Carregando motocicleta..." [ref=f2e73]:
+            - generic [ref=f2e82]:
+              - generic [ref=f2e84]: •
+              - generic [ref=f2e86]: •
+            - generic [ref=f2e95]: Carregando card da motocicleta...
+          - status "Carregando motocicleta..." [ref=f2e97]:
+            - generic [ref=f2e106]:
+              - generic [ref=f2e108]: •
+              - generic [ref=f2e110]: •
+            - generic [ref=f2e119]: Carregando card da motocicleta...
+          - status "Carregando motocicleta..." [ref=f2e121]:
+            - generic [ref=f2e130]:
+              - generic [ref=f2e132]: •
+              - generic [ref=f2e134]: •
+            - generic [ref=f2e143]: Carregando card da motocicleta...
+          - status "Carregando motocicleta..." [ref=f2e145]:
+            - generic [ref=f2e154]:
+              - generic [ref=f2e156]: •
+              - generic [ref=f2e158]: •
+            - generic [ref=f2e167]: Carregando card da motocicleta...
+          - status "Carregando motocicleta..." [ref=f2e169]:
+            - generic [ref=f2e178]:
+              - generic [ref=f2e180]: •
+              - generic [ref=f2e182]: •
+            - generic [ref=f2e191]: Carregando card da motocicleta...
+          - generic [ref=f2e192]: Carregando catálogo de motocicletas...
+      - generic [ref=f2e193]: Carregando catálogo de veículos da AF Motos...
+  - region "Notifications alt+T"
+  - generic:
+    - generic: Falar no WhatsApp
+    - link "Falar conosco pelo WhatsApp" [ref=f2e194] [cursor=pointer]:
+      - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20AF%20Motos%20e%20gostaria%20de%20saber%20mais%20sobre%20as%20motos%20dispon%C3%ADveis.
+  - contentinfo [ref=f2e199]:
+    - region "Diferenciais e Garantias AF Motos" [ref=f2e200]:
+      - generic [ref=f2e202]:
+        - link "Todas com Histórico Veicular Procedência 100% garantida" [ref=f2e203] [cursor=pointer]:
+          - /url: /historico-veicular
+          - generic [ref=f2e210]:
+            - generic [ref=f2e211]: Todas com Histórico Veicular
+            - generic [ref=f2e212]: Procedência 100% garantida
+        - link "Atendimento Direto no WhatsApp Sem intermediários" [ref=f2e213] [cursor=pointer]:
+          - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20AF%20Motos.
+          - generic [ref=f2e218]:
+            - generic [ref=f2e219]: Atendimento Direto no WhatsApp
+            - generic [ref=f2e220]: Sem intermediários
+        - generic [ref=f2e227]:
+          - generic [ref=f2e228]: Documentação 100% Clara
+          - generic [ref=f2e229]: Transferência orientada
+        - generic [ref=f2e235]:
+          - generic [ref=f2e236]: Negociação Transparente
+          - generic [ref=f2e237]: Preço justo & troca
+    - generic [ref=f2e239]:
+      - generic [ref=f2e240]:
+        - link "AF Motos AF Motos Compra e venda de motos com procedência" [ref=f2e241] [cursor=pointer]:
+          - /url: /
+          - img "AF Motos" [ref=f2e243]
+          - generic [ref=f2e244]:
+            - generic [ref=f2e245]: AF Motos
+            - generic [ref=f2e247]: Compra e venda de motos com procedência
+        - paragraph [ref=f2e248]: Compra e venda de motos com atendimento direto e transparente pelo WhatsApp.
+        - generic [ref=f2e249]:
+          - generic [ref=f2e250]: Siga a AF Motos
+          - link "Acessar nosso Instagram" [ref=f2e252] [cursor=pointer]:
+            - /url: https://www.instagram.com/af_motos2026/
+        - link "Falar no WhatsApp" [ref=f2e257] [cursor=pointer]:
+          - /url: https://wa.me/5581985901175?text=Ol%C3%A1!%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20AF%20Motos.
+      - generic [ref=f2e261]:
+        - heading "Motos & Catálogo" [level=4] [ref=f2e262]
+        - list [ref=f2e263]:
+          - listitem [ref=f2e264]:
+            - link "Início" [ref=f2e265] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=f2e266]:
+            - link "Sobre a AF Motos" [ref=f2e267] [cursor=pointer]:
+              - /url: /sobre
+          - listitem [ref=f2e268]:
+            - link "Motos Disponíveis" [ref=f2e269] [cursor=pointer]:
+              - /url: /motos
+          - listitem [ref=f2e270]:
+            - link "Motos Vendidas" [ref=f2e271] [cursor=pointer]:
+              - /url: /motos-vendidas
+      - generic [ref=f2e272]:
+        - heading "Serviços" [level=4] [ref=f2e273]
+        - list [ref=f2e274]:
+          - listitem [ref=f2e275]:
+            - link "Venda sua Moto" [ref=f2e276] [cursor=pointer]:
+              - /url: /vender-minha-moto
+          - listitem [ref=f2e277]:
+            - link "Anuncie sua Moto" [ref=f2e278] [cursor=pointer]:
+              - /url: /anunciar-sua-moto
+          - listitem [ref=f2e279]:
+            - link "Histórico Veicular" [ref=f2e280] [cursor=pointer]:
+              - /url: /historico-veicular
+          - listitem [ref=f2e281]:
+            - link "Termos de Uso" [ref=f2e282] [cursor=pointer]:
+              - /url: /termos-de-uso
+          - listitem [ref=f2e283]:
+            - link "Privacidade & Dados" [ref=f2e284] [cursor=pointer]:
+              - /url: /politica-de-privacidade
+      - generic [ref=f2e285]:
+        - heading "Atendimento & Loja" [level=4] [ref=f2e286]
+        - list [ref=f2e287]:
+          - listitem [ref=f2e288]:
+            - link "(81) 9 8590-1175" [ref=f2e289] [cursor=pointer]:
+              - /url: tel:81985901175
+          - listitem [ref=f2e293]:
+            - link "afmotos2026@gmail.com" [ref=f2e294] [cursor=pointer]:
+              - /url: mailto:afmotos2026@gmail.com
+          - listitem [ref=f2e299]:
+            - link "Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655 Ver no Google Maps" [ref=f2e300] [cursor=pointer]:
+              - /url: https://www.google.com/maps/search/?api=1&query=Rua%20Milton%20Adolfo%20de%20Jesus%2C%2068%2C%20S%C3%A3o%20Francisco%2C%20Cabo%20de%20Santo%20Agostinho%2C%20PE%2C%2054530-655
+              - generic [ref=f2e304]:
+                - generic [ref=f2e305]: Rua Milton Adolfo de Jesus, 68, Loja, São Francisco, Cabo de Santo Agostinho - PE, 54530-655
+                - generic [ref=f2e306]: Ver no Google Maps
+          - listitem [ref=f2e312]:
+            - generic [ref=f2e316]:
+              - paragraph [ref=f2e317]: "Segunda a Sexta: 08:00 às 18:00"
+              - paragraph [ref=f2e318]: "Sábado: 08:00 às 13:00"
+              - paragraph [ref=f2e319]: "Domingo: Fechado"
+    - generic [ref=f2e321]:
+      - paragraph [ref=f2e322]: © 2026 AF Motos. Todos os direitos reservados.
+      - generic [ref=f2e323]:
+        - link "Termos de Uso" [ref=f2e324] [cursor=pointer]:
+          - /url: /termos-de-uso
+        - link "Política de Privacidade" [ref=f2e325] [cursor=pointer]:
+          - /url: /politica-de-privacidade
+        - link "Área Restrita" [ref=f2e326] [cursor=pointer]:
+          - /url: /admin/login
+        - link "Desenvolvido por alex._ricardo" [ref=f2e327] [cursor=pointer]:
+          - /url: https://instagram.com/alex._ricardo
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f2e333] [cursor=pointer]
+  - alert [ref=f2e337]
