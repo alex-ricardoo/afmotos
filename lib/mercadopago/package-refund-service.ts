@@ -359,6 +359,7 @@ export async function processPackageRefund({
     // Registra o estorno formal na tabela payment_refunds
     await adminDb.from('payment_refunds').insert({
       transaction_id: order.payment_transaction_id,
+      consultation_id: null,
       credit_package_order_id: order.id,
       provider: 'mercadopago',
       provider_payment_id: order.mp_payment_id || 'manual_unrecorded',

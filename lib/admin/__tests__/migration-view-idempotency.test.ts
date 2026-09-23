@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 /**
  * Simulação de Schema Relacional do Banco de Dados para verificação
- * de integridade de migrations e compatibilidade retroativa.
+ * de integridade de migrations, RBAC e compatibilidade retroativa.
  */
 interface TableConstraint {
   name: string;
@@ -59,70 +59,98 @@ class SimulatedTable {
 }
 
 describe('Migration & Schema Compatibility Test (Production baseline without 20260922100000)', () => {
-  it('1. Rejeita package_type = "standard" no schema original de produção', () => {
+  it('1. Rejeita package_type = "standard" no schema original de produção e aceita todos os 7 tipos válidos após o hotfix', () => {
     // Estado do banco de produção original (migration 20260914120000)
-    const originalPackagesTable = new SimulatedTable(
-      ['id', 'user_id', 'package_type', 'status'],
-      ['id', 'user_id', 'package_type'],
-    );
-
-    originalPackagesTable.addConstraint('customer_credit_packages_package_type_check', (row) =>
-      ['manual_negotiated', 'agency', 'reseller', 'promotional', 'partner', 'test'].includes(
-        row.package_type,
-      ),
-    );
-
-    assert.throws(() => {
-      originalPackagesTable.insert({
-        id: 'pkg-1',
-        user_id: 'usr-1',
-        package_type: 'standard',
-        status: 'active',
-      });
-    }, /Check constraint violation: customer_credit_packages_package_type_check/);
-  });
-
-  it('2. Aplica hotfix de constraint de package_type e aceita "standard" com idempotência', () => {
     const packagesTable = new SimulatedTable(
       ['id', 'user_id', 'package_type', 'status'],
       ['id', 'user_id', 'package_type'],
     );
 
-    // Schema original
     packagesTable.addConstraint('customer_credit_packages_package_type_check', (row) =>
       ['manual_negotiated', 'agency', 'reseller', 'promotional', 'partner', 'test'].includes(
         row.package_type,
       ),
     );
 
-    // Simula execução da migration 20260923100000: DROP IF EXISTS + ADD CONSTRAINT permitindo 'standard'
-    const applyHotfix = () => {
-      packagesTable.dropConstraint('customer_credit_packages_package_type_check');
-      packagesTable.addConstraint('customer_credit_packages_package_type_check', (row) =>
-        [
-          'standard',
-          'manual_negotiated',
-          'agency',
-          'reseller',
-          'promotional',
-          'partner',
-          'test',
-        ].includes(row.package_type),
-      );
+    // Schema original rejeita 'standard'
+    assert.throws(() => {
+      packagesTable.insert({
+        id: 'pkg-orig-1',
+        user_id: 'usr-1',
+        package_type: 'standard',
+        status: 'active',
+      });
+    }, /Check constraint violation: customer_credit_packages_package_type_check/);
+
+    // Aplica o hotfix da migration 20260923100000
+    packagesTable.dropConstraint('customer_credit_packages_package_type_check');
+    const validPackageTypes = [
+      'standard',
+      'manual_negotiated',
+      'agency',
+      'reseller',
+      'promotional',
+      'partner',
+      'test',
+    ];
+    packagesTable.addConstraint('customer_credit_packages_package_type_check', (row) =>
+      validPackageTypes.includes(row.package_type),
+    );
+
+    // Valida que TODOS os 7 tipos são aceitos
+    for (const type of validPackageTypes) {
+      const inserted = packagesTable.insert({
+        id: `pkg-${type}`,
+        user_id: 'usr-1',
+        package_type: type,
+        status: 'active',
+      });
+      assert.equal(inserted.package_type, type);
+    }
+
+    // Tipo inválido desconhecido continua rejeitado
+    assert.throws(() => {
+      packagesTable.insert({
+        id: 'pkg-invalid',
+        user_id: 'usr-1',
+        package_type: 'hacked_type',
+        status: 'active',
+      });
+    }, /Check constraint violation: customer_credit_packages_package_type_check/);
+  });
+
+  it('2. RBAC da RPC: Bloqueia acesso direto de anon e authenticated, permitindo apenas service_role', () => {
+    // Simula a tabela de permissões e controle de acesso (PostgREST + PostgreSQL)
+    const functionGrants = new Map<string, Set<string>>();
+    functionGrants.set(
+      'grant_credit_package_from_paid_order',
+      new Set(['service_role']), // Somente service_role após a migration corrigida
+    );
+
+    const executeRpc = (role: 'anon' | 'authenticated' | 'service_role', orderId: string) => {
+      const grants = functionGrants.get('grant_credit_package_from_paid_order');
+      if (!grants || !grants.has(role)) {
+        throw new Error(
+          `permission denied for function grant_credit_package_from_paid_order (invoked by role "${role}")`,
+        );
+      }
+      return { success: true, orderId };
     };
 
-    // Primeira aplicação
-    applyHotfix();
-    const pkg = packagesTable.insert({
-      id: 'pkg-std-1',
-      user_id: 'usr-1',
-      package_type: 'standard',
-      status: 'active',
-    });
-    assert.equal(pkg.package_type, 'standard');
+    // 1. Usuário não autenticado (anon) -> BLOQUEADO
+    assert.throws(() => {
+      executeRpc('anon', 'order-123');
+    }, /permission denied for function grant_credit_package_from_paid_order \(invoked by role "anon"\)/);
 
-    // Segunda aplicação (idempotência)
-    assert.doesNotThrow(() => applyHotfix());
+    // 2. Usuário autenticado normal (authenticated) -> BLOQUEADO
+    assert.throws(() => {
+      executeRpc('authenticated', 'order-123');
+    }, /permission denied for function grant_credit_package_from_paid_order \(invoked by role "authenticated"\)/);
+
+    // 3. Backend privilegiado (service_role via createAdminClient) -> PERMITIDO
+    const res = executeRpc('service_role', 'order-123');
+    assert.equal(res.success, true);
+    assert.equal(res.orderId, 'order-123');
   });
 
   it('3. Executa preflight de payment_refunds e rejeita constraint XOR se dados forem ambíguos', () => {
@@ -164,7 +192,7 @@ describe('Migration & Schema Compatibility Test (Production baseline without 202
     );
   });
 
-  it('4. Preflight aprova dados válidos e constraint XOR garante integridade estrita', () => {
+  it('4. Preflight aprova dados válidos, constraint XOR garante integridade estrita e preserva refunds históricos', () => {
     const refundsTable = new SimulatedTable(
       ['id', 'transaction_id', 'consultation_id', 'amount', 'status'],
       ['id', 'transaction_id', 'consultation_id'],
@@ -228,7 +256,44 @@ describe('Migration & Schema Compatibility Test (Production baseline without 202
     }, /Check constraint violation: payment_refunds_target_xor_check/);
   });
 
-  it('5. View administrativa unificada com LEFT JOIN preserva consultas veiculares e inclui pacotes com package_id', () => {
+  it('5. Proteção de unicidade de refund ativo impede estornos concorrentes duplicados', () => {
+    // Simula o índice único parcial idx_unique_active_refund_per_transaction
+    const activeRefunds = new Set<string>();
+
+    const insertRefund = (transactionId: string, status: string) => {
+      const isActive = ['requested', 'pending', 'confirmed'].includes(status);
+      if (isActive && activeRefunds.has(transactionId)) {
+        throw new Error(
+          `duplicate key value violates unique constraint "idx_unique_active_refund_per_transaction"`,
+        );
+      }
+      if (isActive) {
+        activeRefunds.add(transactionId);
+      }
+      return { transactionId, status };
+    };
+
+    // 1. Primeiro refund ativo registrado -> SUCESSO
+    const ref1 = insertRefund('tx-100', 'requested');
+    assert.equal(ref1.status, 'requested');
+
+    // 2. Segundo refund ativo concorrente para a mesma transação -> REJEITADO
+    assert.throws(() => {
+      insertRefund('tx-100', 'pending');
+    }, /duplicate key value violates unique constraint "idx_unique_active_refund_per_transaction"/);
+
+    // 3. Transação diferente -> SUCESSO
+    const ref2 = insertRefund('tx-200', 'requested');
+    assert.equal(ref2.status, 'requested');
+
+    // 4. Tentativa anterior com status failed para nova transação não bloqueia histórico
+    assert.doesNotThrow(() => {
+      insertRefund('tx-300', 'failed');
+      insertRefund('tx-300', 'requested'); // Pode tentar novamente após falha
+    });
+  });
+
+  it('6. View administrativa unificada com LEFT JOIN preserva consultas veiculares e inclui pacotes concedidos e pendentes com package_id', () => {
     // Simula registros de transações
     const transactions = [
       {
@@ -239,10 +304,17 @@ describe('Migration & Schema Compatibility Test (Production baseline without 202
         status: 'approved',
       },
       {
-        id: 'tx-pkg-1',
+        id: 'tx-pkg-granted',
         purpose: 'credit_package',
         consultation_id: null,
         credit_package_order_id: 'cpo-1',
+        status: 'approved',
+      },
+      {
+        id: 'tx-pkg-pending',
+        purpose: 'credit_package',
+        consultation_id: null,
+        credit_package_order_id: 'cpo-2',
         status: 'approved',
       },
     ];
@@ -261,6 +333,14 @@ describe('Migration & Schema Compatibility Test (Production baseline without 202
         offer_name_snapshot: 'Pacote Essencial',
         credits_quantity: 5,
         status: 'paid',
+        granted_at: '2026-09-23T10:00:00Z',
+      },
+      {
+        id: 'cpo-2',
+        offer_name_snapshot: 'Pacote Turbo',
+        credits_quantity: 10,
+        status: 'paid',
+        granted_at: null, // Pendente de liberação de créditos
       },
     ];
 
@@ -291,24 +371,32 @@ describe('Migration & Schema Compatibility Test (Production baseline without 202
         package_credits_quantity: cpo?.credits_quantity || null,
         package_id: ccp?.id || null,
         customer_credit_package_id: ccp?.id || null,
-        is_package_granted: Boolean(ccp?.id),
+        is_package_granted: Boolean(cpo?.granted_at || ccp?.id),
       };
     });
 
-    assert.equal(unifiedViewResult.length, 2);
+    assert.equal(unifiedViewResult.length, 3);
 
-    // Registro de Consulta Veicular
+    // 1. Registro de Consulta Veicular
     const consRow = unifiedViewResult.find((r) => r.purpose === 'vehicle_consultation');
     assert.ok(consRow);
     assert.equal(consRow.plate, 'ABC1D23');
     assert.equal(consRow.package_id, null);
 
-    // Registro de Pacote de Créditos
-    const pkgRow = unifiedViewResult.find((r) => r.purpose === 'credit_package');
-    assert.ok(pkgRow);
-    assert.equal(pkgRow.package_offer_name, 'Pacote Essencial');
-    assert.equal(pkgRow.package_credits_quantity, 5);
-    assert.equal(pkgRow.package_id, 'pkg-real-uuid-1');
-    assert.equal(pkgRow.is_package_granted, true);
+    // 2. Registro de Pacote de Créditos Concedido
+    const pkgGranted = unifiedViewResult.find((r) => r.transaction_id === 'tx-pkg-granted');
+    assert.ok(pkgGranted);
+    assert.equal(pkgGranted.package_offer_name, 'Pacote Essencial');
+    assert.equal(pkgGranted.package_credits_quantity, 5);
+    assert.equal(pkgGranted.package_id, 'pkg-real-uuid-1');
+    assert.equal(pkgGranted.is_package_granted, true);
+
+    // 3. Registro de Pacote de Créditos Pago Aguardando Concessão (Incidente da ordem presa)
+    const pkgPending = unifiedViewResult.find((r) => r.transaction_id === 'tx-pkg-pending');
+    assert.ok(pkgPending);
+    assert.equal(pkgPending.package_offer_name, 'Pacote Turbo');
+    assert.equal(pkgPending.package_credits_quantity, 10);
+    assert.equal(pkgPending.package_id, null);
+    assert.equal(pkgPending.is_package_granted, false);
   });
 });

@@ -280,9 +280,14 @@ BEGIN
 END;
 $$;
 
+-- Permissões estritas de segurança e RBAC:
+-- A RPC grant_credit_package_from_paid_order é SECURITY DEFINER e realiza movimentação financeira
+-- e concessão de saldo no ledger. Ela NUNCA pode ser invocada diretamente por clientes não privilegiados
+-- (anon ou authenticated). Apenas o backend privilegiado com role service_role possui permissão de execução.
 REVOKE ALL ON FUNCTION public.grant_credit_package_from_paid_order(UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.grant_credit_package_from_paid_order(UUID) FROM anon;
+REVOKE ALL ON FUNCTION public.grant_credit_package_from_paid_order(UUID) FROM authenticated;
 GRANT EXECUTE ON FUNCTION public.grant_credit_package_from_paid_order(UUID) TO service_role;
-GRANT EXECUTE ON FUNCTION public.grant_credit_package_from_paid_order(UUID) TO authenticated;
 
 -- 5. Recreate Unified Administrative View with LEFT JOINs and package_id contract
 CREATE OR REPLACE VIEW public.admin_payment_consultations_view AS
