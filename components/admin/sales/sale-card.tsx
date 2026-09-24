@@ -9,6 +9,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { SaleWithDetails } from '@/lib/queries/sales';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
 import { CONSTANTS } from '@/lib/utils/constants';
+import { getWarrantyInfo } from '@/lib/warranty/calculator';
 
 interface SaleCardProps {
   sale: SaleWithDetails;
@@ -53,6 +54,7 @@ export function SaleCard({ sale }: SaleCardProps) {
     : null;
 
   const statusBadge = getPaymentStatusBadge(sale.payment_status);
+  const warranty = getWarrantyInfo(sale);
 
   return (
     <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-3xl p-4.5 shadow-sm space-y-4 hover:border-[#c9a44c]/40 transition-colors">
@@ -130,6 +132,33 @@ export function SaleCard({ sale }: SaleCardProps) {
           <span className="text-zinc-400">Data:</span>
           <span className="font-mono text-zinc-300">{formatDate(sale.sale_date)}</span>
         </div>
+
+        {!sale.is_repasse && (
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-400">Garantia:</span>
+            <div className="flex flex-col items-end gap-0.5">
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold border ${warranty.badgeClass}`}
+              >
+                {warranty.label}
+              </span>
+              {warranty.formattedEndsAt ? (
+                <span className="font-mono text-zinc-300 text-[10px]">
+                  Até {warranty.formattedEndsAt}
+                  {warranty.daysRemaining !== null && warranty.daysRemaining >= 0 && (
+                    <span className="text-[#e3c56c] font-semibold ml-1">
+                      ({warranty.daysRemaining}d)
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="text-[10px] text-zinc-500 italic">
+                  Definida na 1ª emissão
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {sale.receipt_number && (
           <div className="flex items-center justify-between pt-1 border-t border-zinc-800/60">

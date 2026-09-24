@@ -2,6 +2,7 @@ import React from 'react';
 import { NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { getSaleById } from '@/lib/queries/sales';
+import { issueSaleWarrantyOnPdfEmission } from '@/lib/warranty/service';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { SaleReceiptPDF } from '@/lib/pdf/sale-receipt';
 import { createClient } from '@/lib/supabase/server';
@@ -37,8 +38,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return new NextResponse('Acesso restrito a administradores', { status: 403 });
     }
 
-    // 2. Fetch sale details
-    const sale = await getSaleById(id);
+    // 2. Fetch sale details & idempotently issue warranty if first server-side emission
+    const sale = await issueSaleWarrantyOnPdfEmission(id, supabase);
     if (!sale) {
       return new NextResponse('Venda não encontrada', { status: 404 });
     }

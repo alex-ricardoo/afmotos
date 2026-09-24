@@ -19,6 +19,7 @@ import { Printer, ArrowLeft, Download, CheckCircle2, Clock, Pencil } from 'lucid
 import { Button, buttonVariants } from '@/components/ui/button';
 import { getSiteLogo, getSiteInitials } from '@/lib/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';
+import { getWarrantyInfo } from '@/lib/warranty/calculator';
 
 interface OfficialReceiptPrintProps {
   sale: SaleWithDetails;
@@ -43,6 +44,7 @@ export function OfficialReceiptPrint({
   const email = siteSettings?.contact_email || CONSTANTS.CONTACT_EMAIL;
   const siteDomain = typeof window !== 'undefined' ? window.location.host : '';
   const siteFullUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const warrantyInfo = getWarrantyInfo(sale);
 
   const currentYear = new Date().getFullYear();
   const receiptCode = sale.receipt_number || `${getSiteInitials(storeName)}-${currentYear}-${sale.id.slice(0, 4).toUpperCase()}`;
@@ -216,9 +218,13 @@ export function OfficialReceiptPrint({
                 <span className="inline-block text-[10px] uppercase font-bold tracking-wider text-amber-800 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded mt-0.5">
                   Modalidade Repasse • Sem Garantia
                 </span>
+              ) : warrantyInfo.formattedEndsAt ? (
+                <span className="inline-block text-[10px] uppercase font-bold tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded mt-0.5">
+                  Garantia até {warrantyInfo.formattedEndsAt}, inclusive
+                </span>
               ) : (
-                <span className="block text-[10px] uppercase font-bold tracking-wider text-emerald-700 mt-0.5">
-                  Comprovante Oficial de Entrega
+                <span className="inline-block text-[10px] uppercase font-bold tracking-wider text-zinc-600 bg-zinc-100 border border-zinc-300 px-2 py-0.5 rounded mt-0.5">
+                  Garantia será definida na 1ª emissão do contrato
                 </span>
               )}
             </div>
@@ -521,14 +527,48 @@ export function OfficialReceiptPrint({
             <div className="mb-3.5 sm:mb-4">
               <div className="bg-slate-100 px-3 py-1.5 rounded border-l-4 border-amber-500 mb-2 flex items-center justify-between">
                 <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-800">
-                  4. Termo de Garantia (90 Dias / 3.000 KM), Vistoria & Proteção Legal
+                  4. Certificado de Garantia Comercial ({warrantyInfo.months} Meses) & Proteção Legal
                 </span>
                 <span className="text-[10px] text-slate-500 font-mono">Art. 18 e 26 CDC & Art. 123 e 134 CTB</span>
               </div>
 
+              {/* CARD DESTAQUE DA GARANTIA COMERCIAL */}
+              <div className="bg-emerald-50/70 p-3 rounded-lg border border-emerald-300/80 mb-2.5">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="text-xs font-black uppercase tracking-wider text-emerald-900">
+                    Certificado de Garantia Comercial ({warrantyInfo.months} Meses)
+                  </span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${warrantyInfo.badgeClass}`}>
+                    {warrantyInfo.status === 'UNDER_WARRANTY' || warrantyInfo.status === 'EXPIRING_SOON'
+                      ? 'Em Vigência'
+                      : warrantyInfo.status === 'EXPIRED'
+                      ? 'Garantia Encerrada'
+                      : 'Aguardando 1ª Emissão'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-950 mb-2 leading-relaxed">
+                  Esta motocicleta possui garantia comercial de {warrantyInfo.months} (três) meses, contados a partir da emissão efetiva deste instrumento.
+                </p>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 pt-1.5 border-t border-emerald-200 text-xs text-emerald-900">
+                  <div>
+                    <strong>Início da garantia:</strong>{' '}
+                    <span>{warrantyInfo.formattedIssuedAt || 'A definir na 1ª emissão'}</span>
+                  </div>
+                  <div>
+                    <strong>Término da garantia:</strong>{' '}
+                    <span>{warrantyInfo.formattedEndsAt ? `${warrantyInfo.formattedEndsAt}, inclusive` : 'A definir na 1ª emissão do contrato'}</span>
+                  </div>
+                  {warrantyInfo.daysRemaining !== null && (
+                    <div className="text-[11px] text-emerald-700 font-medium">
+                      ({warrantyInfo.daysRemaining >= 0 ? `${warrantyInfo.daysRemaining} dias restantes` : 'Período encerrado'})
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200 text-[10px] sm:text-[10.5px] text-slate-700 space-y-2 leading-relaxed text-justify">
                 <p>
-                  <strong>4.1. Garantia Legal de 90 Dias ou 3.000 KM (Motor e Câmbio):</strong> A Loja <strong>&quot;{storeName}&quot;</strong> concede ao ADQUIRENTE garantia legal pelo prazo improrrogável de <strong>90 (noventa) dias corridos ou 3.000 (três mil) quilômetros rodados</strong>, o que primeiro ocorrer, a contar da data de entrega do veículo, nos termos do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é <strong>restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO</strong>.
+                  <strong>4.1. Garantia Comercial de {warrantyInfo.months} Meses ou 3.000 KM (Motor e Câmbio):</strong> A Loja <strong>&quot;{storeName}&quot;</strong> concede ao ADQUIRENTE garantia comercial pelo prazo de <strong>{warrantyInfo.months} (três) meses calendários{warrantyInfo.formattedEndsAt ? ` (válida até ${warrantyInfo.formattedEndsAt}, inclusive)` : ''} ou 3.000 (três mil) quilômetros rodados</strong>, o que primeiro ocorrer, a contar da data de emissão deste instrumento, nos termos e limites aqui convencionados, observados os direitos legais do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é <strong>restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO</strong>.
                 </p>
                 <p>
                   <strong>4.2. Exclusões Expressas por Mau Uso, Modificações e Negligência:</strong> A garantia <strong>NÃO COBRE</strong> avarias decorrentes de: 

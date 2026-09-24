@@ -20,9 +20,10 @@ export default async function VendasPage({
     search?: string;
     month?: string;
     payment?: string;
+    warranty?: string;
   }>;
 }) {
-  const { search, month, payment } = await searchParams;
+  const { search, month, payment, warranty } = await searchParams;
 
   const [metrics, sales] = await Promise.all([
     getSalesMetrics(),
@@ -30,6 +31,7 @@ export default async function VendasPage({
       search,
       month,
       paymentMethod: payment,
+      warrantyStatus: warranty,
     }),
   ]);
 

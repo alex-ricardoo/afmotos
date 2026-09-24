@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { Sale } from '@/types/database';
+import { getWarrantyInfo } from '@/lib/warranty/calculator';
 
 export interface SaleWithDetails extends Sale {
   motorcycle: {
@@ -38,6 +39,7 @@ export interface SalesFilterParams {
   search?: string;
   month?: string; // YYYY-MM
   paymentMethod?: string;
+  warrantyStatus?: string;
 }
 
 function resolveMotorcycleImages(supabase: any, images: any[]) {
@@ -182,6 +184,16 @@ export async function getSales(params?: SalesFilterParams): Promise<SaleWithDeta
         item.motorcycle?.renavam?.toLowerCase().includes(searchLower);
 
       return buyerMatch || motoMatch;
+    });
+  }
+
+  if (params?.warrantyStatus && params.warrantyStatus !== 'ALL') {
+    result = result.filter((item) => {
+      const info = getWarrantyInfo(item);
+      if (params.warrantyStatus === 'REPASSE') {
+        return Boolean(item.is_repasse);
+      }
+      return info.status === params.warrantyStatus;
     });
   }
 

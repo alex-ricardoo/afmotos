@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, X, Calendar, Filter } from 'lucide-react';
+import { Search, X, Calendar, Filter, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,15 @@ const paymentMethodLabels: Record<string, string> = {
   CARTAO: 'Cartão Crédito/Débito',
   FINANCIAMENTO: 'Financiamento',
   OUTRO: 'Outro',
+};
+
+const warrantyStatusLabels: Record<string, string> = {
+  ALL: 'Todas as Garantias',
+  UNDER_WARRANTY: 'Em Garantia',
+  EXPIRING_SOON: 'Vencendo em 15 dias',
+  EXPIRED: 'Garantia Encerrada',
+  AWAITING_ISSUANCE: 'Aguardando Emissão',
+  REPASSE: 'Modalidade Repasse',
 };
 
 const monthNamesBR = [
@@ -46,6 +55,7 @@ export function SaleFilters() {
   const currentSearch = searchParams.get('search') || '';
   const currentMonth = searchParams.get('month') || 'ALL';
   const currentPayment = searchParams.get('payment') || 'ALL';
+  const currentWarranty = searchParams.get('warranty') || 'ALL';
 
   const monthOptions = useMemo(() => {
     const options = [{ value: 'ALL', label: 'Todos os Meses' }];
@@ -83,14 +93,15 @@ export function SaleFilters() {
   const hasActiveFilters = Boolean(
     currentSearch ||
     (currentMonth && currentMonth !== 'ALL') ||
-    (currentPayment && currentPayment !== 'ALL'),
+    (currentPayment && currentPayment !== 'ALL') ||
+    (currentWarranty && currentWarranty !== 'ALL'),
   );
 
   return (
     <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-3xl p-4 shadow-xs space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
         {/* Campo de busca textual */}
-        <div className="sm:col-span-6 relative">
+        <div className="sm:col-span-12 lg:col-span-4 relative">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
           <Input
             value={currentSearch}
@@ -109,7 +120,7 @@ export function SaleFilters() {
         </div>
 
         {/* Seletor Amigável de Mês / Período */}
-        <div className="sm:col-span-3">
+        <div className="sm:col-span-4 lg:col-span-3">
           <Select
             value={currentMonth}
             onValueChange={(val: string | null) => updateQueryParams('month', val || 'ALL')}
@@ -131,7 +142,7 @@ export function SaleFilters() {
         </div>
 
         {/* Seletor de Forma de Pagamento */}
-        <div className="sm:col-span-3">
+        <div className="sm:col-span-4 lg:col-span-2">
           <Select
             value={currentPayment}
             onValueChange={(val: string | null) => updateQueryParams('payment', val || 'ALL')}
@@ -146,6 +157,30 @@ export function SaleFilters() {
             </SelectTrigger>
             <SelectContent className="bg-zinc-950 border-zinc-800 text-zinc-200">
               {Object.entries(paymentMethodLabels).map(([value, label]) => (
+                <SelectItem key={value} value={value} className="cursor-pointer">
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Seletor de Status da Garantia */}
+        <div className="sm:col-span-4 lg:col-span-3">
+          <Select
+            value={currentWarranty}
+            onValueChange={(val: string | null) => updateQueryParams('warranty', val || 'ALL')}
+          >
+            <SelectTrigger className="h-11 bg-zinc-900/80 border-zinc-800 rounded-xl text-xs sm:text-sm text-zinc-200">
+              <div className="flex items-center gap-2 truncate">
+                <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
+                <SelectValue placeholder="Garantia">
+                  {warrantyStatusLabels[currentWarranty] || 'Todas as Garantias'}
+                </SelectValue>
+              </div>
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-950 border-zinc-800 text-zinc-200">
+              {Object.entries(warrantyStatusLabels).map(([value, label]) => (
                 <SelectItem key={value} value={value} className="cursor-pointer">
                   {label}
                 </SelectItem>

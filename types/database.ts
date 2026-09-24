@@ -178,6 +178,9 @@ export interface Sale {
   chassi?: string | null;
   legal_terms_accepted?: boolean;
   is_repasse?: boolean | null;
+  warranty_months?: number | null;
+  warranty_issued_at?: string | null;
+  warranty_ends_at?: string | null;
   receipt_number: string | null;
   receipt_notes: string | null;
   consignment_id: string | null;
