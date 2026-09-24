@@ -30,6 +30,7 @@ interface CustomerNavProps {
     avatarUrl?: string | null;
     isGoogleAccount?: boolean;
   };
+  creditBalance?: number;
 }
 
 function GoogleIcon({ className = 'w-3 h-3' }: { className?: string }) {
@@ -55,7 +56,7 @@ function GoogleIcon({ className = 'w-3 h-3' }: { className?: string }) {
   );
 }
 
-export function CustomerNav({ user }: CustomerNavProps) {
+export function CustomerNav({ user, creditBalance = 0 }: CustomerNavProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -66,6 +67,7 @@ export function CustomerNav({ user }: CustomerNavProps) {
       icon: LayoutDashboard,
       exact: true,
       badge: null,
+      badgeHighlight: false,
     },
     {
       name: 'Minhas Consultas',
@@ -73,13 +75,15 @@ export function CustomerNav({ user }: CustomerNavProps) {
       icon: Search,
       exact: false,
       badge: null,
+      badgeHighlight: false,
     },
     {
       name: 'Pacotes de Créditos',
       href: '/cliente/creditos',
       icon: Coins,
       exact: false,
-      badge: 'B2B',
+      badge: creditBalance > 0 ? `${creditBalance} disp.` : 'Comprar',
+      badgeHighlight: creditBalance > 0,
     },
     {
       name: 'Meu Perfil',
@@ -87,6 +91,7 @@ export function CustomerNav({ user }: CustomerNavProps) {
       icon: User,
       exact: false,
       badge: null,
+      badgeHighlight: false,
     },
   ];
 
@@ -115,13 +120,32 @@ export function CustomerNav({ user }: CustomerNavProps) {
           </div>
         </Link>
 
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-colors"
-          aria-label="Abrir menu"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Quick Credits Pill in Mobile Topbar */}
+          <Link
+            href="/cliente/creditos"
+            title="Seus Créditos Disponíveis"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+              creditBalance > 0
+                ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 border-amber-500/40 text-amber-300 shadow-sm shadow-[#c9a44c]/10'
+                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Coins className={`w-3.5 h-3.5 ${creditBalance > 0 ? 'text-[#c9a44c]' : 'text-zinc-400'}`} />
+            <span className="font-mono">{creditBalance}</span>
+            <span className="text-[10px] font-medium opacity-80 hidden xs:inline">
+              {creditBalance === 1 ? 'crédito' : 'créditos'}
+            </span>
+          </Link>
+
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800 transition-colors"
+            aria-label="Abrir menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Backdrop & Drawer */}
@@ -135,7 +159,7 @@ export function CustomerNav({ user }: CustomerNavProps) {
           </button>
 
           {/* User Card */}
-          <div className="flex items-center gap-3 p-3.5 bg-zinc-900/80 rounded-2xl border border-zinc-800/80 mb-6 shadow-lg shadow-black/40">
+          <div className="flex items-center gap-3 p-3.5 bg-zinc-900/80 rounded-2xl border border-zinc-800/80 mb-3 shadow-lg shadow-black/40">
             <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-[#c9a44c] to-[#997628] flex items-center justify-center text-zinc-950 font-bold overflow-hidden shrink-0 shadow-md">
               {user.avatarUrl ? (
                 <Image
@@ -169,7 +193,45 @@ export function CustomerNav({ user }: CustomerNavProps) {
             </div>
           </div>
 
-          <div className="space-y-1.5 flex-1">
+          {/* Quick Credit Balance Card (Mobile Drawer) */}
+          <div className="p-3.5 bg-gradient-to-r from-zinc-900/90 to-zinc-950/90 rounded-2xl border border-zinc-800/90 mb-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border shrink-0 ${
+                  creditBalance > 0
+                    ? 'bg-[#c9a44c]/20 border-[#c9a44c]/40 text-[#e3c56c]'
+                    : 'bg-zinc-800/80 border-zinc-700/60 text-zinc-400'
+                }`}>
+                  <Coins className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block leading-tight">
+                    Saldo de Créditos
+                  </span>
+                  <div className="flex items-baseline gap-1 mt-0.5">
+                    <span className={`text-base font-black font-mono leading-none ${
+                      creditBalance > 0 ? 'text-amber-300' : 'text-zinc-300'
+                    }`}>
+                      {creditBalance}
+                    </span>
+                    <span className="text-[11px] text-zinc-400 font-medium">
+                      {creditBalance === 1 ? 'crédito disponível' : 'créditos disponíveis'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <Link
+                href="/cliente/creditos"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-[11px] font-bold text-[#c9a44c] hover:text-[#e3c56c] bg-[#c9a44c]/10 hover:bg-[#c9a44c]/20 border border-[#c9a44c]/30 px-2.5 py-1 rounded-lg transition-all"
+              >
+                {creditBalance > 0 ? '+ Adicionar' : 'Comprar'}
+              </Link>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 flex-1 overflow-y-auto">
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-3 mb-2">
               Navegação
             </p>
@@ -191,7 +253,11 @@ export function CustomerNav({ user }: CustomerNavProps) {
                     <Icon className={`w-4 h-4 ${active ? 'text-[#c9a44c]' : 'text-zinc-400'}`} />
                     <span>{item.name}</span>
                     {item.badge && (
-                      <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
+                      <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${
+                        item.badgeHighlight
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs'
+                          : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                      }`}>
                         {item.badge}
                       </span>
                     )}
@@ -302,8 +368,45 @@ export function CustomerNav({ user }: CustomerNavProps) {
           </div>
         </div>
 
+        {/* Quick Credit Balance Card (Desktop Sidebar) */}
+        <div className="p-3 mx-3.5 mt-3.5 rounded-2xl bg-gradient-to-br from-zinc-900/90 via-zinc-900/50 to-zinc-950 border border-zinc-800/80 shadow-md relative z-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center border shrink-0 transition-all ${
+                creditBalance > 0
+                  ? 'bg-[#c9a44c]/20 border-[#c9a44c]/40 text-[#e3c56c]'
+                  : 'bg-zinc-800/80 border-zinc-700/60 text-zinc-400'
+              }`}>
+                <Coins className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block leading-tight">
+                  Saldo de Créditos
+                </span>
+                <div className="flex items-baseline gap-1 mt-0.5">
+                  <span className={`text-base font-black font-mono leading-none ${
+                    creditBalance > 0 ? 'text-amber-300' : 'text-zinc-300'
+                  }`}>
+                    {creditBalance}
+                  </span>
+                  <span className="text-[10px] text-zinc-400 font-medium">
+                    {creditBalance === 1 ? 'disponível' : 'disponíveis'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <Link
+              href="/cliente/creditos"
+              className="text-[10px] font-bold text-[#c9a44c] hover:text-[#e3c56c] bg-[#c9a44c]/10 hover:bg-[#c9a44c]/20 border border-[#c9a44c]/30 px-2 py-1 rounded-lg transition-all"
+            >
+              {creditBalance > 0 ? '+ Adicionar' : 'Comprar'}
+            </Link>
+          </div>
+        </div>
+
         {/* Navigation Sections */}
-        <div className="flex-1 px-3.5 py-5 space-y-6 overflow-y-auto relative z-10 scrollbar-none">
+        <div className="flex-1 px-3.5 py-4 space-y-6 overflow-y-auto relative z-10 scrollbar-none">
           <div className="space-y-1">
             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-3 mb-2">
               Menu Principal
@@ -333,7 +436,11 @@ export function CustomerNav({ user }: CustomerNavProps) {
                     <span>{item.name}</span>
                   </div>
                   {item.badge && (
-                    <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
+                    <span className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${
+                      item.badgeHighlight
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-xs'
+                        : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                    }`}>
                       {item.badge}
                     </span>
                   )}
