@@ -9,6 +9,7 @@ import {
 } from '@/lib/vehicle-lookup/share-service';
 import { VehicleReportPDF } from '@/lib/vehicle-lookup/pdf/vehicle-report-pdf';
 import { resolvePdfLogo } from '@/lib/pdf/assets';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,7 @@ export async function GET(
     // 3. Fetch Site Settings & Prepare Logo (Prioritize database base64, then remote with timeout, then local fallback)
     const settings = await getSiteSettings();
     const logoBase64 = (await resolvePdfLogo(settings)) || undefined;
+    const siteInfo = resolveCurrentSiteDomain(request);
 
     // 4. Render PDF to Buffer on-demand
     const pdfBuffer = await renderToBuffer(
@@ -57,6 +59,7 @@ export async function GET(
         report: publicDto as any,
         settings,
         logoSrc: logoBase64,
+        siteUrl: siteInfo.fullUrl,
       }) as any
     );
 

@@ -41,6 +41,8 @@ export function OfficialReceiptPrint({
   const rawPhone = siteSettings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE;
   const phone = formatPhone(rawPhone);
   const email = siteSettings?.contact_email || CONSTANTS.CONTACT_EMAIL;
+  const siteDomain = typeof window !== 'undefined' ? window.location.host : '';
+  const siteFullUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
   const currentYear = new Date().getFullYear();
   const receiptCode = sale.receipt_number || `${getSiteInitials(storeName)}-${currentYear}-${sale.id.slice(0, 4).toUpperCase()}`;
@@ -170,6 +172,19 @@ export function OfficialReceiptPrint({
                   <span><strong>Endereço:</strong> {address}</span>
                   <span><strong>WhatsApp:</strong> {phone}</span>
                   {email && <span><strong>E-mail:</strong> {email}</span>}
+                  {siteDomain && (
+                    <span>
+                      <strong>Site:</strong>{' '}
+                      <a
+                        href={siteFullUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline text-amber-600 print:text-slate-800"
+                      >
+                        {siteDomain}
+                      </a>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

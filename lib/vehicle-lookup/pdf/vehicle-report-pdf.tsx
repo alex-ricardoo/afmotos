@@ -1,8 +1,9 @@
 /* eslint-disable jsx-a11y/alt-text */
 import React from 'react';
-import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, Link, StyleSheet } from '@react-pdf/renderer';
 import type { CustomerVehicleReportDto } from '../types.ts';
 import type { SiteSettings } from '@/types/database';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain.ts';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { formatPhone } from '@/lib/utils/formatters';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
@@ -73,6 +74,10 @@ const styles = StyleSheet.create({
     color: '#475569',
     lineHeight: 1.3,
     marginBottom: 1,
+  },
+  linkText: {
+    color: '#0369a1',
+    textDecoration: 'underline',
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -552,12 +557,14 @@ interface VehicleReportPDFProps {
   report: CustomerVehicleReportDto;
   settings?: SiteSettings | null;
   logoSrc?: string | null;
+  siteUrl?: string | null;
 }
 
 export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   report,
   settings,
   logoSrc,
+  siteUrl,
 }) => {
   const storeName = settings?.site_name || report.issuer?.trade_name || 'AF VEÍCULOS PE';
   const cnpj = settings?.cnpj || report.issuer?.cnpj || '58.742.981/0001-08';
@@ -565,6 +572,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   const storeAddress = settings?.address || 'Recife / PE • Loja Principal';
   const storePhone = settings?.whatsapp_phone ? formatPhone(settings.whatsapp_phone) : null;
   const storeEmail = settings?.contact_email || 'contato@afmotos.com.br';
+  const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
 
   const isApproved = report.procedural_verdict === 'APPROVED';
   const isRestricted = report.procedural_verdict === 'RESTRICTED';
@@ -655,8 +663,19 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 {storePhone ? ` • Telefone/WhatsApp: ${storePhone}` : ''}
               </Text>
               <Text style={styles.storeContact}>{storeAddress}</Text>
-              {storeEmail ? (
-                <Text style={styles.storeContact}>E-mail: {storeEmail}</Text>
+              {storeEmail || siteInfo.displayDomain ? (
+                <Text style={styles.storeContact}>
+                  {storeEmail ? `E-mail: ${storeEmail}` : ''}
+                  {storeEmail && siteInfo.displayDomain ? ' • ' : ''}
+                  {siteInfo.displayDomain ? (
+                    <Text>
+                      Site:{' '}
+                      <Link src={siteInfo.fullUrl} style={styles.linkText}>
+                        {siteInfo.displayDomain}
+                      </Link>
+                    </Text>
+                  ) : null}
+                </Text>
               ) : null}
             </View>
           </View>

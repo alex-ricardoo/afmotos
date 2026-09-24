@@ -7,6 +7,7 @@ import { getSiteSettings } from '@/lib/queries/settings';
 import { motorcycleTechnicalSheetSchema } from '@/lib/technical-sheet/schema';
 import { TechnicalSheetPDF } from '@/lib/pdf/technical-sheet';
 import { loadPdfImage, resolvePdfLogo } from '@/lib/pdf/assets';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .maybeSingle();
 
     const resolvedPlate = parsed.data.unitData.licensePlate || moto?.license_plate || null;
+    const siteInfo = resolveCurrentSiteDomain(request);
 
     const buffer = await renderToBuffer(
       React.createElement(TechnicalSheetPDF, {
@@ -70,6 +72,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         },
         settings,
         logoSrc,
+        siteUrl: siteInfo.fullUrl,
       }) as unknown as React.ReactElement<DocumentProps>,
     );
     const slug =

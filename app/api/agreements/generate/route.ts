@@ -13,6 +13,7 @@ import { getSiteLogo, getSiteName } from '@/lib/site-settings';
 import { SiteSettingsRecord } from '@/types/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { resolvePdfLogo } from '@/lib/pdf/assets';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -280,6 +281,8 @@ export async function POST(request: NextRequest) {
       console.warn('[agreements.generate] could not persist vehicle data to proposal/sell_request:', saveVehicleErr);
     }
 
+    const siteInfo = resolveCurrentSiteDomain(request);
+
     const pdfBuffer = await renderToBuffer(
       React.createElement(AgreementSalePDF, {
         saleId: sellRequest.id,
@@ -289,6 +292,8 @@ export async function POST(request: NextRequest) {
         phone,
         email,
         cnpj,
+        website: siteInfo.displayDomain,
+        siteUrl: siteInfo.fullUrl,
         sellerName,
         sellerDocument: owner_cpf,
         sellerRg: owner_rg,

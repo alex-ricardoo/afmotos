@@ -1,11 +1,12 @@
 import React from 'react';
-import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, Link, StyleSheet } from '@react-pdf/renderer';
 import { SaleWithDetails } from '@/lib/queries/sales';
 import { SiteSettings } from '@/types/database';
 import { formatPhone, formatCpf, formatRenavam, formatChassi } from '@/lib/utils/formatters';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
 import { getSiteInitials } from '@/lib/site-settings';
+import { resolveCurrentSiteDomain } from './domain.ts';
 
 const styles = StyleSheet.create({
   page: {
@@ -74,6 +75,10 @@ const styles = StyleSheet.create({
     color: '#475569',
     lineHeight: 1.35,
     marginTop: 1,
+  },
+  linkText: {
+    color: '#0369a1',
+    textDecoration: 'underline',
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -253,6 +258,7 @@ interface SaleReceiptPDFProps {
   sale: SaleWithDetails;
   settings?: SiteSettings | null;
   logoSrc?: string;
+  siteUrl?: string | null;
 }
 
 const formatCurrencyBRL = (val?: number | null) => {
@@ -271,12 +277,13 @@ const formatDateBR = (dateStr?: string | null) => {
 
 import { CONSTANTS } from '@/lib/utils/constants';
 
-export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps) {
+export function SaleReceiptPDF({ sale, settings, logoSrc, siteUrl }: SaleReceiptPDFProps) {
   const storeName = settings?.site_name || CONSTANTS.STORE_NAME;
   const cnpj = formatCnpj(settings?.cnpj);
   const phone = formatPhone(settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE);
   const email = settings?.contact_email || CONSTANTS.CONTACT_EMAIL;
   const address = settings?.address || CONSTANTS.STORE_ADDRESS;
+  const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
 
   const moto = sale.motorcycle;
   const year = new Date().getFullYear();
@@ -312,7 +319,20 @@ export function SaleReceiptPDF({ sale, settings, logoSrc }: SaleReceiptPDFProps)
               <Text style={styles.storeContact}>
                 WhatsApp: {phone} {email ? `• E-mail: ${email}` : ''}
               </Text>
-              {cnpj ? <Text style={styles.storeContact}>CNPJ: {cnpj}</Text> : null}
+              {cnpj || siteInfo.displayDomain ? (
+                <Text style={styles.storeContact}>
+                  {cnpj ? `CNPJ: ${cnpj}` : ''}
+                  {cnpj && siteInfo.displayDomain ? ' • ' : ''}
+                  {siteInfo.displayDomain ? (
+                    <Text>
+                      Site:{' '}
+                      <Link src={siteInfo.fullUrl} style={styles.linkText}>
+                        {siteInfo.displayDomain}
+                      </Link>
+                    </Text>
+                  ) : null}
+                </Text>
+              ) : null}
               <Text style={styles.storeContact}>{address}</Text>
             </View>
           </View>

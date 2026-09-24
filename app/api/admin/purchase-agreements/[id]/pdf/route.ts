@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getPurchaseAgreementPdfUrlService } from '@/lib/purchase-agreements/service';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
@@ -32,7 +33,8 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Acesso restrito a administradores.' }, { status: 403 });
     }
 
-    const result = await getPurchaseAgreementPdfUrlService(id, requestId);
+    const siteInfo = resolveCurrentSiteDomain(request);
+    const result = await getPurchaseAgreementPdfUrlService(id, requestId, siteInfo.fullUrl);
     return NextResponse.json(result, { status: 200 });
   } catch (error: unknown) {
     console.error('[purchase-agreements.pdf] error', { requestId, agreementId: id, error });

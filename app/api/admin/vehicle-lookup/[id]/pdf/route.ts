@@ -7,6 +7,7 @@ import { getSiteSettings } from '@/lib/queries/settings';
 import { toCustomerVehicleReportDto } from '@/lib/vehicle-lookup/adapters/vehicle-pdf';
 import { VehicleReportPDF } from '@/lib/vehicle-lookup/pdf/vehicle-report-pdf';
 import { resolvePdfLogo } from '@/lib/pdf/assets';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +65,7 @@ export async function GET(
 
     // 4. Prepare Safe Customer DTO
     const customerDto = toCustomerVehicleReportDto(dto);
+    const siteInfo = resolveCurrentSiteDomain(request);
 
     // 5. Render PDF to Buffer
     const pdfBuffer = await renderToBuffer(
@@ -71,6 +73,7 @@ export async function GET(
         report: customerDto,
         settings,
         logoSrc: logoBase64,
+        siteUrl: siteInfo.fullUrl,
       }) as any
     );
 

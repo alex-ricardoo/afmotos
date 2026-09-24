@@ -12,6 +12,7 @@ export interface PurchaseAgreementStoreSnapshot {
   state?: string | null;
   phone: string;
   email?: string | null;
+  website?: string | null;
   legal_representative?: string | null;
 }
 

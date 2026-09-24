@@ -1,10 +1,11 @@
 import React from 'react';
-import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Document, Image, Link, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import type { MotorcycleTechnicalSheet } from '@/lib/technical-sheet/schema';
 import type { SiteSettings } from '@/types/database';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
 import { getSiteName } from '@/lib/site-settings';
+import { resolveCurrentSiteDomain } from './domain.ts';
 
 const styles = StyleSheet.create({
   page: {
@@ -121,6 +122,7 @@ type Props = {
   sheet: MotorcycleTechnicalSheet & { pdfVersion?: number };
   settings: SiteSettings | null;
   logoSrc?: string | null;
+  siteUrl?: string | null;
 };
 
 function formatCurrency(value: number | null) {
@@ -156,7 +158,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function TechnicalSheetPDF({ sheet, settings, logoSrc }: Props) {
+export function TechnicalSheetPDF({ sheet, settings, logoSrc, siteUrl }: Props) {
   const {
     identity,
     unitData,
@@ -171,7 +173,13 @@ export function TechnicalSheetPDF({ sheet, settings, logoSrc }: Props) {
   const storeName = getSiteName(settings);
   const phone = settings?.whatsapp_phone || '';
   const cnpj = formatCnpj(settings?.cnpj);
-  const contact = [phone, cnpj ? `CNPJ: ${cnpj}` : null, settings?.address]
+  const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
+  const contact = [
+    phone,
+    cnpj ? `CNPJ: ${cnpj}` : null,
+    siteInfo.displayDomain ? `Site: ${siteInfo.displayDomain}` : null,
+    settings?.address,
+  ]
     .filter(Boolean)
     .join(' | ');
   const boolValue = (value: boolean | null) => (value === null ? null : value ? 'Sim' : 'Não');
@@ -210,6 +218,14 @@ export function TechnicalSheetPDF({ sheet, settings, logoSrc }: Props) {
             <View>
               <Text style={styles.brand}>{storeName}</Text>
               <Text style={styles.eyebrow}>{headerTitle}</Text>
+              {siteInfo.displayDomain ? (
+                <Text style={{ fontSize: 6.2, color: '#0369a1', marginTop: 1 }}>
+                  Site:{' '}
+                  <Link src={siteInfo.fullUrl} style={{ color: '#0369a1', textDecoration: 'underline' }}>
+                    {siteInfo.displayDomain}
+                  </Link>
+                </Text>
+              ) : null}
             </View>
           </View>
           <View style={{ alignItems: 'flex-end' }}>

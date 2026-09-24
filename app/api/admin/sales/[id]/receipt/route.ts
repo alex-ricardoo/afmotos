@@ -6,6 +6,7 @@ import { getSiteSettings } from '@/lib/queries/settings';
 import { SaleReceiptPDF } from '@/lib/pdf/sale-receipt';
 import { createClient } from '@/lib/supabase/server';
 import { resolvePdfLogo } from '@/lib/pdf/assets';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,12 +48,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // 4. Load official logo (Prioritize database base64, then remote with timeout, then local fallback)
     const logoBase64 = (await resolvePdfLogo(settings)) || undefined;
+    const siteInfo = resolveCurrentSiteDomain(request);
 
     // 5. Render PDF to Buffer
     const element = React.createElement(SaleReceiptPDF, {
       sale,
       settings,
       logoSrc: logoBase64,
+      siteUrl: siteInfo.fullUrl,
     });
 
     const buffer = await renderToBuffer(element as any);
