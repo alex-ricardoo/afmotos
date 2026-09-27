@@ -226,6 +226,7 @@ export async function loginWithGoogle(returnUrl = '/cliente'): Promise<ActionRes
 export async function logoutCustomer(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  revalidatePath('/', 'layout');
   redirect('/');
 }
 

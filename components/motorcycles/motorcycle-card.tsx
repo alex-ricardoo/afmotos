@@ -246,7 +246,12 @@ export function MotorcycleCard({ motorcycle, whatsappPhone, siteName }: Motorcyc
                   <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
                   <span>Histórico Verificado</span>
                 </span>
-                <span className="text-zinc-400">Garantia 90 dias</span>
+                <span
+                  className="text-zinc-400"
+                  title="Garantia legal de 90 dias para motor e câmbio (exceto motos na modalidade repasse)"
+                >
+                  Garantia 90 dias*
+                </span>
               </div>
             )}
             {/* Preço */}

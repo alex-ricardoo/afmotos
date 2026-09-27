@@ -61,9 +61,12 @@ export function AboutHero({
               <HeartHandshake className="w-4 h-4 text-amber-400" />
               <span>Negociação Segura e Sem Golpe</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800 shadow-sm">
+            <span
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900/80 border border-zinc-800 shadow-sm"
+              title="Garantia de 90 dias para motor e câmbio em motos convencionais da loja (exceto motos de repasse)"
+            >
               <Award className="w-4 h-4 text-amber-400" />
-              <span>Garantia de 90 Dias</span>
+              <span>Garantia de 90 Dias (exceto repasse)</span>
             </span>
           </div>
         </div>

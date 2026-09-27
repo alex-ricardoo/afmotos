@@ -32,3 +32,8 @@ export async function login(formData: FormData) {
 
   redirect('/admin');
 }
+
+export async function checkCurrentUserIsAdmin(): Promise<boolean> {
+  const { isCurrentSessionAdmin } = await import('@/lib/auth/admin-guard');
+  return isCurrentSessionAdmin();
+}

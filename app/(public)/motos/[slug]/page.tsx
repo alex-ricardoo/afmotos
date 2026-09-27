@@ -226,10 +226,10 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                   <BadgeCheck className="w-5 h-5 text-amber-400 shrink-0" />
                   <div>
                     <span className="block text-xs font-black text-amber-300">
-                      Garantia de 90 dias
+                      Garantia de 90 dias*
                     </span>
                     <span className="block text-[10px] text-zinc-400">
-                      Cobre motor e câmbio por 90 dias.
+                      Cobre motor e câmbio por 90 dias (exceto motos de repasse).
                     </span>
                   </div>
                 </div>

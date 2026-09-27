@@ -17,8 +17,19 @@ import {
   Store,
   UserCircle,
   LogOut,
+  ShieldCheck,
+  ChevronDown,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuGroup,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { createClient } from '@/lib/supabase/client';
+import { checkCurrentUserIsAdmin } from '@/lib/actions/auth';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -58,6 +69,7 @@ export function Header({ settings }: { settings?: any }) {
     email: string;
     fullName: string;
     avatarUrl?: string | null;
+    isAdmin?: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -69,6 +81,7 @@ export function Header({ settings }: { settings?: any }) {
 
       if (user) {
         const metadata = user.user_metadata || {};
+        const isAdmin = await checkCurrentUserIsAdmin();
         setCustomerUser({
           id: user.id,
           email: user.email || '',
@@ -78,6 +91,7 @@ export function Header({ settings }: { settings?: any }) {
             user.email?.split('@')[0] ||
             'Cliente',
           avatarUrl: metadata.avatar_url || metadata.picture || null,
+          isAdmin,
         });
       } else {
         setCustomerUser(null);
@@ -85,9 +99,10 @@ export function Header({ settings }: { settings?: any }) {
     }
     checkAuth();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         const metadata = session.user.user_metadata || {};
+        const isAdmin = await checkCurrentUserIsAdmin();
         setCustomerUser({
           id: session.user.id,
           email: session.user.email || '',
@@ -97,6 +112,7 @@ export function Header({ settings }: { settings?: any }) {
             session.user.email?.split('@')[0] ||
             'Cliente',
           avatarUrl: metadata.avatar_url || metadata.picture || null,
+          isAdmin,
         });
       } else {
         setCustomerUser(null);
@@ -328,15 +344,12 @@ export function Header({ settings }: { settings?: any }) {
           })}
         </nav>
 
-        {/* Desktop Customer Area Button */}
+        {/* Desktop Customer Area Dropdown */}
         <div className="hidden lg:flex items-center gap-2 shrink-0">
           {customerUser ? (
-            <div className="flex items-center gap-2 p-1.5 pl-3 rounded-full bg-zinc-900/80 border border-[#c9a44c]/30 shadow-sm">
-              <Link
-                href="/cliente"
-                className="flex items-center gap-2 text-xs font-semibold text-zinc-200 hover:text-[#c9a44c] transition-colors"
-              >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#c9a44c] to-[#997628] flex items-center justify-center text-zinc-950 font-bold text-[11px] overflow-hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 p-1.5 pl-3 pr-2.5 rounded-full bg-zinc-900/80 hover:bg-zinc-800/90 border border-[#c9a44c]/30 hover:border-[#c9a44c]/60 shadow-sm transition-all duration-200 outline-none cursor-pointer group">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#c9a44c] to-[#997628] flex items-center justify-center text-zinc-950 font-bold text-[11px] overflow-hidden shrink-0 shadow-xs">
                   {customerUser.avatarUrl ? (
                     <Image
                       src={customerUser.avatarUrl}
@@ -350,22 +363,71 @@ export function Header({ settings }: { settings?: any }) {
                     customerUser.fullName.charAt(0).toUpperCase()
                   )}
                 </div>
-                <span className="max-w-[100px] truncate">{customerUser.fullName.split(' ')[0]}</span>
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="px-2 py-1 rounded-full text-[11px] text-zinc-400 hover:text-red-400 hover:bg-zinc-800 transition-colors"
-                title="Sair da conta"
+                <span className="max-w-[120px] truncate text-xs font-semibold text-zinc-200 group-hover:text-white transition-colors">
+                  {customerUser.fullName.split(' ')[0]}
+                </span>
+                {customerUser.isAdmin && (
+                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    Admin
+                  </span>
+                )}
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-200 transition-transform group-data-[state=open]:rotate-180" />
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                align="end"
+                className="w-56 p-1.5 bg-[#090C14]/95 backdrop-blur-xl border border-zinc-800/90 shadow-2xl rounded-2xl text-zinc-200"
               >
-                Sair
-              </button>
-            </div>
+                {/* User Info Header */}
+                <div className="px-3 py-2 border-b border-zinc-800/80 mb-1">
+                  <p className="text-xs font-bold text-white truncate">{customerUser.fullName}</p>
+                  <p className="text-[11px] text-zinc-400 truncate mt-0.5">{customerUser.email}</p>
+                </div>
+
+                <DropdownMenuGroup className="space-y-0.5">
+                  {/* Option 1: Área do Cliente */}
+                  <DropdownMenuItem
+                    onClick={() => router.push('/cliente')}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800/80 cursor-pointer transition-colors"
+                  >
+                    <UserCircle className="w-4 h-4 text-[#c9a44c]" />
+                    <span>Área do Cliente</span>
+                  </DropdownMenuItem>
+
+                  {/* Option 2: Painel Administrativo (CASO FOR ADMIN) */}
+                  {customerUser.isAdmin && (
+                    <DropdownMenuItem
+                      onClick={() => router.push('/admin')}
+                      className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-amber-300 hover:text-amber-200 hover:bg-amber-500/10 cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <ShieldCheck className="w-4 h-4 text-amber-400" />
+                        <span>Painel Administrativo</span>
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        Admin
+                      </span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuGroup>
+
+                <DropdownMenuSeparator className="my-1 bg-zinc-800/80" />
+
+                {/* Option 3: Sair / Logout */}
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sair da conta</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link href="/cliente/login">
               <Button
                 size="sm"
-                className="h-9 px-4 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/80 hover:border-[#c9a44c]/50 text-zinc-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all"
+                className="h-9 px-4 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/80 hover:border-[#c9a44c]/50 text-zinc-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
               >
                 <UserCircle className="w-4 h-4 text-[#c9a44c]" />
                 <span>Área do Cliente</span>
@@ -374,8 +436,19 @@ export function Header({ settings }: { settings?: any }) {
           )}
         </div>
 
-        {/* Mobile Hamburger */}
-        <div className="lg:hidden shrink-0">
+        {/* Mobile Hamburger & Admin Shortcut */}
+        <div className="lg:hidden flex items-center gap-2 shrink-0">
+          {customerUser?.isAdmin && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 text-xs font-bold transition-all shadow-xs active:scale-95"
+              title="Acessar Painel Administrativo"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[11px] font-mono">Admin</span>
+            </Link>
+          )}
+
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger
               render={
@@ -502,16 +575,54 @@ export function Header({ settings }: { settings?: any }) {
                 ))}
               </div>
 
-              {customerUser && (
-                <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/60 shrink-0">
+              {customerUser ? (
+                <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/60 shrink-0 space-y-2">
+                  {customerUser.isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsOpen(false)}
+                      className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/10 hover:from-amber-500/30 hover:to-amber-600/20 border border-amber-500/40 text-amber-300 text-xs font-bold transition-all shadow-xs"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <ShieldCheck className="w-4 h-4 text-amber-400" />
+                        <span>Painel Administrativo</span>
+                      </div>
+                      <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-200">
+                        Admin
+                      </span>
+                    </Link>
+                  )}
+                  <Link
+                    href="/cliente"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full flex items-center justify-between p-3 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 text-xs font-semibold transition-all shadow-xs"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <UserCircle className="w-4 h-4 text-[#c9a44c]" />
+                      <span>Área do Cliente ({customerUser.fullName.split(' ')[0]})</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+                  </Link>
+
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Sair da minha conta</span>
                   </button>
+                </div>
+              ) : (
+                <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/60 shrink-0">
+                  <Link
+                    href="/cliente/login"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-zinc-950 bg-gradient-to-r from-[#c9a44c] to-[#b38e3a] hover:brightness-110 shadow-md transition-all cursor-pointer"
+                  >
+                    <UserCircle className="w-4 h-4" />
+                    <span>Entrar na Área do Cliente</span>
+                  </Link>
                 </div>
               )}
             </SheetContent>
