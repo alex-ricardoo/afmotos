@@ -19,6 +19,7 @@ export const motorcycleSchema = z.object({
     .enum(['AVAILABLE', 'RESERVED', 'SOLD', 'RENTED', 'MAINTENANCE', 'UNAVAILABLE', 'HIDDEN'])
     .default('AVAILABLE'),
   featured: z.boolean().default(false),
+  is_repasse: z.boolean().default(false),
   license_plate: z.string().optional(),
   renavam: z.string().optional().nullable(),
   chassi: z.string().optional().nullable(),

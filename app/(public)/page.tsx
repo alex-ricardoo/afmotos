@@ -116,7 +116,8 @@ export default async function HomePage() {
             {/* Direct Transparent Subtitle */}
             <p className="text-base sm:text-lg text-zinc-300 max-w-2xl mx-auto font-normal leading-relaxed">
               Veja as motos disponíveis ou anuncie a sua com a {siteName}. Todas revisadas,{' '}
-              <span className="text-amber-400 font-semibold">com garantia de 90 dias</span> e
+              <span className="text-amber-400 font-semibold">com garantia de 90 dias</span>{' '}
+              <span className="text-zinc-400 text-sm">(exceto motos de repasse)</span> e
               atendimento direto pelo WhatsApp.
             </p>
 
@@ -440,7 +441,10 @@ export default async function HomePage() {
                   Histórico Veicular & Garantia de 90 dias
                 </h3>
                 <p className="text-sm text-zinc-400 max-w-xl">
-                  Toda moto vendida pela {siteName} possui <span className="text-emerald-400 font-semibold">Histórico Veicular oficial verificado</span> (livre de leilão, roubo e gravames), passa por revisão rigorosa e sai com <span className="text-amber-400 font-semibold">3 meses de garantia</span> no motor e câmbio.
+                  Toda moto vendida pela {siteName} possui <span className="text-emerald-400 font-semibold">Histórico Veicular oficial verificado</span> (livre de leilão, roubo e gravames), passa por revisão rigorosa e sai com <span className="text-amber-400 font-semibold">3 meses de garantia</span> no motor e câmbio (exceto motos na modalidade de repasse).
+                </p>
+                <p className="text-[11px] text-zinc-500 max-w-xl">
+                  * A garantia legal de 90 dias é exclusiva para motos convencionais da loja. Veículos negociados na modalidade repasse são vendidos no estado em que se encontram, sem garantia.
                 </p>
               </div>
               {/* Badges */}
@@ -460,7 +464,7 @@ export default async function HomePage() {
                 <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2">
                   <BadgeCheck className="w-4 h-4 text-amber-400 shrink-0" />
                   <span className="text-xs font-bold text-amber-300 whitespace-nowrap">
-                    90 dias garantia
+                    90 dias garantia*
                   </span>
                 </div>
               </div>
@@ -499,8 +503,9 @@ export default async function HomePage() {
               </div>
               <h3 className="text-lg font-bold text-white">Revisada e com Garantia</h3>
               <p className="text-sm text-[#a6a6a1] leading-relaxed">
-                Toda moto é revisada antes da venda e sai com{' '}
-                <span className="text-amber-400 font-semibold">90 dias de garantia</span>. Você
+                Toda moto de loja é revisada antes da venda e sai com{' '}
+                <span className="text-amber-400 font-semibold">90 dias de garantia</span>{' '}
+                <span className="text-zinc-400 text-xs">(exceto motos de repasse)</span>. Você
                 compra sabendo o que está levando.
               </p>
             </div>
@@ -561,7 +566,7 @@ export default async function HomePage() {
               {/* Selo de garantia */}
               <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3 py-2.5">
                 <BadgeCheck className="w-5 h-5 text-amber-400 shrink-0" />
-                <span className="text-xs font-bold text-amber-300">Garantia de 90 dias</span>
+                <span className="text-xs font-bold text-amber-300">Garantia de 90 dias (exceto repasse)</span>
               </div>
               <ul className="space-y-2 pt-1">
                 <li className="flex items-start gap-2 text-sm text-zinc-300">

@@ -11,6 +11,7 @@ interface DeleteSaleButtonProps {
   receiptNumber?: string | null;
   /** Quando true, exibe o label textual além do ícone (modo card) */
   showLabel?: boolean;
+  customTrigger?: (openModal: () => void) => React.ReactNode;
 }
 
 export function DeleteSaleButton({
@@ -18,6 +19,7 @@ export function DeleteSaleButton({
   motorcycleId,
   receiptNumber,
   showLabel = false,
+  customTrigger,
 }: DeleteSaleButtonProps) {
   const [open, setOpen] = useState(false);
   const [revert, setRevert] = useState(true);
@@ -39,21 +41,25 @@ export function DeleteSaleButton({
   return (
     <>
       {/* Trigger */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        title="Excluir Venda"
-        className={buttonVariants({
-          variant: 'ghost',
-          size: showLabel ? 'sm' : 'icon-sm',
-          className: showLabel
-            ? 'h-10 rounded-xl text-xs font-bold border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center justify-center gap-1.5 cursor-pointer w-full'
-            : 'rounded-xl text-red-400/70 hover:text-red-400 hover:bg-red-500/10 cursor-pointer',
-        })}
-      >
-        <Trash2 className={showLabel ? 'w-3.5 h-3.5' : 'w-3.5 h-3.5'} />
-        {showLabel && <span>Excluir</span>}
-      </button>
+      {customTrigger ? (
+        customTrigger(() => setOpen(true))
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          title="Excluir Venda"
+          className={buttonVariants({
+            variant: 'ghost',
+            size: showLabel ? 'sm' : 'icon-sm',
+            className: showLabel
+              ? 'h-10 rounded-xl text-xs font-bold border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center justify-center gap-1.5 cursor-pointer w-full'
+              : 'rounded-xl text-red-400/70 hover:text-red-400 hover:bg-red-500/10 cursor-pointer',
+          })}
+        >
+          <Trash2 className={showLabel ? 'w-3.5 h-3.5' : 'w-3.5 h-3.5'} />
+          {showLabel && <span>Excluir</span>}
+        </button>
+      )}
 
       {/* Modal overlay */}
       {open && (

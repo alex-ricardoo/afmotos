@@ -68,6 +68,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 
 import { formatRenavam, formatChassi, formatCurrency, formatKm } from '@/lib/utils/formatters';
+import { cn } from '@/lib/utils';
 import {
   MOTORCYCLE_STATUS_OPTIONS,
   motorcycleStatusLabels,
@@ -152,7 +153,7 @@ const motorcycleSchema = z
     color: z.string().optional(),
     price: z.coerce.number().optional(),
     fipe_price: z.coerce.number().optional(),
-    description: z.string().optional(),
+    description: z.string().min(1, 'A descrição da motocicleta é obrigatória.'),
     ownership_type: z.enum(['OWNED', 'CONSIGNMENT']),
     operation_type: z.enum(['SALE', 'RENTAL', 'SALE_AND_RENTAL']),
     status: z.enum([
@@ -165,6 +166,7 @@ const motorcycleSchema = z
       'HIDDEN',
     ]),
     featured: z.boolean().default(false),
+    is_repasse: z.boolean().default(false),
     license_plate: z.string().optional(),
     renavam: z.string().optional().nullable().or(z.literal('')),
     chassi: z.string().optional().nullable().or(z.literal('')),
@@ -341,6 +343,7 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
       operation_type: normalizeOperation(initialData?.operation_type),
       status: initialData?.status || 'AVAILABLE',
       featured: initialData?.featured || false,
+      is_repasse: initialData?.is_repasse || false,
       license_plate: initialData?.license_plate || searchParams.get('license_plate') || '',
       renavam: initialData?.renavam || '',
       chassi: initialData?.chassi || '',
@@ -508,6 +511,16 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
   };
 
   const [isGeneratingAiDesc, setIsGeneratingAiDesc] = useState(false);
+  const [showDescTooltip, setShowDescTooltip] = useState(false);
+
+  useEffect(() => {
+    if (showDescTooltip) {
+      const timer = setTimeout(() => {
+        setShowDescTooltip(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showDescTooltip]);
 
   const generateAiDescription = async () => {
     const values = form.getValues();
@@ -521,6 +534,8 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
       const res = await generateMotorcycleAiDescriptionAction(values);
       if (res?.success && res.description) {
         form.setValue('description', res.description, { shouldValidate: true, shouldDirty: true });
+        setShowDescTooltip(false);
+        form.clearErrors('description');
         if (res.isFallback) {
           toast.info('Descrição comercial gerada com sucesso baseada nos dados da moto.');
         } else {
@@ -751,6 +766,21 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
     } else if (currentStep === 2) {
       isValid = await form.trigger(['price', 'status', 'operation_type', 'ownership_type']);
     } else if (currentStep === 3) {
+      const desc = form.getValues('description')?.trim();
+      if (!desc) {
+        setShowDescTooltip(true);
+        form.setError('description', {
+          type: 'manual',
+          message: 'É necessário preencher uma descrição antes de avançar para as fotos.',
+        });
+        const textarea = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement | null;
+        if (textarea) {
+          textarea.focus();
+        }
+        return;
+      }
+      setShowDescTooltip(false);
+      form.clearErrors('description');
       isValid = true;
     }
 
@@ -1818,6 +1848,44 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                     </FormItem>
                   )}
                 />
+
+                {/* MODALIDADE DE REPASSE */}
+                <FormField
+                  control={form.control as any}
+                  name="is_repasse"
+                  render={({ field }) => (
+                    <FormItem
+                      className={cn(
+                        'col-span-1 md:col-span-2 flex flex-col sm:flex-row sm:items-center justify-between rounded-xl border p-4 transition-all gap-3 select-none',
+                        field.value
+                          ? 'border-orange-500/60 bg-orange-950/20 shadow-md ring-1 ring-orange-500/40'
+                          : 'border-zinc-800 bg-zinc-950/80 hover:border-zinc-700',
+                      )}
+                    >
+                      <div className="space-y-1">
+                        <FormLabel className="text-sm font-bold text-white flex items-center gap-2 cursor-pointer">
+                          <Tag className="w-4 h-4 text-orange-400" />
+                          <span>Moto na Modalidade Repasse (Sem Garantia)</span>
+                          {field.value && (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40">
+                              Ativo
+                            </span>
+                          )}
+                        </FormLabel>
+                        <FormDescription className="text-xs text-zinc-400 leading-relaxed max-w-xl">
+                          Define o veículo para repasse no estado em que se encontra, exibindo selo de oportunidade na vitrine e preenchendo automaticamente a modalidade Repasse na venda.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-orange-500"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* Botões de Navegação do Passo 2 */}
@@ -1900,18 +1968,28 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 <FormField
                   control={form.control as any}
                   name="description"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <FormItem>
                       <FormControl>
                         <Textarea
                           placeholder="Descreva a motocicleta, opcionais, estado de conservação, revisões, garantias e condições especiais de pagamento..."
                           {...field}
                           value={field.value || ''}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            if (e.target.value.trim() && showDescTooltip) {
+                              setShowDescTooltip(false);
+                              form.clearErrors('description');
+                            }
+                          }}
                           rows={8}
-                          className="bg-zinc-950 border-zinc-800 text-zinc-200 rounded-xl focus:border-amber-500 text-sm leading-relaxed p-4"
+                          className={cn(
+                            'bg-zinc-950 border-zinc-800 text-zinc-200 rounded-xl focus:border-amber-500 text-sm leading-relaxed p-4 transition-colors',
+                            fieldState.error && 'border-rose-500/80 focus:border-rose-500 ring-1 ring-rose-500/30'
+                          )}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-rose-400 text-xs mt-1.5" />
                     </FormItem>
                   )}
                 />
@@ -1922,21 +2000,38 @@ export function MotorcycleForm({ initialData }: MotorcycleFormProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handlePrevStep}
+                  onClick={() => {
+                    setShowDescTooltip(false);
+                    handlePrevStep();
+                  }}
                   className="border-zinc-800 bg-zinc-950 text-zinc-300 hover:bg-zinc-800 h-11 px-5 rounded-xl cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1.5" />
                   <span>Voltar</span>
                 </Button>
 
-                <Button
-                  type="button"
-                  onClick={handleNextStep}
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-950 font-bold px-8 py-3 h-auto rounded-xl flex items-center gap-2 cursor-pointer"
-                >
-                  <span>Avançar: Fotos do Veículo</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                <div className="relative">
+                  {showDescTooltip && (
+                    <div
+                      role="alert"
+                      className="absolute bottom-full right-0 mb-3 z-30 flex items-center gap-2 px-3.5 py-2.5 bg-rose-600/95 backdrop-blur-md text-white text-xs font-semibold rounded-xl shadow-xl shadow-rose-950/50 border border-rose-400/40 whitespace-nowrap animate-in fade-in zoom-in-95 duration-200"
+                    >
+                      <AlertCircle className="w-4 h-4 text-white shrink-0 animate-pulse" />
+                      <span>É necessário preencher uma descrição antes de avançar</span>
+                      {/* Seta do tooltip apontando para o botão */}
+                      <div className="absolute top-full right-8 -mt-0.5 w-0 h-0 border-solid border-t-rose-600/95 border-t-[6px] border-x-transparent border-x-[6px] border-b-0" />
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-950 font-bold px-8 py-3 h-auto rounded-xl flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/10 active:scale-[0.98] transition-all"
+                  >
+                    <span>Avançar: Fotos do Veículo</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}

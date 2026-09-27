@@ -73,3 +73,44 @@ export async function requireAdminUser() {
 
   return { supabase, user, profile };
 }
+
+/**
+ * Fast boolean check using admin client to verify if a user has an active admin role.
+ */
+export async function isUserAdmin(userId: string): Promise<boolean> {
+  if (!userId) return false;
+  try {
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const adminDb = createAdminClient();
+    const { data, error } = await adminDb
+      .from('admin_profiles')
+      .select('id')
+      .eq('auth_user_id', userId)
+      .eq('is_active', true)
+      .in('role', ['admin', 'super_admin'])
+      .maybeSingle();
+
+    return !error && Boolean(data);
+  } catch (err) {
+    console.error('[isUserAdmin] Error checking admin status:', err);
+    return false;
+  }
+}
+
+/**
+ * Checks if the currently authenticated session user is an admin.
+ */
+export async function isCurrentSessionAdmin(): Promise<boolean> {
+  try {
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return false;
+    return isUserAdmin(user.id);
+  } catch {
+    return false;
+  }
+}

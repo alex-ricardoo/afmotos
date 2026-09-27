@@ -25,6 +25,7 @@ import { ExecutiveReportPDF } from '@/lib/reports/pdf/executive-report';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { getSiteName, getSiteShortName } from '@/lib/site-settings';
 import { ReportPeriodPreset } from '@/lib/reports/types';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,6 +92,7 @@ export async function GET(request: NextRequest) {
     // 4. Handle PDF Export
     if (format === 'pdf') {
       const logoBase64 = (await resolvePdfLogo(settings)) || undefined;
+      const siteInfo = resolveCurrentSiteDomain(request);
 
       const reportTitle =
         type === 'informe-anual' || yearParam
@@ -110,6 +112,7 @@ export async function GET(request: NextRequest) {
         logoSrc: logoBase64,
         reportTitle,
         yearLabel: baseYear,
+        siteUrl: siteInfo.fullUrl,
       });
 
       const pdfBuffer = await renderToBuffer(element as any);

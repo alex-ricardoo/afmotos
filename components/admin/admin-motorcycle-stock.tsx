@@ -73,6 +73,7 @@ interface MotorcycleItem {
   operation_type?: string | null;
   license_plate?: string | null;
   featured?: boolean | null;
+  is_repasse?: boolean | null;
   image_url?: string;
   internal_code?: string | null;
   total_expenses_amount?: number;
@@ -428,6 +429,15 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                       ] || moto.ownership_type}
                     </Badge>
                   )}
+
+                  {moto.is_repasse && (
+                    <Badge
+                      variant="outline"
+                      className="bg-orange-500/20 backdrop-blur-md text-[10px] font-black text-orange-400 border-orange-500/50 uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-xs"
+                    >
+                      Repasse
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Bottom Overlay Gradient */}
@@ -668,8 +678,15 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                           )}
                         </div>
                         <div>
-                          <div className="font-extrabold text-white leading-tight">
-                            {moto.brand} {moto.model}
+                          <div className="font-extrabold text-white leading-tight flex items-center gap-2">
+                            <span>
+                              {moto.brand} {moto.model}
+                            </span>
+                            {moto.is_repasse && (
+                              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-orange-500/20 text-orange-400 border border-orange-500/40">
+                                Repasse
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-zinc-400">
                             {moto.version || 'Edição Padrão'}

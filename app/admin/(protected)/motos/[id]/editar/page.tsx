@@ -6,6 +6,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { MotorcyclePurchaseAgreementAction } from '@/components/admin/motorcycle-purchase-agreement-action';
+import { MotorcycleWarrantyCard } from '@/components/admin/motorcycles/motorcycle-warranty-card';
 
 export const metadata = {
   title: 'Editar Moto',
@@ -31,6 +32,18 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  let saleData = null;
+  if (moto.status === 'SOLD') {
+    const { data: sale } = await supabase
+      .from('sales')
+      .select('*')
+      .eq('motorcycle_id', id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    saleData = sale;
+  }
 
   const rawImages = ((moto.images as any[]) || []).sort(
     (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0),
@@ -102,6 +115,8 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
           </div>
         </div>
       </div>
+
+      {saleData && <MotorcycleWarrantyCard sale={saleData} />}
 
       <Suspense fallback={<div className="p-8 text-center text-zinc-400 text-sm">Carregando formulário...</div>}>
         <MotorcycleForm initialData={initialData} />

@@ -9,6 +9,7 @@ import { toCustomerVehicleReportDto } from '@/lib/vehicle-lookup/adapters/vehicl
 import { VehicleReportPDF } from '@/lib/vehicle-lookup/pdf/vehicle-report-pdf';
 import type { VehicleConsultationRecord } from '@/lib/vehicle-lookup/types';
 import { resolvePdfLogo } from '@/lib/pdf/assets';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -145,6 +146,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
     // 5. Prepare Safe Customer DTO (Same standard as admin & public)
     const customerDto = toCustomerVehicleReportDto(dto);
+    const siteInfo = resolveCurrentSiteDomain(request);
 
     // 6. Render PDF to Buffer using the exact same VehicleReportPDF component
     const pdfBuffer = await renderToBuffer(
@@ -152,6 +154,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         report: customerDto,
         settings,
         logoSrc: logoBase64,
+        siteUrl: siteInfo.fullUrl,
       }) as React.ReactElement<DocumentProps>,
     );
 

@@ -88,7 +88,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
     {
       question: `As motos do estoque da ${siteName} possuem garantia?`,
       answer:
-        'Sim! Todas as motocicletas comercializadas pela nossa loja contam com garantia legal de 90 dias para motor e câmbio, além de rigorosa revisão mecânica pré-entrega.',
+        'Sim! Todas as motocicletas comercializadas convencionalmente pela nossa loja contam com garantia legal de 90 dias para motor e câmbio (exceto modelos negociados na modalidade repasse, vendidos no estado em que se encontram), além de rigorosa revisão mecânica pré-entrega.',
     },
     {
       question: `As motos têm laudo cautelar aprovado?`,
@@ -248,7 +248,7 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
                 Revisão Mecânica & Garantia
               </h4>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Mecânica, parte elétrica, freios e pneus inspecionados com garantia de 90 dias para você rodar com total segurança.
+                Mecânica, parte elétrica, freios e pneus inspecionados com garantia de 90 dias (exceto motos de repasse) para você rodar com total segurança.
               </p>
             </div>
 

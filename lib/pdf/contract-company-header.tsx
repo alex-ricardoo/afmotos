@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from '@react-pdf/renderer';
+import { View, Text, Image, Link, StyleSheet } from '@react-pdf/renderer';
 import { MercosulPlateBadge } from './mercosul-plate-badge';
+import { resolveCurrentSiteDomain } from './domain.ts';
 
 const styles = StyleSheet.create({
   header: {
@@ -47,6 +48,10 @@ const styles = StyleSheet.create({
     color: '#475569',
     lineHeight: 1.35,
   },
+  linkText: {
+    color: '#0369a1',
+    textDecoration: 'underline',
+  },
   headerRight: {
     alignItems: 'flex-end',
   },
@@ -72,6 +77,8 @@ interface ContractCompanyHeaderProps {
   phone: string;
   email?: string | null;
   cnpj?: string | null;
+  website?: string | null;
+  siteUrl?: string | null;
   vehiclePlate?: string | null;
   documentIdentifier?: string;
   documentDate: string;
@@ -85,12 +92,15 @@ export function ContractCompanyHeader({
   phone,
   email,
   cnpj,
+  website,
+  siteUrl,
   vehiclePlate,
   documentIdentifier,
   documentDate,
   documentTypeLabel = 'CONTRATO DE COMPRA',
 }: ContractCompanyHeaderProps) {
   const displayCnpj = cnpj?.trim();
+  const siteInfo = resolveCurrentSiteDomain(null, siteUrl || website);
 
   return (
     <View style={styles.header}>
@@ -109,7 +119,20 @@ export function ContractCompanyHeader({
             WhatsApp: {phone}
             {email ? ` • E-mail: ${email}` : ''}
           </Text>
-          {displayCnpj ? <Text style={styles.smallText}>CNPJ: {displayCnpj}</Text> : null}
+          {displayCnpj || siteInfo.displayDomain ? (
+            <Text style={styles.smallText}>
+              {displayCnpj ? `CNPJ: ${displayCnpj}` : ''}
+              {displayCnpj && siteInfo.displayDomain ? ' • ' : ''}
+              {siteInfo.displayDomain ? (
+                <Text>
+                  Site:{' '}
+                  <Link src={siteInfo.fullUrl} style={styles.linkText}>
+                    {siteInfo.displayDomain}
+                  </Link>
+                </Text>
+              ) : null}
+            </Text>
+          ) : null}
         </View>
       </View>
 

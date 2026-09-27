@@ -48,7 +48,7 @@ export function MotorcycleSpecs({ motorcycle, siteName = 'AF Veículos PE' }: Mo
     "Totalmente revisada",
     "Óleo e filtros revisados",
     "Pneus em ótimo estado",
-    "Motor e câmbio com garantia de 90 dias",
+    "Motor e câmbio com garantia de 90 dias (exceto repasse)",
     "Moto pronta para rodar",
   ];
 

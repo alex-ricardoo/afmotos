@@ -14,6 +14,8 @@ export interface AgreementPdfInput {
   phone: string;
   email?: string | null;
   cnpj?: string;
+  website?: string | null;
+  siteUrl?: string | null;
   sellerName: string;
   sellerDocument?: string | null;
   sellerRg: string;
@@ -123,6 +125,8 @@ export function AgreementSalePDF({
   phone,
   email,
   cnpj,
+  website,
+  siteUrl,
   sellerName,
   sellerDocument,
   sellerRg,
@@ -160,6 +164,8 @@ export function AgreementSalePDF({
           phone={phone}
           email={email}
           cnpj={cnpj}
+          website={website}
+          siteUrl={siteUrl || website}
           vehiclePlate={vehiclePlate}
           documentIdentifier={formattedAgreementNumber}
           documentDate={agreementDate}

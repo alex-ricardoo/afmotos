@@ -9,6 +9,7 @@ import { SiteSettingsRecord } from '@/types/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { MotorcyclePurchaseAgreementPDF } from '@/lib/pdf/purchase-agreement';
 import { resolvePdfLogo } from '@/lib/pdf/assets';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 import { purchaseAgreementGenerateSchema, PurchaseAgreementGenerateInput } from './schema';
 import { formatAgreementNumber } from './formatters';
 import { PurchaseAgreementSnapshot } from '@/types/purchase-agreement';
@@ -30,6 +31,7 @@ export async function generatePurchaseAgreementService(
   rawInput: PurchaseAgreementGenerateInput,
   userId: string,
   requestId: string = crypto.randomUUID(),
+  siteUrl?: string | null,
 ) {
   const parsed = purchaseAgreementGenerateSchema.safeParse(rawInput);
   if (!parsed.success) {
@@ -47,6 +49,7 @@ export async function generatePurchaseAgreementService(
   const storeEmail = settings?.contact_email || null;
   const storeCnpj = formatCnpj(settings?.cnpj);
   const logoDataUri = await getCurrentLogoDataUri(settings, requestId);
+  const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
 
   // Consulta de laudo veicular vinculado (se fornecido)
   let vehicleConsultationSnapshot = null;
@@ -90,6 +93,7 @@ export async function generatePurchaseAgreementService(
       state: 'PE',
       phone: storePhone,
       email: storeEmail,
+      website: siteInfo.displayDomain,
       legal_representative: storeName,
     },
     seller: {
@@ -182,6 +186,7 @@ export async function generatePurchaseAgreementService(
       snapshot,
       agreementNumber,
       logoSrc: logoDataUri,
+      siteUrl: siteInfo.fullUrl,
     }) as Parameters<typeof renderToBuffer>[0],
   );
 
@@ -272,7 +277,11 @@ export async function generatePurchaseAgreementService(
   };
 }
 
-export async function getPurchaseAgreementPdfUrlService(agreementId: string, requestId: string = crypto.randomUUID()) {
+export async function getPurchaseAgreementPdfUrlService(
+  agreementId: string,
+  requestId: string = crypto.randomUUID(),
+  siteUrl?: string | null,
+) {
   const supabase = await createClient();
   const { data: agreement, error } = await supabase
     .from('motorcycle_purchase_agreements')
@@ -306,12 +315,14 @@ export async function getPurchaseAgreementPdfUrlService(agreementId: string, req
   const snapshot = agreement.contract_snapshot as PurchaseAgreementSnapshot;
   const settings = await getSiteSettings();
   const logoDataUri = await getCurrentLogoDataUri(settings, requestId);
+  const siteInfo = resolveCurrentSiteDomain(null, siteUrl || snapshot.store?.website);
 
   const pdfBuffer = await renderToBuffer(
     React.createElement(MotorcyclePurchaseAgreementPDF, {
       snapshot,
       agreementNumber: agreement.agreement_number,
       logoSrc: logoDataUri,
+      siteUrl: siteInfo.fullUrl,
     }) as Parameters<typeof renderToBuffer>[0],
   );
 

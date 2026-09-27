@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { Sale } from '@/types/database';
+import { getWarrantyInfo } from '@/lib/warranty/calculator';
 
 export interface SaleWithDetails extends Sale {
   motorcycle: {
@@ -15,6 +16,7 @@ export interface SaleWithDetails extends Sale {
     license_plate: string | null;
     color: string | null;
     mileage: number | null;
+    is_repasse?: boolean | null;
     renavam?: string | null;
     chassi?: string | null;
     images?: Array<{
@@ -38,6 +40,7 @@ export interface SalesFilterParams {
   search?: string;
   month?: string; // YYYY-MM
   paymentMethod?: string;
+  warrantyStatus?: string;
 }
 
 function resolveMotorcycleImages(supabase: any, images: any[]) {
@@ -110,6 +113,7 @@ export async function getSales(params?: SalesFilterParams): Promise<SaleWithDeta
         license_plate,
         color,
         mileage,
+        is_repasse,
         renavam,
         chassi,
         images:motorcycle_images(
@@ -185,6 +189,16 @@ export async function getSales(params?: SalesFilterParams): Promise<SaleWithDeta
     });
   }
 
+  if (params?.warrantyStatus && params.warrantyStatus !== 'ALL') {
+    result = result.filter((item) => {
+      const info = getWarrantyInfo(item);
+      if (params.warrantyStatus === 'REPASSE') {
+        return Boolean(item.is_repasse);
+      }
+      return info.status === params.warrantyStatus;
+    });
+  }
+
   return result;
 }
 
@@ -209,6 +223,7 @@ export async function getSaleById(id: string): Promise<SaleWithDetails | null> {
         license_plate,
         color,
         mileage,
+        is_repasse,
         renavam,
         chassi,
         images:motorcycle_images(
@@ -300,6 +315,7 @@ export async function getAvailableMotorcyclesForSale() {
       license_plate,
       color,
       mileage,
+      is_repasse,
       renavam,
       chassi,
       images:motorcycle_images(

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, Link, StyleSheet } from '@react-pdf/renderer';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 import {
   OverviewReportData,
   SalesReportData,
@@ -86,6 +87,10 @@ const styles = StyleSheet.create({
     color: '#475569',
     lineHeight: 1.4,
     marginTop: 1,
+  },
+  linkText: {
+    color: '#0369a1',
+    textDecoration: 'underline',
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -291,6 +296,7 @@ interface ExecutiveReportPDFProps {
   logoSrc?: string;
   reportTitle?: string;
   yearLabel?: string;
+  siteUrl?: string | null;
 }
 
 export function ExecutiveReportPDF({
@@ -306,6 +312,7 @@ export function ExecutiveReportPDF({
   logoSrc,
   reportTitle = 'RELATÓRIO GERENCIAL ANUAL DE APOIO CONTÁBIL',
   yearLabel,
+  siteUrl,
 }: ExecutiveReportPDFProps) {
   const storeName = getSiteName(settings);
   const rawCnpj = settings?.cnpj || '';
@@ -313,6 +320,7 @@ export function ExecutiveReportPDF({
   const storePhone = formatPhone(settings?.whatsapp_phone) || settings?.whatsapp_phone || '';
   const storeEmail = settings?.contact_email || '';
   const storeAddress = settings?.address || 'São Paulo, SP';
+  const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
 
   const baseYear = yearLabel || overview.dateRange.startDate.substring(0, 4);
 
@@ -343,6 +351,14 @@ export function ExecutiveReportPDF({
               <Text style={styles.storeContact}>
                 {storeAddress}
                 {storeEmail ? ` • E-mail: ${storeEmail}` : ''}
+                {siteInfo.displayDomain ? (
+                  <Text>
+                    {' • Site: '}
+                    <Link src={siteInfo.fullUrl} style={styles.linkText}>
+                      {siteInfo.displayDomain}
+                    </Link>
+                  </Text>
+                ) : null}
               </Text>
             </View>
           </View>

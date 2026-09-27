@@ -57,6 +57,7 @@ export default async function EditSalePage({ params }: EditSalePageProps) {
         license_plate,
         color,
         mileage,
+        is_repasse,
         renavam,
         chassi,
         images:motorcycle_images(

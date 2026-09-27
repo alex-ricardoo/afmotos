@@ -156,12 +156,27 @@ export function ClientDashboard({ data, creditBalance = 0 }: ClientDashboardProp
           </p>
         </div>
 
-        <Link href="/cliente/consultas/nova">
-          <Button className="w-full sm:w-auto h-11 px-5 bg-gradient-to-r from-[#c9a44c] via-[#d4b35e] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#c9a44c]/15 transition-all flex items-center justify-center gap-2 cursor-pointer">
-            <PlusCircle className="w-4 h-4" />
-            <span>Nova Consulta Veicular</span>
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2.5">
+          <Link href="/cliente/creditos" className="hidden sm:inline-flex">
+            <Button
+              variant="outline"
+              className={`h-11 px-4 border rounded-xl font-bold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
+                creditBalance > 0
+                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                  : 'border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
+            >
+              <Coins className={`w-4 h-4 ${creditBalance > 0 ? 'text-[#c9a44c]' : 'text-zinc-400'}`} />
+              <span>{creditBalance} {creditBalance === 1 ? 'Crédito' : 'Créditos'}</span>
+            </Button>
+          </Link>
+          <Link href="/cliente/consultas/nova">
+            <Button className="w-full sm:w-auto h-11 px-5 bg-gradient-to-r from-[#c9a44c] via-[#d4b35e] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#c9a44c]/15 transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <PlusCircle className="w-4 h-4" />
+              <span>Nova Consulta Veicular</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Metrics Strip (Responsive 4-Column Grid) */}
@@ -208,20 +223,39 @@ export function ClientDashboard({ data, creditBalance = 0 }: ClientDashboardProp
         {/* Card 3: Créditos Disponíveis (B2B) */}
         <Link
           href="/cliente/creditos"
-          className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 hover:border-[#c9a44c]/50 p-3.5 sm:p-4 backdrop-blur-xl shadow-sm transition-all group"
+          className={`rounded-2xl p-3.5 sm:p-4 backdrop-blur-xl shadow-sm transition-all group relative overflow-hidden ${
+            creditBalance > 0
+              ? 'bg-gradient-to-br from-amber-500/[0.12] via-zinc-950/90 to-zinc-950 border border-amber-500/40 hover:border-amber-500/70 shadow-amber-500/5'
+              : 'bg-zinc-950/70 border border-zinc-800/80 hover:border-[#c9a44c]/50'
+          }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] sm:text-[11px] font-bold text-zinc-400 uppercase tracking-wider group-hover:text-[#e3c56c] transition-colors truncate">
               Meus Créditos
             </span>
-            <Coins className="w-4 h-4 text-[#e3c56c] shrink-0" />
+            <div className="flex items-center gap-1.5">
+              {creditBalance > 0 ? (
+                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  Ativo
+                </span>
+              ) : (
+                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-semibold text-zinc-500 bg-zinc-900 border border-zinc-800">
+                  0 un
+                </span>
+              )}
+              <Coins className={`w-4 h-4 ${creditBalance > 0 ? 'text-[#c9a44c]' : 'text-zinc-500'} shrink-0`} />
+            </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black text-[#e3c56c] font-mono leading-none">
+            <span className={`text-2xl sm:text-3xl font-black font-mono leading-none ${
+              creditBalance > 0 ? 'text-amber-300' : 'text-zinc-400'
+            }`}>
               {creditBalance}
             </span>
-            <span className="text-[10px] text-zinc-500 group-hover:text-[#e3c56c] truncate hidden sm:inline transition-colors">
-              {creditBalance > 0 ? 'disponíveis →' : 'comprar pacote →'}
+            <span className={`text-[10px] truncate hidden sm:inline transition-colors ${
+              creditBalance > 0 ? 'text-amber-400/90 group-hover:text-amber-300' : 'text-zinc-500 group-hover:text-zinc-300'
+            }`}>
+              {creditBalance > 0 ? (creditBalance === 1 ? 'crédito ativo →' : 'créditos ativos →') : 'comprar pacote →'}
             </span>
           </div>
         </Link>
@@ -248,31 +282,71 @@ export function ClientDashboard({ data, creditBalance = 0 }: ClientDashboardProp
         </Link>
       </div>
 
-      {/* Banner Promocional de Pacotes de Créditos B2B */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-[#c9a44c]/30 bg-gradient-to-r from-zinc-950 via-[#c9a44c]/10 to-zinc-950 p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1.5 max-w-xl">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
-              Vantagem B2B
-            </span>
-            <span className="text-xs font-bold text-zinc-300">Para Lojistas, Revendedores e Compradores Frequentes</span>
+      {/* Banner Dinâmico de Créditos: Saldo Ativo vs Pacotes B2B */}
+      {creditBalance > 0 ? (
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-amber-500/40 bg-gradient-to-r from-zinc-950 via-amber-500/[0.12] to-zinc-950 p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Saldo Ativo
+              </span>
+              <span className="text-xs font-bold text-amber-300">
+                {creditBalance} {creditBalance === 1 ? 'consulta pré-paga disponível' : 'consultas pré-pagas disponíveis'}
+              </span>
+            </div>
+            <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
+              Você tem créditos prontos para consulta veicular instantânea
+            </h2>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Consulte placas sem precisar passar por cartão de crédito ou aguardar aprovação de PIX. O laudo oficial é liberado no mesmo instante.
+            </p>
           </div>
-          <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
-            Consulte veículos com desconto em pacotes de créditos pré-pagos
-          </h2>
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            Feche pacotes de 5 a 50+ consultas negociadas diretamente no WhatsApp. Liberação imediata e você não precisa pagar cartão a cada placa.
-          </p>
-        </div>
 
-        <Link href="/cliente/creditos" className="shrink-0 w-full sm:w-auto">
-          <Button className="w-full sm:w-auto bg-[#c9a44c] hover:bg-[#b48d3c] text-zinc-950 font-extrabold text-xs h-10 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
-            <Coins className="w-4 h-4" />
-            <span>Conhecer Pacotes de Créditos</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
-        </Link>
-      </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto shrink-0">
+            <Link href="/cliente/consultas/nova">
+              <Button className="w-full sm:w-auto bg-[#c9a44c] hover:bg-[#b48d3c] text-zinc-950 font-extrabold text-xs h-10 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+                <PlusCircle className="w-4 h-4" />
+                <span>Usar Crédito Agora</span>
+              </Button>
+            </Link>
+            <Link href="/cliente/creditos">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto border-zinc-700 hover:border-[#c9a44c]/60 bg-zinc-900/80 text-zinc-300 hover:text-white font-bold text-xs h-10 px-4 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Coins className="w-4 h-4 text-[#c9a44c]" />
+                <span>Extrato & Recarga</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-[#c9a44c]/30 bg-gradient-to-r from-zinc-950 via-[#c9a44c]/10 to-zinc-950 p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#c9a44c]/20 text-[#e3c56c] border border-[#c9a44c]/40">
+                Vantagem B2B
+              </span>
+              <span className="text-xs font-bold text-zinc-300">Para Lojistas, Revendedores e Compradores Frequentes</span>
+            </div>
+            <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
+              Consulte veículos com desconto em pacotes de créditos pré-pagos
+            </h2>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Adquira pacotes de 5 a 50+ consultas negociadas com descontos progressivos. Liberação imediata e você não precisa pagar cartão a cada placa.
+            </p>
+          </div>
+
+          <Link href="/cliente/creditos" className="shrink-0 w-full sm:w-auto">
+            <Button className="w-full sm:w-auto bg-[#c9a44c] hover:bg-[#b48d3c] text-zinc-950 font-extrabold text-xs h-10 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <Coins className="w-4 h-4" />
+              <span>Conhecer Pacotes de Créditos</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Recent Consultations Section */}
       <div className="rounded-2xl sm:rounded-3xl bg-zinc-950/80 border border-zinc-800/80 p-4 sm:p-6 backdrop-blur-xl shadow-xl space-y-4">

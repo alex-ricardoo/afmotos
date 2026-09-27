@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { generatePurchaseAgreementService } from '@/lib/purchase-agreements/service';
+import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const result = await generatePurchaseAgreementService(body, user.id, requestId);
+    const siteInfo = resolveCurrentSiteDomain(request);
+    const result = await generatePurchaseAgreementService(body, user.id, requestId, siteInfo.fullUrl);
 
     console.info('[purchase-agreements.generate] success', {
       requestId,

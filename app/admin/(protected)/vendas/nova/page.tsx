@@ -45,6 +45,7 @@ export default async function NovaVendaPage({
         license_plate,
         color,
         mileage,
+        is_repasse,
         renavam,
         chassi,
         images:motorcycle_images(
