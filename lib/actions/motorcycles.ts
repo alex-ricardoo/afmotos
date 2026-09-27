@@ -54,6 +54,7 @@ export interface MotorcycleInputData {
   operation_type: string;
   status: string;
   featured?: boolean | null;
+  is_repasse?: boolean | null;
   license_plate?: string | null;
   renavam?: string | null;
   chassi?: string | null;
@@ -82,6 +83,7 @@ type MotorcyclePayload = {
   renavam: string | null;
   chassi: string | null;
   featured: boolean;
+  is_repasse: boolean;
   category_id?: string | null;
 };
 
@@ -117,6 +119,7 @@ function toMotorcyclePayload(values: MotorcycleInputData): MotorcyclePayload {
     renavam: renavam || null,
     chassi: chassi ? chassi.toUpperCase() : null,
     featured: Boolean(values.featured),
+    is_repasse: Boolean(values.is_repasse),
     ...(categoryId ? { category_id: categoryId } : {}),
   };
 }

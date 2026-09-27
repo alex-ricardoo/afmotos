@@ -226,6 +226,7 @@ export interface Database {
           operation_type: string;
           status: string;
           featured: boolean;
+          is_repasse?: boolean | null;
           license_plate: string | null;
           renavam?: string | null;
           chassi?: string | null;
@@ -257,6 +258,7 @@ export interface Database {
           operation_type?: string;
           status?: string;
           featured?: boolean;
+          is_repasse?: boolean | null;
           license_plate?: string | null;
           renavam?: string | null;
           chassi?: string | null;
@@ -286,6 +288,7 @@ export interface Database {
           operation_type?: string;
           status?: string;
           featured?: boolean;
+          is_repasse?: boolean | null;
           license_plate?: string | null;
           renavam?: string | null;
           chassi?: string | null;

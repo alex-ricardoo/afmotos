@@ -16,6 +16,7 @@ export interface SaleWithDetails extends Sale {
     license_plate: string | null;
     color: string | null;
     mileage: number | null;
+    is_repasse?: boolean | null;
     renavam?: string | null;
     chassi?: string | null;
     images?: Array<{
@@ -112,6 +113,7 @@ export async function getSales(params?: SalesFilterParams): Promise<SaleWithDeta
         license_plate,
         color,
         mileage,
+        is_repasse,
         renavam,
         chassi,
         images:motorcycle_images(
@@ -221,6 +223,7 @@ export async function getSaleById(id: string): Promise<SaleWithDetails | null> {
         license_plate,
         color,
         mileage,
+        is_repasse,
         renavam,
         chassi,
         images:motorcycle_images(
@@ -312,6 +315,7 @@ export async function getAvailableMotorcyclesForSale() {
       license_plate,
       color,
       mileage,
+      is_repasse,
       renavam,
       chassi,
       images:motorcycle_images(

@@ -179,9 +179,16 @@ export function SaleForm({
       financed_amount: 0,
       trade_amount: Number(initialSale?.trade_amount ?? 0),
       legal_terms_accepted: initialSale?.legal_terms_accepted ?? true,
-      is_repasse: Boolean((initialSale as any)?.is_repasse || false),
+      is_repasse:
+        (initialSale as any)?.is_repasse !== undefined
+          ? Boolean((initialSale as any).is_repasse)
+          : Boolean((defaultMotorcycle as any)?.is_repasse),
       receipt_number: initialSale?.receipt_number || initialReceiptNumber,
-      receipt_notes: initialSale?.receipt_notes || '',
+      receipt_notes:
+        initialSale?.receipt_notes ||
+        (Boolean((defaultMotorcycle as any)?.is_repasse)
+          ? 'Venda realizada na modalidade REPASSE no estado em que se encontra, sem garantia comercial ou mecânica, por valor negociado abaixo do mercado. Comprador declara ter vistoriado e aprovado o bem.'
+          : ''),
       notes: initialSale?.notes || '',
     },
   });
@@ -262,6 +269,16 @@ export function SaleForm({
       }
       if (moto.mileage !== null && moto.mileage !== undefined) {
         form.setValue('delivery_km', moto.mileage);
+      }
+      if ((moto as any).is_repasse !== undefined) {
+        const isRepasse = Boolean((moto as any).is_repasse);
+        form.setValue('is_repasse', isRepasse, { shouldValidate: true });
+        if (isRepasse && !form.getValues('receipt_notes')) {
+          form.setValue(
+            'receipt_notes',
+            'Venda realizada na modalidade REPASSE no estado em que se encontra, sem garantia comercial ou mecânica, por valor negociado abaixo do mercado. Comprador declara ter vistoriado e aprovado o bem.',
+          );
+        }
       }
     }
   };
@@ -480,6 +497,11 @@ export function SaleForm({
                                 <span className="font-bold text-white">
                                   {m.brand} {m.model} {m.version || ''}
                                 </span>
+                                {(m as any).is_repasse && (
+                                  <span className="bg-orange-500/20 border border-orange-500/40 px-1.5 py-0.5 rounded text-[10px] text-orange-400 font-bold uppercase shrink-0">
+                                    Repasse
+                                  </span>
+                                )}
                                 <span className="text-zinc-400 text-xs shrink-0">
                                   ({m.year_manufacture}/{m.year_model})
                                 </span>
@@ -522,8 +544,13 @@ export function SaleForm({
                 </div>
 
                 <div className="flex-1 text-center sm:text-left min-w-0">
-                  <h3 className="text-base font-bold text-white">
-                    {selectedMoto.brand} {selectedMoto.model} {selectedMoto.version || ''}
+                  <h3 className="text-base font-bold text-white flex items-center gap-2 flex-wrap">
+                    <span>{selectedMoto.brand} {selectedMoto.model} {selectedMoto.version || ''}</span>
+                    {(selectedMoto as any).is_repasse && (
+                      <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[10px] font-black uppercase">
+                        Repasse
+                      </span>
+                    )}
                   </h3>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1 text-xs text-zinc-400">
                     <span>Ano: {selectedMoto.year_manufacture}/{selectedMoto.year_model}</span>
@@ -1585,10 +1612,18 @@ export function SaleForm({
               name="is_repasse"
               render={({ field }) => (
                 <FormItem className="space-y-2.5">
-                  <FormLabel className="text-zinc-300 font-semibold text-sm flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-amber-500" />
-                    Modalidade da Venda & Garantia
-                  </FormLabel>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                    <FormLabel className="text-zinc-300 font-semibold text-sm flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-amber-500" />
+                      Modalidade da Venda & Garantia
+                    </FormLabel>
+                    {Boolean((selectedMoto as any)?.is_repasse) && (
+                      <span className="text-[11px] font-bold text-orange-400 bg-orange-500/10 border border-orange-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 self-start sm:self-auto">
+                        <Tag className="w-3 h-3 text-orange-400 shrink-0" />
+                        Pré-preenchido pelo cadastro do veículo (Repasse)
+                      </span>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* Opção 1: Venda Padrão com Garantia */}
                     <div

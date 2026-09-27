@@ -35,6 +35,7 @@ interface RawMotorcycle {
   engine_capacity: number | null;
   status: string;
   featured?: boolean | null;
+  is_repasse?: boolean | null;
   description?: string | null;
   fuel?: string | null;
   fuel_type?: string | null;
@@ -73,6 +74,7 @@ export async function getFeaturedMotorcycles() {
       engine_capacity,
       status,
       featured,
+      is_repasse,
       motorcycle_images (*)
     `,
     )
@@ -133,6 +135,7 @@ export async function getAllMotorcycles(searchParams?: FilterSearchParams) {
       engine_capacity,
       status,
       featured,
+      is_repasse,
       motorcycle_images (*)
     `,
     )

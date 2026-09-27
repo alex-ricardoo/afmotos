@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronRight, ArrowLeft, MapPin, Clock, BadgeCheck, ClipboardCheck, ShieldCheck } from 'lucide-react';
+import { ChevronRight, ArrowLeft, MapPin, Clock, BadgeCheck, ClipboardCheck, ShieldCheck, Tag } from 'lucide-react';
 import { Metadata } from 'next';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { getMotorcycleBySlug, getFeaturedMotorcycles } from '@/lib/queries/motorcycles';
@@ -150,7 +150,15 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                 <span className="text-xs uppercase tracking-wider font-extrabold text-[#c9a44c]">
                   {moto.brand}
                 </span>
-                <MotorcycleStatusBadge status={moto.status as MotorcycleStatus} />
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {moto.is_repasse && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[10px] font-black uppercase tracking-wider">
+                      <Tag className="w-3 h-3 text-orange-400" />
+                      Repasse
+                    </span>
+                  )}
+                  <MotorcycleStatusBadge status={moto.status as MotorcycleStatus} />
+                </div>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-heading">
                 {moto.model}
@@ -181,7 +189,15 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                   <span className="text-xs uppercase tracking-wider font-extrabold text-[#c9a44c]">
                     {moto.brand}
                   </span>
-                  <MotorcycleStatusBadge status={moto.status as MotorcycleStatus} />
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {moto.is_repasse && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[10px] font-black uppercase tracking-wider">
+                        <Tag className="w-3 h-3 text-orange-400" />
+                        Repasse
+                      </span>
+                    )}
+                    <MotorcycleStatusBadge status={moto.status as MotorcycleStatus} />
+                  </div>
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-snug font-heading">
@@ -222,17 +238,31 @@ export default async function MotorcycleDetailPage({ params }: Props) {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5">
-                  <BadgeCheck className="w-5 h-5 text-amber-400 shrink-0" />
-                  <div>
-                    <span className="block text-xs font-black text-amber-300">
-                      Garantia de 90 dias*
-                    </span>
-                    <span className="block text-[10px] text-zinc-400">
-                      Cobre motor e câmbio por 90 dias (exceto motos de repasse).
-                    </span>
+                {moto.is_repasse ? (
+                  <div className="flex items-center gap-2.5 bg-orange-500/10 border border-orange-500/30 rounded-xl px-3.5 py-2.5">
+                    <Tag className="w-5 h-5 text-orange-400 shrink-0" />
+                    <div>
+                      <span className="block text-xs font-black text-orange-300">
+                        Modalidade Repasse (Preço Especial)
+                      </span>
+                      <span className="block text-[10px] text-zinc-400">
+                        Veículo vendido no estado em que se encontra, sem garantia comercial de loja. Oportunidade com valor abaixo de mercado!
+                      </span>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5">
+                    <BadgeCheck className="w-5 h-5 text-amber-400 shrink-0" />
+                    <div>
+                      <span className="block text-xs font-black text-amber-300">
+                        Garantia de 90 dias*
+                      </span>
+                      <span className="block text-[10px] text-zinc-400">
+                        Cobre motor e câmbio por 90 dias (conforme CDC).
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5">
                   <ClipboardCheck className="w-5 h-5 text-amber-400 shrink-0" />
                   <div>
