@@ -778,6 +778,16 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => setMotoToDelete(moto)}
+                          className="h-8 w-8 p-0 rounded-xl text-red-400/80 hover:text-red-300 hover:bg-red-500/10 border border-zinc-800 hover:border-red-500/30 cursor-pointer transition-colors"
+                          title="Excluir Motocicleta"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -789,29 +799,40 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
       )}
 
       {/* Delete Confirmation Modal */}
-      <Dialog open={!!motoToDelete} onOpenChange={(open) => !open && setMotoToDelete(null)}>
+      <Dialog open={!!motoToDelete} onOpenChange={(open) => !open && !isDeleting && setMotoToDelete(null)}>
         <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-rose-500" />
-              Confirmar Exclusão
+              Confirmar Exclusão da Moto
             </DialogTitle>
-            <DialogDescription className="text-sm text-zinc-400 pt-2">
-              Tem certeza que deseja excluir permanentemente a motocicleta{' '}
-              <strong className="text-white">
-                {motoToDelete?.brand} {motoToDelete?.model} ({motoToDelete?.year_model})
-              </strong>
-              ? Esta ação não pode ser desfeita.
+            <DialogDescription className="text-sm text-zinc-400 pt-2 space-y-2">
+              <p>
+                Tem certeza que deseja excluir permanentemente a motocicleta{' '}
+                <strong className="text-white">
+                  {motoToDelete?.brand} {motoToDelete?.model} ({motoToDelete?.year_model})
+                </strong>
+                ?
+              </p>
+              {motoToDelete?.license_plate && (
+                <p className="text-xs font-mono text-zinc-400">
+                  Placa: <span className="text-[#e3c56c] font-bold">{motoToDelete.license_plate}</span>
+                  {motoToDelete?.internal_code && ` • Cód: ${motoToDelete.internal_code}`}
+                </p>
+              )}
+              <p className="text-xs text-rose-400/80 bg-rose-500/10 border border-rose-500/20 rounded-xl p-2.5">
+                Esta ação removerá as fotos, ficha técnica e dados cadastrais. Não poderá ser desfeita.
+              </p>
             </DialogDescription>
           </DialogHeader>
 
-          <DialogFooter className="gap-2 sm:gap-0 pt-4">
+          <DialogFooter className="gap-2 sm:gap-2 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => setMotoToDelete(null)}
               disabled={isDeleting}
-              className="border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 rounded-xl cursor-pointer"
+              className="flex-1 border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 rounded-xl cursor-pointer h-11"
             >
               Cancelar
             </Button>
@@ -820,9 +841,10 @@ export function AdminMotorcycleStock({ initialData, siteName }: Props) {
               variant="destructive"
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl cursor-pointer"
+              className="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl cursor-pointer h-11 flex items-center justify-center gap-2"
             >
-              {isDeleting ? 'Excluindo...' : 'Excluir Definitivamente'}
+              <Trash2 className="w-4 h-4" />
+              <span>{isDeleting ? 'Excluindo...' : 'Excluir Moto'}</span>
             </Button>
           </DialogFooter>
         </DialogContent>

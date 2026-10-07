@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bike, Download, MessageSquare, Printer, Pencil, MoreVertical, Trash2 } from 'lucide-react';
-import { DeleteSaleButton } from '@/components/admin/sales/delete-sale-button';
+import { DeleteSaleModal } from '@/components/admin/sales/delete-sale-modal';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -54,6 +54,8 @@ const getPaymentStatusBadge = (status?: string | null) => {
 };
 
 export function SalesTable({ sales }: SalesTableProps) {
+  const [saleToDelete, setSaleToDelete] = useState<SaleWithDetails | null>(null);
+
   return (
     <div className="bg-zinc-950/70 border border-zinc-800/80 rounded-3xl overflow-hidden shadow-xs">
       <Table>
@@ -310,20 +312,13 @@ export function SalesTable({ sales }: SalesTableProps) {
 
                           <DropdownMenuSeparator className="bg-zinc-800" />
 
-                          <DeleteSaleButton
-                            saleId={sale.id}
-                            motorcycleId={sale.motorcycle_id}
-                            receiptNumber={sale.receipt_number}
-                            customTrigger={(openModal) => (
-                              <DropdownMenuItem
-                                onClick={openModal}
-                                className="cursor-pointer text-xs text-red-400 focus:text-red-300 focus:bg-red-500/10"
-                              >
-                                <Trash2 className="mr-2 h-3.5 w-3.5 text-red-400" />
-                                <span>Excluir Venda</span>
-                              </DropdownMenuItem>
-                            )}
-                          />
+                          <DropdownMenuItem
+                            onClick={() => setSaleToDelete(sale)}
+                            className="cursor-pointer text-xs text-red-400 focus:text-red-300 focus:bg-red-500/10"
+                          >
+                            <Trash2 className="mr-2 h-3.5 w-3.5 text-red-400" />
+                            <span>Excluir Venda</span>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -334,6 +329,13 @@ export function SalesTable({ sales }: SalesTableProps) {
           )}
         </TableBody>
       </Table>
+
+      {/* Modal de Confirmação de Exclusão da Venda */}
+      <DeleteSaleModal
+        sale={saleToDelete}
+        isOpen={Boolean(saleToDelete)}
+        onClose={() => setSaleToDelete(null)}
+      />
     </div>
   );
 }

@@ -231,6 +231,7 @@ export function SaleCard({ sale }: SaleCardProps) {
         )}
 
         <DeleteSaleButton
+          sale={sale}
           saleId={sale.id}
           motorcycleId={sale.motorcycle_id}
           receiptNumber={sale.receipt_number}
