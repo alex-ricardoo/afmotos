@@ -18,6 +18,8 @@ import {
   ExternalLink,
   WifiOff,
   RotateCcw,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatBrazilianPlate, isValidBrazilianPlate, normalizeBrazilianPlate } from '@/lib/vehicle-lookup/plate';
@@ -41,6 +43,7 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
   const [cachedResult, setCachedResult] = useState<VehicleConsultationSummaryDto | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReprocessConfirmOpen, setIsReprocessConfirmOpen] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [errorDetails, setErrorDetails] = useState<{
     message: string;
@@ -49,9 +52,12 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
     balance?: string;
     isTokenError?: boolean;
     isProviderUnavailable?: boolean;
+    isConsultationInProgress?: boolean;
+    isChargeStatusUnknown?: boolean;
     userGuidance?: string;
     attempts?: number;
     failedPlate?: string;
+    canManualReprocess?: boolean;
   } | null>(null);
 
   // Auto-focus on plate input on mount
@@ -101,18 +107,44 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
     }
   };
 
-  const handleExecuteConsultation = async (confirmedPlate: string) => {
+  const handleExecuteConsultation = async (
+    confirmedPlate: string,
+    options?: { isManualReprocess?: boolean; confirmedManualReprocess?: boolean }
+  ) => {
     setIsExecuting(true);
     setErrorDetails(null);
     try {
       const res = await executeVehiclePlateLookupAction({
         plate: confirmedPlate,
         confirmedPlate,
+        isManualReprocess: options?.isManualReprocess,
+        confirmedManualReprocess: options?.confirmedManualReprocess,
+        forceRefresh: options?.confirmedManualReprocess,
       });
 
       if (res.error) {
         setIsExecuting(false);
         setIsModalOpen(false);
+
+        if (res.isConsultationInProgress || res.statusCode === 409) {
+          setErrorDetails({
+            message: 'Já existe uma consulta em andamento para esta placa. Para evitar cobrança duplicada, aguarde a conclusão.',
+            isConsultationInProgress: true,
+          });
+          toast.warning('Já existe uma consulta em andamento para esta placa. Para evitar cobrança duplicada, aguarde a conclusão.', { duration: 10000 });
+          return;
+        }
+
+        if (res.isChargeStatusUnknown) {
+          setErrorDetails({
+            message: res.error,
+            isChargeStatusUnknown: true,
+            canManualReprocess: true,
+            failedPlate: confirmedPlate,
+          });
+          toast.error(res.error, { duration: 10000 });
+          return;
+        }
 
         if (res.isInsufficientBalance) {
           setErrorDetails({
@@ -145,16 +177,22 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
             message: res.error,
             isProviderUnavailable: true,
             userGuidance: res.userGuidance,
-            attempts: res.attempts || 3,
+            attempts: 1,
             failedPlate: confirmedPlate,
+            canManualReprocess: true,
           });
           toast.error(
-            'Bases oficiais temporariamente indisponíveis após 3 tentativas. Nenhum crédito foi debitado.',
+            'Bases oficiais ou API Brasil temporariamente indisponíveis. Retentativas automáticas desligadas.',
             { duration: 8000 }
           );
           return;
         }
 
+        setErrorDetails({
+          message: res.error,
+          failedPlate: confirmedPlate,
+          canManualReprocess: true,
+        });
         toast.error(res.error);
         return;
       }
@@ -217,7 +255,7 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
           <div className="pt-2">
             <Button
               type="submit"
-              disabled={isCheckingCache || !plateInput.trim()}
+              disabled={isCheckingCache || isExecuting || !plateInput.trim()}
               size="lg"
               className="w-full h-13 rounded-2xl text-sm sm:text-base font-bold shadow-lg gap-2.5 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
             >
@@ -236,10 +274,42 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
           </div>
         </form>
 
-        {/* Error Details Banner (Insufficient balance / Token expired) */}
+        {/* Error Details Banner */}
         {errorDetails && (
           <div className="mt-6 p-5 rounded-2xl bg-destructive/10 border border-destructive/30 animate-in fade-in slide-in-from-top-3 duration-200">
-            {errorDetails.isInsufficientBalance ? (
+            {errorDetails.isConsultationInProgress ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5 text-amber-500 font-bold text-sm">
+                  <Clock className="w-5 h-5 shrink-0" />
+                  Consulta em Andamento
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Já existe uma consulta em andamento para esta placa. Para evitar cobrança duplicada, aguarde a conclusão.
+                </p>
+              </div>
+            ) : errorDetails.isChargeStatusUnknown ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5 text-amber-500 font-bold text-sm">
+                  <AlertTriangle className="w-5 h-5 shrink-0" />
+                  Tempo Limite Esgotado (Cobrança Desconhecida)
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  A requisição foi enviada à API Brasil, mas o tempo limite de espera (120s) expirou sem resposta do gateway. Para garantir a sua segurança financeira, o reenvio automático foi estritamente bloqueado.
+                </p>
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setIsReprocessConfirmOpen(true)}
+                    className="rounded-xl text-xs font-bold gap-2 cursor-pointer shadow-xs"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reprocessar Manualmente
+                  </Button>
+                </div>
+              </div>
+            ) : errorDetails.isInsufficientBalance ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2.5 text-destructive font-bold text-sm">
                   <CreditCard className="w-5 h-5 shrink-0" />
@@ -278,29 +348,39 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {errorDetails.userGuidance ||
-                    'Não foi possível concluir a consulta veicular no momento devido a instabilidade temporária nas bases do SENATRAN / DETRAN ou na API Brasil. Foram realizadas 3 tentativas automáticas sem sucesso.'}
+                    'Não foi possível concluir a consulta veicular no momento devido a instabilidade temporária nas bases do SENATRAN / DETRAN ou na API Brasil. Retentativas automáticas foram desligadas.'}
                 </p>
-                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/40 border border-border/50 text-[11px] text-muted-foreground">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>
-                    <strong>Segurança de Cobrança:</strong> Nenhum crédito foi tarifado da sua conta nesta consulta.
-                  </span>
-                </div>
                 <div className="pt-1">
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => handleExecuteConsultation(errorDetails.failedPlate || plateInput)}
+                    onClick={() => setIsReprocessConfirmOpen(true)}
                     className="rounded-xl text-xs font-bold gap-2 cursor-pointer border-amber-500/40 text-amber-500 hover:bg-amber-500/10 transition-colors"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    Tentar Novamente Agora
+                    Reprocessar Consulta
                   </Button>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-destructive">{errorDetails.message}</p>
+              <div className="space-y-3">
+                <p className="text-xs text-destructive">{errorDetails.message}</p>
+                {errorDetails.canManualReprocess && (
+                  <div className="pt-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsReprocessConfirmOpen(true)}
+                      className="rounded-xl text-xs font-bold gap-2 cursor-pointer border-destructive/40 text-destructive hover:bg-destructive/10"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Reprocessar Consulta
+                    </Button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -394,6 +474,73 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
         isMockMode={isMockMode}
         isExecuting={isExecuting}
       />
+
+      {/* Manual Reprocess Confirmation Modal */}
+      {isReprocessConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-3xl border border-destructive/40 bg-card p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-2xl bg-destructive/15 text-destructive shrink-0 mt-0.5">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-bold text-foreground text-base">
+                  Confirmar Reprocessamento Manual
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Atenção: Um novo processamento fará uma nova chamada tarifável à API Brasil no valor estimado de{' '}
+                  <strong className="text-foreground">R$ 30,00</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-3.5 space-y-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-foreground">Placa a consultar:</span>
+                <span className="font-mono font-bold text-foreground">
+                  {formatBrazilianPlate(errorDetails?.failedPlate || plateInput)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-foreground">Tarifa estimada:</span>
+                <span className="font-bold text-destructive">R$ 30,00</span>
+              </div>
+              <p className="text-[11px] pt-1 text-muted-foreground">
+                Esta ação gerará uma nova chamada tarifável com trava de execução única e prazo de até 120s.
+              </p>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isExecuting}
+                onClick={() => setIsReprocessConfirmOpen(false)}
+                className="w-full sm:w-auto rounded-xl text-xs font-semibold"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={isExecuting}
+                onClick={async () => {
+                  const plateToUse = errorDetails?.failedPlate || plateInput;
+                  setIsReprocessConfirmOpen(false);
+                  await handleExecuteConsultation(plateToUse, {
+                    isManualReprocess: true,
+                    confirmedManualReprocess: true,
+                  });
+                }}
+                className="w-full sm:w-auto rounded-xl text-xs font-bold gap-2 cursor-pointer shadow-xs"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Confirmar Reprocessamento (Cobrar R$ 30,00)
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

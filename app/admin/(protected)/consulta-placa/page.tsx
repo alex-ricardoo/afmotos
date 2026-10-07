@@ -15,6 +15,8 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 150;
 
 export default async function AdminVehicleLookupPage() {
   const config = getVehicleLookupConfig();

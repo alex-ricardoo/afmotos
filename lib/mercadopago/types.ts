@@ -31,7 +31,13 @@ export type ConsultationLifecycleStatus =
 export type ProviderFailureClass = 'transient' | 'permanent' | 'unknown';
 
 export type DeliveryJobStatus =
-  'pending' | 'processing' | 'completed' | 'retry_scheduled' | 'failed_permanent';
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'retry_scheduled'
+  | 'failed_permanent'
+  | 'manual_review'
+  | 'charge_status_unknown';
 
 export interface ConsultationDeliveryJobRecord {
   id: string;

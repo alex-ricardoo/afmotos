@@ -15,17 +15,16 @@ export interface VehicleLookupConfig {
 const TIMEOUT_MIN_MS = 3_000;
 
 /**
- * Maximum allowed timeout (ms). Values above this risk holding serverless functions
- * past their execution budget.
+ * Maximum allowed timeout (ms). Allows up to 150s with margin for Vercel functions.
  */
-const TIMEOUT_MAX_MS = 30_000;
+const TIMEOUT_MAX_MS = 150_000;
 
 /**
  * Default timeout when APIBRASIL_REQUEST_TIMEOUT_MS is not set or invalid.
- * 15 s is tolerant enough for the API Brasil gateway while keeping 2 attempts
- * well within Vercel's 60 s execution limit (~31 s total budget).
+ * 120s ensures API Brasil "Veículos Total" queries (45-70s) complete reliably
+ * without premature termination or duplicate attempts.
  */
-const TIMEOUT_DEFAULT_MS = 15_000;
+const TIMEOUT_DEFAULT_MS = 120_000;
 
 /**
  * Parses and validates the APIBRASIL_REQUEST_TIMEOUT_MS environment variable.

@@ -13,6 +13,8 @@ export interface ExecuteLookupActionInput {
   motorcycleId?: string | null;
   sellRequestId?: string | null;
   forceRefresh?: boolean;
+  isManualReprocess?: boolean;
+  confirmedManualReprocess?: boolean;
 }
 
 export async function checkPlateCacheAction(plate: string) {
@@ -58,6 +60,43 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
       return { error: `A placa "${input.plate}" não possui formato válido (antigo ou Mercosul).` };
     }
 
+    const { logProviderEvent } = await import('@/lib/vehicle-lookup/provider-logger');
+    const logicalRequestId = `req_admin_${crypto.randomUUID()}`;
+
+    if (input.isManualReprocess) {
+      logProviderEvent({
+        event: 'provider_manual_reprocess_requested',
+        provider: 'apibrasil',
+        operation: 'veiculos-total',
+        placa_normalizada: normalized,
+        logical_request_id: logicalRequestId,
+        physical_request_id: 'pending',
+        attempt_number: 1,
+        timeout_ms: 120000,
+        duration_ms: 0,
+        status: 'created',
+        charge_status: 'not_sent',
+        origem: 'admin_panel',
+      });
+    }
+
+    if (input.confirmedManualReprocess) {
+      logProviderEvent({
+        event: 'provider_manual_reprocess_confirmed',
+        provider: 'apibrasil',
+        operation: 'veiculos-total',
+        placa_normalizada: normalized,
+        logical_request_id: logicalRequestId,
+        physical_request_id: 'pending',
+        attempt_number: 1,
+        timeout_ms: 120000,
+        duration_ms: 0,
+        status: 'created',
+        charge_status: 'not_sent',
+        origem: 'admin_panel',
+      });
+    }
+
     console.log(`[VEHICLE_LOOKUP] [executeAction] Chamando executeVehiclePlateLookup...`);
     const result = await executeVehiclePlateLookup(
       {
@@ -67,7 +106,11 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         confirmationMessageVersion: input.confirmationMessageVersion || 'v1.0',
         motorcycleId: input.motorcycleId,
         sellRequestId: input.sellRequestId,
-        forceRefresh: input.forceRefresh,
+        forceRefresh: Boolean(input.forceRefresh && input.confirmedManualReprocess),
+        logicalRequestId,
+        source: 'admin_panel',
+        isManualReprocess: input.isManualReprocess,
+        confirmedManualReprocess: input.confirmedManualReprocess,
       },
       supabase
     );
@@ -84,6 +127,28 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     };
   } catch (err: any) {
     console.error('[VEHICLE_LOOKUP] [executeAction] ❌ Erro durante a execução da consulta veicular:', err);
+
+    if (
+      err?.name === 'ConsultationInProgressError' ||
+      err?.code === 'CONSULTATION_IN_PROGRESS' ||
+      err?.statusCode === 409
+    ) {
+      return {
+        error:
+          'Já existe uma consulta em andamento para esta placa. Para evitar cobrança duplicada, aguarde a conclusão.',
+        isConsultationInProgress: true,
+        statusCode: 409,
+      };
+    }
+
+    if (err?.name === 'ChargeStatusUnknownError' || err?.code === 'CHARGE_STATUS_UNKNOWN') {
+      return {
+        error: err.message,
+        isChargeStatusUnknown: true,
+        statusCode: 504,
+        canManualReprocess: true,
+      };
+    }
 
     if (err?.name === 'InsufficientBalanceError') {
       console.warn(`[VEHICLE_LOOKUP] [executeAction] ⚠️ Saldo insuficiente na API Brasil: ${err.balance}`);
@@ -104,14 +169,14 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     }
 
     if (err?.name === 'ProviderUnavailableError' || err?.isProviderUnavailable) {
-      console.warn(`[VEHICLE_LOOKUP] [executeAction] ⚠️ Bases oficiais ou API Brasil temporariamente indisponíveis após ${err.attempts || 3} tentativas.`);
+      console.warn(`[VEHICLE_LOOKUP] [executeAction] ⚠️ Bases oficiais ou API Brasil temporariamente indisponíveis.`);
       return {
         error: err.message,
         isProviderUnavailable: true,
-        attempts: err.attempts || 3,
+        attempts: 1,
         lastStatusCode: err.lastStatusCode,
         userGuidance:
-          'Não foi possível consultar as bases oficiais no momento por instabilidade temporária no SENATRAN / DETRAN ou na API Brasil. Foram realizadas 3 tentativas automáticas sem sucesso. Nenhum crédito foi debitado. Você pode tentar novamente agora.',
+          'Não foi possível consultar as bases oficiais no momento por instabilidade temporária no SENATRAN / DETRAN ou na API Brasil. Retentativas automáticas foram desligadas para sua segurança financeira.',
       };
     }
 

@@ -1,5 +1,11 @@
 import { createAdminClient } from '../supabase/admin.ts';
-import { findExistingConsultation, executeVehiclePlateLookup } from '../vehicle-lookup/service.ts';
+import {
+  findExistingConsultation,
+  executeVehiclePlateLookup,
+  ConsultationInProgressError,
+  ChargeStatusUnknownError,
+} from '../vehicle-lookup/service.ts';
+import { logProviderEvent } from '../vehicle-lookup/provider-logger.ts';
 import { getVehicleLookupConfig } from '../vehicle-lookup/config.ts';
 import { classifyProviderFailure } from './failure-classifier.ts';
 import { initiateRefundForFailedDelivery } from '../mercadopago/refund-service.ts';
@@ -728,27 +734,27 @@ export async function executeSingleDeliveryJob(
       'warn',
     );
 
-    // 5. Avalia se é falha transitória elegível a retry
-    const isRetryable =
-      (classified.failureClass === 'transient' ||
-        (classified.failureClass === 'unknown' && job.attempt_count < 3)) &&
-      job.attempt_count < job.max_attempts;
-
-    if (isRetryable) {
-      const nextRetryAt = calculateNextRetryTimestamp(
-        job.attempt_count,
-        classified.retryAfterSeconds,
+    // 5. Trata bloqueio por concorrência ativa (409 CONSULTATION_IN_PROGRESS)
+    if (
+      err instanceof ConsultationInProgressError ||
+      (err as any)?.code === 'CONSULTATION_IN_PROGRESS' ||
+      (err as any)?.statusCode === 409
+    ) {
+      logVehicleDeliveryEvent(
+        'delivery_concurrent_lock_active',
+        {
+          jobIdMasked: maskId(job.id),
+          consultationIdMasked: maskId(consultation.id),
+          plateToLookup,
+        },
+        'warn',
       );
 
       await adminDb
         .from('consultation_delivery_jobs')
         .update({
-          status: 'retry_scheduled',
-          last_error_code: classified.failureCode,
-          last_error_message_safe: classified.errorMessageSafe,
-          last_http_status: classified.httpStatus,
-          last_failure_class: classified.failureClass,
-          next_retry_at: nextRetryAt,
+          status: 'pending',
+          next_retry_at: new Date(Date.now() + 15000).toISOString(),
           locked_at: null,
           locked_by: null,
           lock_expires_at: null,
@@ -756,36 +762,87 @@ export async function executeSingleDeliveryJob(
         })
         .eq('id', job.id);
 
+      return {
+        success: false,
+        status: 'pending',
+        error: 'Consulta em andamento por outra chamada concorrente.',
+      };
+    }
+
+    // 6. REGRA MANDATÓRIA: Bloqueio estrito de retry automático após request enviado à API Brasil
+    logProviderEvent({
+      event: 'provider_retry_blocked',
+      provider: 'apibrasil',
+      operation: 'veiculos-total',
+      placa_normalizada: plateToLookup,
+      logical_request_id: `delivery_job_${job.id}`,
+      physical_request_id: `worker_${job.id}_att_${job.attempt_count}`,
+      attempt_number: job.attempt_count,
+      timeout_ms: 120000,
+      duration_ms: 0,
+      status: 'charge_status_unknown',
+      charge_status: 'unknown',
+      origem: 'worker',
+      extra: {
+        failure_code: classified.failureCode,
+        reason: 'AUTOMATIC_RETRY_STRICTLY_BLOCKED_POST_REQUEST_SENT',
+      },
+    });
+
+    const isChargeUnknown =
+      err instanceof ChargeStatusUnknownError ||
+      (err as any)?.code === 'CHARGE_STATUS_UNKNOWN' ||
+      classified.failureCode === 'APIBRASIL_TIMEOUT' ||
+      classified.failureCode === 'APIBRASIL_TIMEOUT_CHARGE_UNKNOWN' ||
+      classified.failureClass === 'unknown';
+
+    if (isChargeUnknown) {
+      const nowIso = new Date().toISOString();
+      await adminDb
+        .from('consultation_delivery_jobs')
+        .update({
+          status: 'manual_review',
+          last_error_code: 'APIBRASIL_TIMEOUT_CHARGE_UNKNOWN',
+          last_error_message_safe:
+            'Possível tarifação ambígua na API Brasil. Retentativas automáticas bloqueadas para evitar duplicidade de cobrança. Requer reconciliação manual.',
+          last_http_status: classified.httpStatus,
+          last_failure_class: 'unknown',
+          failed_at: nowIso,
+          locked_at: null,
+          locked_by: null,
+          lock_expires_at: null,
+          updated_at: nowIso,
+        })
+        .eq('id', job.id);
+
       await adminDb
         .from('customer_plate_consultations')
         .update({
-          status: 'retry_scheduled',
-          lookup_error_message: classified.errorMessageSafe,
-          updated_at: new Date().toISOString(),
+          status: 'manual_review',
+          lookup_error_message:
+            'Consulta em auditoria operacional devido a tempo limite do provedor. Reconciliação pendente.',
+          updated_at: nowIso,
         })
         .eq('id', consultation.id);
-
-      logVehicleDeliveryEvent('retry_scheduled', {
-        jobIdMasked: maskId(job.id),
-        consultationIdMasked: maskId(consultation.id),
-        nextRetryAt,
-        attempt: job.attempt_count,
-      });
 
       await adminDb.from('consultation_audit_logs').insert({
         consultation_id: consultation.id,
         transaction_id: job.transaction_id,
         actor_type: 'system',
-        event: 'apibrasil_retry_scheduled',
+        event: 'charge_status_unknown_alert',
         details: {
           job_id: job.id,
-          failure_code: classified.failureCode,
-          next_retry_at: nextRetryAt,
-          attempt: job.attempt_count,
+          failure_code: 'APIBRASIL_TIMEOUT_CHARGE_UNKNOWN',
+          alert: 'Possível cobrança externa sem resposta recebida. Retentativas automáticas bloqueadas.',
         },
       });
 
-      return { success: false, status: 'retry_scheduled', error: classified.errorMessageSafe };
+      return {
+        success: false,
+        status: 'manual_review',
+        error:
+          'Tempo limite na comunicação com a API Brasil. Retentativa automática bloqueada para evitar cobrança duplicada. Requer auditoria manual.',
+      };
     }
 
     // 6. Falha Permanente ou Esgotamento de Tentativas

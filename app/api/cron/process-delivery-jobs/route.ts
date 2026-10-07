@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { claimAndProcessDeliveryJobs } from '@/lib/vehicle-delivery/delivery-service';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // 60 segundos permitidos na Vercel
+export const runtime = 'nodejs';
+export const maxDuration = 150; // 150 segundos permitidos na Vercel (120s timeout + margem para persistência)
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
