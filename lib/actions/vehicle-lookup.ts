@@ -43,6 +43,70 @@ export async function checkPlateCacheAction(plate: string) {
   }
 }
 
+export async function syncConsultationStatusAction(plate: string) {
+  try {
+    const normalized = normalizeBrazilianPlate(plate);
+    if (!isValidBrazilianPlate(normalized)) {
+      return { status: 'invalid_plate' as const };
+    }
+
+    const supabase = await createClient();
+
+    // 1. Checa se já existe consulta concluída
+    const cached = await checkCacheForPlate(normalized);
+    if (cached && cached.status === 'COMPLETED') {
+      return {
+        status: 'completed' as const,
+        consultationId: cached.id,
+        isMock: cached.is_mock,
+      };
+    }
+
+    // 2. Checa se o lock distribuído ainda está ativo
+    const lockKey = `apibrasil:veiculos-total:${normalized}`;
+    const { data: lockRow } = await supabase
+      .from('vehicle_provider_locks')
+      .select('locked_at, lock_expires_at, locked_by')
+      .eq('lock_key', lockKey)
+      .gt('lock_expires_at', new Date().toISOString())
+      .maybeSingle();
+
+    if (lockRow) {
+      return {
+        status: 'processing' as const,
+        startedAt: lockRow.locked_at,
+        expiresAt: lockRow.lock_expires_at,
+      };
+    }
+
+    // 3. Checa se existe tentativa ambígua recente
+    const { data: attemptRow } = await supabase
+      .from('vehicle_provider_attempts')
+      .select('id, status, charge_status, created_at')
+      .eq('provider', 'apibrasil')
+      .eq('operation', 'veiculos-total')
+      .eq('plate_normalized', normalized)
+      .in('status', ['charge_status_unknown', 'manual_review', 'response_persistence_failed'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (attemptRow) {
+      return {
+        status: 'charge_status_unknown' as const,
+        attemptId: attemptRow.id,
+        attemptStatus: attemptRow.status,
+        canManualReprocess: true,
+      };
+    }
+
+    return { status: 'not_found' as const };
+  } catch (err: any) {
+    console.error('[VEHICLE_LOOKUP] [syncConsultationStatusAction] Erro ao sincronizar status:', err);
+    return { status: 'error' as const, message: err?.message };
+  }
+}
+
 export async function executeVehiclePlateLookupAction(input: ExecuteLookupActionInput) {
   console.log(`[VEHICLE_LOOKUP] [executeAction] 🚀 Recebida solicitação de consulta veicular para a placa: "${input.plate}"`);
   try {
