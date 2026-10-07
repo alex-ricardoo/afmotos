@@ -150,21 +150,7 @@ export async function getSales(params?: SalesFilterParams): Promise<SaleWithDeta
     return [];
   }
 
-  const rawSales = (data as unknown as SaleWithDetails[]) || [];
-
-  // Format images with correct public URLs
-  let result = rawSales.map((sale) => {
-    if (sale.motorcycle && sale.motorcycle.images) {
-      return {
-        ...sale,
-        motorcycle: {
-          ...sale.motorcycle,
-          images: resolveMotorcycleImages(supabase, sale.motorcycle.images),
-        },
-      };
-    }
-    return sale;
-  });
+  let result = (data as unknown as SaleWithDetails[]) || [];
 
   if (params?.search) {
     const searchLower = params.search.toLowerCase().trim();
@@ -198,6 +184,20 @@ export async function getSales(params?: SalesFilterParams): Promise<SaleWithDeta
       return info.status === params.warrantyStatus;
     });
   }
+
+  // Format images with correct public URLs only for filtered results
+  result = result.map((sale) => {
+    if (sale.motorcycle && sale.motorcycle.images) {
+      return {
+        ...sale,
+        motorcycle: {
+          ...sale.motorcycle,
+          images: resolveMotorcycleImages(supabase, sale.motorcycle.images),
+        },
+      };
+    }
+    return sale;
+  });
 
   return result;
 }

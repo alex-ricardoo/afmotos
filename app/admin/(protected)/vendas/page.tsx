@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { Plus, Receipt, Sparkles } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
@@ -69,7 +70,9 @@ export default async function VendasPage({
       <SalesSummary metrics={metrics} />
 
       {/* Filtros */}
-      <SaleFilters />
+      <Suspense fallback={null}>
+        <SaleFilters />
+      </Suspense>
 
       {/* Listagem Responsiva */}
       {sales.length === 0 ? (

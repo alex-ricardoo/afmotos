@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useTransition, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, X, Calendar, Filter, ShieldCheck } from 'lucide-react';
+import { Search, X, Calendar, Filter, ShieldCheck, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,11 +51,20 @@ export function SaleFilters() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const currentSearch = searchParams.get('search') || '';
   const currentMonth = searchParams.get('month') || 'ALL';
   const currentPayment = searchParams.get('payment') || 'ALL';
   const currentWarranty = searchParams.get('warranty') || 'ALL';
+
+  const [searchTerm, setSearchTerm] = useState(currentSearch);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sincroniza o estado local caso a URL mude externamente (ex: botão limpar ou voltar)
+  useEffect(() => {
+    setSearchTerm(currentSearch);
+  }, [currentSearch]);
 
   const monthOptions = useMemo(() => {
     const options = [{ value: 'ALL', label: 'Todos os Meses' }];
@@ -76,6 +85,65 @@ export function SaleFilters() {
     return found ? found.label : 'Todos os Meses';
   }, [currentMonth, monthOptions]);
 
+  // Função centralizada para aplicar a busca na URL de forma não-bloqueante
+  const applySearch = (val: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    const trimmed = val.trim();
+    if (trimmed) {
+      params.set('search', trimmed);
+    } else {
+      params.delete('search');
+    }
+    startTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`);
+    });
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchTerm(val);
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      const trimmed = val.trim();
+      if (trimmed) {
+        params.set('search', trimmed);
+      } else {
+        params.delete('search');
+      }
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`);
+      });
+    }, 300);
+  };
+
+  // Limpa o timer ao desmontar
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applySearch(searchTerm);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    applySearch('');
+  };
+
   const updateQueryParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value && value !== 'ALL') {
@@ -83,15 +151,23 @@ export function SaleFilters() {
     } else {
       params.delete(key);
     }
-    router.replace(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`);
+    });
   };
 
   const clearAllFilters = () => {
-    router.replace(pathname);
+    setSearchTerm('');
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    startTransition(() => {
+      router.replace(pathname);
+    });
   };
 
   const hasActiveFilters = Boolean(
-    currentSearch ||
+    searchTerm ||
     (currentMonth && currentMonth !== 'ALL') ||
     (currentPayment && currentPayment !== 'ALL') ||
     (currentWarranty && currentWarranty !== 'ALL'),
@@ -102,17 +178,24 @@ export function SaleFilters() {
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
         {/* Campo de busca textual */}
         <div className="sm:col-span-12 lg:col-span-4 relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+          {isPending ? (
+            <Loader2 className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#c9a44c] animate-spin" />
+          ) : (
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+          )}
           <Input
-            value={currentSearch}
-            onChange={(e) => updateQueryParams('search', e.target.value)}
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Buscar por comprador, moto, placa, CPF ou recibo..."
             className="pl-9.5 pr-8 h-11 bg-zinc-900/80 border-zinc-800 focus:border-[#c9a44c] focus:ring-1 focus:ring-[#c9a44c]/30 rounded-xl text-xs sm:text-sm text-white placeholder:text-zinc-500"
           />
-          {currentSearch && (
+          {searchTerm && (
             <button
-              onClick={() => updateQueryParams('search', '')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200 cursor-pointer"
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200 cursor-pointer p-0.5 transition-colors"
+              title="Limpar busca"
             >
               <X className="w-4 h-4" />
             </button>
