@@ -126,6 +126,68 @@ function createSimulatedSupabase(db: SimulatedDb) {
         return { data: false, error: null };
       }
 
+      if (fn === 'renew_vehicle_provider_lock') {
+        const lockKey = params.p_lock_key;
+        const existing = db.locks.get(lockKey);
+        if (existing && existing.locked_by === params.p_locked_by) {
+          const ttlMs = (params.p_ttl_seconds || 180) * 1000;
+          existing.lock_expires_at = new Date(now.getTime() + ttlMs).toISOString();
+          return {
+            data: [{
+              renewed: true,
+              lock_key: lockKey,
+              locked_by: params.p_locked_by,
+              new_expires_at: existing.lock_expires_at,
+            }],
+            error: null,
+          };
+        }
+        return {
+          data: [{
+            renewed: false,
+            lock_key: lockKey,
+            locked_by: params.p_locked_by,
+            reason: 'LOCK_NOT_HELD_OR_EXPIRED',
+          }],
+          error: null,
+        };
+      }
+
+      if (fn === 'check_ambiguous_provider_attempt') {
+        const found = db.attempts.find(
+          (a) =>
+            a.provider === params.p_provider &&
+            a.operation === params.p_operation &&
+            a.plate_normalized === params.p_plate_normalized &&
+            ['request_sent', 'response_received', 'charge_status_unknown', 'manual_review'].includes(a.status)
+        );
+        if (found) {
+          return {
+            data: [{
+              has_ambiguous_attempt: true,
+              attempt_id: found.id,
+              status: found.status,
+              charge_status: found.charge_status,
+              logical_request_id: found.logical_request_id,
+              physical_request_id: found.physical_request_id,
+              created_at: found.created_at,
+            }],
+            error: null,
+          };
+        }
+        return {
+          data: [{ has_ambiguous_attempt: false }],
+          error: null,
+        };
+      }
+
+      if (fn === 'audit_manual_vehicle_lookup_reprocess') {
+        return {
+          data: [{ id: 'audit-' + Math.random().toString(36).substring(2, 9) }],
+          error: null,
+        };
+      }
+
       return { data: null, error: { message: `Unknown RPC function: ${fn}` } };
     },
 
@@ -484,7 +546,9 @@ describe('Mandatory Concurrency, Lock and Single-Attempt Suite (API Brasil)', ()
         );
       },
       (err: any) => {
-        assert.ok(err instanceof ProviderUnavailableError);
+        assert.ok(
+          err instanceof ProviderUnavailableError || err instanceof ChargeStatusUnknownError,
+        );
         assert.equal(err.attempts, 1);
         return true;
       }

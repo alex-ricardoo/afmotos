@@ -5,6 +5,10 @@ import { createClient } from '@/lib/supabase/server';
 import { executeVehiclePlateLookup } from '@/lib/vehicle-lookup/service';
 import { checkCacheForPlate } from '@/lib/queries/vehicle-lookup';
 import { normalizeBrazilianPlate, isValidBrazilianPlate } from '@/lib/vehicle-lookup/plate';
+import {
+  createManualReprocessAuditRecord,
+  checkAmbiguousProviderAttempt,
+} from '@/lib/vehicle-lookup/lock-service';
 
 export interface ExecuteLookupActionInput {
   plate: string;
@@ -15,6 +19,7 @@ export interface ExecuteLookupActionInput {
   forceRefresh?: boolean;
   isManualReprocess?: boolean;
   confirmedManualReprocess?: boolean;
+  manualReprocessReason?: string;
 }
 
 export async function checkPlateCacheAction(plate: string) {
@@ -52,8 +57,24 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
       return { error: 'Usuário não autenticado ou sessão expirada.' };
     }
 
+    // =========================================================================
+    // BLOQUEADOR 7: Validar permissão administrativa no backend
+    // Não confiar apenas em flags do frontend.
+    // =========================================================================
+    const { data: adminProfile } = await supabase
+      .from('admin_profiles')
+      .select('id, is_active')
+      .eq('auth_user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (!adminProfile) {
+      console.error(`[VEHICLE_LOOKUP] [executeAction] ❌ Usuário ${user.id} não é admin ativo.`);
+      return { error: 'Acesso negado. Apenas administradores ativos podem consultar veículos.' };
+    }
+
     const normalized = normalizeBrazilianPlate(input.plate);
-    console.log(`[VEHICLE_LOOKUP] [executeAction] Usuário: ${user.id} (${user.email || 'sem email'}) | Placa normalizada: "${normalized}"`);
+    console.log(`[VEHICLE_LOOKUP] [executeAction] Usuário admin: ${user.id} (${user.email || 'sem email'}) | Placa normalizada: "${normalized}"`);
 
     if (!isValidBrazilianPlate(normalized)) {
       console.warn(`[VEHICLE_LOOKUP] [executeAction] ❌ Placa com formato inválido: "${input.plate}"`);
@@ -63,9 +84,61 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     const { logProviderEvent } = await import('@/lib/vehicle-lookup/provider-logger');
     const logicalRequestId = `req_admin_${crypto.randomUUID()}`;
 
-    if (input.isManualReprocess) {
+    // =========================================================================
+    // BLOQUEADOR 7: Reprocessamento manual com auditoria backend
+    // =========================================================================
+    if (input.isManualReprocess && input.confirmedManualReprocess) {
+      // Validar que reason foi fornecido
+      if (!input.manualReprocessReason || input.manualReprocessReason.trim().length < 5) {
+        logProviderEvent({
+          event: 'provider_manual_reprocess_denied',
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          placa_normalizada: normalized,
+          logical_request_id: logicalRequestId,
+          physical_request_id: 'pending',
+          attempt_number: 1,
+          timeout_ms: 120000,
+          duration_ms: 0,
+          status: 'blocked',
+          charge_status: 'not_sent',
+          origem: 'admin_panel',
+          extra: { reason: 'missing_or_short_reason', actor_id: user.id },
+        });
+
+        return {
+          error: 'Para reprocessar manualmente, é obrigatório fornecer o motivo (mínimo 5 caracteres).',
+          isManualReprocessDenied: true,
+        };
+      }
+
+      // Verificar se existe tentativa ambígua para esta placa
+      const ambiguousCheck = await checkAmbiguousProviderAttempt(
+        'apibrasil',
+        'veiculos-total',
+        normalized,
+        supabase,
+      );
+
+      // Registrar auditoria de reprocessamento manual ANTES de executar
+      const auditId = await createManualReprocessAuditRecord(
+        {
+          actorId: user.id,
+          actorType: 'admin',
+          previousAttemptId: ambiguousCheck.attemptId || null,
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          plateNormalized: normalized,
+          reason: input.manualReprocessReason.trim(),
+          estimatedCostCents: 3000,
+          acknowledgedRisk: true,
+          logicalRequestId,
+        },
+        supabase,
+      );
+
       logProviderEvent({
-        event: 'provider_manual_reprocess_requested',
+        event: 'provider_manual_reprocess_authorized',
         provider: 'apibrasil',
         operation: 'veiculos-total',
         placa_normalizada: normalized,
@@ -77,12 +150,17 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         status: 'created',
         charge_status: 'not_sent',
         origem: 'admin_panel',
+        extra: {
+          actor_id: user.id,
+          audit_id: auditId,
+          has_ambiguous_attempt: ambiguousCheck.hasAmbiguousAttempt,
+          previous_attempt_id: ambiguousCheck.attemptId,
+          reason: input.manualReprocessReason.trim(),
+        },
       });
-    }
-
-    if (input.confirmedManualReprocess) {
+    } else if (input.isManualReprocess) {
       logProviderEvent({
-        event: 'provider_manual_reprocess_confirmed',
+        event: 'provider_manual_reprocess_requested',
         provider: 'apibrasil',
         operation: 'veiculos-total',
         placa_normalizada: normalized,
@@ -111,6 +189,7 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         source: 'admin_panel',
         isManualReprocess: input.isManualReprocess,
         confirmedManualReprocess: input.confirmedManualReprocess,
+        manualReprocessReason: input.manualReprocessReason,
       },
       supabase
     );
@@ -147,6 +226,42 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         isChargeStatusUnknown: true,
         statusCode: 504,
         canManualReprocess: true,
+      };
+    }
+
+    if (
+      err?.name === 'ProviderLockUnavailableError' ||
+      err?.code === 'LOCK_UNAVAILABLE'
+    ) {
+      return {
+        error: err.message,
+        isLockUnavailable: true,
+        statusCode: 503,
+      };
+    }
+
+    if (
+      err?.name === 'ProviderPersistenceAfterSuccessError' ||
+      err?.code === 'DATABASE_PERSISTENCE_FAILED_AFTER_PROVIDER_SUCCESS'
+    ) {
+      return {
+        error: err.message,
+        isPersistenceError: true,
+        statusCode: 503,
+        canManualReprocess: false,
+      };
+    }
+
+    if (
+      err?.name === 'AmbiguousAttemptGuardError' ||
+      err?.code === 'CHARGE_STATUS_UNKNOWN_RECONCILIATION_REQUIRED'
+    ) {
+      return {
+        error: err.message,
+        isAmbiguousAttempt: true,
+        statusCode: 409,
+        canManualReprocess: true,
+        previousAttemptId: err?.previousAttemptId,
       };
     }
 

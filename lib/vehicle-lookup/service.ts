@@ -15,14 +15,25 @@ import { getVehicleHistoryPricingConfig } from '../settings/pricing-service.ts';
 import {
   acquireDistributedProviderLock,
   releaseDistributedProviderLock,
+  renewDistributedProviderLock,
+  checkAmbiguousProviderAttempt,
   createProviderAttemptRecord,
   updateProviderAttemptRecord,
   ConsultationInProgressError,
   ChargeStatusUnknownError,
+  ProviderLockUnavailableError,
+  ProviderPersistenceAfterSuccessError,
+  AmbiguousAttemptGuardError,
 } from './lock-service.ts';
 import { logProviderEvent, type ProviderSource } from './provider-logger.ts';
 
-export { ConsultationInProgressError, ChargeStatusUnknownError };
+export {
+  ConsultationInProgressError,
+  ChargeStatusUnknownError,
+  ProviderLockUnavailableError,
+  ProviderPersistenceAfterSuccessError,
+  AmbiguousAttemptGuardError,
+};
 
 export class InsufficientBalanceError extends Error {
   balance?: string;
@@ -82,6 +93,7 @@ export interface ExecuteLookupParams {
   deploymentId?: string | null;
   isManualReprocess?: boolean;
   confirmedManualReprocess?: boolean;
+  manualReprocessReason?: string;
 }
 
 export interface LookupExecutionResult {
@@ -229,6 +241,13 @@ function loadMockFixture(targetPlate: string): Record<string, unknown> {
 
 /**
  * Main Service Orchestrator: executes lookup following cache, live API, and error rules
+ *
+ * BLOQUEADORES implementados:
+ * 1 — Sem fallback não atômico (via lock-service.ts)
+ * 4 — Falha de persistência após sucesso não permite retry
+ * 5 — TTL 180s, renovação de lock antes de fetch e persistência
+ * 7 — Guarda de tentativa ambígua bloqueia reprocessamento automático
+ * 8 — HTTP 429 tratado como cobrança desconhecida
  */
 export async function executeVehiclePlateLookup(
   params: ExecuteLookupParams,
@@ -261,7 +280,8 @@ export async function executeVehiclePlateLookup(
   const physicalRequestId = `att_${crypto.randomUUID()}`;
   const idempotencyKey = `apibrasil:veiculos-total:${normalizedPlate}:${logicalRequestId}`;
   const environment = process.env.VERCEL_ENV || process.env.NODE_ENV || 'development';
-  const deploymentId = process.env.VERCEL_DEPLOYMENT_ID || null;
+  const deploymentId = params.deploymentId || process.env.VERCEL_DEPLOYMENT_ID || null;
+  const lockTtlSeconds = 180;
 
   console.log(
     `[API_BRASIL] ⚙️ Modo ativo: [${currentMode.toUpperCase()}] | URL Base: ${config.apiBrasilBaseUrl} | Timeout: ${timeoutMs}ms`,
@@ -270,7 +290,14 @@ export async function executeVehiclePlateLookup(
     `[API_BRASIL] 🔑 Token configurado? ${Boolean(config.apiBrasilToken)} ${config.apiBrasilToken ? `(tamanho: ${config.apiBrasilToken.length} caracteres)` : '(TOKEN AUSENTE!)'}`,
   );
 
-  // 1. Aquisição do Lock Distribuído
+  // Reprocessamento manual confirmado por admin bypassa cache e guarda ambígua
+  const isManualBypass =
+    Boolean(params.isManualReprocess && params.confirmedManualReprocess) ||
+    Boolean(params.forceRefresh && params.confirmedManualReprocess);
+
+  // =========================================================================
+  // 1. Aquisição do Lock Distribuído (BLOQUEADOR 1: sem fallback)
+  // =========================================================================
   const lockResult = await acquireDistributedProviderLock(
     {
       provider: 'apibrasil',
@@ -278,7 +305,7 @@ export async function executeVehiclePlateLookup(
       plateNormalized: normalizedPlate,
       logicalRequestId,
       lockedBy: physicalRequestId,
-      ttlSeconds: 150,
+      ttlSeconds: lockTtlSeconds,
       source,
       timeoutMs,
     },
@@ -393,7 +420,6 @@ export async function executeVehiclePlateLookup(
 
   try {
     // 3. Cache-first check (unless forceRefresh is explicitly requested with confirmedManualReprocess)
-    const isManualBypass = Boolean(params.forceRefresh && params.confirmedManualReprocess);
     if (!isManualBypass) {
       console.log(`[API_BRASIL] 🔎 Verificando se já existe laudo em cache local no Supabase...`);
       const requireLiveOnly = currentMode === 'live' || Boolean(params.requireLiveOnly);
@@ -426,7 +452,60 @@ export async function executeVehiclePlateLookup(
       }
       console.log(`[API_BRASIL] ℹ️ Cache MISS: Nenhuma consulta válida encontrada em cache local.`);
     } else {
-      console.log(`[API_BRASIL] 🔄 forceRefresh=true e confirmedManualReprocess=true: Executando nova chamada tarifável.`);
+      console.log(`[API_BRASIL] 🔄 Reprocessamento manual confirmado: Executando nova chamada tarifável.`);
+    }
+
+    // =========================================================================
+    // BLOQUEADOR 5 & 7: Guarda de tentativa ambígua após cache miss
+    // Se existe attempt recente com status ambíguo e a chamada NÃO é
+    // reprocessamento manual confirmado, bloquear.
+    // =========================================================================
+    if (currentMode === 'live' && !isManualBypass) {
+      const ambiguousCheck = await checkAmbiguousProviderAttempt(
+        'apibrasil',
+        'veiculos-total',
+        normalizedPlate,
+        supabase,
+      );
+
+      if (ambiguousCheck.hasAmbiguousAttempt) {
+        logProviderEvent({
+          event: 'provider_ambiguous_attempt_guard_blocked',
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          placa_normalizada: normalizedPlate,
+          logical_request_id: logicalRequestId,
+          physical_request_id: physicalRequestId,
+          attempt_number: 1,
+          timeout_ms: timeoutMs,
+          duration_ms: 0,
+          status: 'blocked',
+          charge_status: 'not_sent',
+          deployment_id: deploymentId,
+          origem: source,
+          extra: {
+            previous_attempt_id: ambiguousCheck.attemptId,
+            previous_status: ambiguousCheck.status,
+            previous_charge_status: ambiguousCheck.chargeStatus,
+          },
+        });
+
+        await updateProviderAttemptRecord(
+          {
+            id: attemptDbId,
+            physicalRequestId,
+            status: 'blocked',
+            chargeStatus: 'not_sent',
+            finishedAt: new Date().toISOString(),
+            providerErrorCode: 'AMBIGUOUS_ATTEMPT_GUARD_BLOCKED',
+          },
+          supabase,
+        );
+
+        await releaseDistributedProviderLock(lockResult.lockKey, physicalRequestId, supabase);
+
+        throw new AmbiguousAttemptGuardError(normalizedPlate, ambiguousCheck.attemptId);
+      }
     }
 
     let rawPayload: Record<string, unknown> = {};
@@ -466,6 +545,68 @@ export async function executeVehiclePlateLookup(
       const rawToken = config.apiBrasilToken.trim();
       const cleanToken = rawToken.replace(/^Bearer\s+/i, '');
       const authHeader = `Bearer ${cleanToken}`;
+
+      // =====================================================================
+      // BLOQUEADOR 5: Renovar lock ANTES do fetch
+      // =====================================================================
+      const preRenew = await renewDistributedProviderLock(
+        lockResult.lockKey,
+        physicalRequestId,
+        lockTtlSeconds,
+        supabase,
+      );
+      if (preRenew.renewed) {
+        logProviderEvent({
+          event: 'provider_lock_renewed',
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          placa_normalizada: normalizedPlate,
+          logical_request_id: logicalRequestId,
+          physical_request_id: physicalRequestId,
+          attempt_number: 1,
+          timeout_ms: timeoutMs,
+          duration_ms: 0,
+          status: 'locked',
+          charge_status: 'not_sent',
+          deployment_id: deploymentId,
+          origem: source,
+          extra: { phase: 'pre_fetch', new_expires_at: preRenew.newExpiresAt },
+        });
+      } else {
+        // Lock já expirou antes do fetch — estado ambíguo, bloquear
+        logProviderEvent({
+          event: 'provider_lock_renewal_failed',
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          placa_normalizada: normalizedPlate,
+          logical_request_id: logicalRequestId,
+          physical_request_id: physicalRequestId,
+          attempt_number: 1,
+          timeout_ms: timeoutMs,
+          duration_ms: 0,
+          status: 'blocked',
+          charge_status: 'not_sent',
+          deployment_id: deploymentId,
+          origem: source,
+          extra: { phase: 'pre_fetch', reason: preRenew.reason },
+        });
+
+        await updateProviderAttemptRecord(
+          {
+            id: attemptDbId,
+            physicalRequestId,
+            status: 'blocked',
+            chargeStatus: 'not_sent',
+            finishedAt: new Date().toISOString(),
+            providerErrorCode: 'LOCK_RENEWAL_FAILED_PRE_FETCH',
+          },
+          supabase,
+        );
+
+        throw new ProviderLockUnavailableError(
+          'Falha na renovação do lock antes do envio. Consulta impedida para evitar duplicidade.',
+        );
+      }
 
       // 4. Antes de fetch, atualizar status = request_sent, charge_status = unknown, request_sent_at = now()
       const requestSentAtIso = new Date().toISOString();
@@ -529,10 +670,13 @@ export async function executeVehiclePlateLookup(
 
         responseText = await response.text();
 
+        // BLOQUEADOR 4: Marcar response_received imediatamente
         await updateProviderAttemptRecord(
           {
             id: attemptDbId,
             physicalRequestId,
+            status: 'response_received',
+            chargeStatus: 'unknown',
             responseReceivedAt: new Date().toISOString(),
             durationMs: elapsedMs,
             httpStatus: response.status,
@@ -606,6 +750,73 @@ export async function executeVehiclePlateLookup(
         );
       }
 
+      // =====================================================================
+      // BLOQUEADOR 5: Renovar lock APÓS resposta, ANTES de persistência
+      // =====================================================================
+      const postRenew = await renewDistributedProviderLock(
+        lockResult.lockKey,
+        physicalRequestId,
+        lockTtlSeconds,
+        supabase,
+      );
+      if (postRenew.renewed) {
+        logProviderEvent({
+          event: 'provider_lock_renewed',
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          placa_normalizada: normalizedPlate,
+          logical_request_id: logicalRequestId,
+          physical_request_id: physicalRequestId,
+          attempt_number: 1,
+          timeout_ms: timeoutMs,
+          duration_ms: 0,
+          status: 'response_received',
+          charge_status: 'unknown',
+          deployment_id: deploymentId,
+          origem: source,
+          extra: { phase: 'post_response', new_expires_at: postRenew.newExpiresAt },
+        });
+      } else {
+        // Lock expirou durante o fetch. A resposta foi recebida mas o lock não é nosso.
+        // Marcar como charge_status_unknown e bloquear.
+        logProviderEvent({
+          event: 'provider_lock_renewal_failed',
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          placa_normalizada: normalizedPlate,
+          logical_request_id: logicalRequestId,
+          physical_request_id: physicalRequestId,
+          attempt_number: 1,
+          timeout_ms: timeoutMs,
+          duration_ms: 0,
+          status: 'charge_status_unknown',
+          charge_status: 'unknown',
+          deployment_id: deploymentId,
+          origem: source,
+          extra: { phase: 'post_response', reason: postRenew.reason },
+        });
+
+        await updateProviderAttemptRecord(
+          {
+            id: attemptDbId,
+            physicalRequestId,
+            status: 'charge_status_unknown',
+            chargeStatus: 'unknown',
+            finishedAt: new Date().toISOString(),
+            providerErrorCode: 'LOCK_EXPIRED_AFTER_RESPONSE',
+            providerMessageSafe: 'Lock expirou após resposta recebida. Cobrança desconhecida.',
+          },
+          supabase,
+        );
+
+        throw new ChargeStatusUnknownError(
+          'O lock distribuído expirou após receber a resposta da API Brasil. Cobrança potencialmente duplicada. Reprocessamento manual necessário.',
+          normalizedPlate,
+          physicalRequestId,
+          logicalRequestId,
+        );
+      }
+
       // Tratamento de respostas HTTP
       if (response.status === 401 || response.status === 403) {
         await updateProviderAttemptRecord(
@@ -624,6 +835,7 @@ export async function executeVehiclePlateLookup(
       }
 
       if (response.status === 402) {
+        // BLOQUEADOR 8: Ser conservador — usar unknown se não há confirmação do fornecedor
         await updateProviderAttemptRecord(
           {
             id: attemptDbId,
@@ -641,23 +853,46 @@ export async function executeVehiclePlateLookup(
         );
       }
 
+      // =====================================================================
+      // BLOQUEADOR 8: HTTP 429 = cobrança potencialmente desconhecida
+      // Zero retry, charge_status = unknown, manual review
+      // =====================================================================
       if (response.status === 429) {
         await updateProviderAttemptRecord(
           {
             id: attemptDbId,
             physicalRequestId,
-            status: 'failed',
-            chargeStatus: 'not_incurred',
+            status: 'charge_status_unknown',
+            chargeStatus: 'unknown',
             finishedAt: new Date().toISOString(),
-            providerErrorCode: 'APIBRASIL_RATE_LIMIT',
-            providerMessageSafe: 'Rate limit excedido na API Brasil.',
+            providerErrorCode: 'APIBRASIL_RATE_LIMIT_CHARGE_UNKNOWN',
+            providerMessageSafe: 'Rate limit (HTTP 429) — cobrança desconhecida.',
           },
           supabase,
         );
-        throw new ProviderUnavailableError(
-          'Limite de requisições excedido temporariamente no gateway da API Brasil. Retentativas automáticas desligadas.',
-          1,
-          429,
+
+        logProviderEvent({
+          event: 'provider_429_charge_unknown',
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          placa_normalizada: normalizedPlate,
+          logical_request_id: logicalRequestId,
+          physical_request_id: physicalRequestId,
+          attempt_number: 1,
+          timeout_ms: timeoutMs,
+          duration_ms: 0,
+          status: 'charge_status_unknown',
+          charge_status: 'unknown',
+          http_status: 429,
+          deployment_id: deploymentId,
+          origem: source,
+        });
+
+        throw new ChargeStatusUnknownError(
+          'A API Brasil retornou HTTP 429 (rate limit). Até confirmação formal do fornecedor, a cobrança é considerada desconhecida. Reprocessamento manual necessário.',
+          normalizedPlate,
+          physicalRequestId,
+          logicalRequestId,
         );
       }
 
@@ -761,8 +996,18 @@ export async function executeVehiclePlateLookup(
         throw new Error(`API Brasil: ${errMsg}`);
       }
 
-      // Sucesso na consulta
+      // Sucesso na consulta — BLOQUEADOR 4: marcar charge_status como 'incurred'
       rawPayload = parsedJson;
+
+      // Atualizar attempt para refletir cobrança incorrida
+      await updateProviderAttemptRecord(
+        {
+          id: attemptDbId,
+          physicalRequestId,
+          chargeStatus: 'incurred',
+        },
+        supabase,
+      );
 
       if (typeof rawPayload.balance === 'string') {
         const num = parseFloat(rawPayload.balance.replace(/[^\d,.-]/g, '').replace(',', '.'));
@@ -788,7 +1033,11 @@ export async function executeVehiclePlateLookup(
     const parsedResponse = parseApiBrasilVehicleResponse(rawPayload);
     const summaryCols = extractDatabaseSummaryColumns(parsedResponse, rawPayload);
 
+    // =====================================================================
     // 6. Persist to Database (vehicle_plate_consultations)
+    // BLOQUEADOR 4: Se a persistência falhar após resposta bem-sucedida,
+    // marcar manual_review e bloquear retry automático.
+    // =====================================================================
     const insertPayload = {
       ...summaryCols,
       consultation_type: 'veiculos-total',
@@ -821,8 +1070,48 @@ export async function executeVehiclePlateLookup(
       .single();
 
     if (insertError || !inserted) {
-      console.error(`[API_BRASIL] ❌ Erro ao salvar consulta no Supabase:`, insertError);
-      throw new Error(`Erro ao salvar histórico veicular no banco de dados: ${insertError?.message}`);
+      // =====================================================================
+      // BLOQUEADOR 4: Persistência falhou APÓS resposta bem-sucedida da API
+      // A cobrança já ocorreu. NÃO permitir retry automático.
+      // =====================================================================
+      console.error(`[API_BRASIL] ❌ BLOQUEADOR 4: Falha ao salvar consulta no Supabase após resposta bem-sucedida:`, insertError);
+
+      await updateProviderAttemptRecord(
+        {
+          id: attemptDbId,
+          physicalRequestId,
+          status: 'manual_review',
+          chargeStatus: isMock ? 'not_incurred' : 'incurred',
+          finishedAt: new Date().toISOString(),
+          providerErrorCode: 'DATABASE_PERSISTENCE_FAILED_AFTER_PROVIDER_SUCCESS',
+          providerMessageSafe: `Falha ao salvar consulta: ${insertError?.message || 'unknown'}`,
+        },
+        supabase,
+      );
+
+      logProviderEvent({
+        event: 'provider_response_persistence_failed',
+        provider: 'apibrasil',
+        operation: 'veiculos-total',
+        placa_normalizada: normalizedPlate,
+        logical_request_id: logicalRequestId,
+        physical_request_id: physicalRequestId,
+        attempt_number: 1,
+        timeout_ms: timeoutMs,
+        duration_ms: 0,
+        status: 'manual_review',
+        charge_status: isMock ? 'not_incurred' : 'incurred',
+        deployment_id: deploymentId,
+        origem: source,
+        extra: {
+          db_error_code: insertError?.code,
+          db_error_message: insertError?.message,
+        },
+      });
+
+      throw new ProviderPersistenceAfterSuccessError(
+        `A consulta veicular foi processada e potencialmente cobrada (R$ ${chargedAmount.toFixed(2)}), mas houve falha ao salvar os dados localmente. Retentativa automática BLOQUEADA. Contate o suporte para reconciliação manual.`,
+      );
     }
 
     // 7. Registrar custo em vehicle_lookup_provider_costs

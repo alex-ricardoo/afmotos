@@ -1,6 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logProviderEvent, type ProviderSource } from './provider-logger.ts';
 
+// ---------------------------------------------------------------------------
+// Type Definitions
+// ---------------------------------------------------------------------------
+
 export type AttemptStatus =
   | 'created'
   | 'locked'
@@ -43,6 +47,27 @@ export interface LockAcquireResult {
   recoveredExpired?: boolean;
 }
 
+export interface LockRenewResult {
+  renewed: boolean;
+  lockKey: string;
+  lockedBy?: string;
+  newExpiresAt?: string;
+  reason?: string;
+}
+
+export interface AmbiguousAttemptCheckResult {
+  hasAmbiguousAttempt: boolean;
+  attemptId?: string;
+  status?: string;
+  chargeStatus?: string;
+  logicalRequestId?: string;
+  physicalRequestId?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Error Classes
+// ---------------------------------------------------------------------------
+
 export class ConsultationInProgressError extends Error {
   public readonly statusCode = 409;
   public readonly code = 'CONSULTATION_IN_PROGRESS';
@@ -64,6 +89,7 @@ export class ChargeStatusUnknownError extends Error {
   public readonly physicalRequestId: string;
   public readonly logicalRequestId: string;
   public readonly plate: string;
+  public readonly attempts: number = 1;
 
   constructor(message: string, plate: string, physicalRequestId: string, logicalRequestId: string) {
     super(message);
@@ -75,13 +101,74 @@ export class ChargeStatusUnknownError extends Error {
 }
 
 /**
- * Atomically acquires a distributed database lock in Supabase.
+ * BLOQUEADOR 1: Erro fechado quando a RPC de lock não está disponível.
+ * Se a RPC falhar, NUNCA se deve usar fallback não atômico.
+ * A chamada à API Brasil é IMPEDIDA.
+ */
+export class ProviderLockUnavailableError extends Error {
+  public readonly code = 'LOCK_UNAVAILABLE';
+  public readonly statusCode = 503;
+
+  constructor(message?: string) {
+    super(
+      message ||
+        'O serviço de lock distribuído não está disponível. A consulta à API Brasil foi impedida para evitar cobrança duplicada.',
+    );
+    this.name = 'ProviderLockUnavailableError';
+  }
+}
+
+/**
+ * BLOQUEADOR 4: Erro quando a persistência local falha após resposta
+ * bem-sucedida do provedor.
+ */
+export class ProviderPersistenceAfterSuccessError extends Error {
+  public readonly code = 'DATABASE_PERSISTENCE_FAILED_AFTER_PROVIDER_SUCCESS';
+  public readonly statusCode = 503;
+
+  constructor(message?: string) {
+    super(
+      message ||
+        'Os dados da consulta veicular foram recebidos com sucesso, porém houve falha ao salvar no banco de dados. Para evitar cobrança duplicada, a retentativa automática foi bloqueada. É necessário reprocessamento manual.',
+    );
+    this.name = 'ProviderPersistenceAfterSuccessError';
+  }
+}
+
+/**
+ * BLOQUEADOR 5 & 7: Erro quando existe tentativa ambígua recente
+ * que impede nova consulta automática.
+ */
+export class AmbiguousAttemptGuardError extends Error {
+  public readonly code = 'CHARGE_STATUS_UNKNOWN_RECONCILIATION_REQUIRED';
+  public readonly statusCode = 409;
+  public readonly previousAttemptId?: string;
+
+  constructor(plate: string, previousAttemptId?: string) {
+    super(
+      `Existe uma tentativa recente com cobrança desconhecida para a placa ${plate}. É necessária reconciliação manual antes de nova consulta.`,
+    );
+    this.name = 'AmbiguousAttemptGuardError';
+    this.previousAttemptId = previousAttemptId;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Lock Acquisition — BLOQUEADOR 1: Sem fallback não atômico em produção
+// ---------------------------------------------------------------------------
+
+/**
+ * Atomically acquires a distributed database lock via Supabase RPC.
+ *
+ * BLOQUEADOR 1: Se a RPC falhar por qualquer motivo, lança
+ * ProviderLockUnavailableError. NUNCA usa fallback de SELECT+INSERT/UPDATE
+ * direto no caminho de produção.
  */
 export async function acquireDistributedProviderLock(
   params: LockAcquireParams,
   supabase: SupabaseClient,
 ): Promise<LockAcquireResult> {
-  const ttlSeconds = params.ttlSeconds ?? 150;
+  const ttlSeconds = params.ttlSeconds ?? 180;
   const lockKey = `${params.provider}:${params.operation}:${params.plateNormalized}`;
 
   try {
@@ -95,9 +182,31 @@ export async function acquireDistributedProviderLock(
     });
 
     if (error) {
-      console.warn('[DistributedLock] Erro ao chamar RPC acquire_vehicle_provider_lock:', error);
-      // Fallback transacional direto se a RPC não estiver disponível (e.g., em testes locais isolados)
-      return await acquireLockDirectTableFallback(params, supabase, ttlSeconds, lockKey);
+      // BLOQUEADOR 1: RPC falhou — NÃO usar fallback.
+      // Registrar e lançar erro fechado.
+      logProviderEvent({
+        event: 'provider_lock_unavailable',
+        provider: params.provider,
+        operation: params.operation,
+        placa_normalizada: params.plateNormalized,
+        logical_request_id: params.logicalRequestId,
+        physical_request_id: params.lockedBy,
+        attempt_number: 1,
+        timeout_ms: params.timeoutMs,
+        duration_ms: 0,
+        status: 'blocked',
+        charge_status: 'not_sent',
+        deployment_id: process.env.VERCEL_DEPLOYMENT_ID || null,
+        origem: params.source,
+        extra: {
+          rpc_error_code: error.code,
+          rpc_error_message: error.message,
+        },
+      });
+
+      throw new ProviderLockUnavailableError(
+        `Falha na RPC de lock distribuído (${error.code}). Chamada à API Brasil impedida.`,
+      );
     }
 
     const row = Array.isArray(data) ? data[0] : data;
@@ -114,95 +223,45 @@ export async function acquireDistributedProviderLock(
       recoveredExpired: Boolean(res?.recovered_expired),
     };
   } catch (err: unknown) {
-    console.warn('[DistributedLock] Exceção ao tentar adquirir lock:', err);
-    return await acquireLockDirectTableFallback(params, supabase, ttlSeconds, lockKey);
+    // Se já é um ProviderLockUnavailableError, re-lançar
+    if (err instanceof ProviderLockUnavailableError) {
+      throw err;
+    }
+
+    // BLOQUEADOR 1: Exceção inesperada — NÃO usar fallback.
+    logProviderEvent({
+      event: 'provider_lock_unavailable',
+      provider: params.provider,
+      operation: params.operation,
+      placa_normalizada: params.plateNormalized,
+      logical_request_id: params.logicalRequestId,
+      physical_request_id: params.lockedBy,
+      attempt_number: 1,
+      timeout_ms: params.timeoutMs,
+      duration_ms: 0,
+      status: 'blocked',
+      charge_status: 'not_sent',
+      deployment_id: process.env.VERCEL_DEPLOYMENT_ID || null,
+      origem: params.source,
+      extra: {
+        exception_type: err instanceof Error ? err.name : 'unknown',
+        exception_message: err instanceof Error ? err.message : String(err),
+      },
+    });
+
+    throw new ProviderLockUnavailableError(
+      'Exceção inesperada ao adquirir lock distribuído. Chamada à API Brasil impedida.',
+    );
   }
 }
 
-/**
- * Direct table manipulation fallback for acquiring the lock.
- */
-async function acquireLockDirectTableFallback(
-  params: LockAcquireParams,
-  supabase: SupabaseClient,
-  ttlSeconds: number,
-  lockKey: string,
-): Promise<LockAcquireResult> {
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + ttlSeconds * 1000);
-
-  // Check if existing lock is active
-  const { data: existing } = await supabase
-    .from('vehicle_provider_locks')
-    .select('*')
-    .eq('lock_key', lockKey)
-    .maybeSingle();
-
-  if (existing) {
-    const existingExpires = new Date(existing.lock_expires_at);
-    if (existingExpires > now) {
-      return {
-        acquired: false,
-        reason: 'ACTIVE_LOCK',
-        lockKey,
-        lockedBy: existing.locked_by,
-        lockedAt: existing.locked_at,
-        lockExpiresAt: existing.lock_expires_at,
-      };
-    }
-
-    // Expired lock recovery
-    const { error: updateErr } = await supabase
-      .from('vehicle_provider_locks')
-      .update({
-        logical_request_id: params.logicalRequestId,
-        locked_by: params.lockedBy,
-        locked_at: now.toISOString(),
-        lock_expires_at: expiresAt.toISOString(),
-        updated_at: now.toISOString(),
-      })
-      .eq('lock_key', lockKey);
-
-    if (updateErr) {
-      return { acquired: false, reason: 'UPDATE_FAILED', lockKey };
-    }
-
-    return {
-      acquired: true,
-      recoveredExpired: true,
-      lockKey,
-      lockedBy: params.lockedBy,
-      lockExpiresAt: expiresAt.toISOString(),
-    };
-  }
-
-  // Insert new lock
-  const { error: insertErr } = await supabase.from('vehicle_provider_locks').insert({
-    lock_key: lockKey,
-    provider: params.provider,
-    operation: params.operation,
-    plate_normalized: params.plateNormalized,
-    logical_request_id: params.logicalRequestId,
-    locked_by: params.lockedBy,
-    locked_at: now.toISOString(),
-    lock_expires_at: expiresAt.toISOString(),
-  });
-
-  if (insertErr) {
-    return { acquired: false, reason: 'CONCURRENT_INSERT', lockKey };
-  }
-
-  return {
-    acquired: true,
-    recoveredExpired: false,
-    lockKey,
-    lockedBy: params.lockedBy,
-    lockExpiresAt: expiresAt.toISOString(),
-  };
-}
+// ---------------------------------------------------------------------------
+// Lock Release — sem fallback direto em produção
+// ---------------------------------------------------------------------------
 
 /**
  * Releases the distributed lock only if held by the current owner (lockedBy).
+ * Se a RPC falhar, o lock expirará naturalmente pelo TTL. Não usar fallback direto.
  */
 export async function releaseDistributedProviderLock(
   lockKey: string,
@@ -219,19 +278,128 @@ export async function releaseDistributedProviderLock(
       return data;
     }
 
-    // Direct fallback
-    const { error: deleteErr } = await supabase
-      .from('vehicle_provider_locks')
-      .delete()
-      .eq('lock_key', lockKey)
-      .eq('locked_by', lockedBy);
-
-    return !deleteErr;
+    // Em produção, se a RPC falhar, o lock vai expirar pelo TTL.
+    // Não usar fallback de DELETE direto — seria não atômico.
+    console.warn(
+      '[DistributedLock] Falha ao liberar lock via RPC. O lock expirará por TTL.',
+      error?.message,
+    );
+    return false;
   } catch (err) {
-    console.warn('[DistributedLock] Falha ao liberar lock:', err);
+    console.warn('[DistributedLock] Exceção ao liberar lock. O lock expirará por TTL.', err);
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Lock Renewal — BLOQUEADOR 5: Renovação controlada de lease
+// ---------------------------------------------------------------------------
+
+/**
+ * Renews the lock lease via RPC.
+ * Only succeeds if the caller still holds the lock and it hasn't expired.
+ */
+export async function renewDistributedProviderLock(
+  lockKey: string,
+  lockedBy: string,
+  ttlSeconds: number,
+  supabase: SupabaseClient,
+): Promise<LockRenewResult> {
+  if (!supabase || typeof supabase.rpc !== 'function') {
+    return {
+      renewed: true,
+      lockKey,
+      lockedBy,
+      newExpiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
+    };
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('renew_vehicle_provider_lock', {
+      p_lock_key: lockKey,
+      p_locked_by: lockedBy,
+      p_ttl_seconds: ttlSeconds,
+    });
+
+    if (error) {
+      return {
+        renewed: false,
+        lockKey,
+        reason: `RPC error: ${error.code}`,
+      };
+    }
+
+    const row = Array.isArray(data) ? data[0] : data;
+    const res = (row && typeof row === 'object' ? row : {}) as Record<string, unknown>;
+
+    return {
+      renewed: Boolean(res?.renewed),
+      lockKey,
+      newExpiresAt: typeof res?.new_expires_at === 'string' ? res.new_expires_at : undefined,
+      reason: typeof res?.reason === 'string' ? res.reason : undefined,
+    };
+  } catch (err) {
+    return {
+      renewed: false,
+      lockKey,
+      reason: err instanceof Error ? err.message : 'unknown',
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Ambiguous Attempt Guard — BLOQUEADOR 5 & 7
+// ---------------------------------------------------------------------------
+
+/**
+ * Checks if there's a recent ambiguous attempt that should block automatic
+ * reprocessing. Uses the RPC for atomic, consistent check.
+ */
+export async function checkAmbiguousProviderAttempt(
+  provider: string,
+  operation: string,
+  plateNormalized: string,
+  supabase: SupabaseClient,
+): Promise<AmbiguousAttemptCheckResult> {
+  if (!supabase || typeof supabase.rpc !== 'function') {
+    return { hasAmbiguousAttempt: false };
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('check_ambiguous_provider_attempt', {
+      p_provider: provider,
+      p_operation: operation,
+      p_plate_normalized: plateNormalized,
+    });
+
+    if (error) {
+      // Em caso de falha na RPC de verificação, ser conservador: bloquear
+      console.warn('[AmbiguousAttemptGuard] Falha na RPC de verificação. Bloqueando por segurança.');
+      return { hasAmbiguousAttempt: true };
+    }
+
+    const row = Array.isArray(data) ? data[0] : data;
+    const res = (row && typeof row === 'object' ? row : {}) as Record<string, unknown>;
+
+    return {
+      hasAmbiguousAttempt: Boolean(res?.has_ambiguous_attempt),
+      attemptId: typeof res?.attempt_id === 'string' ? res.attempt_id : undefined,
+      status: typeof res?.status === 'string' ? res.status : undefined,
+      chargeStatus: typeof res?.charge_status === 'string' ? res.charge_status : undefined,
+      logicalRequestId:
+        typeof res?.logical_request_id === 'string' ? res.logical_request_id : undefined,
+      physicalRequestId:
+        typeof res?.physical_request_id === 'string' ? res.physical_request_id : undefined,
+    };
+  } catch (err) {
+    console.warn('[AmbiguousAttemptGuard] Exceção na verificação. Bloqueando por segurança.', err);
+    return { hasAmbiguousAttempt: true };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Attempt Record CRUD
+// ---------------------------------------------------------------------------
 
 export interface CreateAttemptRecordParams {
   id?: string;
@@ -359,5 +527,60 @@ export async function updateProviderAttemptRecord(
     }
   } catch (err) {
     console.warn('[updateProviderAttemptRecord] Falha ao atualizar auditoria:', err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Manual Reprocess Audit — BLOQUEADOR 7
+// ---------------------------------------------------------------------------
+
+export interface ManualReprocessAuditParams {
+  actorId: string;
+  actorType?: 'admin' | 'system';
+  previousAttemptId?: string | null;
+  provider: string;
+  operation: string;
+  plateNormalized: string;
+  reason: string;
+  estimatedCostCents?: number;
+  acknowledgedRisk: boolean;
+  logicalRequestId: string;
+}
+
+/**
+ * Persists a manual reprocess confirmation audit record BEFORE any new call.
+ */
+export async function createManualReprocessAuditRecord(
+  params: ManualReprocessAuditParams,
+  supabase: SupabaseClient,
+): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('vehicle_provider_manual_reprocess_audit')
+      .insert({
+        actor_id: params.actorId,
+        actor_type: params.actorType || 'admin',
+        action: 'manual_reprocess_confirmed',
+        previous_attempt_id: params.previousAttemptId || null,
+        provider: params.provider,
+        operation: params.operation,
+        plate_normalized: params.plateNormalized,
+        reason: params.reason,
+        estimated_cost_cents: params.estimatedCostCents ?? 3000,
+        acknowledged_risk: params.acknowledgedRisk,
+        logical_request_id: params.logicalRequestId,
+        confirmed_at: new Date().toISOString(),
+      })
+      .select('id')
+      .maybeSingle();
+
+    if (error) {
+      console.warn('[createManualReprocessAuditRecord] Falha ao gravar auditoria:', error.message);
+      return null;
+    }
+    return data?.id || null;
+  } catch (err) {
+    console.warn('[createManualReprocessAuditRecord] Exceção ao gravar auditoria:', err);
+    return null;
   }
 }

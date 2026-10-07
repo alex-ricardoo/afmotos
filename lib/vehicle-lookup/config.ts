@@ -17,7 +17,7 @@ const TIMEOUT_MIN_MS = 3_000;
 /**
  * Maximum allowed timeout (ms). Allows up to 150s with margin for Vercel functions.
  */
-const TIMEOUT_MAX_MS = 150_000;
+const TIMEOUT_MAX_MS = 180_000;
 
 /**
  * Default timeout when APIBRASIL_REQUEST_TIMEOUT_MS is not set or invalid.

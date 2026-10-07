@@ -1,13 +1,21 @@
 export type ProviderEventType =
   | 'provider_attempt_created'
   | 'provider_lock_acquired'
+  | 'provider_lock_unavailable'
+  | 'provider_lock_renewed'
+  | 'provider_lock_renewal_failed'
   | 'provider_request_sent'
   | 'provider_response_received'
+  | 'provider_response_persistence_failed'
   | 'provider_timeout_charge_unknown'
   | 'provider_duplicate_blocked'
   | 'provider_retry_blocked'
+  | 'provider_ambiguous_attempt_guard_blocked'
   | 'provider_manual_reprocess_requested'
-  | 'provider_manual_reprocess_confirmed';
+  | 'provider_manual_reprocess_confirmed'
+  | 'provider_manual_reprocess_authorized'
+  | 'provider_manual_reprocess_denied'
+  | 'provider_429_charge_unknown';
 
 export type ProviderSource = 'admin_panel' | 'customer_flow' | 'cron' | 'worker';
 
@@ -107,7 +115,13 @@ export function logProviderEvent(payload: ProviderLogPayload): void {
   if (
     payload.event === 'provider_timeout_charge_unknown' ||
     payload.event === 'provider_duplicate_blocked' ||
-    payload.event === 'provider_retry_blocked'
+    payload.event === 'provider_retry_blocked' ||
+    payload.event === 'provider_lock_unavailable' ||
+    payload.event === 'provider_lock_renewal_failed' ||
+    payload.event === 'provider_response_persistence_failed' ||
+    payload.event === 'provider_ambiguous_attempt_guard_blocked' ||
+    payload.event === 'provider_manual_reprocess_denied' ||
+    payload.event === 'provider_429_charge_unknown'
   ) {
     console.warn(jsonOutput);
   } else {

@@ -52,10 +52,43 @@ function createMockSupabase(initialRecords: VehicleConsultationRecord[] = []) {
           return {
             select: () => ({
               single: async () => ({ data: newRecord, error: null }),
+              maybeSingle: async () => ({ data: newRecord, error: null }),
             }),
           };
         },
       };
+    },
+    rpc: async (fn: string) => {
+      if (fn === 'acquire_vehicle_provider_lock') {
+        return {
+          data: [{
+            acquired: true,
+            lock_key: 'mock-lock',
+            locked_by: 'mock-worker',
+            lock_expires_at: new Date(Date.now() + 180000).toISOString(),
+            recovered_expired: false,
+          }],
+          error: null,
+        };
+      }
+      if (fn === 'release_vehicle_provider_lock') {
+        return { data: true, error: null };
+      }
+      if (fn === 'renew_vehicle_provider_lock') {
+        return {
+          data: [{
+            renewed: true,
+            lock_key: 'mock-lock',
+            locked_by: 'mock-worker',
+            new_expires_at: new Date(Date.now() + 180000).toISOString(),
+          }],
+          error: null,
+        };
+      }
+      if (fn === 'check_ambiguous_provider_attempt') {
+        return { data: [{ has_ambiguous_attempt: false }], error: null };
+      }
+      return { data: null, error: null };
     },
   } as any;
 }
