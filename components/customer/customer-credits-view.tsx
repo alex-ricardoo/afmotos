@@ -26,6 +26,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { MercadoPagoBrandIcon } from '@/components/customer/payment-brand-icons';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
+import { generateWhatsAppLink, cleanWhatsAppNumber } from '@/lib/utils/whatsapp';
+import { CONSTANTS } from '@/lib/utils/constants';
 import type { CreditPackageOffer } from '@/lib/credits/types';
 import { cn } from '@/lib/utils';
 
@@ -86,7 +88,7 @@ export function CustomerCreditsView({
     return 15;
   });
 
-  const cleanPhone = whatsappPhone.replace(/\D/g, '') || '81999999999';
+  const contactPhone = whatsappPhone || CONSTANTS.CONTACT_PHONE;
 
   // Preço base oficial da consulta avulsa configurado dinamicamente no banco de dados (site_settings)
   const basePrice =
@@ -630,7 +632,7 @@ export function CustomerCreditsView({
         {/* Grade de Pacotes Responsiva com Estética Premium */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
           {packages.map((pkg) => {
-            const waUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(pkg.whatsappMessage)}`;
+            const waUrl = generateWhatsAppLink(contactPhone, pkg.whatsappMessage);
 
             return (
               <div
@@ -1169,9 +1171,10 @@ export function CustomerCreditsView({
         </div>
 
         <a
-          href={`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(
+          href={generateWhatsAppLink(
+            contactPhone,
             `Olá! Gostaria de conversar com a equipe sobre pacotes corporativos de consultas veiculares (+50 laudos). Meu e-mail é ${userEmail}.`,
-          )}`}
+          )}
           target="_blank"
           rel="noopener noreferrer"
           className="shrink-0"

@@ -5,6 +5,7 @@ import { getPublicSiteSettings } from '@/lib/settings/server-queries';
 import { getVehicleHistorySettings } from '@/lib/site-settings';
 import { getUserCreditBalance } from '@/lib/credits/credit-service';
 import { getActiveCreditOffers } from '@/lib/credits/offers-service';
+import { CONSTANTS } from '@/lib/utils/constants';
 import { CustomerCreditsView, type LedgerItem } from '@/components/customer/customer-credits-view';
 
 export const dynamic = 'force-dynamic';
@@ -63,7 +64,7 @@ export default async function CustomerCreditsPage() {
     console.warn('[CustomerCreditsPage] Erro ao carregar ledger:', err);
   }
 
-  const rawPhone = publicSettings?.phone || '81999999999';
+  const rawPhone = publicSettings?.phone || CONSTANTS.CONTACT_PHONE;
   const userName =
     user.user_metadata?.full_name ||
     user.user_metadata?.name ||

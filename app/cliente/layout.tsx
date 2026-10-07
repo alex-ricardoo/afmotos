@@ -6,6 +6,7 @@ import { getUserComplianceStatus } from '@/lib/legal/queries';
 import { getUserCreditBalance } from '@/lib/credits/credit-service';
 import { isUserAdmin } from '@/lib/auth/admin-guard';
 import { ComplianceBanner } from '@/components/customer/compliance-banner';
+import { getPublicSiteSettings } from '@/lib/settings/server-queries';
 
 export const metadata = {
   title: 'Área do Cliente | AF Veículos PE',
@@ -23,11 +24,12 @@ export default async function CustomerLayout({ children }: { children: React.Rea
     return <div className="min-h-screen bg-slate-950 text-slate-100">{children}</div>;
   }
 
-  const [profile, compliance, creditBalance, isAdmin] = await Promise.all([
+  const [profile, compliance, creditBalance, isAdmin, publicSettings] = await Promise.all([
     getCustomerProfile(),
     getUserComplianceStatus(user.id),
     getUserCreditBalance(user.id),
     isUserAdmin(user.id),
+    getPublicSiteSettings(),
   ]);
 
   const metadata = user.user_metadata || {};
@@ -64,6 +66,8 @@ export default async function CustomerLayout({ children }: { children: React.Rea
         }}
         creditBalance={creditBalance}
         isAdmin={isAdmin}
+        whatsappPhone={publicSettings?.phone}
+        siteName={publicSettings?.siteName}
       />
 
       <main className="flex-1 lg:pl-72 pt-16 lg:pt-0 pb-24 lg:pb-8 min-h-screen relative z-10">

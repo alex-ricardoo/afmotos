@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { revalidatePublicCatalog } from '@/lib/cache/revalidate-catalog';
 import { saleSchema, SaleFormValues } from '@/lib/validations/sale';
 import { getNextSequentialReceiptNumber } from '@/lib/queries/sales';
 import { findOrCreateCustomer } from '@/lib/domain/customer-dedup';
@@ -178,10 +179,12 @@ export async function createSaleAction(rawData: SaleFormValues) {
     motoUpdatePayload.mileage = data.delivery_km;
   }
 
-  const { error: motoError } = await supabase
+  const { data: updatedMoto, error: motoError } = await supabase
     .from('motorcycles')
     .update(motoUpdatePayload)
-    .eq('id', data.motorcycle_id);
+    .eq('id', data.motorcycle_id)
+    .select('slug')
+    .maybeSingle();
 
   if (motoError) {
     console.error('Error updating motorcycle status to SOLD:', motoError);
@@ -241,6 +244,7 @@ export async function createSaleAction(rawData: SaleFormValues) {
   revalidatePath('/admin');
   revalidatePath('/motos');
   revalidatePath(`/admin/motos/${data.motorcycle_id}/editar`);
+  revalidatePublicCatalog(updatedMoto?.slug);
 
   return {
     success: true,
@@ -460,15 +464,19 @@ export async function deleteSaleAction(
     };
   }
 
-  // 5. Reverter status da motocicleta para 'AVAILABLE'
+  let revertedMotoSlug: string | null = null;
   if (effectiveMotoId && revertMotoStatus) {
-    const { error: motoError } = await supabase
+    const { data: revertedMoto, error: motoError } = await supabase
       .from('motorcycles')
       .update({ status: 'AVAILABLE' })
-      .eq('id', effectiveMotoId);
+      .eq('id', effectiveMotoId)
+      .select('slug')
+      .maybeSingle();
 
     if (motoError) {
       console.error('Error updating motorcycle status to AVAILABLE:', motoError);
+    } else {
+      revertedMotoSlug = revertedMoto?.slug ?? null;
     }
   }
 
@@ -481,6 +489,7 @@ export async function deleteSaleAction(
   if (effectiveMotoId) {
     revalidatePath(`/admin/motos/${effectiveMotoId}/editar`);
   }
+  revalidatePublicCatalog(revertedMotoSlug);
 
   return { success: true };
 }

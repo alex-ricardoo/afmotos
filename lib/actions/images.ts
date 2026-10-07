@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { revalidatePublicCatalog } from '@/lib/cache/revalidate-catalog';
 import { MotorcycleImage } from '@/types/database';
 import {
   uploadImage,
@@ -175,6 +176,7 @@ export async function uploadMotorcycleImageAction(formData: FormData): Promise<U
   if (moto.slug) {
     revalidatePath(`/motos/${moto.slug}`);
   }
+  revalidatePublicCatalog(moto.slug);
 
   return {
     success: true,
@@ -257,6 +259,7 @@ export async function deleteMotorcycleImageAction(
   if (slug) {
     revalidatePath(`/motos/${slug}`);
   }
+  revalidatePublicCatalog(slug);
 
   return { success: true };
 }
@@ -302,6 +305,13 @@ export async function setPrimaryMotorcycleImageAction(
   revalidatePath(`/admin/motos/${motorcycleId}/editar`);
   revalidatePath('/motos');
 
+  const { data: motoRecord } = await supabase
+    .from('motorcycles')
+    .select('slug')
+    .eq('id', motorcycleId)
+    .maybeSingle();
+  revalidatePublicCatalog(motoRecord?.slug);
+
   return { success: true };
 }
 
@@ -326,6 +336,13 @@ export async function reorderMotorcycleImagesAction(
   revalidatePath('/admin/motos');
   revalidatePath(`/admin/motos/${motorcycleId}/editar`);
   revalidatePath('/motos');
+
+  const { data: motoRecord } = await supabase
+    .from('motorcycles')
+    .select('slug')
+    .eq('id', motorcycleId)
+    .maybeSingle();
+  revalidatePublicCatalog(motoRecord?.slug);
 
   return { success: true };
 }

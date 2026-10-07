@@ -21,6 +21,8 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import { logoutCustomer } from '@/lib/customer/actions';
+import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
+import { CONSTANTS } from '@/lib/utils/constants';
 
 interface CustomerNavProps {
   user: {
@@ -31,6 +33,8 @@ interface CustomerNavProps {
   };
   creditBalance?: number;
   isAdmin?: boolean;
+  whatsappPhone?: string | null;
+  siteName?: string | null;
 }
 
 function GoogleIcon({ className = 'w-3 h-3' }: { className?: string }) {
@@ -56,9 +60,21 @@ function GoogleIcon({ className = 'w-3 h-3' }: { className?: string }) {
   );
 }
 
-export function CustomerNav({ user, creditBalance = 0, isAdmin = false }: CustomerNavProps) {
+export function CustomerNav({
+  user,
+  creditBalance = 0,
+  isAdmin = false,
+  whatsappPhone,
+  siteName,
+}: CustomerNavProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Dynamic WhatsApp support URL from database settings with fallback
+  const supportPhone = whatsappPhone || CONSTANTS.CONTACT_PHONE;
+  const storeName = siteName || CONSTANTS.STORE_NAME;
+  const supportMessage = `Olá! Sou ${user.fullName || 'Cliente'} e gostaria de suporte na Área do Cliente da ${storeName}.`;
+  const supportHref = generateWhatsAppLink(supportPhone, supportMessage);
 
   // Prevent background scrolling when mobile drawer is open
   useEffect(() => {
@@ -124,7 +140,7 @@ export function CustomerNav({ user, creditBalance = 0, isAdmin = false }: Custom
       : []),
     {
       name: 'Suporte',
-      href: 'https://wa.me/5581999999999',
+      href: supportHref,
       icon: Headphones,
       exact: false,
       badge: 'Online',

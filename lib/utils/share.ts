@@ -3,6 +3,7 @@
  */
 
 import { CONSTANTS } from './constants';
+import { cleanWhatsAppNumber } from './whatsapp';
 import { getBaseSiteUrl } from '@/lib/seo';
 
 export interface ShareableMotorcycle {
@@ -56,8 +57,7 @@ export function buildMotorcycleWhatsAppShareUrl(
 
   const message = `Olá! Encontrei esta moto no site da ${storeName} e gostaria de saber mais:\n\n${motorcycle.brand} ${motorcycle.model}${yearText}${priceText}\n\nLink: ${canonicalUrl}`;
 
-  const cleanDigits = (phone || '5511999999999').replace(/\D/g, '');
-  const finalPhone = cleanDigits.startsWith('55') ? cleanDigits : `55${cleanDigits}`;
+  const finalPhone = cleanWhatsAppNumber(phone);
 
   return `https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`;
 }

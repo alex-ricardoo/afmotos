@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { ChevronRight, ArrowLeft, MapPin, Clock, BadgeCheck, ClipboardCheck, ShieldCheck, Tag } from 'lucide-react';
 import { Metadata } from 'next';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
-import { getMotorcycleBySlug, getFeaturedMotorcycles } from '@/lib/queries/motorcycles';
+import { getPublicMotorcycleBySlug, getPublicFeaturedMotorcycles } from '@/lib/queries/public-motorcycles';
 import { getSettings } from '@/lib/actions/settings';
 import { ImageCarousel } from '@/components/gallery/image-carousel';
 import { MotorcycleSpecs } from '@/components/motorcycles/motorcycle-specs';
@@ -31,17 +31,23 @@ import {
   SEO_CONFIG,
 } from '@/lib/seo';
 
+export const revalidate = 300;
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const [moto, settings] = await Promise.all([getMotorcycleBySlug(slug), getSettings()]);
+  const [motoResult, settings] = await Promise.all([
+    getPublicMotorcycleBySlug(slug),
+    getSettings(),
+  ]);
 
+  const moto = motoResult.data;
   const siteName = settings?.site_name || SEO_CONFIG.defaultStoreName;
 
-  if (!moto || moto.status === 'HIDDEN') {
+  if (!moto) {
     return {
       title: 'Moto não encontrada',
       description: 'A motocicleta solicitada não está disponível no momento.',
@@ -52,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const isSold = moto.status === 'SOLD';
   const title = formatMotorcycleTitle(moto);
   const description = formatMotorcycleDescription(moto, siteName);
-  const primaryImage = moto.images?.[0]?.url || moto.image_url || null;
+  const primaryImage = moto.images?.[0]?.url || moto.imageUrl || moto.image_url || null;
 
   return buildPageMetadata({
     title,
@@ -66,13 +72,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MotorcycleDetailPage({ params }: Props) {
   const { slug } = await params;
-  const [moto, allFeatured, settings] = await Promise.all([
-    getMotorcycleBySlug(slug),
-    getFeaturedMotorcycles(),
+  const [motoResult, featuredResult, settings] = await Promise.all([
+    getPublicMotorcycleBySlug(slug),
+    getPublicFeaturedMotorcycles(4),
     getSettings(),
   ]);
 
-  if (!moto || moto.status === 'HIDDEN') {
+  const moto = motoResult.data;
+  const allFeatured = featuredResult.data;
+
+  if (!moto) {
     notFound();
   }
 

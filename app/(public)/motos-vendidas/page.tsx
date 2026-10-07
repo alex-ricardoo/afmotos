@@ -10,8 +10,9 @@ import {
   ArrowRight,
   Bike,
 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
-import { getSoldMotorcycles } from '@/lib/queries/motorcycles';
+import { getPublicSoldMotorcycles } from '@/lib/queries/public-motorcycles';
 import { getSettings } from '@/lib/actions/settings';
 import { SoldMotorcyclesClient } from '@/components/motorcycles/sold-motorcycles-client';
 import { buttonVariants } from '@/components/ui/button';
@@ -27,6 +28,8 @@ import {
   SEO_CONFIG,
 } from '@/lib/seo';
 
+export const revalidate = 300;
+
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const siteName = settings?.site_name || SEO_CONFIG.defaultStoreName;
@@ -39,7 +42,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MotosVendidasPage() {
-  const [motorcycles, settings] = await Promise.all([getSoldMotorcycles(), getSettings()]);
+  const [soldResult, settings] = await Promise.all([
+    getPublicSoldMotorcycles(),
+    getSettings(),
+  ]);
+
+  const motorcycles = soldResult.data;
+  const soldError = soldResult.error;
 
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
 
@@ -100,7 +109,9 @@ export default async function MotosVendidasPage() {
           <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-semibold text-zinc-300">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
               <Bike className="w-3.5 h-3.5 text-amber-400" />
-              <span>{motorcycles.length} motos entregues com sucesso</span>
+              <span>
+                {soldError ? 'Carregamento pendente' : `${motorcycles.length} motos entregues com sucesso`}
+              </span>
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -116,11 +127,50 @@ export default async function MotosVendidasPage() {
 
       {/* Main Interactive Grid & Filters Area */}
       <div className="container mx-auto px-4 sm:px-6 py-10 md:py-14 max-w-6xl space-y-16">
-        <SoldMotorcyclesClient
-          motorcycles={motorcycles}
-          whatsappPhone={settings?.whatsapp_phone}
-          siteName={siteName}
-        />
+        {soldError ? (
+          <div className="w-full py-16 px-4 text-center bg-zinc-900/60 rounded-3xl border border-red-500/30 shadow-xs flex flex-col items-center justify-center space-y-5">
+            <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+              <AlertTriangle className="w-8 h-8 text-red-400" />
+            </div>
+            <div className="max-w-md space-y-1.5">
+              <h3 className="text-xl font-bold text-white font-heading">
+                Instabilidade no Histórico de Vendas
+              </h3>
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                Não foi possível consultar os registros de motos entregues neste instante. Nossa equipe já foi notificada para verificação.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+              <a
+                href="/motos-vendidas"
+                className={cn(
+                  buttonVariants({ variant: 'outline' }),
+                  'rounded-xl font-semibold text-xs h-10 px-5 bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700 transition-all',
+                )}
+              >
+                Tentar Novamente
+              </a>
+              <a
+                href={customOrderWhatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  buttonVariants(),
+                  'bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-xl font-semibold text-xs h-10 px-5 flex items-center gap-2 shadow-[0_0_15px_rgba(37,211,102,0.2)] transition-all',
+                )}
+              >
+                <WhatsAppIcon className="w-4 h-4 fill-current" />
+                <span>Consultar no WhatsApp</span>
+              </a>
+            </div>
+          </div>
+        ) : (
+          <SoldMotorcyclesClient
+            motorcycles={motorcycles}
+            whatsappPhone={settings?.whatsapp_phone}
+            siteName={siteName}
+          />
+        )}
 
         {/* Custom Order Callout Box VIP */}
         <div className="relative overflow-hidden bg-gradient-to-br from-zinc-900/90 via-zinc-900/60 to-zinc-950 p-8 sm:p-10 rounded-3xl border border-amber-500/30 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-black/70">

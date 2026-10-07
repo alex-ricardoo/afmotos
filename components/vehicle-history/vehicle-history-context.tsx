@@ -6,7 +6,8 @@ import {
   isValidBrazilianPlate,
   formatBrazilianPlate,
 } from "@/lib/vehicle-lookup/plate";
-import { buildVehicleHistoryWhatsAppUrl } from "@/lib/utils/whatsapp";
+import { buildVehicleHistoryWhatsAppUrl, cleanWhatsAppNumber } from "@/lib/utils/whatsapp";
+import { CONSTANTS } from "@/lib/utils/constants";
 
 interface VehicleHistoryContextValue {
   plate: string;
@@ -75,7 +76,7 @@ export function VehicleHistoryProvider({ children }: { children: React.ReactNode
     if (customMessage) {
       // If custom message is supplied, extract phone and rewrite query param
       const phoneMatch = url.match(/wa\.me\/([^?]+)/);
-      const phone = phoneMatch ? phoneMatch[1] : "5511999999999";
+      const phone = phoneMatch ? phoneMatch[1] : cleanWhatsAppNumber(CONSTANTS.CONTACT_PHONE);
       const customUrl = `https://wa.me/${phone}?text=${encodeURIComponent(customMessage)}`;
       window.open(customUrl, "_blank", "noopener,noreferrer");
       return;

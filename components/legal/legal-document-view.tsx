@@ -15,7 +15,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatPhoneForDisplay } from '@/lib/utils/whatsapp';
+import { formatPhoneForDisplay, cleanWhatsAppNumber } from '@/lib/utils/whatsapp';
 
 export interface LegalSection {
   id: string;
@@ -195,7 +195,7 @@ export function LegalDocumentView({
                 <div className="pt-1 space-y-1.5 text-[11px]">
                   {storeInfo.whatsappPhone && (
                     <a
-                      href={`https://wa.me/55${storeInfo.whatsappPhone.replace(/\D/g, '')}`}
+                      href={`https://wa.me/${cleanWhatsAppNumber(storeInfo.whatsappPhone)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-emerald-400 hover:underline"

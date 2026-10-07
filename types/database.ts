@@ -637,7 +637,52 @@ export interface Database {
     };
 
     Views: {
-      [_ in never]: never;
+      public_motorcycles: {
+        Row: {
+          id: string;
+          slug: string;
+          brand: string;
+          model: string;
+          version: string | null;
+          year_manufacture: number;
+          year_model: number;
+          mileage: number | null;
+          engine_capacity: number | null;
+          fuel: string | null;
+          transmission: string | null;
+          color: string | null;
+          price: number | null;
+          description: string | null;
+          status: string;
+          featured: boolean;
+          is_repasse: boolean;
+          published_at: string | null;
+          category_id: string | null;
+          category_name: string | null;
+          category_slug: string | null;
+          operation_type: string | null;
+          created_at: string;
+          updated_at: string;
+          images: Json;
+        };
+      };
+      public_motorcycle_images: {
+        Row: {
+          id: string;
+          motorcycle_id: string;
+          storage_path: string;
+          alt_text: string | null;
+          sort_order: number;
+          is_primary: boolean;
+          width: number | null;
+          height: number | null;
+          provider: string | null;
+          public_url: string | null;
+          display_url: string | null;
+          thumbnail_url: string | null;
+          created_at: string;
+        };
+      };
     };
     Functions: {
       [_ in never]: never;

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 import { generateUniqueMotorcycleSlug, isSlugConflictError } from '@/lib/utils/slug';
+import { revalidatePublicCatalog } from '@/lib/cache/revalidate-catalog';
 
 export async function getMotorcycles() {
   const supabase = await createClient();
@@ -84,6 +85,7 @@ type MotorcyclePayload = {
   chassi: string | null;
   featured: boolean;
   is_repasse: boolean;
+  published_at?: string | null;
   category_id?: string | null;
 };
 
@@ -120,6 +122,10 @@ function toMotorcyclePayload(values: MotorcycleInputData): MotorcyclePayload {
     chassi: chassi ? chassi.toUpperCase() : null,
     featured: Boolean(values.featured),
     is_repasse: Boolean(values.is_repasse),
+    published_at:
+      typeof values.published_at === 'string' && values.published_at.trim()
+        ? values.published_at.trim()
+        : new Date().toISOString(),
     ...(categoryId ? { category_id: categoryId } : {}),
   };
 }
@@ -215,6 +221,7 @@ export async function createMotorcycleAction(data: MotorcycleInputData) {
     if (!error && insertedMoto) {
       revalidatePath('/admin/motos');
       revalidatePath('/motos');
+      revalidatePublicCatalog(insertedMoto.slug);
       return { success: true, id: insertedMoto.id, slug: insertedMoto.slug };
     }
 
@@ -310,6 +317,7 @@ export async function updateMotorcycleAction(id: string, data: MotorcycleInputDa
   if (updatedSlug) {
     revalidatePath(`/motos/${updatedSlug}`);
   }
+  revalidatePublicCatalog(updatedSlug);
 
   return { success: true, id, slug: updatedSlug };
 }
@@ -325,6 +333,14 @@ export async function deleteMotorcycleAction(id: string) {
   if (authError || !user) {
     return { error: 'Acesso não autorizado. Faça login novamente.' };
   }
+
+  // 0. Obter slug antes da exclusão para revalidação precisa de cache
+  const { data: motoToDelete } = await supabase
+    .from('motorcycles')
+    .select('slug')
+    .eq('id', id)
+    .maybeSingle();
+  const motoSlug = motoToDelete?.slug;
 
   // 1. Buscar imagens para limpeza do storage
   const { data: images } = await supabase
@@ -385,6 +401,7 @@ export async function deleteMotorcycleAction(id: string) {
   revalidatePath('/motos-vendidas');
   revalidatePath('/admin/relatorios');
   revalidatePath('/admin/vendas');
+  revalidatePublicCatalog(motoSlug);
   return { success: true };
 }
 
@@ -392,7 +409,12 @@ export async function toggleMotorcycleStatus(id: string, currentStatus: string) 
   const supabase = await createClient();
   const newStatus = currentStatus === 'AVAILABLE' ? 'UNAVAILABLE' : 'AVAILABLE';
 
-  const { error } = await supabase.from('motorcycles').update({ status: newStatus }).eq('id', id);
+  const { data, error } = await supabase
+    .from('motorcycles')
+    .update({ status: newStatus })
+    .eq('id', id)
+    .select('slug')
+    .maybeSingle();
 
   if (error) {
     console.error('Error updating status:', error);
@@ -400,6 +422,7 @@ export async function toggleMotorcycleStatus(id: string, currentStatus: string) 
   }
 
   revalidatePath('/admin/motos');
+  revalidatePublicCatalog(data?.slug);
   return { success: true, newStatus };
 }
 

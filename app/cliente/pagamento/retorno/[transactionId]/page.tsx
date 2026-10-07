@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getSiteSettings } from '@/lib/queries/settings';
 import { PaymentReturnStatus } from '@/components/customer/payment-return-status';
+import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 import { ArrowLeft } from 'lucide-react';
 import { type PaymentTransactionStatus } from '@/lib/mercadopago/types';
 
@@ -75,9 +76,10 @@ export default async function PaymentReturnPage({ params }: ReturnPageProps) {
   const supportPhone = settings?.whatsapp_phone || null;
   const shortRef = consultation.id.slice(0, 8).toUpperCase();
   const whatsappUrl = supportPhone
-    ? `https://wa.me/55${supportPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
+    ? generateWhatsAppLink(
+        supportPhone,
         `Olá! Preciso de ajuda com uma consulta veicular.\nReferência: ${shortRef}\nStatus: acompanhamento de laudo veicular`,
-      )}`
+      )
     : null;
 
   return (
