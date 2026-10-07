@@ -19,7 +19,10 @@ import { WhatsAppIcon } from '@/components/icons/whatsapp-icon';
 import { buttonVariants } from '@/components/ui/button';
 import { MotorcycleGrid } from '@/components/motorcycles/motorcycle-grid';
 import { QuickSearch } from '@/components/filters/quick-search';
-import { getFeaturedMotorcycles, getMotorcycleFilterFacets } from '@/lib/queries/motorcycles';
+import {
+  getPublicFeaturedMotorcycles,
+  getPublicMotorcycleFilterFacets,
+} from '@/lib/queries/public-motorcycles';
 import { cn } from '@/lib/utils';
 import { getSettings } from '@/lib/actions/settings';
 import { CONSTANTS } from '@/lib/utils/constants';
@@ -28,6 +31,8 @@ import { PaymentMethods } from '@/components/ui/payment-methods';
 import { Metadata } from 'next';
 import { buildPageMetadata, JsonLd, buildAutoDealerSchema, SEO_CONFIG } from '@/lib/seo';
 import { getSiteLogo, getSocialLinks } from '@/lib/site-settings';
+
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
@@ -56,11 +61,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [featuredMotos, facets, settings] = await Promise.all([
-    getFeaturedMotorcycles(),
-    getMotorcycleFilterFacets(),
+  const [featuredResult, facets, settings] = await Promise.all([
+    getPublicFeaturedMotorcycles(),
+    getPublicMotorcycleFilterFacets(),
     getSettings(),
   ]);
+
+  const featuredMotos = featuredResult.data;
 
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
   const logoInfo = getSiteLogo(settings);

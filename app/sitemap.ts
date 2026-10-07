@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
-import { createClient } from '@/lib/supabase/server';
 import { getBaseSiteUrl } from '@/lib/seo';
 import { getPublicSiteSettings } from '@/lib/settings/server-queries';
+import { getPublicSitemapMotorcycles } from '@/lib/queries/public-motorcycles';
 
 /**
  * Revalidação incremental do sitemap a cada 1 hora (ISR).
@@ -64,9 +64,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const [supabase, siteSettings] = await Promise.all([
-      createClient(),
+    const [siteSettings, activeMotorcycles] = await Promise.all([
       getPublicSiteSettings().catch(() => null),
+      getPublicSitemapMotorcycles().catch(() => []),
     ]);
 
     const staticRoutes = [...baseStaticRoutes];
@@ -91,30 +91,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
 
-    // 2. Consulta de Inventário Ativo (Apenas motos com status AVAILABLE)
-    const { data: activeMotorcycles, error } = await supabase
-      .from('motorcycles')
-      .select('slug, updated_at, created_at, status')
-      .eq('status', 'AVAILABLE')
-      .order('updated_at', { ascending: false });
-
-    if (error || !activeMotorcycles) {
-      console.warn(
-        '[SEO Sitemap] Aviso ao consultar inventário de motos:',
-        error?.message || error,
-      );
-      return staticRoutes;
-    }
-
-    // 3. Montagem das URLs de Inventário
+    // 2. Montagem das URLs de Inventário
     const motorcycleRoutes: MetadataRoute.Sitemap = activeMotorcycles
       .filter((moto) => moto.slug && moto.slug.trim().length > 0)
       .map((moto) => {
-        const lastMod = moto.updated_at
-          ? new Date(moto.updated_at)
-          : moto.created_at
-            ? new Date(moto.created_at)
-            : currentDate;
+        const lastMod = moto.updatedAt ? new Date(moto.updatedAt) : currentDate;
 
         return {
           url: `${baseUrl}/motos/${moto.slug.trim()}`,

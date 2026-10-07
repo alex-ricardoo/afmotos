@@ -15,7 +15,10 @@ import {
   MobileFiltersDrawer,
   CatalogControls,
 } from '@/components/filters/motorcycle-filters';
-import { getAllMotorcycles, getMotorcycleFilterFacets } from '@/lib/queries/motorcycles';
+import {
+  getPublicAvailableMotorcycles,
+  getPublicMotorcycleFilterFacets,
+} from '@/lib/queries/public-motorcycles';
 import { getSettings } from '@/lib/actions/settings';
 import { CONSTANTS } from '@/lib/utils/constants';
 import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
@@ -29,6 +32,9 @@ import {
   buildFaqSchema,
   SEO_CONFIG,
 } from '@/lib/seo';
+import { AlertTriangle } from 'lucide-react';
+
+export const revalidate = 300;
 
 interface CatalogProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -63,11 +69,14 @@ export async function generateMetadata({ searchParams }: CatalogProps): Promise<
 
 export default async function CatalogPage({ searchParams }: CatalogProps) {
   const resolvedParams = await searchParams;
-  const [motos, facets, settings] = await Promise.all([
-    getAllMotorcycles(resolvedParams),
-    getMotorcycleFilterFacets(),
+  const [catalogResult, facets, settings] = await Promise.all([
+    getPublicAvailableMotorcycles(resolvedParams),
+    getPublicMotorcycleFilterFacets(),
     getSettings(),
   ]);
+
+  const motos = catalogResult.data;
+  const catalogError = catalogResult.error;
 
   const siteName = settings?.site_name || CONSTANTS.STORE_NAME;
 
@@ -121,13 +130,20 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
               <h1 className="text-sm sm:text-base md:text-xl font-black text-white font-heading tracking-tight whitespace-nowrap">
                 Motos Disponíveis
               </h1>
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="hidden xs:inline">
-                  {motos.length} {motos.length === 1 ? 'moto' : 'motos'}
+              {catalogError ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                  <span>Erro no carregamento</span>
                 </span>
-                <span className="xs:hidden">{motos.length}</span>
-              </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="hidden xs:inline">
+                    {motos.length} {motos.length === 1 ? 'moto' : 'motos'}
+                  </span>
+                  <span className="xs:hidden">{motos.length}</span>
+                </span>
+              )}
             </div>
 
             {/* Actions: Mobile Filters Drawer Button & Desktop Controls */}
@@ -164,13 +180,52 @@ export default async function CatalogPage({ searchParams }: CatalogProps) {
 
           {/* Motorcycle Cards Grid */}
           <main className="md:col-span-3">
-            <MotorcycleGrid
-              motorcycles={motos}
-              emptyMessage="Nenhuma moto encontrada com os filtros selecionados. Tente ajustar os termos ou limpar os filtros."
-              viewMode={currentView}
-              whatsappPhone={settings?.whatsapp_phone}
-              siteName={siteName}
-            />
+            {catalogError ? (
+              <div className="w-full py-16 px-4 text-center bg-zinc-900/60 rounded-3xl border border-red-500/30 shadow-xs flex flex-col items-center justify-center space-y-5">
+                <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+                  <AlertTriangle className="w-8 h-8 text-red-400" />
+                </div>
+                <div className="max-w-md space-y-1.5">
+                  <h3 className="text-xl font-bold text-white font-heading">
+                    Instabilidade no Carregamento do Estoque
+                  </h3>
+                  <p className="text-sm text-zinc-400 leading-relaxed">
+                    Não foi possível consultar as motocicletas disponíveis neste momento. Nossa equipe técnica já foi notificada. Você pode recarregar ou nos consultar no WhatsApp.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                  <a
+                    href="/motos"
+                    className={cn(
+                      buttonVariants({ variant: 'outline' }),
+                      'rounded-xl font-semibold text-xs h-10 px-5 bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700 transition-all',
+                    )}
+                  >
+                    Tentar Novamente
+                  </a>
+                  <a
+                    href={customOrderWhatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      buttonVariants(),
+                      'bg-[#25D366] hover:bg-[#20BD5A] text-white rounded-xl font-semibold text-xs h-10 px-5 flex items-center gap-2 shadow-[0_0_15px_rgba(37,211,102,0.2)] transition-all',
+                    )}
+                  >
+                    <WhatsAppIcon className="w-4 h-4 fill-current" />
+                    <span>Consultar no WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <MotorcycleGrid
+                motorcycles={motos}
+                emptyMessage="Nenhuma moto encontrada com os filtros selecionados. Tente ajustar os termos ou limpar os filtros."
+                viewMode={currentView}
+                whatsappPhone={settings?.whatsapp_phone}
+                siteName={siteName}
+              />
+            )}
           </main>
         </div>
 

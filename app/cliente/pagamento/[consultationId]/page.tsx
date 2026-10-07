@@ -8,6 +8,7 @@ import { VehicleConsultationBenefits } from '@/components/customer/vehicle-consu
 import { CheckoutProButton } from '@/components/customer/checkout-pro-button';
 import { PayWithCreditButton } from '@/components/customer/pay-with-credit-button';
 import { getUserCreditBalance } from '@/lib/credits/credit-service';
+import { generateWhatsAppLink } from '@/lib/utils/whatsapp';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Lock, MessageCircle, Sparkles } from 'lucide-react';
 import {
@@ -81,9 +82,10 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
 
   const supportPhone = settings?.whatsapp_phone || null;
   const whatsappUrl = supportPhone
-    ? `https://wa.me/55${supportPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
+    ? generateWhatsAppLink(
+        supportPhone,
         `Olá! Gostaria de suporte sobre a consulta da placa ${consultation.plate} (ID: ${consultation.id}).`,
-      )}`
+      )
     : null;
 
   return (
