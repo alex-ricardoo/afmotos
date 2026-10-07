@@ -669,8 +669,8 @@ describe('Mandatory Concurrency, Lock and Single-Attempt Suite (API Brasil)', ()
     assert.equal(regularResult.isCacheHit, true);
     assert.equal(attemptsCount, 0, 'Sem confirmação explícita de reprocessamento, usa cache local');
 
-    // Attempt 2: Explicitly confirmed manual reprocess -> executes new live paid fetch
-    const reprocessResult = await executeVehiclePlateLookup(
+    // Attempt 2: Apenas flags booleanas sem audit ID -> NÃO autoriza bypass, continua usando cache local
+    const unapprovedResult = await executeVehiclePlateLookup(
       {
         plate: 'PFX3G38',
         confirmedPlate: 'PFX3G38',
@@ -681,9 +681,25 @@ describe('Mandatory Concurrency, Lock and Single-Attempt Suite (API Brasil)', ()
       },
       supabase
     );
+    assert.equal(unapprovedResult.isCacheHit, true);
+    assert.equal(attemptsCount, 0, 'Flags booleanas sozinhas não podem burlar o cache');
+
+    // Attempt 3: Reprocessamento manual com manualReprocessAuditId válido -> executa nova chamada externa
+    const reprocessResult = await executeVehiclePlateLookup(
+      {
+        plate: 'PFX3G38',
+        confirmedPlate: 'PFX3G38',
+        userId: 'admin-1',
+        isManualReprocess: true,
+        confirmedManualReprocess: true,
+        forceRefresh: true,
+        manualReprocessAuditId: 'audit-valid-1234',
+      },
+      supabase
+    );
     assert.equal(reprocessResult.success, true);
     assert.equal(reprocessResult.isCacheHit, false);
-    assert.equal(attemptsCount, 1, 'Com confirmação explícita, nova chamada externa é realizada');
+    assert.equal(attemptsCount, 1, 'Com manualReprocessAuditId válido, nova chamada externa é realizada');
   });
 
   // Test 9: Lock expira de modo seguro após 150 s

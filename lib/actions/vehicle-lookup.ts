@@ -154,8 +154,8 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     // BLOQUEADOR 7: Reprocessamento manual com auditoria backend
     // =========================================================================
     if (input.isManualReprocess && input.confirmedManualReprocess) {
-      // Validar que reason foi fornecido
-      if (!input.manualReprocessReason || input.manualReprocessReason.trim().length < 5) {
+      // Validar que reason foi fornecido com no mínimo 10 caracteres úteis
+      if (!input.manualReprocessReason || input.manualReprocessReason.trim().length < 10) {
         logProviderEvent({
           event: 'provider_manual_reprocess_denied',
           provider: 'apibrasil',
@@ -173,7 +173,7 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         });
 
         return {
-          error: 'Para reprocessar manualmente, é obrigatório fornecer o motivo (mínimo 5 caracteres).',
+          error: 'Para reprocessar manualmente, é obrigatório fornecer o motivo (mínimo 10 caracteres).',
           isManualReprocessDenied: true,
         };
       }
@@ -186,7 +186,7 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         supabase,
       );
 
-      // Registrar auditoria de reprocessamento manual ANTES de executar
+      // Registrar auditoria de reprocessamento manual ANTES de executar via RPC segura
       auditId = await createManualReprocessAuditRecord(
         {
           actorId: user.id,
@@ -203,6 +203,11 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         supabase,
       );
 
+      const maskedAuditId =
+        auditId && auditId.length > 8
+          ? `${auditId.slice(0, 4)}...${auditId.slice(-4)}`
+          : '****';
+
       logProviderEvent({
         event: 'provider_manual_reprocess_authorized',
         provider: 'apibrasil',
@@ -217,11 +222,9 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         charge_status: 'not_sent',
         origem: 'admin_panel',
         extra: {
-          actor_id: user.id,
-          audit_id: auditId,
+          audit_id_masked: maskedAuditId,
           has_ambiguous_attempt: ambiguousCheck.hasAmbiguousAttempt,
           previous_attempt_id: ambiguousCheck.attemptId,
-          reason: input.manualReprocessReason.trim(),
         },
       });
     } else if (input.isManualReprocess) {
@@ -250,7 +253,6 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         confirmationMessageVersion: input.confirmationMessageVersion || 'v1.0',
         motorcycleId: input.motorcycleId,
         sellRequestId: input.sellRequestId,
-        forceRefresh: Boolean(input.forceRefresh && input.confirmedManualReprocess),
         logicalRequestId,
         source: 'admin_panel',
         isManualReprocess: input.isManualReprocess,

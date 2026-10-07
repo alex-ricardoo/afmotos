@@ -12,6 +12,7 @@ import {
 import {
   acquireDistributedProviderLock,
   createManualReprocessAuditRecord,
+  ManualReprocessAuditError,
   AmbiguousAttemptGuardError,
   ConsultationInProgressError,
 } from '../lock-service.ts';
@@ -381,4 +382,237 @@ describe('Hardened Polling, Atomic Audit & Lock Recovery Suite (Correções 1 a 
       'Deve lançar erro explícito se produção for detectada',
     );
   });
+
+  it('16. Migration 20261007080000 corrige GRANT EXECUTE na assinatura de 7 parâmetros e revoga de PUBLIC/anon', () => {
+    const migrationPath = path.resolve(
+      process.cwd(),
+      'supabase/migrations/20261007080000_fix_lock_function_signature_privileges.sql',
+    );
+    const sql = fs.readFileSync(migrationPath, 'utf8');
+
+    // acquire_vehicle_provider_lock com 7 parâmetros
+    assert.match(
+      sql,
+      /REVOKE ALL ON FUNCTION public\.acquire_vehicle_provider_lock\(\s*TEXT,\s*TEXT,\s*TEXT,\s*TEXT,\s*TEXT,\s*INTEGER,\s*UUID\s*\) FROM PUBLIC;/i,
+      'Deve revogar PUBLIC na assinatura de 7 parâmetros',
+    );
+    assert.match(
+      sql,
+      /REVOKE ALL ON FUNCTION public\.acquire_vehicle_provider_lock\(\s*TEXT,\s*TEXT,\s*TEXT,\s*TEXT,\s*TEXT,\s*INTEGER,\s*UUID\s*\) FROM anon;/i,
+      'Deve revogar anon na assinatura de 7 parâmetros',
+    );
+    assert.match(
+      sql,
+      /GRANT EXECUTE ON FUNCTION public\.acquire_vehicle_provider_lock\(\s*TEXT,\s*TEXT,\s*TEXT,\s*TEXT,\s*TEXT,\s*INTEGER,\s*UUID\s*\) TO authenticated,\s*service_role;/i,
+      'Deve conceder execução para authenticated e service_role na assinatura de 7 parâmetros',
+    );
+
+    // release_vehicle_provider_lock
+    assert.match(
+      sql,
+      /GRANT EXECUTE ON FUNCTION public\.release_vehicle_provider_lock\(\s*TEXT,\s*TEXT\s*\) TO authenticated,\s*service_role;/i,
+      'Deve conceder release_vehicle_provider_lock para authenticated e service_role',
+    );
+
+    // renew_vehicle_provider_lock
+    assert.match(
+      sql,
+      /GRANT EXECUTE ON FUNCTION public\.renew_vehicle_provider_lock\(\s*TEXT,\s*TEXT,\s*INTEGER\s*\) TO authenticated,\s*service_role;/i,
+      'Deve conceder renew_vehicle_provider_lock para authenticated e service_role',
+    );
+
+    // check_ambiguous_provider_attempt
+    assert.match(
+      sql,
+      /GRANT EXECUTE ON FUNCTION public\.check_ambiguous_provider_attempt\(\s*TEXT,\s*TEXT,\s*TEXT\s*\) TO authenticated,\s*service_role;/i,
+      'Deve conceder check_ambiguous_provider_attempt para authenticated e service_role',
+    );
+  });
+
+  it('17. Migration 20261007090000 implementa RPC SECURITY DEFINER para auditoria manual e blinda RLS da tabela', () => {
+    const migrationPath = path.resolve(
+      process.cwd(),
+      'supabase/migrations/20261007090000_create_secure_manual_reprocess_audit_rpc.sql',
+    );
+    const sql = fs.readFileSync(migrationPath, 'utf8');
+
+    // SECURITY DEFINER e search_path seguro
+    assert.match(sql, /CREATE OR REPLACE FUNCTION public\.create_manual_vehicle_reprocess_audit/i);
+    assert.match(sql, /SECURITY DEFINER/i, 'Função deve ser SECURITY DEFINER');
+    assert.match(sql, /SET search_path = ''/i, 'search_path deve ser vazio');
+
+    // Validações obrigatórias
+    assert.match(sql, /v_actor_uuid UUID := auth\.uid\(\);/i, 'Deve capturar auth.uid()');
+    assert.match(sql, /RAISE EXCEPTION 'AUTH_REQUIRED';/i, 'Deve exigir sessão autenticada');
+    assert.match(sql, /RAISE EXCEPTION 'ADMIN_REQUIRED';/i, 'Deve exigir admin ativo');
+    assert.match(sql, /public\.is_admin\(\)/i, 'Deve validar via public.is_admin()');
+    assert.match(sql, /length\(trim\(p_reason\)\) < 10/i, 'Deve exigir pelo menos 10 caracteres no motivo');
+    assert.match(sql, /RAISE EXCEPTION 'MANUAL_REPROCESS_REASON_REQUIRED';/i, 'Deve levantar MANUAL_REPROCESS_REASON_REQUIRED');
+
+    // Privilégios da RPC
+    assert.match(sql, /REVOKE ALL ON FUNCTION public\.create_manual_vehicle_reprocess_audit[\s\S]*?FROM PUBLIC;/i);
+    assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.create_manual_vehicle_reprocess_audit[\s\S]*?TO authenticated,\s*service_role;/i);
+
+    // RLS da tabela
+    assert.match(sql, /DROP POLICY IF EXISTS "Service role can insert reprocess audit"/i);
+    assert.match(sql, /REVOKE INSERT, UPDATE, DELETE, TRUNCATE[\s\S]*?FROM anon,\s*authenticated;/i);
+    assert.match(sql, /CREATE POLICY "Admins can view reprocess audit"[\s\S]*?USING \(public\.is_admin\(\)\);/i);
+  });
+
+  it('18. createManualReprocessAuditRecord invoca a RPC segura, valida motivo, trata erros com fail-closed e mascara audit ID', async () => {
+    // 1. Motivo com menos de 10 caracteres falha antes da RPC
+    await assert.rejects(
+      async () => {
+        await createManualReprocessAuditRecord(
+          {
+            actorId: 'admin-1',
+            provider: 'apibrasil',
+            operation: 'veiculos-total',
+            plateNormalized: 'ABC1D23',
+            reason: 'curto',
+            logicalRequestId: 'req_123',
+          },
+          {} as any,
+        );
+      },
+      (err: any) => {
+        assert.ok(err instanceof ManualReprocessAuditError);
+        assert.match(err.message, /mínimo de 10 caracteres/i);
+        return true;
+      },
+    );
+
+    // 2. Chamada à RPC com sucesso retorna UUID
+    let capturedRpcParams: any = null;
+    const mockSuccessSupabase = {
+      rpc: async (fn: string, params: any) => {
+        if (fn === 'create_manual_vehicle_reprocess_audit') {
+          capturedRpcParams = params;
+          return { data: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', error: null };
+        }
+        return { data: null, error: null };
+      },
+    } as any;
+
+    const auditId = await createManualReprocessAuditRecord(
+      {
+        provider: 'apibrasil',
+        operation: 'veiculos-total',
+        plateNormalized: 'ABC1D23',
+        reason: 'Motivo com mais de 10 caracteres para teste unitário',
+        estimatedCostCents: 3000,
+        logicalRequestId: 'req_test_rpc_1',
+      },
+      mockSuccessSupabase,
+    );
+
+    assert.strictEqual(auditId, 'a1b2c3d4-e5f6-7890-abcd-ef1234567890');
+    assert.strictEqual(capturedRpcParams.p_provider, 'apibrasil');
+    assert.strictEqual(capturedRpcParams.p_plate_normalized, 'ABC1D23');
+    assert.strictEqual(capturedRpcParams.p_logical_request_id, 'req_test_rpc_1');
+
+    // 3. Falha na RPC lança ManualReprocessAuditError (fail-closed, nunca faz fallback para insert)
+    const mockErrorSupabase = {
+      rpc: async () => ({
+        data: null,
+        error: { code: 'P0001', message: 'ADMIN_REQUIRED' },
+      }),
+      from: () => {
+        throw new Error('NUNCA deve chamar supabase.from() como fallback!');
+      },
+    } as any;
+
+    await assert.rejects(
+      async () => {
+        await createManualReprocessAuditRecord(
+          {
+            provider: 'apibrasil',
+            operation: 'veiculos-total',
+            plateNormalized: 'ABC1D23',
+            reason: 'Tentativa legítima que deve falhar fechada',
+            logicalRequestId: 'req_test_rpc_2',
+          },
+          mockErrorSupabase,
+        );
+      },
+      (err: any) => {
+        assert.ok(err instanceof ManualReprocessAuditError);
+        assert.match(err.message, /Falha ao registrar auditoria/i);
+        return true;
+      },
+    );
+  });
+
+  it('19. Route Handler administrativa valida motivo mínimo de 10 caracteres e service.ts autoriza reprocessamento exclusivamente com audit ID', () => {
+    const routePath = path.resolve(
+      process.cwd(),
+      'app/api/admin/vehicle-lookup/route.ts',
+    );
+    const routeContent = fs.readFileSync(routePath, 'utf8');
+
+    const servicePath = path.resolve(
+      process.cwd(),
+      'lib/vehicle-lookup/service.ts',
+    );
+    const serviceContent = fs.readFileSync(servicePath, 'utf8');
+
+    // Na route handler, validação de motivo exige pelo menos 10 caracteres
+    assert.match(
+      routeContent,
+      /body\.manualReprocessReason\.trim\(\)\.length\s*<\s*10/,
+      'Route handler deve exigir no mínimo 10 caracteres no motivo',
+    );
+    assert.doesNotMatch(
+      routeContent,
+      /length\s*<\s*5/,
+      'Validação antiga de 5 caracteres deve ser removida',
+    );
+
+    // No service.ts, autorização de reprocessamento depende única e exclusivamente de manualReprocessAuditId
+    assert.match(
+      serviceContent,
+      /isManualReprocessAuthorized\s*=\s*Boolean\(params\.manualReprocessAuditId\);/,
+      'service.ts deve autorizar reprocessamento exclusivamente via manualReprocessAuditId',
+    );
+    assert.doesNotMatch(
+      serviceContent,
+      /isManualBypass/,
+      'service.ts não pode conter isManualBypass baseado em flags booleanas',
+    );
+    assert.doesNotMatch(
+      serviceContent,
+      /params\.isManualReprocess\s*&&\s*params\.confirmedManualReprocess/,
+      'service.ts não pode usar flags booleanas de reprocessamento para bypass de cache',
+    );
+  });
+
+  it('20. Teste de integração exige SUPABASE_TEST_ADMIN_USER_ID real e rejeita crypto.randomUUID() para usuário', () => {
+    const integrationPath = path.resolve(
+      process.cwd(),
+      'lib/vehicle-lookup/__tests__/integration-vehicle-lookup.test.ts',
+    );
+    const integrationContent = fs.readFileSync(integrationPath, 'utf8');
+
+    assert.match(
+      integrationContent,
+      /const testAdminUserId = process\.env\.SUPABASE_TEST_ADMIN_USER_ID;/,
+      'Deve ler SUPABASE_TEST_ADMIN_USER_ID da variável de ambiente',
+    );
+    assert.doesNotMatch(
+      integrationContent,
+      /testAdminUserId\s*=\s*crypto\.randomUUID\(\)/,
+      'NUNCA pode gerar UUID aleatório para o usuário admin de teste',
+    );
+    assert.match(
+      integrationContent,
+      /auth\.admin\.getUserById\(testAdminUserId\)/,
+      'Deve validar existência do usuário em auth.users',
+    );
+    assert.match(
+      integrationContent,
+      /from\('admin_profiles'\)/,
+      'Deve validar perfil admin ativo em admin_profiles',
+    );
+  });
 });
+

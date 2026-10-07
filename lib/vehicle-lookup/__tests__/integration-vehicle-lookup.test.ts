@@ -16,6 +16,7 @@ import { createClient } from '@supabase/supabase-js';
 // Setup Supabase Client EXCLUSIVAMENTE via variáveis TEST
 const supabaseUrl = process.env.SUPABASE_TEST_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_TEST_SERVICE_ROLE_KEY;
+const testAdminUserId = process.env.SUPABASE_TEST_ADMIN_USER_ID;
 
 // Proteção estrita contra execução acidental em produção
 if (
@@ -30,6 +31,7 @@ if (
 const canRunIntegration =
   Boolean(supabaseUrl) &&
   Boolean(supabaseServiceRoleKey) &&
+  Boolean(testAdminUserId) &&
   process.env.NODE_ENV !== 'production';
 
 describe('Integration: Vehicle Lookup Locks & Audit (staging only)', { skip: !canRunIntegration }, () => {
@@ -40,17 +42,42 @@ describe('Integration: Vehicle Lookup Locks & Audit (staging only)', { skip: !ca
   const operation = 'veiculos-total';
   let activeLockKey: string;
   let activeLogicalRequestId: string;
-  let testAdminUserId: string;
 
   before(async () => {
     if (!canRunIntegration) return;
+
+    if (!testAdminUserId) {
+      throw new Error(
+        'SUPABASE_TEST_ADMIN_USER_ID é obrigatório para executar os testes de integração.',
+      );
+    }
+
+    // 1. Valida que o usuário de teste existe em auth.users no ambiente de staging
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(testAdminUserId);
+    if (userError || !userData?.user) {
+      throw new Error(
+        `Usuário de teste ${testAdminUserId} não foi encontrado em auth.users no banco de staging.`,
+      );
+    }
+
+    // 2. Valida que possui perfil de admin ativo em public.admin_profiles
+    const { data: adminProfile, error: profileError } = await supabase
+      .from('admin_profiles')
+      .select('id, is_active')
+      .eq('auth_user_id', testAdminUserId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (profileError || !adminProfile) {
+      throw new Error(
+        `Usuário de teste ${testAdminUserId} não possui perfil de admin ativo em public.admin_profiles no banco de staging.`,
+      );
+    }
+
     // Cleanup any existing locks, attempts or audits for this test plate
     await supabase.from('vehicle_provider_locks').delete().eq('plate_normalized', testPlate);
     await supabase.from('vehicle_provider_attempts').delete().eq('plate_normalized', testPlate);
     await supabase.from('vehicle_provider_manual_reprocess_audit').delete().eq('plate_normalized', testPlate);
-
-    // Obtém ou gera um UUID de usuário para auditoria
-    testAdminUserId = crypto.randomUUID();
   });
 
   after(async () => {

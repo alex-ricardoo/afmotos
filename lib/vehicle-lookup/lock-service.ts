@@ -154,6 +154,23 @@ export class AmbiguousAttemptGuardError extends Error {
   }
 }
 
+/**
+ * Erro fechado quando a criação da auditoria de reprocessamento manual falha.
+ * A chamada à API Brasil é estritamente impedida.
+ */
+export class ManualReprocessAuditError extends Error {
+  public readonly code = 'MANUAL_REPROCESS_AUDIT_FAILED';
+  public readonly statusCode = 500;
+
+  constructor(message?: string) {
+    super(
+      message ||
+        'Falha ao registrar auditoria de reprocessamento manual. Chamada à API Brasil impedida.',
+    );
+    this.name = 'ManualReprocessAuditError';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Lock Acquisition — BLOQUEADOR 1: Sem fallback não atômico em produção
 // ---------------------------------------------------------------------------
@@ -537,7 +554,7 @@ export async function updateProviderAttemptRecord(
 // ---------------------------------------------------------------------------
 
 export interface ManualReprocessAuditParams {
-  actorId: string;
+  actorId?: string;
   actorType?: 'admin' | 'system';
   previousAttemptId?: string | null;
   provider: string;
@@ -545,50 +562,107 @@ export interface ManualReprocessAuditParams {
   plateNormalized: string;
   reason: string;
   estimatedCostCents?: number;
-  acknowledgedRisk: boolean;
+  acknowledgedRisk?: boolean;
   logicalRequestId: string;
 }
 
 /**
- * Persists a manual reprocess confirmation audit record BEFORE any new call.
+ * Persiste a auditoria de reprocessamento manual ANTES de qualquer nova chamada
+ * externa utilizando exclusivamente a RPC segura SECURITY DEFINER:
+ * public.create_manual_vehicle_reprocess_audit.
+ *
+ * CORREÇÃO 3:
+ * - Invoca a RPC segura com parâmetros validados.
+ * - Retorna o UUID real gerado pela RPC.
+ * - Falha fechada (lança ManualReprocessAuditError) se a RPC falhar ou dados forem inválidos.
+ * - NUNCA faz fallback para INSERT direto na tabela.
+ * - Registra apenas log de auditoria seguro com audit ID mascarado, sem vazar a justificativa bruta.
  */
 export async function createManualReprocessAuditRecord(
   params: ManualReprocessAuditParams,
   supabase: SupabaseClient,
-): Promise<string | null> {
-  try {
-    const isUuid =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        params.actorId,
-      );
+): Promise<string> {
+  const trimmedReason = (params.reason || '').trim();
+  if (trimmedReason.length < 10) {
+    throw new ManualReprocessAuditError(
+      'Motivo de reprocessamento manual inválido. Mínimo de 10 caracteres obrigatório.',
+    );
+  }
 
-    const { data, error } = await supabase
-      .from('vehicle_provider_manual_reprocess_audit')
-      .insert({
-        actor_id: params.actorId,
-        actor_uuid: isUuid ? params.actorId : null,
-        actor_type: params.actorType || 'admin',
-        action: 'manual_reprocess_confirmed',
-        previous_attempt_id: params.previousAttemptId || null,
+  try {
+    const { data, error } = await supabase.rpc(
+      'create_manual_vehicle_reprocess_audit',
+      {
+        p_previous_attempt_id: params.previousAttemptId ?? null,
+        p_provider: params.provider,
+        p_operation: params.operation,
+        p_plate_normalized: params.plateNormalized,
+        p_reason: trimmedReason,
+        p_estimated_cost_cents: params.estimatedCostCents ?? 3000,
+        p_logical_request_id: params.logicalRequestId,
+      },
+    );
+
+    if (error || !data) {
+      logProviderEvent({
+        event: 'provider_manual_reprocess_denied',
         provider: params.provider,
         operation: params.operation,
-        plate_normalized: params.plateNormalized,
-        reason: params.reason,
-        estimated_cost_cents: params.estimatedCostCents ?? 3000,
-        acknowledged_risk: params.acknowledgedRisk,
+        placa_normalizada: params.plateNormalized,
         logical_request_id: params.logicalRequestId,
-        confirmed_at: new Date().toISOString(),
-      })
-      .select('id')
-      .maybeSingle();
+        physical_request_id: 'pending',
+        attempt_number: 1,
+        timeout_ms: 0,
+        duration_ms: 0,
+        status: 'blocked',
+        charge_status: 'not_sent',
+        origem: 'admin_panel',
+        extra: {
+          error_code: error?.code,
+          error_message: error?.message,
+        },
+      });
 
-    if (error) {
-      console.warn('[createManualReprocessAuditRecord] Falha ao gravar auditoria:', error.message);
-      return null;
+      throw new ManualReprocessAuditError(
+        `Falha ao registrar auditoria de reprocessamento manual via RPC (${error?.code || 'NO_DATA'}). Operação cancelada por segurança.`,
+      );
     }
-    return data?.id || null;
-  } catch (err) {
-    console.warn('[createManualReprocessAuditRecord] Exceção ao gravar auditoria:', err);
-    return null;
+
+    const auditId = typeof data === 'string' ? data : (data as any)?.id || String(data);
+
+    // Mascarar audit ID para logging seguro (ex: 1234...9abc)
+    const maskedAuditId =
+      auditId.length > 8 ? `${auditId.slice(0, 4)}...${auditId.slice(-4)}` : '****';
+
+    logProviderEvent({
+      event: 'provider_manual_reprocess_confirmed',
+      provider: params.provider,
+      operation: params.operation,
+      placa_normalizada: params.plateNormalized,
+      logical_request_id: params.logicalRequestId,
+      physical_request_id: 'pending',
+      attempt_number: 1,
+      timeout_ms: 0,
+      duration_ms: 0,
+      status: 'created',
+      charge_status: 'not_sent',
+      origem: 'admin_panel',
+      extra: {
+        audit_id_masked: maskedAuditId,
+        reason_length: trimmedReason.length,
+      },
+    });
+
+    return auditId;
+  } catch (err: unknown) {
+    if (err instanceof ManualReprocessAuditError) {
+      throw err;
+    }
+
+    throw new ManualReprocessAuditError(
+      err instanceof Error
+        ? err.message
+        : 'Exceção ao registrar auditoria de reprocessamento manual.',
+    );
   }
 }

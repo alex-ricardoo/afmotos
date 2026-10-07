@@ -79,10 +79,10 @@ export async function POST(request: NextRequest) {
 
     // BLOQUEADOR 7: Auditoria única de reprocessamento manual autorizada no backend
     if (body.isManualReprocess && body.confirmedManualReprocess) {
-      if (!body.manualReprocessReason || body.manualReprocessReason.trim().length < 5) {
+      if (!body.manualReprocessReason || body.manualReprocessReason.trim().length < 10) {
         return NextResponse.json(
           {
-            error: 'Para reprocessar manualmente, é obrigatório fornecer o motivo (mínimo 5 caracteres).',
+            error: 'Para reprocessar manualmente, é obrigatório fornecer o motivo (mínimo 10 caracteres).',
             isManualReprocessDenied: true,
           },
           { status: 400 },
@@ -118,6 +118,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const maskedAuditId =
+        manualReprocessAuditId.length > 8
+          ? `${manualReprocessAuditId.slice(0, 4)}...${manualReprocessAuditId.slice(-4)}`
+          : '****';
+
       logProviderEvent({
         event: 'provider_manual_reprocess_authorized',
         provider: 'apibrasil',
@@ -132,8 +137,7 @@ export async function POST(request: NextRequest) {
         charge_status: 'not_sent',
         origem: 'admin_panel',
         extra: {
-          actor_id: user.id,
-          audit_id: manualReprocessAuditId,
+          audit_id_masked: maskedAuditId,
           has_ambiguous: ambiguousCheck.hasAmbiguousAttempt,
           previous_attempt_id: ambiguousCheck.attemptId,
         },
@@ -148,7 +152,6 @@ export async function POST(request: NextRequest) {
         confirmationMessageVersion: body.confirmationMessageVersion || 'v1.0',
         motorcycleId: body.motorcycleId,
         sellRequestId: body.sellRequestId,
-        forceRefresh: Boolean(body.forceRefresh && body.confirmedManualReprocess),
         source: 'admin_panel',
         isManualReprocess: body.isManualReprocess,
         confirmedManualReprocess: body.confirmedManualReprocess,
@@ -175,6 +178,7 @@ export async function POST(request: NextRequest) {
       ChargeStatusUnknownError: 504,
       ProviderLockUnavailableError: 503,
       ProviderPersistenceAfterSuccessError: 503,
+      ManualReprocessAuditError: 500,
       InsufficientBalanceError: 402,
       InvalidTokenError: 401,
       ProviderUnavailableError: 502,

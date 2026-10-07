@@ -291,11 +291,6 @@ export async function executeVehiclePlateLookup(
     `[API_BRASIL] 🔑 Token configurado? ${Boolean(config.apiBrasilToken)} ${config.apiBrasilToken ? `(tamanho: ${config.apiBrasilToken.length} caracteres)` : '(TOKEN AUSENTE!)'}`,
   );
 
-  const isManualBypass = Boolean(
-    params.manualReprocessAuditId ||
-      (params.isManualReprocess && params.confirmedManualReprocess),
-  );
-
   // =========================================================================
   // 1. Aquisição do Lock Distribuído (BLOQUEADOR 1: sem fallback)
   // Reprocessamento manual só é autorizado mediante manualReprocessAuditId
@@ -430,11 +425,8 @@ export async function executeVehiclePlateLookup(
   });
 
   try {
-    // 3. Cache-first check (unless manual reprocess was explicitly authorized)
-    const isManualReprocessAuthorized = Boolean(
-      params.manualReprocessAuditId ||
-      (params.isManualReprocess && params.confirmedManualReprocess),
-    );
+    // 3. Cache-first check (autorização de reprocessamento exige estritamente manualReprocessAuditId)
+    const isManualReprocessAuthorized = Boolean(params.manualReprocessAuditId);
     if (!isManualReprocessAuthorized) {
       console.log(`[API_BRASIL] 🔎 Verificando se já existe laudo em cache local no Supabase...`);
       const requireLiveOnly = currentMode === 'live' || Boolean(params.requireLiveOnly);
@@ -475,7 +467,7 @@ export async function executeVehiclePlateLookup(
     // Se existe attempt recente com status ambíguo e a chamada NÃO é
     // reprocessamento manual confirmado, bloquear.
     // =========================================================================
-    if (currentMode === 'live' && !isManualBypass) {
+    if (currentMode === 'live' && !isManualReprocessAuthorized) {
       const ambiguousCheck = await checkAmbiguousProviderAttempt(
         'apibrasil',
         'veiculos-total',
