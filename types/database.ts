@@ -663,7 +663,7 @@ export interface Database {
           operation_type: string | null;
           created_at: string;
           updated_at: string;
-          images: Json;
+          images: Json | null;
         };
       };
       public_motorcycle_images: {
@@ -671,15 +671,13 @@ export interface Database {
           id: string;
           motorcycle_id: string;
           storage_path: string;
-          alt_text: string | null;
           sort_order: number;
           is_primary: boolean;
-          width: number | null;
-          height: number | null;
-          provider: string | null;
+          provider: string;
           public_url: string | null;
           display_url: string | null;
           thumbnail_url: string | null;
+          alt_text: string | null;
           created_at: string;
         };
       };

@@ -102,49 +102,130 @@ export function sanitizeErrorMessage(message?: string | null): string {
     .slice(0, 300);
 }
 
+import { createAdminClient } from '../supabase/admin.ts';
+
+/**
+ * Busca fotos diretamente na tabela motorcycle_images como fallback server-side
+ * caso a view public_motorcycles ainda não tenha retornado a coluna JSONB images.
+ */
+async function fetchServerImagesForMotorcycles(
+  motorcycleIds: string[],
+): Promise<Map<string, any[]>> {
+  const imagesByMotoId = new Map<string, any[]>();
+  if (!motorcycleIds || motorcycleIds.length === 0) return imagesByMotoId;
+
+  try {
+    const admin = createAdminClient();
+    const { data: rawImages, error } = await admin
+      .from('motorcycle_images')
+      .select(
+        'id, motorcycle_id, storage_path, provider, public_url, display_url, thumbnail_url, sort_order, is_primary, alt_text, created_at',
+      )
+      .in('motorcycle_id', motorcycleIds)
+      .order('sort_order', { ascending: true });
+
+    if (!error && rawImages) {
+      for (const img of rawImages) {
+        const list = imagesByMotoId.get(img.motorcycle_id) || [];
+        list.push(img);
+        imagesByMotoId.set(img.motorcycle_id, list);
+      }
+    }
+  } catch (err) {
+    // Falha silenciosa de fallback para não impactar requisição pública
+  }
+
+  return imagesByMotoId;
+}
+
 /**
  * Mapeia registro bruto da view public_motorcycles para o DTO tipado e sanitizado.
  */
-export function mapRawToPublicMotorcycle(raw: any): PublicMotorcycle {
-  const rawImages: any[] = Array.isArray(raw.images) ? raw.images : [];
+export function mapRawToPublicMotorcycle(
+  raw: any,
+  fallbackImages?: any[],
+): PublicMotorcycle {
+  const sourceImages: any[] =
+    Array.isArray(raw.images) && raw.images.length > 0
+      ? raw.images
+      : Array.isArray(fallbackImages) && fallbackImages.length > 0
+        ? fallbackImages
+        : [];
 
-  const sortedRawImages = [...rawImages].sort(
-    (a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0),
-  );
-
-  const images: PublicMotorcycleImage[] = sortedRawImages.map((img) => {
-    const recordLike: ImageRecordLike = {
-      provider: img.provider,
-      storage_path: img.storage_path,
-      public_url: img.public_url,
-      display_url: img.display_url,
-      thumbnail_url: img.thumbnail_url,
-    };
-
-    const resolvedUrl = resolveImageUrl(recordLike);
-    const resolvedThumb = img.thumbnail_url
-      ? resolveImageUrl(recordLike, { useThumbnail: true })
-      : undefined;
-
-    return {
-      id: String(img.id || ''),
-      url: resolvedUrl,
-      thumbnailUrl: resolvedThumb,
-      isPrimary: Boolean(img.is_primary),
-      sortOrder: Number(img.sort_order) || 0,
-      altText: img.alt_text ?? null,
-      width: img.width ? Number(img.width) : null,
-      height: img.height ? Number(img.height) : null,
-    };
+  // Ordenação: is_primary primeiro (descendente), seguido por sort_order (crescente)
+  const sortedRawImages = [...sourceImages].sort((a, b) => {
+    const aPrimary = a.is_primary ? 1 : 0;
+    const bPrimary = b.is_primary ? 1 : 0;
+    if (aPrimary !== bPrimary) return bPrimary - aPrimary;
+    return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0);
   });
 
-  const primaryImage = images.find((i) => i.isPrimary) || images[0];
+  const images: PublicMotorcycleImage[] = sortedRawImages
+    .map((img) => {
+      // 2. Resolução determinística de URL
+      const resolvedUrl =
+        typeof img.public_url === 'string' && img.public_url.trim()
+          ? img.public_url.trim()
+          : typeof img.display_url === 'string' && img.display_url.trim()
+            ? img.display_url.trim()
+            : resolveImageUrl({
+                provider: img.provider,
+                storage_path: img.storage_path,
+                public_url: img.public_url,
+                display_url: img.display_url,
+                thumbnail_url: img.thumbnail_url,
+              });
+
+      // 3. Resolução determinística de thumbnail
+      const resolvedThumbnail =
+        typeof img.thumbnail_url === 'string' && img.thumbnail_url.trim()
+          ? img.thumbnail_url.trim()
+          : undefined;
+
+      // 6. Log sanitizado quando URL não puder ser resolvida
+      if (!resolvedUrl) {
+        console.warn('[PUBLIC_CATALOG_IMAGE]', {
+          event: 'public_image_url_unresolved',
+          motorcycleId: raw.id ?? null,
+          imageId: img.id ?? null,
+          provider: img.provider ?? null,
+          hasStoragePath: Boolean(img.storage_path),
+          hasPublicUrl: Boolean(img.public_url),
+          hasDisplayUrl: Boolean(img.display_url),
+          hasThumbnailUrl: Boolean(img.thumbnail_url),
+        });
+      }
+
+      return {
+        id: String(img.id || ''),
+        url: resolvedUrl,
+        thumbnailUrl: resolvedThumbnail,
+        isPrimary: Boolean(img.is_primary),
+        sortOrder: Number(img.sort_order) || 0,
+        altText: img.alt_text ?? null,
+        width: img.width ? Number(img.width) : null,
+        height: img.height ? Number(img.height) : null,
+      };
+    })
+    // 4. Filtrar imagens inválidas (sem URL resolvível)
+    .filter((image) => Boolean(image.url));
+
+  // 5. Garantir que a imagem principal seja definida por:
+  // - is_primary = true
+  // - fallback para primeira imagem com URL válida
+  // - ordem sort_order crescente
+  const primaryImage =
+    images.find((i) => i.isPrimary && Boolean(i.url)) ||
+    images[0];
   const primaryUrl = primaryImage?.url || undefined;
 
   const yearMan = Number(raw.year_manufacture) || new Date().getFullYear();
   const yearMod = Number(raw.year_model) || yearMan;
   const isRepasse = Boolean(raw.is_repasse);
-  const engineCap = raw.engine_capacity !== null && raw.engine_capacity !== undefined ? Number(raw.engine_capacity) : null;
+  const engineCap =
+    raw.engine_capacity !== null && raw.engine_capacity !== undefined
+      ? Number(raw.engine_capacity)
+      : null;
 
   return {
     id: String(raw.id),
@@ -290,7 +371,18 @@ export async function getPublicAvailableMotorcycles(
       };
     }
 
-    const items = (data || []).map(mapRawToPublicMotorcycle);
+    const missingImageIds = (data || [])
+      .filter((raw) => !Array.isArray(raw.images) || raw.images.length === 0)
+      .map((raw) => raw.id);
+
+    const fallbackImagesMap =
+      missingImageIds.length > 0
+        ? await fetchServerImagesForMotorcycles(missingImageIds)
+        : new Map();
+
+    const items = (data || []).map((raw) =>
+      mapRawToPublicMotorcycle(raw, fallbackImagesMap.get(raw.id)),
+    );
 
     console.info('[PUBLIC_CATALOG]', {
       event: 'public_motorcycles_query',
@@ -368,7 +460,18 @@ export async function getPublicSoldMotorcycles(): Promise<PublicCatalogResult<Pu
       };
     }
 
-    const items = (data || []).map(mapRawToPublicMotorcycle);
+    const soldMissingImageIds = (data || [])
+      .filter((raw) => !Array.isArray(raw.images) || raw.images.length === 0)
+      .map((raw) => raw.id);
+
+    const soldFallbackImagesMap =
+      soldMissingImageIds.length > 0
+        ? await fetchServerImagesForMotorcycles(soldMissingImageIds)
+        : new Map();
+
+    const items = (data || []).map((raw) =>
+      mapRawToPublicMotorcycle(raw, soldFallbackImagesMap.get(raw.id)),
+    );
 
     console.info('[PUBLIC_CATALOG]', {
       event: 'public_motorcycles_query',
@@ -449,7 +552,18 @@ export async function getPublicFeaturedMotorcycles(
       };
     }
 
-    let items = (data || []).map(mapRawToPublicMotorcycle);
+    const featuredMissingImageIds = (data || [])
+      .filter((raw) => !Array.isArray(raw.images) || raw.images.length === 0)
+      .map((raw) => raw.id);
+
+    const featuredFallbackImagesMap =
+      featuredMissingImageIds.length > 0
+        ? await fetchServerImagesForMotorcycles(featuredMissingImageIds)
+        : new Map();
+
+    let items = (data || []).map((raw) =>
+      mapRawToPublicMotorcycle(raw, featuredFallbackImagesMap.get(raw.id)),
+    );
 
     // Se nenhuma moto estiver com featured=true, faz fallback para as mais recentes disponíveis
     if (items.length === 0) {
@@ -461,7 +575,18 @@ export async function getPublicFeaturedMotorcycles(
         .limit(limit);
 
       if (!fallbackResult.error && fallbackResult.data && fallbackResult.data.length > 0) {
-        items = fallbackResult.data.map(mapRawToPublicMotorcycle);
+        const fallbackMissingIds = fallbackResult.data
+          .filter((raw) => !Array.isArray(raw.images) || raw.images.length === 0)
+          .map((raw) => raw.id);
+
+        const extraImagesMap =
+          fallbackMissingIds.length > 0
+            ? await fetchServerImagesForMotorcycles(fallbackMissingIds)
+            : new Map();
+
+        items = fallbackResult.data.map((raw) =>
+          mapRawToPublicMotorcycle(raw, extraImagesMap.get(raw.id)),
+        );
       }
     }
 
@@ -554,7 +679,12 @@ export async function getPublicMotorcycleBySlug(
       };
     }
 
-    const moto = mapRawToPublicMotorcycle(data);
+    const missingImages = !Array.isArray(data.images) || data.images.length === 0;
+    const fallbackImages = missingImages
+      ? (await fetchServerImagesForMotorcycles([data.id])).get(data.id)
+      : undefined;
+
+    const moto = mapRawToPublicMotorcycle(data, fallbackImages);
 
     console.info('[PUBLIC_CATALOG]', {
       event: 'public_motorcycles_query',
