@@ -30,6 +30,7 @@ interface LookupRequestBody {
   isManualReprocess?: boolean;
   confirmedManualReprocess?: boolean;
   manualReprocessReason?: string;
+  logicalRequestId?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -136,11 +137,11 @@ export async function POST(request: NextRequest) {
         motorcycleId: body.motorcycleId,
         sellRequestId: body.sellRequestId,
         forceRefresh: Boolean(body.forceRefresh && body.confirmedManualReprocess),
-        logicalRequestId,
         source: 'admin_panel',
         isManualReprocess: body.isManualReprocess,
         confirmedManualReprocess: body.confirmedManualReprocess,
         manualReprocessReason: body.manualReprocessReason,
+        logicalRequestId: body.logicalRequestId || logicalRequestId,
       },
       supabase,
     );
@@ -173,6 +174,16 @@ export async function POST(request: NextRequest) {
         error: err?.message || 'Erro interno ao processar consulta veicular.',
         code: err?.code || 'UNKNOWN',
         canManualReprocess: err?.code === 'CHARGE_STATUS_UNKNOWN' || err?.code === 'CHARGE_STATUS_UNKNOWN_RECONCILIATION_REQUIRED',
+        statusCode,
+        isConsultationInProgress: err?.name === 'ConsultationInProgressError',
+        isAmbiguousAttempt: err?.name === 'AmbiguousAttemptGuardError',
+        isChargeStatusUnknown: err?.name === 'ChargeStatusUnknownError',
+        isInsufficientBalance: err?.name === 'InsufficientBalanceError',
+        isTokenError: err?.name === 'InvalidTokenError',
+        isProviderUnavailable: err?.name === 'ProviderUnavailableError',
+        rechargeUrl: err?.rechargeUrl,
+        balance: err?.balance,
+        userGuidance: err?.userGuidance,
       },
       { status: statusCode },
     );

@@ -142,7 +142,8 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
 
   // 2. Proteção de beforeunload durante consulta ativa
   useEffect(() => {
-    if (!isExecuting) return;
+    const isTerminal = activeStatus ? ['completed', 'failed', 'charge_status_unknown', 'manual_review'].includes(activeStatus) : false;
+    if (!isExecuting || isTerminal) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -154,7 +155,7 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [isExecuting]);
+  }, [isExecuting, activeStatus]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isExecuting) return;
@@ -240,14 +241,21 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
     }, 1200);
 
     try {
-      const res = await executeVehiclePlateLookupAction({
-        plate: normalized,
-        confirmedPlate: displayPlate,
-        isManualReprocess: options?.isManualReprocess,
-        confirmedManualReprocess: options?.confirmedManualReprocess,
-        forceRefresh: options?.confirmedManualReprocess,
-        manualReprocessReason: options?.manualReprocessReason,
+      const response = await fetch('/api/admin/vehicle-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plate: normalized,
+          confirmedPlate: displayPlate,
+          isManualReprocess: options?.isManualReprocess,
+          confirmedManualReprocess: options?.confirmedManualReprocess,
+          forceRefresh: options?.confirmedManualReprocess,
+          manualReprocessReason: options?.manualReprocessReason,
+          logicalRequestId: session.logicalRequestId,
+        }),
       });
+
+      const res = await response.json();
 
       clearTimeout(statusTimer);
 
@@ -390,9 +398,6 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
   const handleConfirmLeave = () => {
     setIsLeaveDialogOpen(false);
     setIsExecuting(false);
-    if (activeSession) {
-      clearActiveLookupSession(activeSession.plateNormalized, 'admin');
-    }
     setActiveSession(null);
     logLookupUiEvent('vehicle_lookup_ui_leave_attempted', {
       context: 'admin_panel',
@@ -537,7 +542,7 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
             Consulta Veicular por Placa
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto">
-            Válido para qualquer tipo de veículo com placa registrada em território nacional. Consulte dados oficiais do Senatran, gravames, débitos estaduais, leilão e FIPE.
+            Válido para qualquer tipo de veículo com placa registrada em território nacional. Consulte dados oficiais estaduais, gravames, débitos, leilão e FIPE.
           </p>
         </div>
 

@@ -35,6 +35,7 @@ export interface LockAcquireParams {
   ttlSeconds?: number;
   source: ProviderSource;
   timeoutMs: number;
+  forceBypass?: boolean;
 }
 
 export interface LockAcquireResult {
@@ -179,6 +180,7 @@ export async function acquireDistributedProviderLock(
       p_logical_request_id: params.logicalRequestId,
       p_locked_by: params.lockedBy,
       p_ttl_seconds: ttlSeconds,
+      p_force_bypass: Boolean(params.forceBypass),
     });
 
     if (error) {

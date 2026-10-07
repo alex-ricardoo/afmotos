@@ -71,11 +71,10 @@ export function LeaveConfirmDialog({
             className="text-xs sm:text-sm text-zinc-300 leading-relaxed space-y-2 pt-1"
           >
             <span>
-              Ainda estamos consultando as bases oficiais para esta placa. Sair agora pode impedir
-              que você acompanhe o resultado nesta tela.
+              Sair ocultará o acompanhamento, mas o processamento continuará em segundo plano. Você poderá visualizar o resultado ao consultar a mesma placa novamente.
             </span>
             <span className="block font-semibold text-amber-300/90 pt-1">
-              Para evitar cobrança duplicada, não inicie uma nova consulta.
+              Para evitar cobrança duplicada, não inicie uma nova consulta até a finalização desta.
             </span>
           </DialogDescription>
         </DialogHeader>

@@ -130,7 +130,7 @@ export function ConsultationProgressPanel({
       {
         id: 3,
         title: 'Consultando fontes oficiais',
-        description: 'Bases Senatran, Detran e histórico nacional',
+        description: 'Bases estaduais e histórico nacional',
         status: isCompleted ? 'done' : isInterrupted ? 'interrupted' : 'current',
       },
       {
@@ -434,7 +434,7 @@ export function ConsultationProgressPanel({
             <span className="text-xs sm:text-sm">Mantenha esta tela aberta</span>
           </div>
           <p className="text-[11px] sm:text-xs text-zinc-300 leading-relaxed">
-            Para sua segurança financeira e técnica, não recarregue a página, não volte no navegador e não inicie outra consulta para a mesma placa.
+            Sua consulta está sendo processada nos servidores. Para evitar interrupções na exibição do resultado final, recomendamos aguardar nesta tela.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-amber-500/15 text-[11px] text-zinc-400">

@@ -24,6 +24,7 @@ import {
   ProviderLockUnavailableError,
   ProviderPersistenceAfterSuccessError,
   AmbiguousAttemptGuardError,
+  createManualReprocessAuditRecord,
 } from './lock-service.ts';
 import { logProviderEvent, type ProviderSource } from './provider-logger.ts';
 
@@ -295,6 +296,23 @@ export async function executeVehiclePlateLookup(
     Boolean(params.isManualReprocess && params.confirmedManualReprocess) ||
     Boolean(params.forceRefresh && params.confirmedManualReprocess);
 
+  if (isManualBypass) {
+    await createManualReprocessAuditRecord(
+      {
+        actorId: params.userId,
+        actorType: 'admin',
+        provider: 'apibrasil',
+        operation: 'veiculos-total',
+        plateNormalized: normalizedPlate,
+        reason: params.manualReprocessReason || 'Reprocessamento manual solicitado pelo administrador',
+        estimatedCostCents: activeCostCents,
+        acknowledgedRisk: true,
+        logicalRequestId,
+      },
+      supabase,
+    );
+  }
+
   // =========================================================================
   // 1. Aquisição do Lock Distribuído (BLOQUEADOR 1: sem fallback)
   // =========================================================================
@@ -308,6 +326,7 @@ export async function executeVehiclePlateLookup(
       ttlSeconds: lockTtlSeconds,
       source,
       timeoutMs,
+      forceBypass: isManualBypass,
     },
     supabase,
   );
@@ -356,6 +375,9 @@ export async function executeVehiclePlateLookup(
       supabase,
     );
 
+    if (lockResult.reason === 'AMBIGUOUS_ATTEMPT_PENDING') {
+      throw new AmbiguousAttemptGuardError(normalizedPlate);
+    }
     throw new ConsultationInProgressError(normalizedPlate, lockResult.lockKey);
   }
 
