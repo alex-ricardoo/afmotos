@@ -35,7 +35,7 @@ export interface LockAcquireParams {
   ttlSeconds?: number;
   source: ProviderSource;
   timeoutMs: number;
-  forceBypass?: boolean;
+  manualReprocessAuditId?: string | null;
 }
 
 export interface LockAcquireResult {
@@ -180,7 +180,7 @@ export async function acquireDistributedProviderLock(
       p_logical_request_id: params.logicalRequestId,
       p_locked_by: params.lockedBy,
       p_ttl_seconds: ttlSeconds,
-      p_force_bypass: Boolean(params.forceBypass),
+      p_manual_reprocess_audit_id: params.manualReprocessAuditId || null,
     });
 
     if (error) {
@@ -557,10 +557,16 @@ export async function createManualReprocessAuditRecord(
   supabase: SupabaseClient,
 ): Promise<string | null> {
   try {
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        params.actorId,
+      );
+
     const { data, error } = await supabase
       .from('vehicle_provider_manual_reprocess_audit')
       .insert({
         actor_id: params.actorId,
+        actor_uuid: isUuid ? params.actorId : null,
         actor_type: params.actorType || 'admin',
         action: 'manual_reprocess_confirmed',
         previous_attempt_id: params.previousAttemptId || null,

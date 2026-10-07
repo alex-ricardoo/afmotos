@@ -24,7 +24,6 @@ import {
   ProviderLockUnavailableError,
   ProviderPersistenceAfterSuccessError,
   AmbiguousAttemptGuardError,
-  createManualReprocessAuditRecord,
 } from './lock-service.ts';
 import { logProviderEvent, type ProviderSource } from './provider-logger.ts';
 
@@ -95,6 +94,7 @@ export interface ExecuteLookupParams {
   isManualReprocess?: boolean;
   confirmedManualReprocess?: boolean;
   manualReprocessReason?: string;
+  manualReprocessAuditId?: string | null;
 }
 
 export interface LookupExecutionResult {
@@ -291,30 +291,15 @@ export async function executeVehiclePlateLookup(
     `[API_BRASIL] 🔑 Token configurado? ${Boolean(config.apiBrasilToken)} ${config.apiBrasilToken ? `(tamanho: ${config.apiBrasilToken.length} caracteres)` : '(TOKEN AUSENTE!)'}`,
   );
 
-  // Reprocessamento manual confirmado por admin bypassa cache e guarda ambígua
-  const isManualBypass =
-    Boolean(params.isManualReprocess && params.confirmedManualReprocess) ||
-    Boolean(params.forceRefresh && params.confirmedManualReprocess);
-
-  if (isManualBypass) {
-    await createManualReprocessAuditRecord(
-      {
-        actorId: params.userId,
-        actorType: 'admin',
-        provider: 'apibrasil',
-        operation: 'veiculos-total',
-        plateNormalized: normalizedPlate,
-        reason: params.manualReprocessReason || 'Reprocessamento manual solicitado pelo administrador',
-        estimatedCostCents: activeCostCents,
-        acknowledgedRisk: true,
-        logicalRequestId,
-      },
-      supabase,
-    );
-  }
+  const isManualBypass = Boolean(
+    params.manualReprocessAuditId ||
+      (params.isManualReprocess && params.confirmedManualReprocess),
+  );
 
   // =========================================================================
   // 1. Aquisição do Lock Distribuído (BLOQUEADOR 1: sem fallback)
+  // Reprocessamento manual só é autorizado mediante manualReprocessAuditId
+  // criado de forma única pela Route Handler administrativa e consumido no banco.
   // =========================================================================
   const lockResult = await acquireDistributedProviderLock(
     {
@@ -326,7 +311,7 @@ export async function executeVehiclePlateLookup(
       ttlSeconds: lockTtlSeconds,
       source,
       timeoutMs,
-      forceBypass: isManualBypass,
+      manualReprocessAuditId: params.manualReprocessAuditId || null,
     },
     supabase,
   );
@@ -350,6 +335,7 @@ export async function executeVehiclePlateLookup(
         lock_key: lockResult.lockKey,
         locked_by: lockResult.lockedBy,
         lock_expires_at: lockResult.lockExpiresAt,
+        reason: lockResult.reason,
       },
     });
 
@@ -375,7 +361,10 @@ export async function executeVehiclePlateLookup(
       supabase,
     );
 
-    if (lockResult.reason === 'AMBIGUOUS_ATTEMPT_PENDING') {
+    if (
+      lockResult.reason === 'AMBIGUOUS_ATTEMPT_PENDING' ||
+      lockResult.reason === 'AMBIGUOUS_ATTEMPT_RECONCILIATION_REQUIRED'
+    ) {
       throw new AmbiguousAttemptGuardError(normalizedPlate);
     }
     throw new ConsultationInProgressError(normalizedPlate, lockResult.lockKey);
@@ -441,8 +430,12 @@ export async function executeVehiclePlateLookup(
   });
 
   try {
-    // 3. Cache-first check (unless forceRefresh is explicitly requested with confirmedManualReprocess)
-    if (!isManualBypass) {
+    // 3. Cache-first check (unless manual reprocess was explicitly authorized)
+    const isManualReprocessAuthorized = Boolean(
+      params.manualReprocessAuditId ||
+      (params.isManualReprocess && params.confirmedManualReprocess),
+    );
+    if (!isManualReprocessAuthorized) {
       console.log(`[API_BRASIL] 🔎 Verificando se já existe laudo em cache local no Supabase...`);
       const requireLiveOnly = currentMode === 'live' || Boolean(params.requireLiveOnly);
       const existing = await findExistingConsultation(normalizedPlate, supabase, { requireLiveOnly });

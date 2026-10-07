@@ -75,7 +75,9 @@ export async function POST(request: NextRequest) {
 
     const logicalRequestId = `req_admin_${crypto.randomUUID()}`;
 
-    // BLOQUEADOR 7: Auditoria de reprocessamento manual
+    let manualReprocessAuditId: string | null = null;
+
+    // BLOQUEADOR 7: Auditoria única de reprocessamento manual autorizada no backend
     if (body.isManualReprocess && body.confirmedManualReprocess) {
       if (!body.manualReprocessReason || body.manualReprocessReason.trim().length < 5) {
         return NextResponse.json(
@@ -91,7 +93,7 @@ export async function POST(request: NextRequest) {
         'apibrasil', 'veiculos-total', normalized, supabase,
       );
 
-      await createManualReprocessAuditRecord(
+      manualReprocessAuditId = await createManualReprocessAuditRecord(
         {
           actorId: user.id,
           actorType: 'admin',
@@ -106,6 +108,15 @@ export async function POST(request: NextRequest) {
         },
         supabase,
       );
+
+      if (!manualReprocessAuditId) {
+        return NextResponse.json(
+          {
+            error: 'Falha ao registrar auditoria de reprocessamento manual. Operação cancelada por segurança.',
+          },
+          { status: 500 },
+        );
+      }
 
       logProviderEvent({
         event: 'provider_manual_reprocess_authorized',
@@ -122,6 +133,7 @@ export async function POST(request: NextRequest) {
         origem: 'admin_panel',
         extra: {
           actor_id: user.id,
+          audit_id: manualReprocessAuditId,
           has_ambiguous: ambiguousCheck.hasAmbiguousAttempt,
           previous_attempt_id: ambiguousCheck.attemptId,
         },
@@ -141,6 +153,7 @@ export async function POST(request: NextRequest) {
         isManualReprocess: body.isManualReprocess,
         confirmedManualReprocess: body.confirmedManualReprocess,
         manualReprocessReason: body.manualReprocessReason,
+        manualReprocessAuditId,
         logicalRequestId: body.logicalRequestId || logicalRequestId,
       },
       supabase,

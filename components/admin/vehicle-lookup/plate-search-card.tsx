@@ -398,6 +398,12 @@ export function PlateSearchCard({ isMockMode, onNavigateToHistory }: PlateSearch
   const handleConfirmLeave = () => {
     setIsLeaveDialogOpen(false);
     setIsExecuting(false);
+    if (activeSession) {
+      saveActiveLookupSession({
+        ...activeSession,
+        userLeftAt: new Date().toISOString(),
+      });
+    }
     setActiveSession(null);
     logLookupUiEvent('vehicle_lookup_ui_leave_attempted', {
       context: 'admin_panel',

@@ -71,17 +71,22 @@ export function LeaveConfirmDialog({
             className="text-xs sm:text-sm text-zinc-300 leading-relaxed space-y-2 pt-1"
           >
             <span>
-              Sair ocultará o acompanhamento, mas o processamento continuará em segundo plano. Você poderá visualizar o resultado ao consultar a mesma placa novamente.
+              Ainda estamos consultando as fontes oficiais para esta placa.
+            </span>
+            <span className="block text-zinc-300">
+              Sair agora encerra apenas o acompanhamento nesta tela. Ao retornar, consulte o histórico para verificar o andamento.
             </span>
             <span className="block font-semibold text-amber-300/90 pt-1">
-              Para evitar cobrança duplicada, não inicie uma nova consulta até a finalização desta.
+              Para evitar cobrança duplicada, não inicie uma nova consulta para esta placa.
             </span>
           </DialogDescription>
         </DialogHeader>
 
         <div className="mt-2 rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 text-[11px] text-zinc-400 flex items-center gap-2">
           <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>O resultado aparecerá automaticamente assim que as bases responderem.</span>
+          <span>
+            Assim que a consulta for concluída, o resultado será exibido nesta tela. Se você sair, poderá acompanhar o status pelo histórico ao retornar.
+          </span>
         </div>
 
         <DialogFooter className="mt-4 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">

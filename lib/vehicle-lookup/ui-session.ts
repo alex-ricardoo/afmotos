@@ -20,12 +20,14 @@ export type LookupUiStatus =
 
 export interface ActiveLookupSession {
   consultationId?: string;
+  logicalRequestId?: string;
   plateNormalized: string;
   plateDisplay: string;
   startedAt: string;
   status: LookupUiStatus;
   context: 'admin' | 'customer' | 'admin_panel' | 'customer_portal';
   estimatedCostCents?: number;
+  userLeftAt?: string;
 }
 
 export const STORAGE_PREFIX = 'af_lookup_session_v1_';
@@ -45,12 +47,14 @@ export function saveActiveLookupSession(session: ActiveLookupSession): void {
     // Salva apenas os campos necessários, estritamente livres de dados sensíveis
     const payload: ActiveLookupSession = {
       consultationId: session.consultationId,
+      logicalRequestId: session.logicalRequestId,
       plateNormalized: session.plateNormalized.toUpperCase(),
       plateDisplay: session.plateDisplay,
       startedAt: session.startedAt,
       status: session.status,
       context: session.context,
       estimatedCostCents: session.estimatedCostCents,
+      userLeftAt: session.userLeftAt,
     };
     window.sessionStorage.setItem(key, JSON.stringify(payload));
   } catch (err) {

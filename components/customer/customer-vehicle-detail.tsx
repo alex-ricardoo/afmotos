@@ -98,59 +98,82 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
     };
   }, [isProcessing, consultation.plate, consultation.id]);
 
-  // Polling automático da entrega em tela enquanto a consulta estiver processando
+  // Polling automático e estritamente read-only enquanto a consulta estiver processando
   useEffect(() => {
     if (!isProcessing) return;
 
-    let isMounted = true;
-    const interval = setInterval(async () => {
+    let disposed = false;
+    let requestInFlight = false;
+
+    const pollStatus = async () => {
+      if (disposed || requestInFlight) return;
+
+      requestInFlight = true;
+
       try {
-        const res = await fetch(`/api/cliente/consultas/${consultation.id}/process-delivery`, {
-          method: 'POST',
-        });
-        if (!res.ok) return;
+        const response = await fetch(
+          `/api/cliente/consultas/${consultation.id}/status`,
+          {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+              Accept: 'application/json',
+            },
+          },
+        );
 
-        const data = await res.json();
-        if (!isMounted) return;
+        if (!response.ok) return;
 
-        if (data.status === 'completed' || data.delivered) {
+        const payload = await response.json();
+        if (disposed || !payload?.data) return;
+
+        const nextStatus = payload.data.status;
+        setCurrentStatus(nextStatus);
+
+        if (payload.data.isCompleted) {
           logLookupUiEvent('vehicle_lookup_ui_completed', {
             context: 'customer_portal',
             plateMasked: consultation.plate,
             status: 'completed',
             consultationIdMasked: consultation.id,
           });
-          clearLookupSession('customer_portal', consultation.plate_normalized || consultation.plate);
+          clearLookupSession(
+            'customer_portal',
+            consultation.plate_normalized || consultation.plate,
+          );
           router.refresh();
-        } else if (data.status && data.status !== currentStatus) {
-          setCurrentStatus(data.status);
-          if (
-            ['failed', 'failed_permanent', 'refund_pending', 'refunded', 'manual_review'].includes(
-              data.status,
-            )
-          ) {
-            clearLookupSession(
-              'customer_portal',
-              consultation.plate_normalized || consultation.plate,
-            );
-            router.refresh();
-          }
+          return;
         }
-      } catch (err) {
-        console.error('[CustomerVehicleDetail] Erro no acompanhamento:', err);
+
+        if (payload.data.isTerminal) {
+          clearLookupSession(
+            'customer_portal',
+            consultation.plate_normalized || consultation.plate,
+          );
+          router.refresh();
+        }
+      } catch (error) {
+        console.warn('[CustomerVehicleDetail] Falha ao consultar status local:', error);
+      } finally {
+        requestInFlight = false;
       }
-    }, 5000);
+    };
+
+    void pollStatus();
+
+    const intervalId = window.setInterval(() => {
+      void pollStatus();
+    }, 7000);
 
     return () => {
-      isMounted = false;
-      clearInterval(interval);
+      disposed = true;
+      window.clearInterval(intervalId);
     };
   }, [
     isProcessing,
     consultation.id,
     consultation.plate,
     consultation.plate_normalized,
-    currentStatus,
     router,
   ]);
 

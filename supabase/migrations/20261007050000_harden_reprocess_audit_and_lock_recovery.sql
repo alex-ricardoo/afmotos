@@ -6,24 +6,9 @@
 --   - Guarda de ambiguidade na recuperacao de lock expirado
 -- ============================================================
 
--- 1. Refatorar schema de auditoria: actor_id para UUID e foreign key
+-- 1. Relaxar NOT NULL em actor_id para suportar chamadas de sistema (evoluído com actor_uuid na migration 20261007070000)
 ALTER TABLE public.vehicle_provider_manual_reprocess_audit
   ALTER COLUMN actor_id DROP NOT NULL;
-
-ALTER TABLE public.vehicle_provider_manual_reprocess_audit
-  ALTER COLUMN actor_id TYPE UUID USING (
-    CASE WHEN actor_type = 'admin' THEN actor_id::UUID ELSE NULL END
-  );
-
-ALTER TABLE public.vehicle_provider_manual_reprocess_audit
-  ADD CONSTRAINT fk_manual_reprocess_actor
-  FOREIGN KEY (actor_id) REFERENCES auth.users(id) ON DELETE SET NULL;
-
-ALTER TABLE public.vehicle_provider_manual_reprocess_audit
-  ADD CONSTRAINT chk_actor_id_required_for_admin CHECK (
-    (actor_type = 'admin' AND actor_id IS NOT NULL) OR
-    (actor_type = 'system')
-  );
 
 -- 2. Harden RLS na tabela de auditoria (Bloqueador 3)
 DROP POLICY IF EXISTS "Service role can insert reprocess audit" ON public.vehicle_provider_manual_reprocess_audit;

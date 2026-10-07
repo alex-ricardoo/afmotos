@@ -129,14 +129,14 @@ export function ConsultationProgressPanel({
       },
       {
         id: 3,
-        title: 'Consultando fontes oficiais',
-        description: 'Bases estaduais e histórico nacional',
+        title: 'Consultando fontes oficiais disponíveis',
+        description: 'Aguardando o retorno das informações do veículo',
         status: isCompleted ? 'done' : isInterrupted ? 'interrupted' : 'current',
       },
       {
         id: 4,
-        title: 'Consolidando informações do veículo',
-        description: 'Compilando dados cadastrais, restrições e gravames',
+        title: 'Consolidando os dados retornados pela consulta',
+        description: 'Preparando o resultado da consulta',
         status: isCompleted ? 'done' : isInterrupted ? 'pending' : elapsedSeconds > 25 ? 'current' : 'pending',
       },
       {
@@ -434,7 +434,7 @@ export function ConsultationProgressPanel({
             <span className="text-xs sm:text-sm">Mantenha esta tela aberta</span>
           </div>
           <p className="text-[11px] sm:text-xs text-zinc-300 leading-relaxed">
-            Sua consulta está sendo processada nos servidores. Para evitar interrupções na exibição do resultado final, recomendamos aguardar nesta tela.
+            Assim que a consulta for concluída, o resultado será exibido nesta tela. Se você sair, poderá acompanhar o status pelo histórico ao retornar.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-amber-500/15 text-[11px] text-zinc-400">
@@ -444,7 +444,7 @@ export function ConsultationProgressPanel({
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Resultado automático sem recarregar</span>
+              <span>Resultado exibido nesta tela ao concluir</span>
             </div>
           </div>
         </div>

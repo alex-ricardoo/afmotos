@@ -148,6 +148,8 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     const { logProviderEvent } = await import('@/lib/vehicle-lookup/provider-logger');
     const logicalRequestId = `req_admin_${crypto.randomUUID()}`;
 
+    let auditId: string | null = null;
+
     // =========================================================================
     // BLOQUEADOR 7: Reprocessamento manual com auditoria backend
     // =========================================================================
@@ -185,7 +187,7 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
       );
 
       // Registrar auditoria de reprocessamento manual ANTES de executar
-      const auditId = await createManualReprocessAuditRecord(
+      auditId = await createManualReprocessAuditRecord(
         {
           actorId: user.id,
           actorType: 'admin',
@@ -254,6 +256,7 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         isManualReprocess: input.isManualReprocess,
         confirmedManualReprocess: input.confirmedManualReprocess,
         manualReprocessReason: input.manualReprocessReason,
+        manualReprocessAuditId: auditId || null,
       },
       supabase
     );
