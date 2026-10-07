@@ -376,24 +376,111 @@ export async function updateSaleAction(id: string, rawData: Partial<SaleFormValu
   return { success: true, id, receiptNumber: updatedSale.receipt_number };
 }
 
-export async function deleteSaleAction(id: string, motorcycleId?: string, revertMotoStatus = true) {
+export async function deleteSaleAction(
+  id: string,
+  motorcycleId?: string,
+  revertMotoStatus = true,
+) {
   const supabase = await createClient();
 
-  const { error } = await supabase.from('sales').delete().eq('id', id);
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-  if (error) {
-    console.error('Error deleting sale:', error);
-    return { error: 'Não foi possível excluir o registro de venda.' };
+  if (authError || !user) {
+    return { error: 'Acesso não autorizado. Faça login novamente.' };
   }
 
-  if (motorcycleId && revertMotoStatus) {
-    await supabase.from('motorcycles').update({ status: 'AVAILABLE' }).eq('id', motorcycleId);
+  // 1. Obter os dados da venda antes de deletar
+  const { data: sale, error: fetchError } = await supabase
+    .from('sales')
+    .select('id, motorcycle_id, receipt_number')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error('Error fetching sale before deletion:', fetchError);
+  }
+
+  const effectiveMotoId = motorcycleId || sale?.motorcycle_id;
+
+  // 2. Desvincular e resetar comissões de intermediação associadas à venda
+  try {
+    const { data: linkedComms } = await supabase
+      .from('proposal_commissions')
+      .select('id, status, sale_id')
+      .eq('sale_id', id);
+
+    if (linkedComms && linkedComms.length > 0) {
+      for (const comm of linkedComms) {
+        await supabase
+          .from('proposal_commissions')
+          .update({
+            sale_id: null,
+            status: comm.status === 'received' ? 'received' : 'proposed',
+            eligible_for_reports: false,
+            commission_confirmed_value: null,
+            confirmed_at: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', comm.id);
+
+        await supabase.from('proposal_commission_audit_logs').insert({
+          commission_id: comm.id,
+          action: 'updated',
+          previous_snapshot: comm,
+          new_snapshot: { ...comm, sale_id: null, eligible_for_reports: false },
+          reason: `Venda ${sale?.receipt_number ? `#${sale.receipt_number}` : id} excluída no painel administrativo`,
+          changed_by: user.id,
+        });
+      }
+    }
+  } catch (commErr) {
+    console.warn('Aviso ao desvincular comissões da venda excluída:', commErr);
+  }
+
+  // 3. Desvincular termos de acordo de venda associados
+  try {
+    await supabase
+      .from('sale_agreements')
+      .update({ sale_id: null })
+      .eq('sale_id', id);
+  } catch (saErr) {
+    console.warn('Aviso ao desvincular termos da venda excluída:', saErr);
+  }
+
+  // 4. Excluir o registro de venda
+  const { error: deleteError } = await supabase.from('sales').delete().eq('id', id);
+
+  if (deleteError) {
+    console.error('Error deleting sale:', deleteError);
+    return {
+      error: `Não foi possível excluir o registro de venda: ${deleteError.message || 'Erro no banco de dados.'}`,
+    };
+  }
+
+  // 5. Reverter status da motocicleta para 'AVAILABLE'
+  if (effectiveMotoId && revertMotoStatus) {
+    const { error: motoError } = await supabase
+      .from('motorcycles')
+      .update({ status: 'AVAILABLE' })
+      .eq('id', effectiveMotoId);
+
+    if (motoError) {
+      console.error('Error updating motorcycle status to AVAILABLE:', motoError);
+    }
   }
 
   revalidatePath('/admin/vendas');
   revalidatePath('/admin/motos');
+  revalidatePath('/admin/relatorios');
+  revalidatePath('/admin/propostas');
   revalidatePath('/admin');
   revalidatePath('/motos');
+  if (effectiveMotoId) {
+    revalidatePath(`/admin/motos/${effectiveMotoId}/editar`);
+  }
 
   return { success: true };
 }

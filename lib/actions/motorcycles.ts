@@ -317,7 +317,16 @@ export async function updateMotorcycleAction(id: string, data: MotorcycleInputDa
 export async function deleteMotorcycleAction(id: string) {
   const supabase = await createClient();
 
-  // 1. Fetch images to cleanup storage
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { error: 'Acesso não autorizado. Faça login novamente.' };
+  }
+
+  // 1. Buscar imagens para limpeza do storage
   const { data: images } = await supabase
     .from('motorcycle_images')
     .select('provider, storage_path')
@@ -337,16 +346,45 @@ export async function deleteMotorcycleAction(id: string) {
     }
   }
 
-  // 2. Delete motorcycle (cascade deletes motorcycle_images rows)
+  // 2. Desvincular com segurança referências opcionais antes da exclusão
+  try {
+    await supabase.from('expenses').update({ motorcycle_id: null }).eq('motorcycle_id', id);
+  } catch (err) {
+    console.warn('Aviso ao desvincular gastos da moto:', err);
+  }
+
+  try {
+    await supabase.from('proposal_commissions').update({ motorcycle_id: null }).eq('motorcycle_id', id);
+  } catch (err) {
+    console.warn('Aviso ao desvincular comissões da moto:', err);
+  }
+
+  try {
+    await supabase.from('motorcycle_purchase_agreements').update({ motorcycle_id: null }).eq('motorcycle_id', id);
+  } catch (err) {
+    console.warn('Aviso ao desvincular acordos de compra da moto:', err);
+  }
+
+  // 3. Excluir a motocicleta (deleção em cascata para motorcycle_images, features_map, technical_sheet, etc.)
   const { error } = await supabase.from('motorcycles').delete().eq('id', id);
 
   if (error) {
     console.error('Error deleting motorcycle:', error);
-    return { error: error.message };
+    if (error.code === '23503') {
+      return {
+        error:
+          'Esta motocicleta possui registros vinculados (como venda ativa ou contrato) e não pode ser excluída diretamente. Exclua a venda ou contrato vinculado antes de remover a moto.',
+      };
+    }
+    return { error: error.message || 'Não foi possível excluir a motocicleta.' };
   }
 
   revalidatePath('/admin/motos');
+  revalidatePath('/admin');
   revalidatePath('/motos');
+  revalidatePath('/motos-vendidas');
+  revalidatePath('/admin/relatorios');
+  revalidatePath('/admin/vendas');
   return { success: true };
 }
 

@@ -76,8 +76,8 @@ export function useFipex() {
       const unique = Array.from(new Map(combined.map((m) => [m.id, m])).values());
       fipexCache.set(cacheKey, unique, FIPEX_CACHE_TTL.BRANDS);
       setAllBrands(unique);
-    } catch (e) {
-      console.error('Error fetching brands', e);
+    } catch (e: any) {
+      console.warn('[FipeX] Falha ao carregar marcas:', e?.message || e);
     } finally {
       setLoadingBrands(false);
     }
@@ -138,8 +138,8 @@ export function useFipex() {
         sample: unique.slice(0, 10).map((model) => model.name),
       });
       setAllModels(unique);
-    } catch (e) {
-      console.error('Error fetching models', e);
+    } catch (e: any) {
+      console.warn('[FipeX] Falha ao carregar modelos:', e?.message || e);
     } finally {
       setLoadingModels(false);
     }
@@ -187,8 +187,8 @@ export function useFipex() {
       fipexCache.set(cacheKey, mapped, FIPEX_CACHE_TTL.MODEL_DETAIL);
       setModelDetail(mapped);
       applyYears(mapped);
-    } catch (e) {
-      console.error('Error fetching model detail', e);
+    } catch (e: any) {
+      console.warn('[FipeX] Falha ao carregar detalhes do modelo:', e?.message || e);
     } finally {
       setLoadingDetail(false);
     }
@@ -211,8 +211,8 @@ export function useFipex() {
         fipeCode: raw.data.price?.fipe_code || null,
       });
       return raw.data.price;
-    } catch (e) {
-      console.error('Error fetching price', e);
+    } catch (e: any) {
+      console.warn('[FipeX] Falha ao carregar preço:', e?.message || e);
       return null;
     } finally {
       setLoadingPrice(false);
@@ -233,8 +233,8 @@ export function useFipex() {
         const mapped = mapPrelude(raw.data);
         fipexCache.set('prelude', mapped, FIPEX_CACHE_TTL.PRELUDE);
         if (mounted) setTypes(mapped.vehicleTypes);
-      } catch (e) {
-        console.error('Error loading prelude', e);
+      } catch (e: any) {
+        console.warn('[FipeX] Falha ao carregar prelude:', e?.message || e);
       } finally {
         if (mounted) setLoadingPrelude(false);
       }

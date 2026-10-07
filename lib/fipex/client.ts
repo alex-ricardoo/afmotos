@@ -19,7 +19,12 @@ export async function fipexFetch<T>(
 ): Promise<T> {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, retries = 1, signal } = options;
 
-  const url = new URL(path.startsWith('/') ? path : `/${path}`, FIPEX_BASE_URL);
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser ? window.location.origin : FIPEX_BASE_URL;
+  const targetPath = isBrowser ? `/api/fipex${cleanPath}` : cleanPath;
+
+  const url = new URL(targetPath, baseUrl);
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {

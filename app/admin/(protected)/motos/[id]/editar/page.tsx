@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { MotorcyclePurchaseAgreementAction } from '@/components/admin/motorcycle-purchase-agreement-action';
 import { MotorcycleWarrantyCard } from '@/components/admin/motorcycles/motorcycle-warranty-card';
+import { DeleteMotorcycleButton } from '@/components/admin/delete-motorcycle-button';
 
 export const metadata = {
   title: 'Editar Moto',
@@ -112,6 +113,12 @@ export default async function EditarMotoPage({ params }: { params: Promise<{ id:
               <FileText className="mr-2 h-4 w-4" />
               Ficha técnica
             </Link>
+            <DeleteMotorcycleButton
+              motorcycleId={moto.id}
+              motorcycleTitle={`${moto.brand} ${moto.model}`}
+              licensePlate={moto.license_plate}
+              redirectTo="/admin/motos"
+            />
           </div>
         </div>
       </div>
