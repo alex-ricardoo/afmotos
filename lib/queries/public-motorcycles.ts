@@ -1,6 +1,14 @@
 import { getPublicSupabaseClient } from '../supabase/public.ts';
 import { resolveImageUrl, type ImageRecordLike } from '../uploads/image-url.ts';
 import { randomUUID } from 'crypto';
+import type { Database, Json } from '../../types/database.ts';
+
+/**
+ * Row type from the public_motorcycles view.
+ * Supabase JS v2 infers `never` for View rows on `.select('*')`,
+ * so we explicitly alias it here to avoid TS2339 errors.
+ */
+type PublicMotorcycleViewRow = Database['public']['Views']['public_motorcycles']['Row'];
 
 export interface PublicMotorcycleImage {
   id: string;
@@ -371,7 +379,9 @@ export async function getPublicAvailableMotorcycles(
       };
     }
 
-    const missingImageIds = (data || [])
+    const rows = (data || []) as PublicMotorcycleViewRow[];
+
+    const missingImageIds = rows
       .filter((raw) => !Array.isArray(raw.images) || raw.images.length === 0)
       .map((raw) => raw.id);
 
@@ -380,7 +390,7 @@ export async function getPublicAvailableMotorcycles(
         ? await fetchServerImagesForMotorcycles(missingImageIds)
         : new Map();
 
-    const items = (data || []).map((raw) =>
+    const items = rows.map((raw) =>
       mapRawToPublicMotorcycle(raw, fallbackImagesMap.get(raw.id)),
     );
 
@@ -460,7 +470,9 @@ export async function getPublicSoldMotorcycles(): Promise<PublicCatalogResult<Pu
       };
     }
 
-    const soldMissingImageIds = (data || [])
+    const soldRows = (data || []) as PublicMotorcycleViewRow[];
+
+    const soldMissingImageIds = soldRows
       .filter((raw) => !Array.isArray(raw.images) || raw.images.length === 0)
       .map((raw) => raw.id);
 
@@ -469,7 +481,7 @@ export async function getPublicSoldMotorcycles(): Promise<PublicCatalogResult<Pu
         ? await fetchServerImagesForMotorcycles(soldMissingImageIds)
         : new Map();
 
-    const items = (data || []).map((raw) =>
+    const items = soldRows.map((raw) =>
       mapRawToPublicMotorcycle(raw, soldFallbackImagesMap.get(raw.id)),
     );
 
@@ -552,7 +564,9 @@ export async function getPublicFeaturedMotorcycles(
       };
     }
 
-    const featuredMissingImageIds = (data || [])
+    const featuredRows = (data || []) as PublicMotorcycleViewRow[];
+
+    const featuredMissingImageIds = featuredRows
       .filter((raw) => !Array.isArray(raw.images) || raw.images.length === 0)
       .map((raw) => raw.id);
 
@@ -561,7 +575,7 @@ export async function getPublicFeaturedMotorcycles(
         ? await fetchServerImagesForMotorcycles(featuredMissingImageIds)
         : new Map();
 
-    let items = (data || []).map((raw) =>
+    let items = featuredRows.map((raw) =>
       mapRawToPublicMotorcycle(raw, featuredFallbackImagesMap.get(raw.id)),
     );
 
@@ -575,7 +589,8 @@ export async function getPublicFeaturedMotorcycles(
         .limit(limit);
 
       if (!fallbackResult.error && fallbackResult.data && fallbackResult.data.length > 0) {
-        const fallbackMissingIds = fallbackResult.data
+        const fallbackRows = fallbackResult.data as PublicMotorcycleViewRow[];
+        const fallbackMissingIds = fallbackRows
           .filter((raw) => !Array.isArray(raw.images) || raw.images.length === 0)
           .map((raw) => raw.id);
 
@@ -584,7 +599,7 @@ export async function getPublicFeaturedMotorcycles(
             ? await fetchServerImagesForMotorcycles(fallbackMissingIds)
             : new Map();
 
-        items = fallbackResult.data.map((raw) =>
+        items = fallbackRows.map((raw) =>
           mapRawToPublicMotorcycle(raw, extraImagesMap.get(raw.id)),
         );
       }
@@ -679,12 +694,13 @@ export async function getPublicMotorcycleBySlug(
       };
     }
 
-    const missingImages = !Array.isArray(data.images) || data.images.length === 0;
+    const singleRow = data as PublicMotorcycleViewRow;
+    const missingImages = !Array.isArray(singleRow.images) || singleRow.images.length === 0;
     const fallbackImages = missingImages
-      ? (await fetchServerImagesForMotorcycles([data.id])).get(data.id)
+      ? (await fetchServerImagesForMotorcycles([singleRow.id])).get(singleRow.id)
       : undefined;
 
-    const moto = mapRawToPublicMotorcycle(data, fallbackImages);
+    const moto = mapRawToPublicMotorcycle(singleRow, fallbackImages);
 
     console.info('[PUBLIC_CATALOG]', {
       event: 'public_motorcycles_query',
