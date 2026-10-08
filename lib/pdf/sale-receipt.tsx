@@ -6,7 +6,7 @@ import { formatPhone, formatCpf, formatRenavam, formatChassi } from '@/lib/utils
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
 import { getSiteInitials } from '@/lib/site-settings';
-import { resolveCurrentSiteDomain } from './domain.ts';
+import { resolveCurrentSiteDomain, formatStoreInstagram } from './domain.ts';
 
 const styles = StyleSheet.create({
   page: {
@@ -259,6 +259,7 @@ interface SaleReceiptPDFProps {
   settings?: SiteSettings | null;
   logoSrc?: string;
   siteUrl?: string | null;
+  instagram?: string | null;
 }
 
 const formatCurrencyBRL = (val?: number | null) => {
@@ -278,13 +279,14 @@ const formatDateBR = (dateStr?: string | null) => {
 import { CONSTANTS } from '@/lib/utils/constants';
 import { getWarrantyInfo } from '@/lib/warranty/calculator';
 
-export function SaleReceiptPDF({ sale, settings, logoSrc, siteUrl }: SaleReceiptPDFProps) {
+export function SaleReceiptPDF({ sale, settings, logoSrc, siteUrl, instagram }: SaleReceiptPDFProps) {
   const storeName = settings?.site_name || CONSTANTS.STORE_NAME;
   const cnpj = formatCnpj(settings?.cnpj);
   const phone = formatPhone(settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE);
   const email = settings?.contact_email || CONSTANTS.CONTACT_EMAIL;
   const address = settings?.address || CONSTANTS.STORE_ADDRESS;
   const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
+  const instagramInfo = formatStoreInstagram(instagram || settings);
   const warrantyInfo = getWarrantyInfo(sale);
 
   const moto = sale.motorcycle;
@@ -321,15 +323,24 @@ export function SaleReceiptPDF({ sale, settings, logoSrc, siteUrl }: SaleReceipt
               <Text style={styles.storeContact}>
                 WhatsApp: {phone} {email ? `• E-mail: ${email}` : ''}
               </Text>
-              {cnpj || siteInfo.displayDomain ? (
+              {cnpj || siteInfo.displayDomain || instagramInfo ? (
                 <Text style={styles.storeContact}>
                   {cnpj ? `CNPJ: ${cnpj}` : ''}
-                  {cnpj && siteInfo.displayDomain ? ' • ' : ''}
+                  {cnpj && (siteInfo.displayDomain || instagramInfo) ? ' • ' : ''}
                   {siteInfo.displayDomain ? (
                     <Text>
                       Site:{' '}
                       <Link src={siteInfo.fullUrl} style={styles.linkText}>
                         {siteInfo.displayDomain}
+                      </Link>
+                    </Text>
+                  ) : null}
+                  {siteInfo.displayDomain && instagramInfo ? ' • ' : ''}
+                  {instagramInfo ? (
+                    <Text>
+                      Instagram:{' '}
+                      <Link src={instagramInfo.fullUrl} style={styles.linkText}>
+                        {instagramInfo.displayHandle}
                       </Link>
                     </Text>
                   ) : null}

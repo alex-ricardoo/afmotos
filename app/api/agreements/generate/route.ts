@@ -13,7 +13,7 @@ import { getSiteLogo, getSiteName } from '@/lib/site-settings';
 import { SiteSettingsRecord } from '@/types/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { resolvePdfLogo } from '@/lib/pdf/assets';
-import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
+import { resolveCurrentSiteDomain, formatStoreInstagram } from '@/lib/pdf/domain';
 
 export const dynamic = 'force-dynamic';
 
@@ -294,6 +294,7 @@ export async function POST(request: NextRequest) {
         cnpj,
         website: siteInfo.displayDomain,
         siteUrl: siteInfo.fullUrl,
+        instagram: formatStoreInstagram(settings)?.fullUrl || null,
         sellerName,
         sellerDocument: owner_cpf,
         sellerRg: owner_rg,

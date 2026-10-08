@@ -13,6 +13,7 @@ export interface PurchaseAgreementStoreSnapshot {
   phone: string;
   email?: string | null;
   website?: string | null;
+  instagram?: string | null;
   legal_representative?: string | null;
 }
 

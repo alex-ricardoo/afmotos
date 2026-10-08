@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, Link, StyleSheet } from '@react-pdf/renderer';
 import { MercosulPlateBadge } from './mercosul-plate-badge';
-import { resolveCurrentSiteDomain } from './domain.ts';
+import { resolveCurrentSiteDomain, formatStoreInstagram } from './domain.ts';
 
 const styles = StyleSheet.create({
   header: {
@@ -79,6 +79,8 @@ interface ContractCompanyHeaderProps {
   cnpj?: string | null;
   website?: string | null;
   siteUrl?: string | null;
+  instagram?: string | null;
+  settings?: any;
   vehiclePlate?: string | null;
   documentIdentifier?: string;
   documentDate: string;
@@ -94,6 +96,8 @@ export function ContractCompanyHeader({
   cnpj,
   website,
   siteUrl,
+  instagram,
+  settings,
   vehiclePlate,
   documentIdentifier,
   documentDate,
@@ -101,6 +105,7 @@ export function ContractCompanyHeader({
 }: ContractCompanyHeaderProps) {
   const displayCnpj = cnpj?.trim();
   const siteInfo = resolveCurrentSiteDomain(null, siteUrl || website);
+  const instagramInfo = formatStoreInstagram(instagram || settings);
 
   return (
     <View style={styles.header}>
@@ -119,15 +124,24 @@ export function ContractCompanyHeader({
             WhatsApp: {phone}
             {email ? ` • E-mail: ${email}` : ''}
           </Text>
-          {displayCnpj || siteInfo.displayDomain ? (
+          {displayCnpj || siteInfo.displayDomain || instagramInfo ? (
             <Text style={styles.smallText}>
               {displayCnpj ? `CNPJ: ${displayCnpj}` : ''}
-              {displayCnpj && siteInfo.displayDomain ? ' • ' : ''}
+              {displayCnpj && (siteInfo.displayDomain || instagramInfo) ? ' • ' : ''}
               {siteInfo.displayDomain ? (
                 <Text>
                   Site:{' '}
                   <Link src={siteInfo.fullUrl} style={styles.linkText}>
                     {siteInfo.displayDomain}
+                  </Link>
+                </Text>
+              ) : null}
+              {siteInfo.displayDomain && instagramInfo ? ' • ' : ''}
+              {instagramInfo ? (
+                <Text>
+                  Instagram:{' '}
+                  <Link src={instagramInfo.fullUrl} style={styles.linkText}>
+                    {instagramInfo.displayHandle}
                   </Link>
                 </Text>
               ) : null}

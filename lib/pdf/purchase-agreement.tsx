@@ -87,6 +87,7 @@ interface MotorcyclePurchaseAgreementPDFProps {
   agreementNumber: string;
   logoSrc?: string;
   siteUrl?: string | null;
+  instagram?: string | null;
 }
 
 export function MotorcyclePurchaseAgreementPDF({
@@ -94,6 +95,7 @@ export function MotorcyclePurchaseAgreementPDF({
   agreementNumber,
   logoSrc,
   siteUrl,
+  instagram,
 }: MotorcyclePurchaseAgreementPDFProps) {
   const { store, seller, motorcycle, commercial_terms, delivery_and_possession, transfer_and_compliance, signatures } = snapshot;
 
@@ -113,6 +115,7 @@ export function MotorcyclePurchaseAgreementPDF({
           cnpj={store.cnpj}
           website={store.website}
           siteUrl={siteUrl || store.website}
+          instagram={instagram || store.instagram}
           vehiclePlate={vehiclePlate}
           documentIdentifier={agreementNumber}
           documentDate={new Date(snapshot.generated_at).toLocaleDateString('pt-BR')}

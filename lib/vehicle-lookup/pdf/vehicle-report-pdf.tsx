@@ -10,7 +10,7 @@ import {
   type RecallSummary,
 } from '../normalizers/index.ts';
 import type { SiteSettings } from '@/types/database';
-import { resolveCurrentSiteDomain } from '@/lib/pdf/domain.ts';
+import { resolveCurrentSiteDomain, formatStoreInstagram } from '@/lib/pdf/domain.ts';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { formatPhone } from '@/lib/utils/formatters';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
@@ -569,6 +569,7 @@ interface VehicleReportPDFProps {
   settings?: SiteSettings | null;
   logoSrc?: string | null;
   siteUrl?: string | null;
+  instagram?: string | null;
 }
 
 export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
@@ -576,6 +577,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   settings,
   logoSrc,
   siteUrl,
+  instagram,
 }) => {
   const storeName = settings?.site_name || report.issuer?.trade_name || 'AF VEÍCULOS PE';
   const cnpj = settings?.cnpj || report.issuer?.cnpj || '58.742.981/0001-08';
@@ -584,6 +586,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   const storePhone = settings?.whatsapp_phone ? formatPhone(settings.whatsapp_phone) : null;
   const storeEmail = settings?.contact_email || 'contato@afmotos.com.br';
   const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
+  const instagramInfo = formatStoreInstagram(instagram || settings);
 
   const isApproved = report.procedural_verdict === 'APPROVED';
   const isRestricted = report.procedural_verdict === 'RESTRICTED';
@@ -737,15 +740,24 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 {storePhone ? ` • Telefone/WhatsApp: ${storePhone}` : ''}
               </Text>
               <Text style={styles.storeContact}>{storeAddress}</Text>
-              {storeEmail || siteInfo.displayDomain ? (
+              {storeEmail || siteInfo.displayDomain || instagramInfo ? (
                 <Text style={styles.storeContact}>
                   {storeEmail ? `E-mail: ${storeEmail}` : ''}
-                  {storeEmail && siteInfo.displayDomain ? ' • ' : ''}
+                  {storeEmail && (siteInfo.displayDomain || instagramInfo) ? ' • ' : ''}
                   {siteInfo.displayDomain ? (
                     <Text>
                       Site:{' '}
                       <Link src={siteInfo.fullUrl} style={styles.linkText}>
                         {siteInfo.displayDomain}
+                      </Link>
+                    </Text>
+                  ) : null}
+                  {siteInfo.displayDomain && instagramInfo ? ' • ' : ''}
+                  {instagramInfo ? (
+                    <Text>
+                      Instagram:{' '}
+                      <Link src={instagramInfo.fullUrl} style={styles.linkText}>
+                        {instagramInfo.displayHandle}
                       </Link>
                     </Text>
                   ) : null}
