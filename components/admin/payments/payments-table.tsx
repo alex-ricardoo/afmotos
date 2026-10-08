@@ -384,7 +384,12 @@ export function PaymentsTable({
             <thead className="bg-zinc-900/90 text-[11px] font-bold text-zinc-400 uppercase tracking-wider border-b border-zinc-800">
               <tr>
                 <th scope="col" className="py-3.5 px-4">
-                  Data / Hora
+                  <div className="inline-flex items-center gap-1.5 text-zinc-300">
+                    <span>Data / Hora</span>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#c9a44c]/15 text-[#e3c56c] border border-[#c9a44c]/30 normal-case tracking-normal">
+                      Mais recente ↓
+                    </span>
+                  </div>
                 </th>
                 <th scope="col" className="py-3.5 px-4">
                   Origem / Placa
