@@ -16,6 +16,7 @@ export interface AgreementPdfInput {
   cnpj?: string;
   website?: string | null;
   siteUrl?: string | null;
+  instagram?: string | null;
   sellerName: string;
   sellerDocument?: string | null;
   sellerRg: string;
@@ -127,6 +128,7 @@ export function AgreementSalePDF({
   cnpj,
   website,
   siteUrl,
+  instagram,
   sellerName,
   sellerDocument,
   sellerRg,
@@ -166,6 +168,7 @@ export function AgreementSalePDF({
           cnpj={cnpj}
           website={website}
           siteUrl={siteUrl || website}
+          instagram={instagram}
           vehiclePlate={vehiclePlate}
           documentIdentifier={formattedAgreementNumber}
           documentDate={agreementDate}

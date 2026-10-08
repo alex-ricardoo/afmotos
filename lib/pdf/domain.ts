@@ -93,3 +93,69 @@ export function resolveCurrentSiteDomain(
   // 3. Fallback to configured canonical site URL
   return formatSiteDomain(getBaseSiteUrl());
 }
+
+export interface StoreInstagramInfo {
+  /**
+   * Complete URL with protocol, e.g. "https://www.instagram.com/afveiculospe/"
+   */
+  fullUrl: string;
+  /**
+   * Clean handle suitable for display in PDF headers, e.g. "@afveiculospe"
+   */
+  displayHandle: string;
+}
+
+/**
+ * Extracts and formats the store's Instagram information from database site_settings
+ * or raw Instagram handle/URL string.
+ */
+export function formatStoreInstagram(inputOrSettings?: any): StoreInstagramInfo | null {
+  if (!inputOrSettings) return null;
+
+  let raw: string | null = null;
+  if (typeof inputOrSettings === 'string') {
+    raw = inputOrSettings;
+  } else if (typeof inputOrSettings === 'object') {
+    if (Array.isArray(inputOrSettings.socialLinks)) {
+      const item = inputOrSettings.socialLinks.find(
+        (l: any) => l?.key === 'instagram' || l?.label?.toLowerCase() === 'instagram',
+      );
+      if (item?.href) raw = item.href;
+    }
+    if (!raw) {
+      raw =
+        inputOrSettings.settings?.socialLinks?.instagram ||
+        inputOrSettings.settings?.instagram_url ||
+        inputOrSettings.socialLinks?.instagram ||
+        inputOrSettings.social_links?.instagram ||
+        inputOrSettings.instagram_url ||
+        inputOrSettings.instagram ||
+        null;
+    }
+  }
+
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const clean = trimmed.split('?')[0].split('#')[0].replace(/\/+$/, '');
+  let username = '';
+  let fullUrl = '';
+
+  if (/instagram\.com/i.test(clean)) {
+    const after = clean.split(/instagram\.com\/?/i)[1];
+    username = after ? after.split('/')[0].replace(/^@+/, '').trim() : '';
+    fullUrl = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/+/, '')}`;
+  } else {
+    username = clean.replace(/^@+/, '').trim();
+    fullUrl = `https://www.instagram.com/${username}/`;
+  }
+
+  if (!username) return null;
+
+  return {
+    fullUrl,
+    displayHandle: `@${username}`,
+  };
+}
+

@@ -101,6 +101,7 @@ export function toPublicVehicleReportDto(
     ads_history: customerDto.ads_history,
     recalls: customerDto.recalls,
     recalls_summary: customerDto.recalls_summary,
+    recall_summary: customerDto.recall_summary,
     latest_km_record: customerDto.latest_km_record,
     commercial_indicators: customerDto.commercial_indicators,
 

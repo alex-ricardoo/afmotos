@@ -9,7 +9,7 @@ import { SiteSettingsRecord } from '@/types/site-settings';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { MotorcyclePurchaseAgreementPDF } from '@/lib/pdf/purchase-agreement';
 import { resolvePdfLogo } from '@/lib/pdf/assets';
-import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
+import { resolveCurrentSiteDomain, formatStoreInstagram } from '@/lib/pdf/domain';
 import { purchaseAgreementGenerateSchema, PurchaseAgreementGenerateInput } from './schema';
 import { formatAgreementNumber } from './formatters';
 import { PurchaseAgreementSnapshot } from '@/types/purchase-agreement';
@@ -94,6 +94,7 @@ export async function generatePurchaseAgreementService(
       phone: storePhone,
       email: storeEmail,
       website: siteInfo.displayDomain,
+      instagram: formatStoreInstagram(settings)?.fullUrl || null,
       legal_representative: storeName,
     },
     seller: {
@@ -187,6 +188,7 @@ export async function generatePurchaseAgreementService(
       agreementNumber,
       logoSrc: logoDataUri,
       siteUrl: siteInfo.fullUrl,
+      instagram: formatStoreInstagram(settings)?.fullUrl || null,
     }) as Parameters<typeof renderToBuffer>[0],
   );
 
@@ -323,6 +325,7 @@ export async function getPurchaseAgreementPdfUrlService(
       agreementNumber: agreement.agreement_number,
       logoSrc: logoDataUri,
       siteUrl: siteInfo.fullUrl,
+      instagram: formatStoreInstagram(settings)?.fullUrl || snapshot.store?.instagram || null,
     }) as Parameters<typeof renderToBuffer>[0],
   );
 

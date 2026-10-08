@@ -100,23 +100,39 @@ export function TabHistory({ dto }: { dto: InternalVehicleConsultationDto }) {
 
             {h.recalls.length > 0 && (
               <div className="space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                  Chamados de Fábrica / Recall ({h.recalls.length})
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+                    Chamados de Fábrica / Recall ({h.recalls.length} {h.recalls.length === 1 ? 'campanha' : 'campanhas'})
+                  </span>
+                  {h.recall_summary && (
+                    <span className={`text-[11px] font-semibold ${h.recall_summary.pendingCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      {h.recall_summary.diagnosticLabel}
+                    </span>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   {h.recalls.map((rec, idx) => (
                     <div key={idx} className="p-3 rounded-xl bg-muted border space-y-1">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold text-foreground">{rec.component}</span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          rec.status === 'PENDENTE' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400'
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                          rec.status === 'PENDENTE'
+                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                            : rec.status === 'ATENDIDO'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'
                         }`}>
-                          {rec.status}
+                          {rec.situation_label || (rec.status === 'PENDENTE' ? 'Pendente' : rec.status === 'ATENDIDO' ? 'Realizado' : 'Campanha identificada')}
                         </span>
                       </div>
                       <div className="text-muted-foreground text-[11px]">{rec.risk_description}</div>
                       {rec.announcement_date && (
-                        <div className="text-[10px] text-muted-foreground">Anunciado em: {rec.announcement_date}</div>
+                        <div className="text-[10px] text-muted-foreground">Início da campanha: {rec.announcement_date}</div>
+                      )}
+                      {rec.action_recommendation && (
+                        <div className="text-[10px] text-zinc-400 pt-0.5 border-t border-border/50">
+                          {rec.action_recommendation}
+                        </div>
                       )}
                     </div>
                   ))}

@@ -5,6 +5,7 @@ import {
   normalizeDebts,
   normalizeOwners,
   normalizeCommercialStatus,
+  normalizeRecallSummary,
   detectAllDivergences,
   NORMALIZER_VERSION,
   REPORT_GENERAL_DISCLAIMER,
@@ -89,9 +90,9 @@ export function toCustomerVehicleReportDto(
   const divergences = detectAllDivergences(rawData);
 
   // ─── Recalls ─────────────────────────────────────────────────────────
-  const pendingRecalls = hist.recalls.filter((r) => r.status === 'PENDENTE');
-  const pendingRecallsCount = pendingRecalls.length;
-  const recallClear = pendingRecallsCount === 0;
+  const recallSummary = hist.recall_summary || normalizeRecallSummary(rawData);
+  const pendingRecallsCount = recallSummary.pendingCount;
+  const recallClear = recallSummary.status !== 'PENDING';
 
   // ─── Overall Verdict ─────────────────────────────────────────────────
   // Non-conclusive, neutral legal framing:
@@ -360,7 +361,7 @@ export function toCustomerVehicleReportDto(
     },
 
     owners_history: {
-      owners_count: ownerRecords.length || hist.owners_count,
+      owners_count: Math.max(hist.owners_count || 0, ownerRecords.length || 0, 1),
       records: ownerRecords,
     },
 
@@ -370,13 +371,17 @@ export function toCustomerVehicleReportDto(
     recalls: hist.recalls && hist.recalls.length > 0 ? hist.recalls : undefined,
 
     recalls_summary: {
-      total_count: hist.recalls.length,
-      pending_count: pendingRecallsCount,
-      status_label:
-        pendingRecallsCount > 0
-          ? `${pendingRecallsCount} Pendência(s)`
-          : 'Nenhuma ocorrência informada nas bases consultadas',
+      total_count: recallSummary.historyCount,
+      pending_count: recallSummary.pendingCount,
+      history_count: recallSummary.historyCount,
+      status_label: recallSummary.diagnosticLabel,
+      diagnostic_label: recallSummary.diagnosticLabel,
+      diagnostic_tone: recallSummary.diagnosticTone,
+      status: recallSummary.status,
+      source_description: recallSummary.sourceDescription,
     },
+
+    recall_summary: recallSummary,
 
     latest_km_record: latestKmRecord,
 

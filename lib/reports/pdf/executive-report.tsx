@@ -1,6 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, Image, Link, StyleSheet } from '@react-pdf/renderer';
-import { resolveCurrentSiteDomain } from '@/lib/pdf/domain';
+import { resolveCurrentSiteDomain, formatStoreInstagram } from '@/lib/pdf/domain';
 import {
   OverviewReportData,
   SalesReportData,
@@ -297,6 +297,7 @@ interface ExecutiveReportPDFProps {
   reportTitle?: string;
   yearLabel?: string;
   siteUrl?: string | null;
+  instagram?: string | null;
 }
 
 export function ExecutiveReportPDF({
@@ -313,6 +314,7 @@ export function ExecutiveReportPDF({
   reportTitle = 'RELATÓRIO GERENCIAL ANUAL DE APOIO CONTÁBIL',
   yearLabel,
   siteUrl,
+  instagram,
 }: ExecutiveReportPDFProps) {
   const storeName = getSiteName(settings);
   const rawCnpj = settings?.cnpj || '';
@@ -321,6 +323,7 @@ export function ExecutiveReportPDF({
   const storeEmail = settings?.contact_email || '';
   const storeAddress = settings?.address || 'São Paulo, SP';
   const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
+  const instagramInfo = formatStoreInstagram(instagram || settings);
 
   const baseYear = yearLabel || overview.dateRange.startDate.substring(0, 4);
 
@@ -356,6 +359,14 @@ export function ExecutiveReportPDF({
                     {' • Site: '}
                     <Link src={siteInfo.fullUrl} style={styles.linkText}>
                       {siteInfo.displayDomain}
+                    </Link>
+                  </Text>
+                ) : null}
+                {instagramInfo ? (
+                  <Text>
+                    {' • Instagram: '}
+                    <Link src={instagramInfo.fullUrl} style={styles.linkText}>
+                      {instagramInfo.displayHandle}
                     </Link>
                   </Text>
                 ) : null}

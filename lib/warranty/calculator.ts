@@ -1,4 +1,6 @@
-import type { WarrantyInfo, WarrantyStatus } from './types.ts';
+import type { WarrantyInfo, WarrantyStatus, SaleWarrantyAttributes } from './types.ts';
+
+export type { SaleWarrantyAttributes };
 
 /**
  * Retorna a data calendário (ano, mês 1-12, dia 1-31) no fuso horário 'America/Sao_Paulo'.
@@ -192,5 +194,42 @@ export function getWarrantyInfo(
     daysRemaining,
     isRepasse: false,
     months,
+  };
+}
+
+/**
+ * Calcula os atributos de garantia comercial para persistência na venda.
+ * Regras:
+ * 1. Venda de repasse (is_repasse = true): nenhuma garantia comercial (campos nulos).
+ * 2. Venda normal (não repasse): gera 3 meses de garantia a partir da data/momento em que a venda é salva.
+ */
+export function calculateSaleWarrantyAttributes(options?: {
+  isRepasse?: boolean | null;
+  months?: number | null;
+  startDate?: Date | string;
+}): SaleWarrantyAttributes {
+  const isRepasse = Boolean(options?.isRepasse);
+  const months = options?.months && options.months > 0 ? options.months : 3;
+
+  if (isRepasse) {
+    return {
+      warranty_months: months,
+      warranty_issued_at: null,
+      warranty_ends_at: null,
+    };
+  }
+
+  const start = options?.startDate
+    ? typeof options.startDate === 'string'
+      ? new Date(options.startDate)
+      : options.startDate
+    : new Date();
+
+  const endsAt = calculateWarrantyEndDate(start, months);
+
+  return {
+    warranty_months: months,
+    warranty_issued_at: start.toISOString(),
+    warranty_ends_at: endsAt,
   };
 }

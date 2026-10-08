@@ -6,7 +6,7 @@ import { formatPhone, formatCpf, formatRenavam, formatChassi } from '@/lib/utils
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
 import { getSiteInitials } from '@/lib/site-settings';
-import { resolveCurrentSiteDomain } from './domain.ts';
+import { resolveCurrentSiteDomain, formatStoreInstagram } from './domain.ts';
 
 const styles = StyleSheet.create({
   page: {
@@ -259,6 +259,7 @@ interface SaleReceiptPDFProps {
   settings?: SiteSettings | null;
   logoSrc?: string;
   siteUrl?: string | null;
+  instagram?: string | null;
 }
 
 const formatCurrencyBRL = (val?: number | null) => {
@@ -278,13 +279,14 @@ const formatDateBR = (dateStr?: string | null) => {
 import { CONSTANTS } from '@/lib/utils/constants';
 import { getWarrantyInfo } from '@/lib/warranty/calculator';
 
-export function SaleReceiptPDF({ sale, settings, logoSrc, siteUrl }: SaleReceiptPDFProps) {
+export function SaleReceiptPDF({ sale, settings, logoSrc, siteUrl, instagram }: SaleReceiptPDFProps) {
   const storeName = settings?.site_name || CONSTANTS.STORE_NAME;
   const cnpj = formatCnpj(settings?.cnpj);
   const phone = formatPhone(settings?.whatsapp_phone || CONSTANTS.CONTACT_PHONE);
   const email = settings?.contact_email || CONSTANTS.CONTACT_EMAIL;
   const address = settings?.address || CONSTANTS.STORE_ADDRESS;
   const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
+  const instagramInfo = formatStoreInstagram(instagram || settings);
   const warrantyInfo = getWarrantyInfo(sale);
 
   const moto = sale.motorcycle;
@@ -321,15 +323,24 @@ export function SaleReceiptPDF({ sale, settings, logoSrc, siteUrl }: SaleReceipt
               <Text style={styles.storeContact}>
                 WhatsApp: {phone} {email ? `• E-mail: ${email}` : ''}
               </Text>
-              {cnpj || siteInfo.displayDomain ? (
+              {cnpj || siteInfo.displayDomain || instagramInfo ? (
                 <Text style={styles.storeContact}>
                   {cnpj ? `CNPJ: ${cnpj}` : ''}
-                  {cnpj && siteInfo.displayDomain ? ' • ' : ''}
+                  {cnpj && (siteInfo.displayDomain || instagramInfo) ? ' • ' : ''}
                   {siteInfo.displayDomain ? (
                     <Text>
                       Site:{' '}
                       <Link src={siteInfo.fullUrl} style={styles.linkText}>
                         {siteInfo.displayDomain}
+                      </Link>
+                    </Text>
+                  ) : null}
+                  {siteInfo.displayDomain && instagramInfo ? ' • ' : ''}
+                  {instagramInfo ? (
+                    <Text>
+                      Instagram:{' '}
+                      <Link src={instagramInfo.fullUrl} style={styles.linkText}>
+                        {instagramInfo.displayHandle}
                       </Link>
                     </Text>
                   ) : null}
@@ -607,25 +618,25 @@ export function SaleReceiptPDF({ sale, settings, logoSrc, siteUrl }: SaleReceipt
                     ? 'EM VIGÊNCIA'
                     : warrantyInfo.status === 'EXPIRED'
                     ? 'GARANTIA ENCERRADA'
-                    : 'A DEFINIR NA EMISSÃO'}
+                    : 'AGUARDANDO ATIVAÇÃO'}
                 </Text>
               </View>
               <Text style={{ fontSize: 5.8, color: '#14532d', lineHeight: 1.25, marginBottom: 2.5 }}>
-                Esta motocicleta possui garantia comercial de {warrantyInfo.months} (três) meses, contados a partir da emissão deste instrumento, nos termos e condições abaixo estipulados.
+                Esta motocicleta possui garantia comercial de {warrantyInfo.months} (três) meses, contados a partir da data de conclusão e registro da venda, nos termos e condições abaixo estipulados.
               </Text>
               <View style={{ flexDirection: 'row', gap: 14, borderTopWidth: 0.5, borderTopColor: '#bbf7d0', paddingTop: 2 }}>
                 <Text style={{ fontSize: 6.5, color: '#166534' }}>
                   Início da garantia: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{warrantyInfo.formattedIssuedAt || formatDateBR(sale.sale_date)}</Text>
                 </Text>
                 <Text style={{ fontSize: 6.5, color: '#166534' }}>
-                  Término da garantia: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{warrantyInfo.formattedEndsAt ? `${warrantyInfo.formattedEndsAt}, inclusive` : 'A definir na primeira emissão'}</Text>
+                  Término da garantia: <Text style={{ fontFamily: 'Helvetica-Bold' }}>{warrantyInfo.formattedEndsAt ? `${warrantyInfo.formattedEndsAt}, inclusive` : 'A definir no registro da venda'}</Text>
                 </Text>
               </View>
             </View>
 
             <View style={styles.legalCard}>
               <Text style={styles.legalText}>
-                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.1. Garantia Comercial de {warrantyInfo.months} Meses ou 3.000 KM (Motor e Câmbio):</Text> A Loja "{storeName}" concede ao ADQUIRENTE garantia comercial pelo prazo de {warrantyInfo.months} (três) meses calendários{warrantyInfo.formattedEndsAt ? ` (válida até ${warrantyInfo.formattedEndsAt}, inclusive)` : ''} ou 3.000 (três mil) quilômetros rodados, o que primeiro ocorrer, a contar da data de emissão deste instrumento, nos termos e limites aqui convencionados, observados os direitos legais do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO.
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.1. Garantia Comercial de {warrantyInfo.months} Meses ou 3.000 KM (Motor e Câmbio):</Text> A Loja "{storeName}" concede ao ADQUIRENTE garantia comercial pelo prazo de {warrantyInfo.months} (três) meses calendários{warrantyInfo.formattedEndsAt ? ` (válida até ${warrantyInfo.formattedEndsAt}, inclusive)` : ''} ou 3.000 (três mil) quilômetros rodados, o que primeiro ocorrer, a contar da data de conclusão e registro da venda, nos termos e limites aqui convencionados, observados os direitos legais do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO.
               </Text>
               <Text style={styles.legalText}>
                 <Text style={{ fontFamily: 'Helvetica-Bold' }}>4.2. Exclusões Expressas por Mau Uso, Modificações e Negligência:</Text> A garantia NÃO COBRE avarias decorrentes de: a) Mau uso, sobre-rotação ("corte de giro"), empinar/manobras, sobrecarga de carga/passageiros ou competições; b) Falta, atraso na troca de óleo, nível insuficiente de lubrificante ou uso de combustível adulterado; c) Quedas, colisões, acidentes ou submersão em água/alagamentos; d) Instalação de escapamento esportivo, remap de injeção, corte de chicote elétrico, alarmes ou rastreadores não homologados pela LOJA.

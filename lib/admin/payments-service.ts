@@ -559,10 +559,10 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
       query = query.lte('payment_created_at', params.endDate);
     }
 
-    // Ordenação padrão: casos com ação necessária primeiro, depois mais recentes
+    // Ordenação estrita: transações por data mais recente primeiro
     query = query
-      .order('is_insufficient_credits', { ascending: false })
-      .order('payment_created_at', { ascending: false })
+      .order('payment_created_at', { ascending: false, nullsFirst: false })
+      .order('transaction_id', { ascending: false })
       .range(offset, offset + pageSize - 1);
 
     const { data: rows, count, error } = await query;
@@ -604,7 +604,8 @@ export async function getAdminPaymentsList(params: AdminPaymentFilterParams = {}
     `,
       { count: 'exact' },
     )
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false })
     .range(offset, offset + pageSize - 1);
 
   if (params.purpose && params.purpose !== 'all') {

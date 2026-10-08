@@ -20,3 +20,9 @@ export interface WarrantyInfo {
   isRepasse: boolean;
   months: number;
 }
+
+export interface SaleWarrantyAttributes {
+  warranty_months: number;
+  warranty_issued_at: string | null;
+  warranty_ends_at: string | null;
+}

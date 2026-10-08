@@ -229,7 +229,7 @@ export function SalesTable({ sales }: SalesTableProps) {
                             </div>
                           ) : (
                             <div className="text-[10px] text-zinc-500 italic whitespace-nowrap">
-                              Pendente 1ª emissão
+                              Pendente ativação
                             </div>
                           )}
                         </div>

@@ -1,15 +1,21 @@
 import { createClient } from '@/lib/supabase/server';
 import { getSaleById, SaleWithDetails } from '@/lib/queries/sales';
-import { calculateWarrantyEndDate } from './calculator';
+import {
+  calculateWarrantyEndDate,
+  calculateSaleWarrantyAttributes,
+  type SaleWarrantyAttributes,
+} from './calculator';
+
+export { calculateSaleWarrantyAttributes, type SaleWarrantyAttributes };
 
 /**
- * Serviço Server-Only para fixação e persistência atômica da garantia comercial
- * exclusivamente na PRIMEIRA emissão efetiva do contrato/recibo em PDF.
+ * Serviço Server-Only para fixação e persistência atômica da garantia comercial.
+ * Utilizado na criação da venda e mantido como fallback idempotente na emissão de PDF.
  *
  * Regras:
  * 1. Se a venda for repasse (is_repasse = true), nenhuma data de garantia é criada.
  * 2. Se a garantia já tiver sido emitida anteriormente, retorna a venda original sem alterações (Idempotência).
- * 3. Se for a primeira emissão, calcula a data final inclusiva (+3 meses-calendário) e persiste atomicamente.
+ * 3. Se não possuir garantia emitida (ex: venda legada), calcula a data final inclusiva (+3 meses) e persiste atomicamente.
  */
 export async function issueSaleWarrantyOnPdfEmission(
   saleId: string,
@@ -33,17 +39,21 @@ export async function issueSaleWarrantyOnPdfEmission(
     return sale;
   }
 
-  // 4. Primeira emissão: fixar timestamp atual e data de encerramento por meses-calendário
+  // 4. Se não possui garantia: fixar timestamp atual e data de encerramento por meses-calendário
   const now = new Date();
   const months = sale.warranty_months && sale.warranty_months > 0 ? sale.warranty_months : 3;
-  const endsAt = calculateWarrantyEndDate(now, months);
+  const warrantyAttrs = calculateSaleWarrantyAttributes({
+    isRepasse: false,
+    months,
+    startDate: now,
+  });
 
   const { error: updateError } = await supabase
     .from('sales')
     .update({
-      warranty_issued_at: now.toISOString(),
-      warranty_ends_at: endsAt,
-      warranty_months: months,
+      warranty_issued_at: warrantyAttrs.warranty_issued_at,
+      warranty_ends_at: warrantyAttrs.warranty_ends_at,
+      warranty_months: warrantyAttrs.warranty_months,
       updated_at: new Date().toISOString(),
     })
     .eq('id', saleId)

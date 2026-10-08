@@ -45,6 +45,12 @@ export {
   isSourceStale,
 } from './availability-helpers.ts';
 
+export type {
+  RecallItem,
+  RecallSummary,
+  RecallItemResolution,
+} from './recall-normalizer.ts';
+
 // Normalizers
 export { normalizeGravame } from './gravame-normalizer.ts';
 export { detectMunicipioDivergence, detectUfDivergence, detectAllDivergences, normalizeLocationForComparison } from './source-consistency.ts';
@@ -52,6 +58,13 @@ export { normalizeFipeReferences } from './fipe-normalizer.ts';
 export { normalizeDebts } from './debts-normalizer.ts';
 export { normalizeOwners } from './owner-normalizer.ts';
 export { normalizeCommercialStatus } from './commercial-status-normalizer.ts';
+export {
+  normalizeRecallSummary,
+  resolveRecallItemSituation,
+  formatRecallDate,
+  sanitizeRecallText,
+} from './recall-normalizer.ts';
 
 // Logger
 export { logConsultationEvent } from './safe-logger.ts';
+

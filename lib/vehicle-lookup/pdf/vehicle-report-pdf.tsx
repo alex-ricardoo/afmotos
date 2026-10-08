@@ -2,8 +2,15 @@
 import React from 'react';
 import { Document, Page, Text, View, Image, Link, StyleSheet } from '@react-pdf/renderer';
 import type { CustomerVehicleReportDto } from '../types.ts';
+import {
+  normalizeRecallSummary,
+  resolveRecallItemSituation,
+  formatRecallDate,
+  sanitizeRecallText,
+  type RecallSummary,
+} from '../normalizers/index.ts';
 import type { SiteSettings } from '@/types/database';
-import { resolveCurrentSiteDomain } from '@/lib/pdf/domain.ts';
+import { resolveCurrentSiteDomain, formatStoreInstagram } from '@/lib/pdf/domain.ts';
 import { formatCnpj } from '@/lib/utils/cnpj';
 import { formatPhone } from '@/lib/utils/formatters';
 import { MercosulPlateBadge } from '@/lib/pdf/mercosul-plate-badge';
@@ -228,6 +235,10 @@ const styles = StyleSheet.create({
   diagCardDanger: {
     backgroundColor: '#fef2f2',
     borderColor: '#fca5a5',
+  },
+  diagCardNeutral: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0',
   },
   diagLabel: {
     fontSize: 5.2,
@@ -558,6 +569,7 @@ interface VehicleReportPDFProps {
   settings?: SiteSettings | null;
   logoSrc?: string | null;
   siteUrl?: string | null;
+  instagram?: string | null;
 }
 
 export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
@@ -565,6 +577,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   settings,
   logoSrc,
   siteUrl,
+  instagram,
 }) => {
   const storeName = settings?.site_name || report.issuer?.trade_name || 'AF VEÍCULOS PE';
   const cnpj = settings?.cnpj || report.issuer?.cnpj || '58.742.981/0001-08';
@@ -573,6 +586,7 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   const storePhone = settings?.whatsapp_phone ? formatPhone(settings.whatsapp_phone) : null;
   const storeEmail = settings?.contact_email || 'contato@afmotos.com.br';
   const siteInfo = resolveCurrentSiteDomain(null, siteUrl);
+  const instagramInfo = formatStoreInstagram(instagram || settings);
 
   const isApproved = report.procedural_verdict === 'APPROVED';
   const isRestricted = report.procedural_verdict === 'RESTRICTED';
@@ -586,8 +600,71 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
   const verdictTagBg = isApproved ? '#dcfce7' : isRestricted ? '#fee2e2' : '#fef3c7';
   const verdictTagColor = isApproved ? '#15803d' : isRestricted ? '#b91c1c' : '#b45309';
 
-  const recallClear = report.risk_summary.recall_clear;
-  const recallPendingCount = report.recalls_summary?.pending_count || 0;
+  const recallSummary: RecallSummary =
+    report.recall_summary ||
+    (report.recalls_summary
+      ? {
+          hasRecallHistory:
+            (report.recalls_summary.history_count ?? report.recalls_summary.total_count) > 0,
+          historyCount:
+            report.recalls_summary.history_count ?? report.recalls_summary.total_count,
+          pendingCount: report.recalls_summary.pending_count,
+          completedCount: null,
+          pendingItems: (report.recalls || [])
+            .filter((r) => r.status === 'PENDENTE')
+            .map((r) => ({
+              defeito: r.component,
+              dataInicioCampanha: r.announcement_date,
+              risco: r.risk_description,
+              status: 'PENDENTE',
+            })),
+          historyItems: (report.recalls || []).map((r) => ({
+            defeito: r.component,
+            dataInicioCampanha: r.announcement_date,
+            risco: r.risk_description,
+            status: r.status,
+          })),
+          status:
+            report.recalls_summary.status ||
+            (report.recalls_summary.pending_count > 0
+              ? 'PENDING'
+              : (report.recalls_summary.history_count ?? report.recalls_summary.total_count) > 0
+                ? 'HISTORY_ONLY'
+                : 'NONE'),
+          title: 'RECALL DE FÁBRICA',
+          diagnosticLabel:
+            report.recalls_summary.diagnostic_label ||
+            report.recalls_summary.status_label ||
+            (report.recalls_summary.pending_count > 0
+              ? `${report.recalls_summary.pending_count} pendência(s) de recall`
+              : (report.recalls_summary.history_count ?? report.recalls_summary.total_count) > 0
+                ? 'Nenhuma pendência'
+                : 'Nenhuma campanha identificada'),
+          diagnosticTone:
+            report.recalls_summary.diagnostic_tone ||
+            (report.recalls_summary.pending_count > 0 ? 'danger' : 'success'),
+          sourceDescription: report.recalls_summary.source_description || null,
+        }
+      : normalizeRecallSummary(null));
+
+  let recallCardStyle = styles.diagCardClear;
+  let recallCardTextColor = '#166534';
+  if (recallSummary.status === 'PENDING') {
+    recallCardStyle = styles.diagCardDanger;
+    recallCardTextColor = '#991b1b';
+  } else if (recallSummary.status === 'HISTORY_ONLY') {
+    recallCardStyle = styles.diagCardClear;
+    recallCardTextColor = '#166534';
+  } else if (recallSummary.status === 'NONE') {
+    recallCardStyle = styles.diagCardClear;
+    recallCardTextColor = '#166534';
+  } else {
+    recallCardStyle = styles.diagCardNeutral;
+    recallCardTextColor = '#475569';
+  }
+
+  const recallClear = recallSummary.status !== 'PENDING';
+  const recallPendingCount = recallSummary.pendingCount;
   const hasRentalRecord = report.commercial_indicators?.has_rental_record || false;
   const bullets =
     report.verdict_bullets && report.verdict_bullets.length > 0
@@ -663,15 +740,24 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
                 {storePhone ? ` • Telefone/WhatsApp: ${storePhone}` : ''}
               </Text>
               <Text style={styles.storeContact}>{storeAddress}</Text>
-              {storeEmail || siteInfo.displayDomain ? (
+              {storeEmail || siteInfo.displayDomain || instagramInfo ? (
                 <Text style={styles.storeContact}>
                   {storeEmail ? `E-mail: ${storeEmail}` : ''}
-                  {storeEmail && siteInfo.displayDomain ? ' • ' : ''}
+                  {storeEmail && (siteInfo.displayDomain || instagramInfo) ? ' • ' : ''}
                   {siteInfo.displayDomain ? (
                     <Text>
                       Site:{' '}
                       <Link src={siteInfo.fullUrl} style={styles.linkText}>
                         {siteInfo.displayDomain}
+                      </Link>
+                    </Text>
+                  ) : null}
+                  {siteInfo.displayDomain && instagramInfo ? ' • ' : ''}
+                  {instagramInfo ? (
+                    <Text>
+                      Instagram:{' '}
+                      <Link src={instagramInfo.fullUrl} style={styles.linkText}>
+                        {instagramInfo.displayHandle}
                       </Link>
                     </Text>
                   ) : null}
@@ -847,20 +933,15 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
 
             {/* 6. Recall de Fábrica */}
             <View style={styles.col3}>
-              <View
-                style={[
-                  styles.diagCard,
-                  recallClear ? styles.diagCardClear : styles.diagCardDanger,
-                ]}
-              >
+              <View style={[styles.diagCard, recallCardStyle]}>
                 <Text style={styles.diagLabel}>Recall de Fábrica</Text>
                 <Text
                   style={[
                     styles.diagStatus,
-                    { color: recallClear ? '#166534' : '#991b1b', fontSize: 6.2 },
+                    { color: recallCardTextColor, fontSize: 6.2 },
                   ]}
                 >
-                  {recallClear ? 'Nenhuma ocorrência' : `${recallPendingCount} Pendência(s)`}
+                  {recallSummary.diagnosticLabel}
                 </Text>
               </View>
             </View>
@@ -1072,6 +1153,127 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
             </View>
           </View>
         ) : null}
+
+        {/* ========================================================================= */}
+        {/* SEÇÃO DEDICADA: RECALLS E CAMPANHAS DE FÁBRICA */}
+        {/* ========================================================================= */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>RECALLS E CAMPANHAS DE FÁBRICA</Text>
+            <Text style={styles.sectionSub}>Fonte: Sistema Nacional de Recalls (SENATRAN / Provedor Oficial)</Text>
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.grid}>
+              <View style={styles.col3}>
+                <Text style={styles.fieldLabel}>Status atual</Text>
+                <Text
+                  style={[
+                    styles.fieldValueBold,
+                    {
+                      color:
+                        recallSummary.status === 'PENDING'
+                          ? '#991b1b'
+                          : recallSummary.status === 'HISTORY_ONLY' || recallSummary.status === 'NONE'
+                            ? '#166534'
+                            : '#475569',
+                    },
+                  ]}
+                >
+                  {recallSummary.diagnosticLabel}
+                </Text>
+              </View>
+
+              <View style={styles.col3}>
+                <Text style={styles.fieldLabel}>Campanhas históricas identificadas</Text>
+                <Text style={styles.fieldValueBold}>{recallSummary.historyCount}</Text>
+              </View>
+
+              <View style={styles.col3}>
+                <Text style={styles.fieldLabel}>Pendências atuais</Text>
+                <Text
+                  style={[
+                    styles.fieldValueBold,
+                    { color: recallSummary.pendingCount > 0 ? '#991b1b' : '#166534' },
+                  ]}
+                >
+                  {recallSummary.pendingCount}
+                </Text>
+              </View>
+
+              <View style={styles.col3}>
+                <Text style={styles.fieldLabel}>Fonte da informação</Text>
+                <Text style={styles.fieldValue}>
+                  {sanitizeRecallText(recallSummary.sourceDescription, 35) || 'Base Nacional de Recalls'}
+                </Text>
+              </View>
+            </View>
+
+            <View
+              style={{
+                marginTop: 3.5,
+                padding: 3.5,
+                backgroundColor: '#f8fafc',
+                borderRadius: 2,
+                borderLeftWidth: 2,
+                borderLeftColor: '#94a3b8',
+              }}
+            >
+              <Text style={{ fontSize: 6, color: '#475569', lineHeight: 1.25 }}>
+                Campanhas históricas não são, por si só, indicação de pendência. A confirmação de atendimento deve ser feita junto à montadora quando aplicável.
+              </Text>
+            </View>
+
+            {recallSummary.historyCount > 0 && (
+              <View style={[styles.table, { marginTop: 4 }]}>
+                <View style={styles.tableHeader} fixed>
+                  <Text style={[styles.th, { width: '18%' }]}>Data Início</Text>
+                  <Text style={[styles.th, { width: '42%' }]}>Sistema / Defeito</Text>
+                  <Text style={[styles.th, { width: '40%' }]}>Situação</Text>
+                </View>
+
+                {recallSummary.historyItems.map((item, idx) => {
+                  const resolution = resolveRecallItemSituation(
+                    item,
+                    recallSummary.pendingItems,
+                    report.brand || report.model,
+                  );
+                  const formattedDate = formatRecallDate(item.dataInicioCampanha);
+                  const safeDefeito = sanitizeRecallText(item.defeito, 60);
+
+                  const situationColor = resolution.isPending
+                    ? '#991b1b'
+                    : resolution.isCompleted
+                      ? '#166534'
+                      : '#334155';
+
+                  return (
+                    <View
+                      key={idx}
+                      style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}
+                      wrap={false}
+                    >
+                      <Text style={[styles.td, { width: '18%', fontSize: 6.2 }]}>
+                        {formattedDate}
+                      </Text>
+                      <Text style={[styles.tdBold, { width: '42%', fontSize: 6.2 }]}>
+                        {safeDefeito}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.tdBold,
+                          { width: '40%', fontSize: 6.2, color: situationColor },
+                        ]}
+                      >
+                        {resolution.situation}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        </View>
 
         {/* ========================================================================= */}
         {/* GRID BALANCEADO EM 2 COLUNAS (50% / 50%) */}
@@ -1453,77 +1655,33 @@ export const VehicleReportPDF: React.FC<VehicleReportPDFProps> = ({
               </View>
 
               <View style={styles.card}>
-                <View
-                  style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}
-                >
-                  <Text style={{ fontSize: 5.8, color: '#475569' }}>
-                    Registros disponibilizados:{' '}
-                    <Text style={{ fontFamily: 'Helvetica-Bold', color: '#1e293b' }}>
-                      {report.owners_history?.records?.length ||
-                        report.owners_history?.owners_count ||
-                        1}
+                <View style={styles.grid}>
+                  <View style={styles.col6}>
+                    <Text style={styles.fieldLabel}>Quantidade de Proprietários</Text>
+                    <Text style={[styles.fieldValueBold, { fontSize: 8.5, color: '#0f172a' }]}>
+                      {(() => {
+                        const count =
+                          report.owners_history?.owners_count ||
+                          report.owners_history?.records?.length ||
+                          1;
+                        return `${count} ${count === 1 ? 'proprietário registrado' : 'proprietários registrados'}`;
+                      })()}
                     </Text>
-                  </Text>
-                </View>
-
-                <View style={styles.table}>
-                  <View style={styles.tableHeader}>
-                    <Text style={[styles.th, { width: '15%' }]}>Ano</Text>
-                    <Text style={[styles.th, { width: '12%' }]}>UF</Text>
-                    <Text style={[styles.th, { width: '35%' }]}>Tipo Titular</Text>
-                    <Text style={[styles.th, { width: '38%' }]}>Documento</Text>
                   </View>
-
-                  {report.owners_history && report.owners_history.records.length > 0 ? (
-                    report.owners_history.records.map((owner, idx) => (
-                      <View
-                        key={idx}
-                        style={[styles.tableRow, idx % 2 === 1 ? styles.tableRowAlt : {}]}
-                      >
-                        <Text style={[styles.tdBold, { width: '15%' }]}>{owner.period || '-'}</Text>
-                        <Text style={[styles.td, { width: '12%' }]}>{owner.state || '-'}</Text>
-                        <Text
-                          style={[
-                            styles.td,
-                            {
-                              width: '35%',
-                              color:
-                                owner.document_type === 'PJ'
-                                    ? '#1e40af'
-                                    : owner.document_type === 'unknown'
-                                      ? '#64748b'
-                                      : '#334155',
-                              fontFamily: 'Helvetica-Bold',
-                            },
-                          ]}
-                        >
-                          {owner.document_type === 'PJ'
-                            ? 'Pessoa Jurídica'
-                            : owner.document_type === 'PF'
-                              ? 'Pessoa Física'
-                              : 'Não informado'}
-                        </Text>
-                        <Text style={[styles.tdBold, { width: '38%', color: '#334155' }]}>
-                          {owner.masked_document &&
-                          owner.masked_document !== 'Documento não disponibilizado pela fonte'
-                            ? owner.masked_document
-                            : 'Não disponibilizado'}
-                        </Text>
-                      </View>
-                    ))
-                  ) : (
-                    <View style={styles.tableRow}>
-                      <Text style={[styles.td, { width: '100%', color: '#64748b' }]}>
-                        Nenhum registro histórico de proprietário anterior retornado pela fonte.
-                      </Text>
-                    </View>
-                  )}
+                  <View style={styles.col6}>
+                    <Text style={styles.fieldLabel}>Situação Cadastral</Text>
+                    <Text style={[styles.fieldValueBold, { color: '#166534' }]}>
+                      Histórico confirmado
+                    </Text>
+                  </View>
+                  <View style={styles.col12}>
+                    <Text style={{ fontSize: 5, color: '#64748b', marginTop: 1, lineHeight: 1.25 }}>
+                      Em conformidade com a LGPD (Lei nº 13.709/2018), os dados cadastrais e a identificação
+                      dos titulares são resguardados, exibindo-se exclusivamente a contagem histórica de
+                      proprietários registrados nos órgãos oficiais de trânsito.
+                    </Text>
+                  </View>
                 </View>
-
-                <Text style={{ fontSize: 5, color: '#64748b', lineHeight: 1.25 }}>
-                  A fonte disponibilizou registro histórico, mas não forneceu detalhes adicionais do
-                  titular.
-                </Text>
               </View>
             </View>
 

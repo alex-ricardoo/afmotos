@@ -6,6 +6,7 @@ import {
   getWarrantyInfo,
   formatDateBR,
   calculateCalendarDaysDifference,
+  calculateSaleWarrantyAttributes,
 } from '../calculator.ts';
 
 describe('Commercial Warranty Engine & Calculator Suite', () => {
@@ -176,6 +177,61 @@ describe('Commercial Warranty Engine & Calculator Suite', () => {
       assert.strictEqual(info.status, 'EXPIRED');
       assert.strictEqual(info.label, 'Garantia encerrada');
       assert.strictEqual(info.daysRemaining, -1);
+    });
+  });
+
+  describe('calculateSaleWarrantyAttributes (Sale Save Warranty Generation)', () => {
+    it('15. should NOT generate warranty dates when is_repasse is true', () => {
+      const attrs = calculateSaleWarrantyAttributes({
+        isRepasse: true,
+        months: 3,
+        startDate: '2026-10-08T12:00:00Z',
+      });
+
+      assert.strictEqual(attrs.warranty_issued_at, null);
+      assert.strictEqual(attrs.warranty_ends_at, null);
+      assert.strictEqual(attrs.warranty_months, 3);
+    });
+
+    it('16. should generate 3 months warranty when sale is saved (not repasse)', () => {
+      const startDate = '2026-10-08T14:30:00-03:00';
+      const attrs = calculateSaleWarrantyAttributes({
+        isRepasse: false,
+        months: 3,
+        startDate,
+      });
+
+      assert.ok(attrs.warranty_issued_at);
+      assert.strictEqual(new Date(attrs.warranty_issued_at).toISOString(), new Date(startDate).toISOString());
+      assert.strictEqual(attrs.warranty_ends_at, '2027-01-08');
+      assert.strictEqual(attrs.warranty_months, 3);
+    });
+
+    it('17. should automatically produce UNDER_WARRANTY info when passed to getWarrantyInfo', () => {
+      const startDate = '2026-10-08T12:00:00Z';
+      const attrs = calculateSaleWarrantyAttributes({
+        isRepasse: false,
+        months: 3,
+        startDate,
+      });
+
+      const info = getWarrantyInfo(
+        {
+          is_repasse: false,
+          warranty_issued_at: attrs.warranty_issued_at,
+          warranty_ends_at: attrs.warranty_ends_at,
+          warranty_months: attrs.warranty_months,
+        },
+        startDate,
+      );
+
+      assert.strictEqual(info.status, 'UNDER_WARRANTY');
+      assert.strictEqual(info.label, 'Em garantia');
+      assert.strictEqual(info.endsAt, '2027-01-08');
+      assert.strictEqual(info.formattedEndsAt, '08/01/2027');
+      assert.strictEqual(info.formattedIssuedAt, '08/10/2026');
+      assert.strictEqual(info.isRepasse, false);
+      assert.ok(info.daysRemaining !== null && info.daysRemaining > 85);
     });
   });
 });

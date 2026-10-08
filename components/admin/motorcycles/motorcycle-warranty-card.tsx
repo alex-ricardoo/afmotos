@@ -72,22 +72,22 @@ export function MotorcycleWarrantyCard({ sale }: MotorcycleWarrantyCardProps) {
         <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 text-xs space-y-2">
           <div className="text-zinc-300 font-medium flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-zinc-500 animate-pulse" />
-            Garantia será definida na primeira emissão do contrato
+            Garantia será ativada no registro
           </div>
           <p className="text-zinc-400 leading-relaxed text-[11px]">
-            A criação da venda e a pré-visualização HTML não iniciam a garantia. O prazo de 3 meses-calendário é fixado automaticamente no momento em que o PDF do contrato/recibo é emitido pela primeira vez.
+            A garantia comercial de 3 meses é gerada automaticamente ao salvar a venda no sistema.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="bg-zinc-900/50 border border-zinc-800/70 rounded-2xl p-3.5">
             <span className="text-[11px] font-semibold text-zinc-400 block uppercase tracking-wider">
-              Início / 1ª Emissão
+              Início da Garantia
             </span>
             <span className="text-sm font-bold text-white font-mono mt-0.5 block">
               {warranty.formattedIssuedAt || '-'}
             </span>
-            <span className="text-[10px] text-zinc-500 mt-0.5 block">Data do contrato</span>
+            <span className="text-[10px] text-zinc-500 mt-0.5 block">Registro da venda</span>
           </div>
 
           <div className="bg-zinc-900/50 border border-zinc-800/70 rounded-2xl p-3.5">
