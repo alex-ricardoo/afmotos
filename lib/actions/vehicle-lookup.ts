@@ -5,6 +5,10 @@ import { createClient } from '@/lib/supabase/server';
 import { executeVehiclePlateLookup } from '@/lib/vehicle-lookup/service';
 import { checkCacheForPlate } from '@/lib/queries/vehicle-lookup';
 import { normalizeBrazilianPlate, isValidBrazilianPlate } from '@/lib/vehicle-lookup/plate';
+import {
+  createManualReprocessAuditRecord,
+  checkAmbiguousProviderAttempt,
+} from '@/lib/vehicle-lookup/lock-service';
 
 export interface ExecuteLookupActionInput {
   plate: string;
@@ -13,6 +17,9 @@ export interface ExecuteLookupActionInput {
   motorcycleId?: string | null;
   sellRequestId?: string | null;
   forceRefresh?: boolean;
+  isManualReprocess?: boolean;
+  confirmedManualReprocess?: boolean;
+  manualReprocessReason?: string;
 }
 
 export async function checkPlateCacheAction(plate: string) {
@@ -36,6 +43,70 @@ export async function checkPlateCacheAction(plate: string) {
   }
 }
 
+export async function syncConsultationStatusAction(plate: string) {
+  try {
+    const normalized = normalizeBrazilianPlate(plate);
+    if (!isValidBrazilianPlate(normalized)) {
+      return { status: 'invalid_plate' as const };
+    }
+
+    const supabase = await createClient();
+
+    // 1. Checa se já existe consulta concluída
+    const cached = await checkCacheForPlate(normalized);
+    if (cached && cached.status === 'COMPLETED') {
+      return {
+        status: 'completed' as const,
+        consultationId: cached.id,
+        isMock: cached.is_mock,
+      };
+    }
+
+    // 2. Checa se o lock distribuído ainda está ativo
+    const lockKey = `apibrasil:veiculos-total:${normalized}`;
+    const { data: lockRow } = await supabase
+      .from('vehicle_provider_locks')
+      .select('locked_at, lock_expires_at, locked_by')
+      .eq('lock_key', lockKey)
+      .gt('lock_expires_at', new Date().toISOString())
+      .maybeSingle();
+
+    if (lockRow) {
+      return {
+        status: 'processing' as const,
+        startedAt: lockRow.locked_at,
+        expiresAt: lockRow.lock_expires_at,
+      };
+    }
+
+    // 3. Checa se existe tentativa ambígua recente
+    const { data: attemptRow } = await supabase
+      .from('vehicle_provider_attempts')
+      .select('id, status, charge_status, created_at')
+      .eq('provider', 'apibrasil')
+      .eq('operation', 'veiculos-total')
+      .eq('plate_normalized', normalized)
+      .in('status', ['charge_status_unknown', 'manual_review', 'response_persistence_failed'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (attemptRow) {
+      return {
+        status: 'charge_status_unknown' as const,
+        attemptId: attemptRow.id,
+        attemptStatus: attemptRow.status,
+        canManualReprocess: true,
+      };
+    }
+
+    return { status: 'not_found' as const };
+  } catch (err: any) {
+    console.error('[VEHICLE_LOOKUP] [syncConsultationStatusAction] Erro ao sincronizar status:', err);
+    return { status: 'error' as const, message: err?.message };
+  }
+}
+
 export async function executeVehiclePlateLookupAction(input: ExecuteLookupActionInput) {
   console.log(`[VEHICLE_LOOKUP] [executeAction] 🚀 Recebida solicitação de consulta veicular para a placa: "${input.plate}"`);
   try {
@@ -50,12 +121,127 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
       return { error: 'Usuário não autenticado ou sessão expirada.' };
     }
 
+    // =========================================================================
+    // BLOQUEADOR 7: Validar permissão administrativa no backend
+    // Não confiar apenas em flags do frontend.
+    // =========================================================================
+    const { data: adminProfile } = await supabase
+      .from('admin_profiles')
+      .select('id, is_active')
+      .eq('auth_user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (!adminProfile) {
+      console.error(`[VEHICLE_LOOKUP] [executeAction] ❌ Usuário ${user.id} não é admin ativo.`);
+      return { error: 'Acesso negado. Apenas administradores ativos podem consultar veículos.' };
+    }
+
     const normalized = normalizeBrazilianPlate(input.plate);
-    console.log(`[VEHICLE_LOOKUP] [executeAction] Usuário: ${user.id} (${user.email || 'sem email'}) | Placa normalizada: "${normalized}"`);
+    console.log(`[VEHICLE_LOOKUP] [executeAction] Usuário admin: ${user.id} (${user.email || 'sem email'}) | Placa normalizada: "${normalized}"`);
 
     if (!isValidBrazilianPlate(normalized)) {
       console.warn(`[VEHICLE_LOOKUP] [executeAction] ❌ Placa com formato inválido: "${input.plate}"`);
       return { error: `A placa "${input.plate}" não possui formato válido (antigo ou Mercosul).` };
+    }
+
+    const { logProviderEvent } = await import('@/lib/vehicle-lookup/provider-logger');
+    const logicalRequestId = `req_admin_${crypto.randomUUID()}`;
+
+    let auditId: string | null = null;
+
+    // =========================================================================
+    // BLOQUEADOR 7: Reprocessamento manual com auditoria backend
+    // =========================================================================
+    if (input.isManualReprocess && input.confirmedManualReprocess) {
+      // Validar que reason foi fornecido com no mínimo 10 caracteres úteis
+      if (!input.manualReprocessReason || input.manualReprocessReason.trim().length < 10) {
+        logProviderEvent({
+          event: 'provider_manual_reprocess_denied',
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          placa_normalizada: normalized,
+          logical_request_id: logicalRequestId,
+          physical_request_id: 'pending',
+          attempt_number: 1,
+          timeout_ms: 120000,
+          duration_ms: 0,
+          status: 'blocked',
+          charge_status: 'not_sent',
+          origem: 'admin_panel',
+          extra: { reason: 'missing_or_short_reason', actor_id: user.id },
+        });
+
+        return {
+          error: 'Para reprocessar manualmente, é obrigatório fornecer o motivo (mínimo 10 caracteres).',
+          isManualReprocessDenied: true,
+        };
+      }
+
+      // Verificar se existe tentativa ambígua para esta placa
+      const ambiguousCheck = await checkAmbiguousProviderAttempt(
+        'apibrasil',
+        'veiculos-total',
+        normalized,
+        supabase,
+      );
+
+      // Registrar auditoria de reprocessamento manual ANTES de executar via RPC segura
+      auditId = await createManualReprocessAuditRecord(
+        {
+          actorId: user.id,
+          actorType: 'admin',
+          previousAttemptId: ambiguousCheck.attemptId || null,
+          provider: 'apibrasil',
+          operation: 'veiculos-total',
+          plateNormalized: normalized,
+          reason: input.manualReprocessReason.trim(),
+          estimatedCostCents: 3000,
+          acknowledgedRisk: true,
+          logicalRequestId,
+        },
+        supabase,
+      );
+
+      const maskedAuditId =
+        auditId && auditId.length > 8
+          ? `${auditId.slice(0, 4)}...${auditId.slice(-4)}`
+          : '****';
+
+      logProviderEvent({
+        event: 'provider_manual_reprocess_authorized',
+        provider: 'apibrasil',
+        operation: 'veiculos-total',
+        placa_normalizada: normalized,
+        logical_request_id: logicalRequestId,
+        physical_request_id: 'pending',
+        attempt_number: 1,
+        timeout_ms: 120000,
+        duration_ms: 0,
+        status: 'created',
+        charge_status: 'not_sent',
+        origem: 'admin_panel',
+        extra: {
+          audit_id_masked: maskedAuditId,
+          has_ambiguous_attempt: ambiguousCheck.hasAmbiguousAttempt,
+          previous_attempt_id: ambiguousCheck.attemptId,
+        },
+      });
+    } else if (input.isManualReprocess) {
+      logProviderEvent({
+        event: 'provider_manual_reprocess_requested',
+        provider: 'apibrasil',
+        operation: 'veiculos-total',
+        placa_normalizada: normalized,
+        logical_request_id: logicalRequestId,
+        physical_request_id: 'pending',
+        attempt_number: 1,
+        timeout_ms: 120000,
+        duration_ms: 0,
+        status: 'created',
+        charge_status: 'not_sent',
+        origem: 'admin_panel',
+      });
     }
 
     console.log(`[VEHICLE_LOOKUP] [executeAction] Chamando executeVehiclePlateLookup...`);
@@ -67,7 +253,12 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
         confirmationMessageVersion: input.confirmationMessageVersion || 'v1.0',
         motorcycleId: input.motorcycleId,
         sellRequestId: input.sellRequestId,
-        forceRefresh: input.forceRefresh,
+        logicalRequestId,
+        source: 'admin_panel',
+        isManualReprocess: input.isManualReprocess,
+        confirmedManualReprocess: input.confirmedManualReprocess,
+        manualReprocessReason: input.manualReprocessReason,
+        manualReprocessAuditId: auditId || null,
       },
       supabase
     );
@@ -84,6 +275,64 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     };
   } catch (err: any) {
     console.error('[VEHICLE_LOOKUP] [executeAction] ❌ Erro durante a execução da consulta veicular:', err);
+
+    if (
+      err?.name === 'ConsultationInProgressError' ||
+      err?.code === 'CONSULTATION_IN_PROGRESS' ||
+      err?.statusCode === 409
+    ) {
+      return {
+        error:
+          'Já existe uma consulta em andamento para esta placa. Para evitar cobrança duplicada, aguarde a conclusão.',
+        isConsultationInProgress: true,
+        statusCode: 409,
+      };
+    }
+
+    if (err?.name === 'ChargeStatusUnknownError' || err?.code === 'CHARGE_STATUS_UNKNOWN') {
+      return {
+        error: err.message,
+        isChargeStatusUnknown: true,
+        statusCode: 504,
+        canManualReprocess: true,
+      };
+    }
+
+    if (
+      err?.name === 'ProviderLockUnavailableError' ||
+      err?.code === 'LOCK_UNAVAILABLE'
+    ) {
+      return {
+        error: err.message,
+        isLockUnavailable: true,
+        statusCode: 503,
+      };
+    }
+
+    if (
+      err?.name === 'ProviderPersistenceAfterSuccessError' ||
+      err?.code === 'DATABASE_PERSISTENCE_FAILED_AFTER_PROVIDER_SUCCESS'
+    ) {
+      return {
+        error: err.message,
+        isPersistenceError: true,
+        statusCode: 503,
+        canManualReprocess: false,
+      };
+    }
+
+    if (
+      err?.name === 'AmbiguousAttemptGuardError' ||
+      err?.code === 'CHARGE_STATUS_UNKNOWN_RECONCILIATION_REQUIRED'
+    ) {
+      return {
+        error: err.message,
+        isAmbiguousAttempt: true,
+        statusCode: 409,
+        canManualReprocess: true,
+        previousAttemptId: err?.previousAttemptId,
+      };
+    }
 
     if (err?.name === 'InsufficientBalanceError') {
       console.warn(`[VEHICLE_LOOKUP] [executeAction] ⚠️ Saldo insuficiente na API Brasil: ${err.balance}`);
@@ -104,14 +353,14 @@ export async function executeVehiclePlateLookupAction(input: ExecuteLookupAction
     }
 
     if (err?.name === 'ProviderUnavailableError' || err?.isProviderUnavailable) {
-      console.warn(`[VEHICLE_LOOKUP] [executeAction] ⚠️ Bases oficiais ou API Brasil temporariamente indisponíveis após ${err.attempts || 3} tentativas.`);
+      console.warn(`[VEHICLE_LOOKUP] [executeAction] ⚠️ Bases oficiais ou API Brasil temporariamente indisponíveis.`);
       return {
         error: err.message,
         isProviderUnavailable: true,
-        attempts: err.attempts || 3,
+        attempts: 1,
         lastStatusCode: err.lastStatusCode,
         userGuidance:
-          'Não foi possível consultar as bases oficiais no momento por instabilidade temporária no SENATRAN / DETRAN ou na API Brasil. Foram realizadas 3 tentativas automáticas sem sucesso. Nenhum crédito foi debitado. Você pode tentar novamente agora.',
+          'Não foi possível consultar as bases oficiais no momento por instabilidade temporária no SENATRAN / DETRAN ou na API Brasil. Retentativas automáticas foram desligadas para sua segurança financeira.',
       };
     }
 

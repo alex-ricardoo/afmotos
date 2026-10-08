@@ -2,7 +2,19 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
-import { Coins, CheckSquare, Loader2, ShieldAlert, X, ChevronDown, CheckCircle2 } from 'lucide-react';
+import {
+  Coins,
+  CheckSquare,
+  Loader2,
+  ShieldAlert,
+  X,
+  ChevronDown,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  ShieldCheck,
+  Lock,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export interface ConsultationConfirmModalProps {
@@ -79,7 +91,7 @@ export function ConsultationConfirmModal({
       }}
     >
       <div
-        className="relative w-full max-w-lg max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/80 shadow-2xl animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl bg-zinc-950 border border-border/80 shadow-2xl animate-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
@@ -91,10 +103,10 @@ export function ConsultationConfirmModal({
               <Coins className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h3 id="modal-title" className="text-base sm:text-lg font-bold tracking-tight text-foreground leading-snug">
+              <h3 id="modal-title" className="text-base sm:text-lg font-bold tracking-tight text-white leading-snug">
                 Confirmar Consulta Veicular Oficial
               </h3>
-              <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+              <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">
                 Bases oficiais Senatran e Detran para qualquer veículo no Brasil.
               </p>
             </div>
@@ -105,7 +117,7 @@ export function ConsultationConfirmModal({
               type="button"
               onClick={handleClose}
               aria-label="Fechar"
-              className="p-2 -mr-1 -mt-1 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer shrink-0"
+              className="p-2 -mr-1 -mt-1 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
@@ -114,38 +126,71 @@ export function ConsultationConfirmModal({
 
         {/* Scrollable Content Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
-          {/* Grid de Resumo da Consulta */}
-          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-muted/40 border border-border/60 space-y-2.5">
-            <div className="flex items-center justify-between py-1 border-b border-border/40 gap-2">
-              <span className="text-muted-foreground text-xs">Placa:</span>
-              <span className="font-mono font-bold text-xs sm:text-sm text-foreground tracking-wider bg-background px-2.5 py-1 rounded-lg border border-border shadow-xs">
-                {formattedPlate}
-              </span>
+          {/* Grid de Resumo da Consulta com Placa em Destaque */}
+          <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-2.5">
+            <div className="flex items-center justify-between py-1 border-b border-zinc-800/80 gap-2">
+              <span className="text-zinc-400 text-xs font-medium">Placa a consultar:</span>
+              <div className="inline-flex items-center gap-2 bg-gradient-to-b from-zinc-900 to-zinc-950 border border-[#c9a44c]/40 rounded-xl px-3 py-1 shadow-inner">
+                <span className="text-[10px] font-bold text-zinc-400">BR</span>
+                <span className="h-3 w-[1px] bg-zinc-700" />
+                <span className="font-mono font-black text-sm sm:text-base text-[#c9a44c] tracking-widest">
+                  {formattedPlate}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center justify-between py-1 border-b border-border/40 gap-2">
-              <span className="text-muted-foreground text-xs">Serviço:</span>
-              <span className="font-semibold text-foreground text-right text-xs">Veículos Total (Bases Nacionais)</span>
+            <div className="flex items-center justify-between py-1 border-b border-zinc-800/80 gap-2">
+              <span className="text-zinc-400 text-xs">Serviço:</span>
+              <span className="font-semibold text-white text-right text-xs">Veículos Total (Bases Nacionais)</span>
             </div>
-            <div className="flex items-center justify-between py-1 border-b border-border/40 gap-2">
-              <span className="text-muted-foreground text-xs">Custo Requisição:</span>
+            <div className="flex items-center justify-between py-1 border-b border-zinc-800/80 gap-2">
+              <span className="text-zinc-400 text-xs">Custo Requisição:</span>
               <span className="font-bold text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 text-right">
                 {displayCost}
               </span>
             </div>
             <div className="flex items-center justify-between py-1 gap-2">
-              <span className="text-muted-foreground text-xs">Armazenamento:</span>
+              <span className="text-zinc-400 text-xs">Armazenamento:</span>
               <span className="font-bold text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 text-right">
                 Cache Permanente (R$ 0,00)
               </span>
             </div>
           </div>
 
-          {/* Collapse / Accordion de Aviso de Créditos */}
-          <div className="rounded-xl sm:rounded-2xl border border-amber-500/20 bg-amber-500/5 overflow-hidden transition-all">
+          {/* Card de Orientações Obrigatórias de Tempo e Segurança (Requisito 1 UX) */}
+          <div className="rounded-xl sm:rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 sm:p-4 space-y-2.5 text-amber-200">
+            <div className="flex items-center gap-2 font-bold text-xs text-amber-300">
+              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Tempo de Processamento Oficial</span>
+            </div>
+            <div className="space-y-1.5 text-[11px] sm:text-xs leading-relaxed text-zinc-300">
+              <p>
+                • <strong className="text-amber-200">Tempo esperado:</strong> O retorno normalmente leva entre <strong>45 e 90 segundos</strong>.
+              </p>
+              <p>
+                • <strong className="text-amber-200">Limite máximo:</strong> Em alguns casos, pode levar até <strong>2 minutos</strong>.
+              </p>
+              <p>
+                • <strong className="text-amber-200">Orientação:</strong> Mantenha esta tela aberta enquanto buscamos as informações.
+              </p>
+              <p className="text-amber-300 font-semibold pt-1">
+                ⚠️ Evite recarregar a página, voltar no navegador ou iniciar outra consulta para a mesma placa.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-2 pt-2 border-t border-amber-500/20 text-[11px] text-zinc-400">
+              <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+              <span>
+                Para evitar cobrança duplicada, o sistema bloqueia novas consultas para esta placa enquanto esta estiver em andamento.
+              </span>
+            </div>
+          </div>
+
+          {/* Collapse / Accordion de Detalhes de Créditos */}
+          <div className="rounded-xl sm:rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden transition-all">
             <button
               type="button"
               onClick={() => setIsNoticeExpanded((prev) => !prev)}
-              className="w-full flex items-center justify-between p-3 sm:p-3.5 text-left text-xs font-semibold text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer gap-2"
+              className="w-full flex items-center justify-between p-3 sm:p-3.5 text-left text-xs font-semibold text-zinc-300 hover:bg-zinc-900/80 transition-colors cursor-pointer gap-2"
               aria-expanded={isNoticeExpanded}
             >
               <div className="flex items-center gap-2">
@@ -153,18 +198,18 @@ export function ConsultationConfirmModal({
                 <span>Entenda os créditos e tarifação</span>
               </div>
               <ChevronDown
-                className={`w-4 h-4 shrink-0 text-amber-400 transition-transform duration-200 ${
+                className={`w-4 h-4 shrink-0 text-zinc-400 transition-transform duration-200 ${
                   isNoticeExpanded ? 'rotate-180' : ''
                 }`}
               />
             </button>
 
             {isNoticeExpanded && (
-              <div className="px-3.5 pb-3.5 pt-1 space-y-2 text-[11px] sm:text-xs leading-relaxed text-amber-200/90 border-t border-amber-500/15 animate-in fade-in duration-200">
+              <div className="px-3.5 pb-3.5 pt-1 space-y-2 text-[11px] sm:text-xs leading-relaxed text-zinc-300 border-t border-zinc-800/80 animate-in fade-in duration-200">
                 <p>
-                  Esta consulta consumirá cerca de <strong className="text-amber-100">R$ 30,00</strong> em créditos na API Brasil. O valor exato pode oscilar conforme as tabelas da provedora oficial.
+                  Esta consulta consumirá cerca de <strong className="text-amber-300">R$ 30,00</strong> em créditos na API Brasil. O valor exato pode oscilar conforme as tabelas da provedora oficial.
                 </p>
-                <div className="flex items-start gap-1.5 text-muted-foreground pt-1 border-t border-amber-500/10">
+                <div className="flex items-start gap-1.5 text-zinc-400 pt-1 border-t border-zinc-800">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                   <span>
                     Após a emissão, o laudo fica armazenado na nuvem da {storeName} para consultas futuras instantâneas e sem custo.
@@ -174,35 +219,35 @@ export function ConsultationConfirmModal({
             )}
           </div>
 
-          {/* Trava de Segurança por Checkbox */}
+          {/* Checkbox Obrigatório conforme Requisito 1 de UX */}
           <label
-            className={`flex items-start gap-3 p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
+            className={`flex items-start gap-3.5 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border transition-all cursor-pointer select-none ${
               confirmedCheckbox
-                ? 'border-amber-500/50 bg-amber-500/10'
-                : 'border-border/60 bg-muted/20 hover:bg-muted/40'
+                ? 'border-[#c9a44c]/60 bg-[#c9a44c]/10 shadow-sm ring-1 ring-[#c9a44c]/30'
+                : 'border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/60'
             }`}
           >
             <input
               type="checkbox"
-              className="mt-0.5 h-4 w-4 rounded border-border text-amber-500 focus:ring-amber-400 accent-amber-500 cursor-pointer shrink-0"
+              className="mt-0.5 h-4 w-4 rounded border-zinc-700 text-[#c9a44c] focus:ring-[#c9a44c] accent-[#c9a44c] cursor-pointer shrink-0"
               checked={confirmedCheckbox}
               onChange={(e) => setConfirmedCheckbox(e.target.checked)}
               disabled={isExecuting}
             />
-            <span className="text-[11px] sm:text-xs font-medium text-foreground leading-snug">
-              Conferi a placa <strong className="font-bold text-amber-400">{formattedPlate}</strong> e autorizo o consumo de créditos para gerar este laudo completo.
+            <span className="text-[11px] sm:text-xs font-semibold text-white leading-snug">
+              Entendi que devo aguardar nesta tela durante o processamento.
             </span>
           </label>
         </div>
 
         {/* Footer Actions - Fixed at Bottom */}
-        <div className="p-3 sm:p-4 sm:px-6 bg-muted/20 border-t border-border/40 flex flex-col-reverse sm:flex-row items-center sm:justify-end gap-2 sm:gap-3 shrink-0">
+        <div className="p-3 sm:p-4 sm:px-6 bg-zinc-900/60 border-t border-zinc-800/80 flex flex-col-reverse sm:flex-row items-center sm:justify-end gap-2 sm:gap-3 shrink-0">
           <Button
             type="button"
             variant="outline"
             onClick={handleClose}
             disabled={isExecuting}
-            className="w-full sm:w-auto rounded-xl h-10 sm:h-11 px-5 font-semibold cursor-pointer border-border text-xs sm:text-sm"
+            className="w-full sm:w-auto rounded-xl h-10 sm:h-11 px-5 font-semibold cursor-pointer border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 text-xs sm:text-sm"
           >
             Cancelar
           </Button>
@@ -213,19 +258,19 @@ export function ConsultationConfirmModal({
             disabled={!confirmedCheckbox || isExecuting}
             className={`w-full sm:w-auto h-10 sm:h-11 px-6 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md ${
               !confirmedCheckbox || isExecuting
-                ? 'opacity-50 cursor-not-allowed bg-amber-600/50 text-zinc-200'
-                : 'bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold cursor-pointer shadow-lg shadow-amber-500/20 active:scale-[0.98]'
+                ? 'opacity-40 cursor-not-allowed bg-zinc-800 text-zinc-500 border border-zinc-700'
+                : 'bg-gradient-to-r from-[#c9a44c] to-[#b38e3a] hover:brightness-110 text-zinc-950 font-bold cursor-pointer shadow-lg shadow-[#c9a44c]/20 active:scale-[0.98]'
             }`}
           >
             {isExecuting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Consultando bases oficiais...</span>
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                <span>Iniciando consulta oficial...</span>
               </>
             ) : (
               <>
                 <CheckSquare className="w-4 h-4" />
-                <span>Confirmar & Consultar</span>
+                <span>Iniciar consulta oficial</span>
               </>
             )}
           </button>
@@ -234,4 +279,3 @@ export function ConsultationConfirmModal({
     </div>
   );
 }
-

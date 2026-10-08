@@ -34,7 +34,7 @@ export function LoadingStepper({ plateDisplay }: LoadingStepperProps) {
       <div className="text-center space-y-1">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-1">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          Processando Consulta
+          Consulta em andamento
         </div>
         <h3 className="text-xl font-bold text-foreground">
           Consultando Placa <span className="font-mono text-primary">{plateDisplay}</span>

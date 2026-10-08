@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ShieldCheck,
   FileSpreadsheet,
@@ -46,6 +47,12 @@ import { TabHistory } from '@/components/admin/vehicle-lookup/tabs/tab-history';
 import { TabFipePricing } from '@/components/admin/vehicle-lookup/tabs/tab-fipe-pricing';
 import { TabAdsMileage } from '@/components/admin/vehicle-lookup/tabs/tab-ads-mileage';
 import { TabTechnicalSpecs } from '@/components/admin/vehicle-lookup/tabs/tab-technical-specs';
+import { ConsultationProgressPanel } from '@/components/vehicle-lookup/consultation-progress-panel';
+import { LeaveConfirmDialog } from '@/components/vehicle-lookup/leave-confirm-dialog';
+import {
+  clearLookupSession,
+  logLookupUiEvent,
+} from '@/lib/vehicle-lookup/ui-session';
 
 interface CustomerVehicleDetailProps {
   consultation: ConsultationDetail;
@@ -56,7 +63,119 @@ type TabKey =
   'summary' | 'vehicle' | 'debts' | 'restrictions' | 'history' | 'fipe' | 'ads' | 'technical';
 
 export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDetailProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>('summary');
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<string>(consultation.status);
+
+  const isProcessing =
+    !dto &&
+    (currentStatus === 'processing' ||
+      currentStatus === 'delivering' ||
+      currentStatus === 'retry_scheduled' ||
+      (currentStatus === 'paid' && !consultation.vehicle_data));
+
+  // Intercepta fechamento de aba durante processamento
+  useEffect(() => {
+    if (!isProcessing) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+      logLookupUiEvent('vehicle_lookup_ui_leave_attempted', {
+        context: 'customer_portal',
+        plateMasked: consultation.plate,
+        status: 'processing',
+        consultationIdMasked: consultation.id,
+        action: 'beforeunload',
+      });
+      return '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isProcessing, consultation.plate, consultation.id]);
+
+  // Polling automático e estritamente read-only enquanto a consulta estiver processando
+  useEffect(() => {
+    if (!isProcessing) return;
+
+    let disposed = false;
+    let requestInFlight = false;
+
+    const pollStatus = async () => {
+      if (disposed || requestInFlight) return;
+
+      requestInFlight = true;
+
+      try {
+        const response = await fetch(
+          `/api/cliente/consultas/${consultation.id}/status`,
+          {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+              Accept: 'application/json',
+            },
+          },
+        );
+
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        if (disposed || !payload?.data) return;
+
+        const nextStatus = payload.data.status;
+        setCurrentStatus(nextStatus);
+
+        if (payload.data.isCompleted) {
+          logLookupUiEvent('vehicle_lookup_ui_completed', {
+            context: 'customer_portal',
+            plateMasked: consultation.plate,
+            status: 'completed',
+            consultationIdMasked: consultation.id,
+          });
+          clearLookupSession(
+            'customer_portal',
+            consultation.plate_normalized || consultation.plate,
+          );
+          router.refresh();
+          return;
+        }
+
+        if (payload.data.isTerminal) {
+          clearLookupSession(
+            'customer_portal',
+            consultation.plate_normalized || consultation.plate,
+          );
+          router.refresh();
+        }
+      } catch (error) {
+        console.warn('[CustomerVehicleDetail] Falha ao consultar status local:', error);
+      } finally {
+        requestInFlight = false;
+      }
+    };
+
+    void pollStatus();
+
+    const intervalId = window.setInterval(() => {
+      void pollStatus();
+    }, 7000);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+    };
+  }, [
+    isProcessing,
+    consultation.id,
+    consultation.plate,
+    consultation.plate_normalized,
+    router,
+  ]);
 
   // Desktop horizontal scroll support for tabs
   const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -194,6 +313,64 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
   };
 
   if (!dto) {
+    if (isProcessing) {
+      return (
+        <div className="space-y-6 max-w-2xl mx-auto py-4">
+          <Link
+            href="/cliente/consultas"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowLeaveDialog(true);
+            }}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white mb-2 transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 text-zinc-500 group-hover:-translate-x-1 group-hover:text-[#c9a44c] transition-transform" />
+            <span>Voltar para Minhas Consultas</span>
+          </Link>
+
+          <ConsultationProgressPanel
+            context="customer"
+            plateDisplay={formattedPlate}
+            startedAt={consultation.created_at}
+            status="processing"
+            onLeave={() => setShowLeaveDialog(true)}
+          />
+
+          <LeaveConfirmDialog
+            open={showLeaveDialog}
+            onOpenChange={setShowLeaveDialog}
+            onStay={() => setShowLeaveDialog(false)}
+            onConfirmLeave={() => {
+              setShowLeaveDialog(false);
+              router.push('/cliente/consultas');
+            }}
+          />
+        </div>
+      );
+    }
+
+    if (currentStatus === 'manual_review') {
+      return (
+        <div className="space-y-6 max-w-2xl mx-auto py-4">
+          <Link
+            href="/cliente/consultas"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white mb-2 transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 text-zinc-500 group-hover:-translate-x-1 group-hover:text-[#c9a44c] transition-transform" />
+            <span>Voltar para Minhas Consultas</span>
+          </Link>
+
+          <ConsultationProgressPanel
+            context="customer"
+            plateDisplay={formattedPlate}
+            startedAt={consultation.created_at}
+            status="manual_review"
+            onLeave={() => router.push('/cliente/consultas')}
+          />
+        </div>
+      );
+    }
+
     const isRefunded = consultation.status === 'refunded';
     const isRefundPending = consultation.status === 'refund_pending';
     const isFailed =
