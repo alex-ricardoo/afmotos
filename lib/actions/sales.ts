@@ -12,6 +12,7 @@ import {
   cleanNumeric,
 } from '@/lib/utils/customer-normalizers';
 import { formatCpf } from '@/lib/utils/formatters';
+import { calculateSaleWarrantyAttributes } from '@/lib/warranty/calculator';
 
 export async function createSaleAction(rawData: SaleFormValues) {
   const supabase = await createClient();
@@ -120,6 +121,13 @@ export async function createSaleAction(rawData: SaleFormValues) {
     }
   }
 
+  const isRepasse = Boolean(data.is_repasse);
+  const warrantyAttrs = calculateSaleWarrantyAttributes({
+    isRepasse,
+    months: 3,
+    startDate: new Date(),
+  });
+
   const salePayload = {
     customer_id: effectiveCustomerId,
     motorcycle_id: data.motorcycle_id,
@@ -147,7 +155,10 @@ export async function createSaleAction(rawData: SaleFormValues) {
     renavam: data.renavam?.trim() || null,
     chassi: data.chassi?.trim() ? data.chassi.trim().toUpperCase() : null,
     legal_terms_accepted: data.legal_terms_accepted ?? true,
-    is_repasse: Boolean(data.is_repasse),
+    is_repasse: isRepasse,
+    warranty_months: warrantyAttrs.warranty_months,
+    warranty_issued_at: warrantyAttrs.warranty_issued_at,
+    warranty_ends_at: warrantyAttrs.warranty_ends_at,
     receipt_number: receiptNumber,
     receipt_notes: data.receipt_notes?.trim() || null,
     notes: data.notes?.trim() || null,
@@ -297,9 +308,53 @@ export async function updateSaleAction(id: string, rawData: Partial<SaleFormValu
   if (rawData.trade_amount !== undefined) updateData.trade_amount = rawData.trade_amount;
   if (rawData.delivery_km !== undefined) updateData.delivery_km = rawData.delivery_km;
   if (rawData.legal_terms_accepted !== undefined) updateData.legal_terms_accepted = rawData.legal_terms_accepted;
-  if (rawData.is_repasse !== undefined) updateData.is_repasse = Boolean(rawData.is_repasse);
   if (rawData.receipt_notes !== undefined) updateData.receipt_notes = rawData.receipt_notes?.trim() || null;
   if (rawData.notes !== undefined) updateData.notes = rawData.notes?.trim() || null;
+
+  if (rawData.is_repasse !== undefined) {
+    const isRepasse = Boolean(rawData.is_repasse);
+    updateData.is_repasse = isRepasse;
+    if (isRepasse) {
+      updateData.warranty_issued_at = null;
+      updateData.warranty_ends_at = null;
+    } else {
+      // Se não for repasse e a venda ainda não possuir garantia emitida, gera a garantia de 3 meses
+      const { data: currentSale } = await supabase
+        .from('sales')
+        .select('warranty_issued_at, warranty_ends_at, warranty_months')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (!currentSale?.warranty_issued_at) {
+        const warrantyAttrs = calculateSaleWarrantyAttributes({
+          isRepasse: false,
+          months: currentSale?.warranty_months || 3,
+          startDate: new Date(),
+        });
+        updateData.warranty_months = warrantyAttrs.warranty_months;
+        updateData.warranty_issued_at = warrantyAttrs.warranty_issued_at;
+        updateData.warranty_ends_at = warrantyAttrs.warranty_ends_at;
+      }
+    }
+  } else {
+    // Se is_repasse não foi alterado na edição, mas a venda legada não tiver garantia emitida e não for repasse
+    const { data: currentSale } = await supabase
+      .from('sales')
+      .select('warranty_issued_at, warranty_ends_at, warranty_months, is_repasse')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (currentSale && !currentSale.is_repasse && !currentSale.warranty_issued_at) {
+      const warrantyAttrs = calculateSaleWarrantyAttributes({
+        isRepasse: false,
+        months: currentSale.warranty_months || 3,
+        startDate: new Date(),
+      });
+      updateData.warranty_months = warrantyAttrs.warranty_months;
+      updateData.warranty_issued_at = warrantyAttrs.warranty_issued_at;
+      updateData.warranty_ends_at = warrantyAttrs.warranty_ends_at;
+    }
+  }
 
   if (rawData.chassi !== undefined) {
     updateData.chassi = rawData.chassi?.trim() ? rawData.chassi.trim().toUpperCase() : null;

@@ -543,20 +543,20 @@ export function OfficialReceiptPrint({
                       ? 'Em Vigência'
                       : warrantyInfo.status === 'EXPIRED'
                       ? 'Garantia Encerrada'
-                      : 'Aguardando 1ª Emissão'}
+                      : 'Aguardando Ativação'}
                   </span>
                 </div>
                 <p className="text-[11px] text-emerald-950 mb-2 leading-relaxed">
-                  Esta motocicleta possui garantia comercial de {warrantyInfo.months} (três) meses, contados a partir da emissão efetiva deste instrumento.
+                  Esta motocicleta possui garantia comercial de {warrantyInfo.months} (três) meses, contados a partir da data de conclusão e registro da venda.
                 </p>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-1 pt-1.5 border-t border-emerald-200 text-xs text-emerald-900">
                   <div>
                     <strong>Início da garantia:</strong>{' '}
-                    <span>{warrantyInfo.formattedIssuedAt || 'A definir na 1ª emissão'}</span>
+                    <span>{warrantyInfo.formattedIssuedAt || formatDate(sale.sale_date)}</span>
                   </div>
                   <div>
                     <strong>Término da garantia:</strong>{' '}
-                    <span>{warrantyInfo.formattedEndsAt ? `${warrantyInfo.formattedEndsAt}, inclusive` : 'A definir na 1ª emissão do contrato'}</span>
+                    <span>{warrantyInfo.formattedEndsAt ? `${warrantyInfo.formattedEndsAt}, inclusive` : 'A definir no registro da venda'}</span>
                   </div>
                   {warrantyInfo.daysRemaining !== null && (
                     <div className="text-[11px] text-emerald-700 font-medium">
@@ -568,7 +568,7 @@ export function OfficialReceiptPrint({
 
               <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200 text-[10px] sm:text-[10.5px] text-slate-700 space-y-2 leading-relaxed text-justify">
                 <p>
-                  <strong>4.1. Garantia Comercial de {warrantyInfo.months} Meses ou 3.000 KM (Motor e Câmbio):</strong> A Loja <strong>&quot;{storeName}&quot;</strong> concede ao ADQUIRENTE garantia comercial pelo prazo de <strong>{warrantyInfo.months} (três) meses calendários{warrantyInfo.formattedEndsAt ? ` (válida até ${warrantyInfo.formattedEndsAt}, inclusive)` : ''} ou 3.000 (três mil) quilômetros rodados</strong>, o que primeiro ocorrer, a contar da data de emissão deste instrumento, nos termos e limites aqui convencionados, observados os direitos legais do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é <strong>restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO</strong>.
+                  <strong>4.1. Garantia Comercial de {warrantyInfo.months} Meses ou 3.000 KM (Motor e Câmbio):</strong> A Loja <strong>&quot;{storeName}&quot;</strong> concede ao ADQUIRENTE garantia comercial pelo prazo de <strong>{warrantyInfo.months} (três) meses calendários{warrantyInfo.formattedEndsAt ? ` (válida até ${warrantyInfo.formattedEndsAt}, inclusive)` : ''} ou 3.000 (três mil) quilômetros rodados</strong>, o que primeiro ocorrer, a contar da data de conclusão e registro da venda, nos termos e limites aqui convencionados, observados os direitos legais do Artigo 26, Inciso II da Lei Federal nº 8.078/1990 (Código de Defesa do Consumidor). A referida garantia é <strong>restrita e exclusiva aos componentes internos banhados a óleo de MOTOR e CÂMBIO</strong>.
                 </p>
                 <p>
                   <strong>4.2. Exclusões Expressas por Mau Uso, Modificações e Negligência:</strong> A garantia <strong>NÃO COBRE</strong> avarias decorrentes de: 

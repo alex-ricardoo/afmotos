@@ -153,7 +153,7 @@ export function SaleCard({ sale }: SaleCardProps) {
                 </span>
               ) : (
                 <span className="text-[10px] text-zinc-500 italic">
-                  Definida na 1ª emissão
+                  Definida no registro
                 </span>
               )}
             </div>
