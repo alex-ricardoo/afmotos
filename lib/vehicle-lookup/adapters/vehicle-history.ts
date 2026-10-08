@@ -8,6 +8,10 @@ import type {
 import { maskCpf, maskCnpj } from '../sanitizers/index.ts';
 import { normalizeText } from './vehicle-risk.ts';
 import { isPlaceholderDocument } from '../normalizers/availability-helpers.ts';
+import {
+  normalizeRecallSummary,
+  resolveRecallItemSituation,
+} from '../normalizers/index.ts';
 
 const CORPORATE_KEYWORDS_REGEX = /\b(LTDA|S\/A|SA|LOCADORA|EIRELI|ME|EPP|CIA|COMPANHIA|BANCO|FINANCEIRA|COOPERATIVA|EMPRESA|COMERCIO|SERVICOS|AUTO|VEICULOS|MOTOS|TRANSPORTES|DISTRIBUIDORA|ASSOCIACAO|FUNDACAO)\b/i;
 
@@ -24,6 +28,7 @@ export function toVehicleHistorySummary(
       has_claims: false,
       claims_records: [],
       recalls: [],
+      recall_summary: normalizeRecallSummary(null),
     };
   }
 
@@ -199,41 +204,51 @@ export function toVehicleHistorySummary(
     insurance_company: c.seguradora || undefined,
   }));
 
-  // Recalls - Tarefa B: Inclusão do Status de Recall
-  const rawRecalls: any[] = [];
+  // Recalls — Centralizado via normalizeRecallSummary (função pura e tipada)
+  const recallSummary = normalizeRecallSummary(d);
+  const brandName = d.dadosBasicosDoVeiculo?.marca || d.marcaModelo || undefined;
 
-  if (Array.isArray(d.recall?.recallsPendente)) {
-    d.recall.recallsPendente.forEach((rp: any) => {
-      rawRecalls.push({
-        announcement_date: rp.data || rp.data_anuncio || undefined,
-        component: rp.componente || rp.sistema || rp.descricao || 'Componente Veicular',
-        risk_description: rp.descricao_risco || rp.motivo || rp.descricaoRetorno || 'Recall Pendente',
-        status: 'PENDENTE' as const,
-      });
-    });
-  }
+  const rawRecalls: Array<{
+    announcement_date?: string;
+    component?: string;
+    risk_description?: string;
+    status?: 'PENDENTE' | 'ATENDIDO';
+    situation_label?: string;
+    action_recommendation?: string;
+  }> = [];
 
-  if (Array.isArray(d.recall?.detalhes)) {
-    d.recall.detalhes.forEach((rd: any) => {
-      rawRecalls.push({
-        announcement_date: rd.data || rd.data_anuncio || undefined,
-        component: rd.componente || rd.sistema || 'Componente Veicular',
-        risk_description: rd.descricao_risco || rd.motivo || rd.descricaoRetorno || 'Verificar na concessionária',
-        status: (rd.status === 'ATENDIDO' ? 'ATENDIDO' : 'PENDENTE') as 'PENDENTE' | 'ATENDIDO',
-      });
+  // 1. Mapeia histórico de campanhas com resolução segura de status
+  recallSummary.historyItems.forEach((item) => {
+    const resolution = resolveRecallItemSituation(item, recallSummary.pendingItems, brandName);
+    rawRecalls.push({
+      announcement_date: item.dataInicioCampanha || undefined,
+      component: item.defeito || 'Componente Veicular',
+      risk_description: item.risco || item.descricaoCompleta || 'Campanha de fábrica',
+      status: resolution.isPending ? 'PENDENTE' : resolution.isCompleted ? 'ATENDIDO' : undefined,
+      situation_label: resolution.situation,
+      action_recommendation: resolution.action,
     });
-  }
+  });
 
-  if (Array.isArray(d.recall?.chamados)) {
-    d.recall.chamados.forEach((rc: any) => {
+  // 2. Garante inclusão de pendências que não constem na lista de histórico
+  recallSummary.pendingItems.forEach((pendingItem) => {
+    const alreadyIncluded = rawRecalls.some(
+      (r) =>
+        (pendingItem.codigoProcon && r.component?.includes(pendingItem.codigoProcon)) ||
+        (pendingItem.defeito && r.component === pendingItem.defeito),
+    );
+    if (!alreadyIncluded) {
+      const resolution = resolveRecallItemSituation(pendingItem, recallSummary.pendingItems, brandName);
       rawRecalls.push({
-        announcement_date: rc.data || rc.data_anuncio || undefined,
-        component: rc.componente || rc.sistema || 'Componente Veicular',
-        risk_description: rc.descricao_risco || rc.motivo || 'Chamado de fábrica',
-        status: (rc.status === 'ATENDIDO' ? 'ATENDIDO' : 'PENDENTE') as 'PENDENTE' | 'ATENDIDO',
+        announcement_date: pendingItem.dataInicioCampanha || undefined,
+        component: pendingItem.defeito || 'Componente Veicular',
+        risk_description: pendingItem.risco || pendingItem.descricaoCompleta || 'Recall Pendente',
+        status: 'PENDENTE',
+        situation_label: resolution.situation,
+        action_recommendation: resolution.action,
       });
-    });
-  }
+    }
+  });
 
   // Auction presence: prefer checking auctions.length > 0 per user requirement
   const leilaoDesc = normalizeText(d.leilao?.descricao || '');
@@ -262,5 +277,6 @@ export function toVehicleHistorySummary(
     has_claims: hasClaims,
     claims_records: claims,
     recalls: rawRecalls,
+    recall_summary: recallSummary,
   };
 }

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { InternalVehicleConsultationDto } from '@/lib/vehicle-lookup/types';
+import { normalizeRecallSummary } from '@/lib/vehicle-lookup/normalizers/index';
 import {
   ShieldCheck,
   AlertTriangle,
@@ -21,8 +22,8 @@ export function TabSummary({ dto }: { dto: InternalVehicleConsultationDto }) {
   const h = dto.history;
   const raw = (dto.raw_response?.data || dto.raw_response || {}) as any;
 
-  const pendingRecalls = h.recalls ? h.recalls.filter((r) => r.status === 'PENDENTE') : [];
-  const hasPendingRecall = pendingRecalls.length > 0;
+  const recallSummary = h.recall_summary || normalizeRecallSummary(raw);
+  const hasPendingRecall = recallSummary.status === 'PENDING';
 
   const latestAdWithPrice = dto.ads_mileage?.ads_records?.find((a) => (a.price || 0) > 0) || dto.ads_mileage?.ads_records?.[0];
   const adPrice = latestAdWithPrice?.price || 0;
@@ -168,10 +169,10 @@ export function TabSummary({ dto }: { dto: InternalVehicleConsultationDto }) {
             )}
           </div>
           <div className={`text-base font-bold ${hasPendingRecall ? 'text-red-500' : 'text-foreground'}`}>
-            {hasPendingRecall ? `${pendingRecalls.length} Recall(s) Pendente(s)` : 'Sem Pendências'}
+            {recallSummary.diagnosticLabel}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Sistema Nacional de Recalls (Senatran)
+            {recallSummary.hasRecallHistory ? `${recallSummary.historyCount} campanha(s) histórica(s)` : 'Sistema Nacional de Recalls (Senatran)'}
           </p>
         </div>
 

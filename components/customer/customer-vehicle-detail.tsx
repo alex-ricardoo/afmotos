@@ -37,6 +37,7 @@ import {
 import { toast } from 'sonner';
 import { CustomerPlateBadge } from './customer-plate-badge';
 import type { InternalVehicleConsultationDto } from '@/lib/vehicle-lookup/types';
+import { normalizeRecallSummary } from '@/lib/vehicle-lookup/normalizers/index';
 import type { ConsultationDetail } from '@/lib/customer/types';
 import { Button } from '@/components/ui/button';
 import { formatBrazilianPlate } from '@/lib/vehicle-lookup/plate';
@@ -555,8 +556,8 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
   };
   const raw = (dto.raw_response?.data || dto.raw_response || {}) as RawVehicleData;
 
-  const pendingRecalls = h.recalls ? h.recalls.filter((r) => r.status === 'PENDENTE') : [];
-  const hasPendingRecall = pendingRecalls.length > 0;
+  const recallSummary = h.recall_summary || normalizeRecallSummary(raw);
+  const hasPendingRecall = recallSummary.status === 'PENDING';
 
   const isLocadora = Boolean(
     raw.registroEmLocadora?.registroEmLocadora === true ||
@@ -1150,10 +1151,10 @@ export function CustomerVehicleDetail({ consultation, dto }: CustomerVehicleDeta
               <div
                 className={`text-sm font-black ${hasPendingRecall ? 'text-red-400' : 'text-white'}`}
               >
-                {hasPendingRecall ? `${pendingRecalls.length} Recall Pendente` : 'Sem Pendências'}
+                {recallSummary.diagnosticLabel}
               </div>
               <p className="text-[11px] text-zinc-400 mt-1">
-                Sistema Nacional de Recalls (Senatran)
+                {recallSummary.hasRecallHistory ? `${recallSummary.historyCount} campanha(s) histórica(s)` : 'Sistema Nacional de Recalls (Senatran)'}
               </p>
             </div>
 

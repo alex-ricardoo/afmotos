@@ -1,4 +1,5 @@
 import type { AuctionRecord, AuctionScore, AuctionPhoto } from './types.ts';
+import type { RecallSummary } from './normalizers/index.ts';
 
 export type VehicleReportShareStatus = 'active' | 'revoked' | 'expired' | 'disabled';
 
@@ -188,13 +189,22 @@ export interface PublicVehicleReportDto {
     component?: string;
     risk_description?: string;
     status?: 'PENDENTE' | 'ATENDIDO';
+    situation_label?: string;
+    action_recommendation?: string;
   }>;
 
   recalls_summary?: {
     total_count: number;
     pending_count: number;
     status_label: string;
+    history_count?: number;
+    diagnostic_label?: string;
+    diagnostic_tone?: 'success' | 'warning' | 'danger' | 'neutral';
+    status?: 'NONE' | 'PENDING' | 'HISTORY_ONLY' | 'UNKNOWN';
+    source_description?: string | null;
   };
+
+  recall_summary?: RecallSummary;
 
   latest_km_record?: {
     mileage: number;

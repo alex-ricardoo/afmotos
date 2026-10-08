@@ -86,11 +86,13 @@ export function PublicRiskMatrix({ report }: PublicRiskMatrixProps) {
     {
       label: 'Recall de Fábrica',
       clear: sum.recall_clear,
-      clearText: 'Sem Pendências',
-      flaggedText: 'Pendente',
+      clearText: report.recalls_summary?.diagnostic_label || 'Sem Pendências',
+      flaggedText: report.recalls_summary?.diagnostic_label || 'Pendente',
       icon: RotateCcw,
       description: sum.recall_clear
-        ? 'Chamados atendidos ou sem recall.'
+        ? (report.recalls_summary?.history_count
+            ? `${report.recalls_summary.history_count} campanha(s) histórica(s) identificada(s).`
+            : 'Nenhuma pendência de recall informada.')
         : `${report.recalls_summary?.pending_count || 1} recall(s) pendente(s).`,
     },
   ];

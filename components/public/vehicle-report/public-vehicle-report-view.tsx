@@ -472,43 +472,22 @@ export function PublicVehicleReportView({
         {activeTab === 'history' && (
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 sm:p-5 space-y-4">
             <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">
-              Histórico de Proprietários e Registros Anteriores
+              Histórico de Proprietários
             </h3>
             <div className="space-y-3">
               <div className="p-3 rounded-lg bg-slate-950/50 border border-slate-800 flex items-center justify-between text-xs">
                 <span className="text-slate-400">Total de Proprietários Registrados</span>
                 <span className="font-bold text-white text-sm">
-                  {report.owners_history?.owners_count || 1}
+                  {report.owners_history?.owners_count || 1}{' '}
+                  {(report.owners_history?.owners_count || 1) === 1 ? 'proprietário' : 'proprietários'}
                 </span>
               </div>
 
-              {report.owners_history?.records && report.owners_history.records.length > 0 ? (
-                <div className="space-y-2">
-                  {report.owners_history.records.map((owner, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80 flex items-center justify-between text-xs"
-                    >
-                      <div>
-                        <span className="font-semibold text-slate-200">
-                          {idx + 1}º Proprietário ({owner.document_type === 'PJ' ? 'Pessoa Jurídica' : owner.document_type === 'PF' ? 'Pessoa Física' : 'Não informado'})
-                        </span>
-                        <p className="text-[11px] text-slate-500">
-                          Documento: {owner.masked_document && owner.masked_document !== 'Documento não disponibilizado pela fonte' ? owner.masked_document : 'Não disponibilizado'}
-                        </p>
-                      </div>
-                      <div className="text-right text-[11px] text-slate-400">
-                        <span>{owner.state ? `UF: ${owner.state}` : ''}</span>
-                        {owner.period && <p className="text-slate-500">{owner.period}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500 italic">
-                  Sem detalhamento adicional de proprietários anteriores nas bases consultadas.
-                </p>
-              )}
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018), os dados cadastrais e a
+                identificação de titulares são resguardados, confirmando-se exclusivamente a contagem histórica de
+                proprietários registrados nos órgãos oficiais de trânsito.
+              </p>
             </div>
 
             {/* Auction Details (with records, score, and photo lightbox) */}
