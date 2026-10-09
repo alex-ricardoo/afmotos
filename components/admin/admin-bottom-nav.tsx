@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Bike, Receipt, MessageSquare, Menu, Settings } from 'lucide-react';
+import { LayoutDashboard, Bike, Receipt, MessageSquare, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AdminSidebar } from './admin-sidebar';
+import type { SiteSettingsRecord } from '@/types/site-settings';
 
 const mainMobileItems = [
   { name: 'Início', href: '/admin', icon: LayoutDashboard },
@@ -15,8 +16,18 @@ const mainMobileItems = [
   { name: 'Propostas', href: '/admin/propostas', icon: MessageSquare },
 ];
 
-export function AdminBottomNav() {
+export interface AdminBottomNavProps {
+  settings?: SiteSettingsRecord | null;
+}
+
+export function AdminBottomNav({ settings }: AdminBottomNavProps = {}) {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  // Fecha o menu gaveta quando a rota muda
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <nav
@@ -33,6 +44,7 @@ export function AdminBottomNav() {
           <Link
             key={item.name}
             href={item.href}
+            onClick={() => setOpen(false)}
             className={cn(
               'flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all relative select-none',
               isActive ? 'text-[#e3c56c] font-bold' : 'text-zinc-400 hover:text-zinc-200',
@@ -55,7 +67,7 @@ export function AdminBottomNav() {
       })}
 
       {/* More / Menu Drawer Trigger */}
-      <Sheet>
+      <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer">
           <div className="p-1 rounded-lg">
             <Menu className="w-5 h-5" />
@@ -63,7 +75,7 @@ export function AdminBottomNav() {
           <span className="text-[10px] tracking-tight mt-0.5">Mais</span>
         </SheetTrigger>
         <SheetContent side="left" className="p-0 border-r-0 w-72 bg-[#0c0c0e]">
-          <AdminSidebar />
+          <AdminSidebar settings={settings} onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
     </nav>

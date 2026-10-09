@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -19,6 +19,7 @@ import {
   Users,
   BarChart3,
   FileSearch,
+  History,
   CircleDollarSign,
   Coins,
   ShieldCheck,
@@ -27,7 +28,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 import { getSiteLogo, getSiteName } from '@/lib/site-settings';
 import type { SiteSettingsRecord } from '@/types/site-settings';
 
@@ -64,7 +64,12 @@ const navigation: NavItem[] = [
     name: 'Histórico Veicular',
     icon: FileSearch,
     children: [
-      { name: 'Consultas de Placas', href: '/admin/consulta-placa', icon: FileSearch },
+      { name: 'Consultar Placa', href: '/admin/consulta-placa', icon: FileSearch },
+      {
+        name: 'Histórico de Consultas',
+        href: '/admin/consulta-placa?tab=historico',
+        icon: History,
+      },
       {
         name: 'Pagamentos & Estornos',
         href: '/admin/pagamentos-consultas',
@@ -89,42 +94,44 @@ const navigation: NavItem[] = [
   { type: 'link', name: 'Configurações', href: '/admin/configuracoes', icon: Settings },
 ];
 
-export function AdminSidebar({ settings }: { settings?: SiteSettingsRecord | null }) {
+export interface AdminSidebarProps {
+  settings?: SiteSettingsRecord | null;
+  onNavigate?: () => void;
+}
+
+function AdminSidebarInner({ settings, onNavigate }: AdminSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const supabase = createClient();
 
-  // Mapeia todas as rotas para resolver correspondência mais específica
-  const allHrefs = useMemo(() => {
-    const list: { href: string; name: string }[] = [];
-    for (const item of navigation) {
-      if (item.type === 'link') {
-        list.push({ href: item.href, name: item.name });
-      } else {
-        for (const child of item.children) {
-          list.push({ href: child.href, name: child.name });
+  // Verifica se um item está ativo considerando rota e parâmetros de busca
+  const isItemActive = (itemHref: string) => {
+    const [itemPath, itemQueryString] = itemHref.split('?');
+
+    if (itemQueryString) {
+      if (pathname !== itemPath) return false;
+      const itemParams = new URLSearchParams(itemQueryString);
+      for (const [key, value] of itemParams.entries()) {
+        if (searchParams.get(key) !== value) {
+          return false;
         }
       }
+      return true;
     }
-    return list;
-  }, []);
 
-  const activeHref = useMemo(() => {
-    const matching = allHrefs.filter((item) => {
-      if (item.href === '/admin') {
-        return pathname === '/admin';
-      }
-      return pathname === item.href || pathname.startsWith(item.href + '/');
-    });
+    if (itemPath === '/admin/consulta-placa' && searchParams.get('tab') === 'historico') {
+      return false;
+    }
 
-    if (matching.length === 0) return null;
+    if (itemPath === '/admin') {
+      return pathname === '/admin';
+    }
 
-    return matching.reduce((best, current) =>
-      current.href.length > best.href.length ? current : best,
-    ).href;
-  }, [pathname, allHrefs]);
+    return pathname === itemPath || pathname.startsWith(itemPath + '/');
+  };
 
-  // Controle de abertura manual de grupos retráteis
+  // Controle de abertura manual de grupos retráteis - inicia fechado por padrão
   const [openOverrides, setOpenOverrides] = useState<Record<string, boolean>>({});
 
   const toggleGroup = (name: string, currentlyOpen: boolean) => {
@@ -138,6 +145,7 @@ export function AdminSidebar({ settings }: { settings?: SiteSettingsRecord | nul
   const siteName = getSiteName(settings);
 
   const handleLogout = async () => {
+    onNavigate?.();
     await supabase.auth.signOut();
     router.push('/admin/login');
     router.refresh();
@@ -147,7 +155,7 @@ export function AdminSidebar({ settings }: { settings?: SiteSettingsRecord | nul
     <aside className="flex flex-1 h-full w-full flex-col bg-[#0c0c0f] text-zinc-100 border-r border-zinc-900/60 select-none">
       {/* Brand Header */}
       <div className="flex h-20 shrink-0 items-center justify-between px-6 pt-2">
-        <Link href="/admin" className="flex items-center gap-3.5 group">
+        <Link href="/admin" onClick={onNavigate} className="flex items-center gap-3.5 group">
           <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[#c9a44c]/50 shadow-[0_0_15px_rgba(201,164,76,0.15)] bg-black/60 group-hover:border-[#c9a44c] group-hover:shadow-[0_0_20px_rgba(201,164,76,0.3)] transition-all">
             <Image
               src={logoInfo.src}
@@ -182,8 +190,8 @@ export function AdminSidebar({ settings }: { settings?: SiteSettingsRecord | nul
         <nav className="space-y-1.5 flex-1">
           {navigation.map((item) => {
             if (item.type === 'group') {
-              const isGroupActive = item.children.some((child) => activeHref === child.href);
-              const isOpen = openOverrides[item.name] ?? true;
+              const isGroupActive = item.children.some((child) => isItemActive(child.href));
+              const isOpen = openOverrides[item.name] ?? false;
 
               return (
                 <div key={item.name} className="space-y-1">
@@ -225,12 +233,13 @@ export function AdminSidebar({ settings }: { settings?: SiteSettingsRecord | nul
                   {isOpen && (
                     <div className="pl-3.5 pr-1 py-1 space-y-1 ml-4 border-l border-zinc-800/80 transition-all">
                       {item.children.map((child) => {
-                        const isChildActive = activeHref === child.href;
+                        const isChildActive = isItemActive(child.href);
 
                         return (
                           <Link
                             key={child.href}
                             href={child.href}
+                            onClick={onNavigate}
                             className={cn(
                               'group flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150',
                               isChildActive
@@ -261,12 +270,13 @@ export function AdminSidebar({ settings }: { settings?: SiteSettingsRecord | nul
               );
             }
 
-            const isActive = activeHref === item.href;
+            const isActive = isItemActive(item.href);
 
             return (
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={onNavigate}
                 className={cn(
                   'group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150',
                   isActive
@@ -297,6 +307,7 @@ export function AdminSidebar({ settings }: { settings?: SiteSettingsRecord | nul
             href="/"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={onNavigate}
             className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/50 transition-all border border-zinc-900/80"
           >
             <div className="flex items-center gap-2.5">
@@ -316,5 +327,13 @@ export function AdminSidebar({ settings }: { settings?: SiteSettingsRecord | nul
         </div>
       </div>
     </aside>
+  );
+}
+
+export function AdminSidebar(props: AdminSidebarProps) {
+  return (
+    <Suspense fallback={<div className="flex flex-1 h-full w-full bg-[#0c0c0f]" />}>
+      <AdminSidebarInner {...props} />
+    </Suspense>
   );
 }

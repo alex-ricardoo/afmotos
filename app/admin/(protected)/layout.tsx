@@ -36,7 +36,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </div>
 
       {/* Mobile Floating Bottom Dock */}
-      <AdminBottomNav />
+      <AdminBottomNav settings={settings} />
     </div>
   );
 }
